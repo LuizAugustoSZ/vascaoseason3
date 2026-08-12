@@ -1,0 +1,9 @@
+const initializePasswordToggles=()=>{
+  const style=document.createElement('style');
+  style.textContent='.password-field{position:relative}.password-field .form-control{padding-right:3rem}.password-toggle{position:absolute;right:.55rem;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:2rem;height:2rem;padding:0;border:0;background:transparent;color:#9298a2}.password-toggle:hover,.password-toggle:focus-visible{color:#fff}.password-toggle svg{width:1.2rem;height:1.2rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}';
+  document.head.append(style);
+  const eye='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>';
+  const eyeOff='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18M10.6 6.2A10.8 10.8 0 0 1 12 6c6 0 9.5 6 9.5 6a15.7 15.7 0 0 1-2.1 2.7M6.2 6.2C3.8 8 2.5 12 2.5 12s3.5 6 9.5 6a9.7 9.7 0 0 0 3.1-.5M10.2 10.2a2.5 2.5 0 0 0 3.6 3.6"/></svg>';
+  document.querySelectorAll('input[type="password"]').forEach(input=>{if(input.parentElement?.classList.contains('password-field'))return;const wrapper=document.createElement('div');wrapper.className='password-field';input.parentNode.insertBefore(wrapper,input);wrapper.append(input);const button=document.createElement('button');button.type='button';button.className='password-toggle';button.setAttribute('aria-label','Mostrar senha');button.setAttribute('aria-pressed','false');button.innerHTML=eye;button.addEventListener('click',()=>{const show=input.type==='password';input.type=show?'text':'password';button.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');button.setAttribute('aria-pressed',String(show));button.innerHTML=show?eyeOff:eye;});wrapper.append(button);});
+};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializePasswordToggles);else initializePasswordToggles();
