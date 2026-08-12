@@ -190,8 +190,26 @@
 }
 
 .overview-card {
+    display: flex;
+    flex-direction: column;
     min-height: 185px;
     padding: 12px
+}
+
+.card-page-items {
+    flex: 1
+}
+
+.rivalry-card {
+    text-align: center
+}
+
+.rivalry-card .versus {
+    margin-top: auto
+}
+
+.rivalry-card>p:last-child {
+    margin-bottom: auto
 }
 
 .overview-card h3,
