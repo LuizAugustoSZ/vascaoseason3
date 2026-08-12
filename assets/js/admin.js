@@ -169,6 +169,8 @@ function setupLeagueAdminTable(perPage=5){
   const teamFilter=filters.querySelector('.admin-team-filter');
   const roundFilter=filters.querySelector('.admin-round-filter');
   const count=filters.querySelector('.admin-filter-count');
+  const currentRound=rounds.find(round=>rows.some(row=>row.cells[0].textContent.trim()===round && !['finalizada','wo'].includes(row.cells[3].textContent.trim().toLocaleLowerCase('pt-BR'))));
+  if(currentRound)roundFilter.value=currentRound;
   let page=1;
   const rowSearch=row=>{const text=row.textContent;const people=teamOptions.filter(item=>text.includes(item.team)).map(item=>item.label).join(' ');return `${text} ${people}`.toLocaleLowerCase('pt-BR');};
   const render=()=>{
