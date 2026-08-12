@@ -6,7 +6,12 @@ RUN a2dismod mpm_event mpm_worker \
 
 WORKDIR /var/www/html
 COPY . /var/www/html
+COPY docker-entrypoint.sh /usr/local/bin/vascao-entrypoint
 
-RUN chown -R www-data:www-data /var/www/html
+RUN chmod +x /usr/local/bin/vascao-entrypoint \
+    && chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
+
+ENTRYPOINT ["vascao-entrypoint"]
+CMD ["apache2-foreground"]
