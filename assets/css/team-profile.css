@@ -284,11 +284,14 @@
 
 .versus .match-team {
     display: grid;
+    grid-template-rows: 55px auto;
     justify-items: center;
+    row-gap: 5px;
     text-align: center
 }
 
 .versus .match-team>.match-shield {
+    align-self: end;
     order: 1
 }
 
@@ -314,7 +317,7 @@
     font-size: .7rem
 }
 
-.scorers-card>div {
+.scorers-card .card-page-items>div {
     display: grid;
     grid-template-columns: 28px 1fr auto;
     gap: 8px;
@@ -323,8 +326,8 @@
     font-size: .72rem
 }
 
-.scorers-card>div>b,
-.scorers-card>div>strong {
+.scorers-card .card-page-items>div>b,
+.scorers-card .card-page-items>div>strong {
     color: var(--red)
 }
 
