@@ -288,6 +288,14 @@
     text-align: center
 }
 
+.versus .match-team>.match-shield {
+    order: 1
+}
+
+.versus .match-team>span:not(.match-shield) {
+    order: 2
+}
+
 .versus .match-shield {
     width: 55px;
     height: 55px
