@@ -437,3 +437,4 @@ document.querySelectorAll('main form[method="post"]').forEach(form=>form.addEven
 }));
 function showAdminToast(message,type){const toast=document.createElement('div');toast.className=`alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3 shadow`;toast.style.zIndex='2000';toast.textContent=message;document.body.append(toast);setTimeout(()=>toast.remove(),type==='success'?3200:5000);}
 })();
+const passwordToggleScript=document.createElement('script');passwordToggleScript.src='../assets/js/password-toggle.js';document.head.append(passwordToggleScript);
