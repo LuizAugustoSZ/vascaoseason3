@@ -256,10 +256,39 @@ foreach ($titulos as $t): ?><div><span>🏆</span><b><?= e(
 ) ?></b><small><?= e($t["temporada"]) ?></small></div><?php endforeach;
 if (!$titulos): ?><p>Nenhum título registrado.</p><?php endif;
 ?></section>
-<section class="future-label">Conteúdo mantido pelo técnico</section><section class="future-grid"><article class="lineup-placeholder"><h3>Escalação atual</h3><div class="empty-pitch"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><p>Escalação ainda não informada</p></div></article><article class="treasury-module"><h3>Cofre do clube</h3><strong>DP —</strong><p>Saldo ainda não informado.</p></article><article class="transfers-module"><h3>Últimas contratações</h3><div class="module-empty">Nenhuma movimentação registrada.</div></article><article class="wall-module"><h3>Mural do clube</h3><blockquote>Nenhuma publicação do clube.</blockquote></article><article class="about-module"><h3>Sobre o clube</h3><p><?= e(
+<section class="future-label">Conteúdo mantido pelo técnico</section>
+<section class="future-grid">
+  <article class="lineup-placeholder">
+    <h3>Escalação atual</h3>
+    <div class="empty-pitch">
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+      <p>Escalação ainda não informada</p>
+    </div>
+  </article>
+  <article class="treasury-module">
+    <h3>Cofre do clube</h3>
+    <strong>R$ —</strong>
+    <p>Saldo ainda não informado.</p>
+  </article>
+  <article class="transfers-module">
+    <h3>Últimas contratações</h3>
+    <div class="module-empty">Nenhuma movimentação registrada.</div>
+  </article>
+  <article class="wall-module">
+    <h3>Mural do clube</h3>
+    <blockquote>Nenhuma publicação do clube.</blockquote>
+  </article>
+  <article class="about-module">
+    <h3>Sobre o clube</h3>
+    <p><?= e(
     $time["descricao"] ?:
     "As informações do clube ainda não foram publicadas pelo responsável.",
-) ?></p></article></section></main>
+) ?></p>
+  </article>
+</section>
+</main>
 <?php endif; ?><footer><div class="wide-container">Vascão dos Gigantes • Season 3</div></footer><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/team-page.js?v=<?= filemtime(
     __DIR__ . "/assets/js/team-page.js",
 ) ?>"></script></body></html>
