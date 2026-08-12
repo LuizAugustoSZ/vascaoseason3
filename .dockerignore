@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+.env.*
+config/config.php
+*.sql
+*.sql.zip
+backups
+tmp
+*.log
