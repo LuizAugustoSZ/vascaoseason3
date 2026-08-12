@@ -1,7 +1,37 @@
 <?php
 // Exibe uma matéria individual do jornal.
-require __DIR__.'/includes/bootstrap.php'; $pdo=db(); $id=(int)($_GET['id'] ?? 0); $stmt=$pdo->prepare('SELECT * FROM noticias WHERE id=? AND ativo=1');$stmt->execute([$id]);$article=$stmt->fetch();if(!$article){http_response_code(404);exit('Notícia não encontrada.');}
+require __DIR__ . "/includes/bootstrap.php";
+$pdo = db();
+$id = (int) ($_GET["id"] ?? 0);
+$stmt = $pdo->prepare("SELECT * FROM noticias WHERE id=? AND ativo=1");
+$stmt->execute([$id]);
+$article = $stmt->fetch();
+if (!$article) {
+    http_response_code(404);
+    exit("Notícia não encontrada.");
+}
 ?>
-<!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="<?=e($article['resumo'] ?: $article['titulo'])?>"><title><?=e($article['titulo'])?> | Jornal S3</title><link rel="icon" href="favicon.ico?v=5" sizes="any"><link rel="icon" type="image/png" href="assets/img/favicon-season3.png?v=5"><link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=5"><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/branding.css?v=5"><link rel="stylesheet" href="assets/css/news.css?v=<?=filemtime(__DIR__.'/assets/css/news.css')?>"></head><body>
-<nav class="navbar navbar-expand-lg fixed-top navbar-dark"><div class="container"><a class="navbar-brand d-flex align-items-center gap-2" href="index.php"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt="Vascao Season 3"><span>VASCÃO <b>S3</b></span></a><button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#article-menu"><span class="navbar-toggler-icon"></span></button><div id="article-menu" class="collapse navbar-collapse"><ul class="navbar-nav ms-auto align-items-lg-center"><li class="nav-item"><a class="nav-link" href="index.php#competicao">Competição</a></li><li class="nav-item"><a class="nav-link" href="index.php#participantes">Participantes</a></li><li class="nav-item"><a class="nav-link" href="index.php#artilharia">Artilharia</a></li><li class="nav-item"><a class="nav-link" href="index.php#titulos">Títulos</a></li><li class="nav-item"><a class="nav-link" href="comandos.php">Comandos</a></li><li class="nav-item"><a class="nav-link" href="regulamento.php">Regulamento</a></li><li class="nav-item"><a class="nav-link active" href="noticias.php">Notícias</a></li><li class="nav-item ms-lg-2"><?php if(account_logged_in() && account_is_admin()):?><a class="btn btn-danger btn-sm px-3" href="admin/">Painel</a><?php elseif(account_logged_in()):?><a class="btn btn-danger btn-sm px-3" href="logout.php">Sair</a><?php else:?><a class="btn btn-danger btn-sm px-3" href="login.php">Login</a><?php endif?></li></ul></div></div></nav>
-<main class="news-page"><article class="container article-shell"><a class="text-secondary text-decoration-none" href="noticias.php">← Voltar ao jornal</a><span class="eyebrow d-block mt-4">Notícias do servidor</span><h1 class="display-3 fw-bold mt-3"><?=e($article['titulo'])?></h1><?php if($article['resumo']):?><p class="lead text-secondary"><?=e($article['resumo'])?></p><?php endif?><p class="news-meta mb-4"><?=e(date('d/m/Y H:i',strtotime($article['publicado_em'])))?> • Por <?=e($article['autor'])?></p><img class="article-cover" src="<?=e($article['capa_base64'])?>" alt=""><div class="article-content"><?=$article['conteudo']?></div></article></main><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script></body></html>
+<!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="<?= e(
+    $article["resumo"] ?: $article["titulo"],
+) ?>"><title><?= e(
+    $article["titulo"],
+) ?> | Jornal S3</title><link rel="icon" href="favicon.ico?v=5" sizes="any"><link rel="icon" type="image/png" href="assets/img/favicon-season3.png?v=5"><link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=5"><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/branding.css?v=5"><link rel="stylesheet" href="assets/css/news.css?v=<?= filemtime(
+     __DIR__ . "/assets/css/news.css",
+ ) ?>"></head><body>
+<nav class="navbar navbar-expand-lg fixed-top navbar-dark"><div class="container"><a class="navbar-brand d-flex align-items-center gap-2" href="index.php"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt="Vascao Season 3"><span>VASCÃO <b>S3</b></span></a><button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#article-menu"><span class="navbar-toggler-icon"></span></button><div id="article-menu" class="collapse navbar-collapse"><ul class="navbar-nav ms-auto align-items-lg-center"><li class="nav-item"><a class="nav-link" href="index.php#competicao">Competição</a></li><li class="nav-item"><a class="nav-link" href="index.php#participantes">Participantes</a></li><li class="nav-item"><a class="nav-link" href="index.php#artilharia">Artilharia</a></li><li class="nav-item"><a class="nav-link" href="index.php#titulos">Títulos</a></li><li class="nav-item"><a class="nav-link" href="comandos.php">Comandos</a></li><li class="nav-item"><a class="nav-link" href="regulamento.php">Regulamento</a></li><li class="nav-item"><a class="nav-link active" href="noticias.php">Notícias</a></li><li class="nav-item ms-lg-2"><?php if (
+    account_logged_in() &&
+    account_is_admin()
+): ?><a class="btn btn-danger btn-sm px-3" href="admin/">Painel</a><?php elseif (
+    account_logged_in()
+): ?><a class="btn btn-danger btn-sm px-3" href="logout.php">Sair</a><?php else: ?><a class="btn btn-danger btn-sm px-3" href="login.php">Login</a><?php endif; ?></li></ul></div></div></nav>
+<main class="news-page"><article class="container article-shell"><a class="text-secondary text-decoration-none" href="noticias.php">← Voltar ao jornal</a><span class="eyebrow d-block mt-4">Notícias do servidor</span><h1 class="display-3 fw-bold mt-3"><?= e(
+    $article["titulo"],
+) ?></h1><?php if ($article["resumo"]): ?><p class="lead text-secondary"><?= e(
+    $article["resumo"],
+) ?></p><?php endif; ?><p class="news-meta mb-4"><?= e(
+    date("d/m/Y H:i", strtotime($article["publicado_em"])),
+) ?> • Por <?= e($article["autor"]) ?></p><img class="article-cover" src="<?= e(
+    $article["capa_base64"],
+) ?>" alt=""><div class="article-content"><?= $article[
+    "conteudo"
+] ?></div></article></main><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script></body></html>
