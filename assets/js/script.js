@@ -11,7 +11,7 @@ let leagueGames = [];
 let leaguePage = 1;
 let currentChampionship = null;
 let allChampionships = [];
-const gamesPerPage = 3;
+const gamesPerPage = 5;
 let scorers = [];
 let scorersPage = 1;
 const scorersPerPage = 5;
@@ -36,6 +36,7 @@ function renderLeagueGames() {
   const query=($('#game-search').val() || '').toLocaleLowerCase('pt-BR').trim();
   let games=leagueGames.filter(game=>selected==='all' || String(game.rodada)===selected);
   if(query) games=games.filter(game=>`${game.mandante} ${game.tecnico_mandante} ${game.visitante} ${game.tecnico_visitante}`.toLocaleLowerCase('pt-BR').includes(query));
+  if(selected!=='all')games.sort((a,b)=>Number(!['finalizada','wo'].includes(a.status))-Number(!['finalizada','wo'].includes(b.status)));
   const totalPages=Math.max(1,Math.ceil(games.length/gamesPerPage));
   leaguePage=Math.min(Math.max(1,leaguePage),totalPages);
   const visibleGames=games.slice((leaguePage-1)*gamesPerPage,leaguePage*gamesPerPage);
