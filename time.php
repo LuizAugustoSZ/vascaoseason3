@@ -1,0 +1,36 @@
+<?php
+declare(strict_types=1);
+require __DIR__ . '/includes/bootstrap.php';
+
+$id=(int)($_GET['id'] ?? 0);
+$time=null;$databaseUnavailable=false;
+try {
+    $pdo=db();
+    $stmt=$pdo->prepare('SELECT id,nome,time_nome,sigla,escudo_url,descricao FROM participantes WHERE id=? AND ativo=1 LIMIT 1');
+    $stmt->execute([$id]);
+    $time=$stmt->fetch() ?: null;
+} catch (Throwable $error) { $databaseUnavailable=true; }
+if (!$time) { http_response_code($databaseUnavailable ? 503 : 404); }
+
+$artilheiros=[];$partidas=[];
+if ($time) {
+    $scorers=$pdo->prepare("SELECT a.jogador,SUM(a.gols) gols,GROUP_CONCAT(DISTINCT c.nome ORDER BY c.criado_em DESC SEPARATOR ', ') campeonatos FROM artilharia a JOIN campeonatos c ON c.id=a.campeonato_id WHERE a.participante_id=? AND a.gols>0 GROUP BY a.jogador ORDER BY gols DESC,a.jogador LIMIT 10");
+    $scorers->execute([$id]);$artilheiros=$scorers->fetchAll();
+    $games=$pdo->prepare("SELECT * FROM (
+      SELECT p.id,p.campeonato_id,c.nome campeonato,p.data_partida data_jogo,p.rodada etapa,p.status,m.id mandante_id,m.time_nome mandante,v.id visitante_id,v.time_nome visitante,p.gols_mandante gols_a,p.gols_visitante gols_b,'pontos' origem
+      FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND (p.mandante_id=? OR p.visitante_id=?)
+      UNION ALL
+      SELECT j.id,j.campeonato_id,c.nome campeonato,NULL data_jogo,j.fase etapa,j.status,a.id mandante_id,a.time_nome mandante,b.id visitante_id,b.time_nome visitante,j.gols_a,j.gols_b,'mata' origem
+      FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND (j.time_a_id=? OR j.time_b_id=?)
+    ) jogos ORDER BY COALESCE(data_jogo,'1970-01-01') DESC,id DESC LIMIT 8");
+    $games->execute([$id,$id,$id,$id]);$partidas=$games->fetchAll();
+}
+function team_link(int $id,string $name):string{return '<a class="team-inline-link" href="time.php?id='.$id.'">'.e($name).'</a>';}
+?>
+<!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=e($time ? $time['time_nome'].' | Vascão S3' : 'Time não encontrado')?></title><link rel="icon" href="favicon.ico" sizes="any"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/branding.css?v=5"><link rel="stylesheet" href="assets/css/team-page.css?v=<?=filemtime(__DIR__.'/assets/css/team-page.css')?>"></head><body>
+<nav class="navbar navbar-dark"><div class="container"><a class="navbar-brand" href="index.php"><img class="brand-mark d-inline-block me-2" src="assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"> SEASON 3</a><div><?php if(account_logged_in()):?><span class="text-secondary me-3 d-none d-md-inline"><?=e($_SESSION['conta_nome'] ?? '')?></span><a class="btn btn-outline-light btn-sm" href="logout.php">Sair</a><?php else:?><a class="btn btn-outline-light btn-sm me-2" href="login.php">Entrar</a><a class="btn btn-danger btn-sm" href="cadastro.php">Criar conta</a><?php endif?></div></div></nav>
+<?php if(!$time):?><main class="container team-page"><div class="panel p-5 text-center"><h1><?=$databaseUnavailable?'DADOS INDISPONÍVEIS':'TIME NÃO ENCONTRADO'?></h1><p class="text-secondary"><?=$databaseUnavailable?'Não foi possível carregar o time agora. Tente novamente em instantes.':'Este time não existe ou não está disponível.'?></p><a class="btn btn-danger" href="index.php#participantes">Ver participantes</a></div></main><?php else:?>
+<header class="team-hero"><div class="container"><a class="team-back" href="index.php#participantes">← Todos os times</a><div class="team-identity"><?php if($time['escudo_url']):?><img src="<?=e($time['escudo_url'])?>" alt="Escudo de <?=e($time['time_nome'])?>"><?php else:?><span><?=e($time['sigla'])?></span><?php endif?><div><small>TIME OFICIAL</small><h1><?=e($time['time_nome'])?></h1><p>Técnico <?=e($time['nome'])?></p></div></div><p class="team-description"><?=e($time['descricao'] ?: 'Participante da Vascão Season 3.')?></p></div></header>
+<main class="container team-page"><div class="row g-4"><div class="col-lg-7"><section class="panel"><div class="panel-head"><h3>Últimas partidas</h3><span><?=count($partidas)?> jogos</span></div><div class="team-games"><?php foreach($partidas as $jogo):?><article><small><?=e($jogo['campeonato'])?> • <?=e($jogo['origem']==='pontos'?'Rodada '.$jogo['etapa']:$jogo['etapa'])?></small><div><span><?=team_link((int)$jogo['mandante_id'],$jogo['mandante'])?></span><strong><?=in_array($jogo['status'],['finalizada','finalizado','wo'],true)?e((string)$jogo['gols_a']).' × '.e((string)$jogo['gols_b']):'— × —'?></strong><span><?=team_link((int)$jogo['visitante_id'],$jogo['visitante'])?></span></div></article><?php endforeach?><?php if(!$partidas):?><div class="empty-state">As partidas deste time aparecerão aqui.</div><?php endif?></div></section></div><div class="col-lg-5"><section class="panel"><div class="panel-head"><h3>Artilheiros do time</h3><span>Histórico</span></div><div class="team-scorers"><?php foreach($artilheiros as $pos=>$artilheiro):?><div><b><?=str_pad((string)($pos+1),2,'0',STR_PAD_LEFT)?></b><span><strong><?=e($artilheiro['jogador'])?></strong><small><?=e($artilheiro['campeonatos'])?></small></span><em><?=$artilheiro['gols']?> gols</em></div><?php endforeach?><?php if(!$artilheiros):?><div class="empty-state">Os artilheiros aparecerão após os primeiros gols.</div><?php endif?></div></section></div></div>
+<section class="team-future"><div><small>FORMAÇÃO</small><strong>Em breve</strong><span>A organização tática será liberada na próxima etapa.</span></div><div><small>COFRE</small><strong>Em breve</strong><span>Saldo e movimentações ainda não estão ativos.</span></div><div><small>GRITO DO TIME</small><strong>Em breve</strong><span>A identidade personalizada será configurada pelo responsável.</span></div><div><small>ESCALAÇÃO</small><strong>Em breve</strong><span>O elenco oficial será exibido neste espaço.</span></div></section></main>
+<?php endif?><footer><div class="container"><span>Vascão dos Gigantes • Season 3</span></div></footer></body></html>

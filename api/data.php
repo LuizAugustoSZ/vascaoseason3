@@ -16,11 +16,11 @@ try {
     // Busca os confrontos do chaveamento.
     $mataStmt=$pdo->prepare("SELECT j.*,a.time_nome time_a,a.nome tecnico_a,a.sigla sigla_a,a.escudo_url escudo_a,b.time_nome time_b,b.nome tecnico_b,b.sigla sigla_b,b.escudo_url escudo_b,w.time_nome vencedor FROM jogos_mata_mata j LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id LEFT JOIN participantes w ON w.id=j.vencedor_id WHERE j.campeonato_id=? AND j.ativo=1 ORDER BY FIELD(j.fase,'Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id");$mataStmt->execute([$campeonatoId]);$mataMata=$mataStmt->fetchAll();
     // Busca o ranking de artilheiros.
-    $artilhariaStmt=$pdo->prepare("SELECT a.id,a.campeonato_id,a.jogador,a.gols,p.time_nome participante,p.nome tecnico FROM artilharia a JOIN participantes p ON p.id=a.participante_id WHERE a.campeonato_id=? ORDER BY a.gols DESC,a.jogador LIMIT 10");
+    $artilhariaStmt=$pdo->prepare("SELECT a.id,a.campeonato_id,a.participante_id,a.jogador,a.gols,p.time_nome participante,p.nome tecnico FROM artilharia a JOIN participantes p ON p.id=a.participante_id WHERE a.campeonato_id=? ORDER BY a.gols DESC,a.jogador LIMIT 10");
     $artilhariaStmt->execute([$campeonatoId]);
     $artilharia=$artilhariaStmt->fetchAll();
     // Busca as conquistas dos técnicos.
-    $titulos = $pdo->query("SELECT t.id,t.titulo,t.temporada,t.descricao,t.conquistado_em,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) time_nome FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id ORDER BY FIELD(t.temporada,'Season 3','Season 2','Season 1'),t.conquistado_em DESC,t.titulo")->fetchAll();
+    $titulos = $pdo->query("SELECT t.id,t.participante_id,t.titulo,t.temporada,t.descricao,t.conquistado_em,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) time_nome FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id ORDER BY FIELD(t.temporada,'Season 3','Season 2','Season 1'),t.conquistado_em DESC,t.titulo")->fetchAll();
     // Busca os vídeos publicados.
     $videos = $pdo->query("SELECT id, titulo, youtube_url FROM videos WHERE ativo=1 ORDER BY criado_em DESC")->fetchAll();
     $finalizadas = count(array_filter($partidas, fn($jogo) => in_array($jogo['status'], ['finalizada','wo'], true))) + count(array_filter($mataMata, fn($jogo) => $jogo['status'] === 'finalizado'));

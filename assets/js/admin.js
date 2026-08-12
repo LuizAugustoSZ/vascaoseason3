@@ -404,6 +404,9 @@ if(scorerForm){
   playerInput.addEventListener('input',searchExisting);scorerForm.campeonato_id.addEventListener('change',searchExisting);
 }
 
+// Recomenda vínculos de conta por coincidência exata com o nome do técnico.
+if(document.querySelector('#tab-usuarios'))fetch('associacoes-dados.php').then(response=>response.json()).then(data=>{if(!data.ok||!data.sugestoes.length)return;const panel=document.createElement('div');panel.className='panel p-3 mb-4';const title=document.createElement('h3');title.className='h5';title.textContent='Sugestões de associação';const intro=document.createElement('p');intro.className='text-secondary small';intro.textContent='Coincidências entre o nome da conta e o técnico. Confirme cada vínculo antes de associar.';const list=document.createElement('div');list.className='d-flex flex-wrap gap-2';data.sugestoes.forEach(item=>{const form=document.createElement('form');form.method='post';form.className='border rounded p-2';[['csrf',data.csrf],['action','vincular_conta'],['conta_id',item.conta_id],['participante_id',item.participante_id]].forEach(([name,value])=>{const input=document.createElement('input');input.type='hidden';input.name=name;input.value=value;form.append(input)});const name=document.createElement('strong');name.textContent=item.conta_nome;const detail=document.createElement('small');detail.className='d-block text-secondary mb-2';detail.textContent=`${item.time_nome} • Técnico ${item.tecnico}`;const button=document.createElement('button');button.className='btn btn-sm btn-warning';button.textContent='Associar conta e time';form.append(name,detail,button);list.append(form)});panel.append(title,intro,list);document.querySelector('#tab-usuarios').prepend(panel)}).catch(()=>{});
+
 // Padroniza todas as demais listagens: cinco registros, pesquisa e filtros por coluna.
 function setupUniversalAdminLists(){
   document.querySelectorAll('.tab-pane table').forEach(table=>{
