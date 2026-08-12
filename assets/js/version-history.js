@@ -1,5 +1,6 @@
 // Um novo ZIP entregue representa uma nova versão do site.
 const siteVersions=[
+['7.2','Nova identidade visual da Season 3 e jogos da rodada reorganizados com resultados concluídos primeiro e até cinco partidas por página.'],
 ['7.1','Notícias foram integradas como aba do painel, o Regulamento foi limpo e os níveis administrativos foram preservados.'],
 ['7.0','Artilharia agora diferencia jogadores de mesmo nome quando atuam por times diferentes no campeonato.'],
 ['6.9','Jogos dos pontos corridos agora identificam o mandante à esquerda e o visitante à direita.'],
@@ -75,6 +76,7 @@ const siteVersions=[
 document.addEventListener('DOMContentLoaded',()=>{
  const footer=document.querySelector('footer .container');if(!footer)return;
  const adminVersions=Array.isArray(window.adminSiteVersions)?window.adminSiteVersions:[];
+ if(adminVersions.length&&adminVersions[0][0]!=='a1.9')adminVersions.unshift(['a1.9','Rodada em andamento selecionada automaticamente e sincronização segura de produção para homologação exclusiva do Slower.']);
  const button=document.createElement('button');button.type='button';button.className='site-version-button';button.dataset.bsToggle='modal';button.dataset.bsTarget='#version-history-modal';button.textContent=adminVersions.length?`v${siteVersions[0][0]} • ADM ${adminVersions[0][0]}`:`v${siteVersions[0][0]}`;footer.appendChild(button);
  const adminHistory=adminVersions.length?`<div class="admin-version-history"><small>HISTÓRICO RESTRITO</small><div class="version-current"><span>VERSÃO ADMINISTRATIVA</span><strong>${adminVersions[0][0]}</strong></div><div class="version-list">${adminVersions.map(([version,description],index)=>`<article class="version-item ${index===0?'active':''}"><b>${version}</b><p>${description}</p></article>`).join('')}</div></div>`:'';
  document.body.insertAdjacentHTML('beforeend',`<div class="modal fade" id="version-history-modal" tabindex="-1" aria-labelledby="version-history-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content version-modal"><div class="modal-header"><div><small>HISTÓRICO DO SITE</small><h2 class="modal-title" id="version-history-title">VERSÕES</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><div class="version-current"><span>VERSÃO PÚBLICA</span><strong>v${siteVersions[0][0]}</strong></div><div class="version-list">${siteVersions.map(([version,description],index)=>`<article class="version-item ${index===0?'active':''}"><b>v${version}</b><p>${description}</p></article>`).join('')}</div>${adminHistory}</div></div></div></div>`);
