@@ -1,0 +1,47 @@
+.brand-mark {
+  display: block;
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  background: transparent;
+  transform: none;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .5));
+}
+
+.hero::after {
+  content: "";
+  right: -7vw;
+  bottom: -12vw;
+  width: min(52vw, 720px);
+  height: auto;
+  aspect-ratio: 1;
+  background: url('../img/logo-season3.webp') center / contain no-repeat;
+  opacity: .045;
+  filter: grayscale(1);
+  -webkit-text-stroke: 0;
+  transform: none;
+}
+
+.public-empty .empty-season-logo,
+.hero-feature-empty .empty-season-logo {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  background: transparent;
+  transform: none;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .5));
+}
+
+.hero-feature-empty .empty-season-logo {
+  width: 82px;
+  height: 82px;
+}
+
+@media (max-width: 575.98px) {
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+}

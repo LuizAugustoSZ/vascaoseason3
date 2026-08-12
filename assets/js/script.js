@@ -1,6 +1,6 @@
 // Escapa os textos da API antes de inserir no HTML.
 const esc = value => $('<div>').text(value ?? '').html();
-const publicEmpty = message => `<div class="public-empty"><span>VG</span><p>${esc(message)}</p></div>`;
+const publicEmpty = message => `<div class="public-empty"><img class="empty-season-logo" src="assets/img/logo-season3.webp?v=5" alt=""><p>${esc(message)}</p></div>`;
 // Mostra o escudo ou usa a sigla do time.
 const badge = team => {const initials=esc(team.sigla || team.nome.slice(0,3).toUpperCase());return team.escudo_url ? `<span class="team-badge team-badge-image"><img src="${esc(team.escudo_url)}" alt="Escudo de ${esc(team.time_nome || team.nome)}"><b>${initials}</b></span>` : `<span class="team-badge">${initials}</span>`;};
 // Mostra um time definido ou a origem do vencedor que ocupará a vaga futura.
