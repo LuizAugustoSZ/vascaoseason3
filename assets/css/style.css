@@ -1,1 +1,598 @@
-:root{--red:#d71920;--red2:#8f0e13;--ink:#08090b;--panel:#101216;--panel2:#171a1f;--line:#292d34;--muted:#9298a2;--white:#f7f7f4}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:76px}body{background:var(--ink);color:var(--white);font-family:Inter,sans-serif}.navbar{background:rgba(8,9,11,.9);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(14px)}.navbar-brand{font-family:"Barlow Condensed",sans-serif;font-weight:800;letter-spacing:.08em}.navbar-brand b{color:var(--red)}.brand-mark{display:grid;place-items:center;width:34px;height:34px;background:var(--red);transform:skew(-8deg);font-size:.9rem}.nav-link{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}.btn-danger{--bs-btn-bg:var(--red);--bs-btn-border-color:var(--red);--bs-btn-hover-bg:#ef222a;--bs-btn-hover-border-color:#ef222a;text-transform:uppercase;font-weight:800;letter-spacing:.05em}.hero{position:relative;min-height:720px;padding-top:76px;overflow:hidden;background:radial-gradient(circle at 76% 36%,rgba(215,25,32,.23),transparent 24%),linear-gradient(112deg,#08090b 0%,#0c0d10 55%,#171013 100%)}.hero:after{content:"VG";position:absolute;right:-3vw;bottom:-15vw;font-family:"Barlow Condensed";font-weight:800;font-size:42vw;line-height:1;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.055);transform:skew(-8deg)}.hero-lines{position:absolute;inset:0;background:repeating-linear-gradient(120deg,transparent 0 120px,rgba(255,255,255,.018) 121px 122px)}.eyebrow{display:inline-block;color:#f4b5b7;font-weight:700;text-transform:uppercase;letter-spacing:.18em;font-size:.76rem;border-left:3px solid var(--red);padding-left:.75rem}.hero h1{font-family:"Barlow Condensed";font-weight:800;font-size:clamp(4.8rem,12vw,10rem);line-height:.76;letter-spacing:-.035em;margin:1.4rem 0 2rem}.hero h1 span{color:var(--red)}.hero .lead{max-width:650px}.status-card{position:relative;background:rgba(16,18,22,.88);border:1px solid var(--line);border-left:4px solid var(--red);padding:1.4rem;display:grid;gap:.65rem;z-index:2}.status-card small,.status-card span{color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em}.status-card strong{font-family:"Barlow Condensed";font-size:1.65rem;letter-spacing:.04em}.status-card i{display:inline-block;width:9px;height:9px;background:#32d278;border-radius:50%;box-shadow:0 0 14px #32d278;margin-right:.4rem}.section-pad{padding:96px 0}.bg-panel{background:#0d0f12}.section-title{display:flex;align-items:center;gap:1rem;margin-bottom:2.5rem}.section-title>span{font-family:"Barlow Condensed";font-size:3.8rem;font-weight:800;color:var(--red);line-height:1}.section-title small{color:var(--muted);font-weight:700;letter-spacing:.2em}.section-title h2,.panel h3,.rule-card h3{font-family:"Barlow Condensed";font-weight:800;margin:0;letter-spacing:.02em}.section-title h2{font-size:clamp(2.5rem,6vw,4.5rem)}.competition-tabs{gap:.5rem;border-bottom:1px solid var(--line)}.competition-tabs .nav-link{color:var(--muted);border:0;border-bottom:3px solid transparent;border-radius:0;padding:.9rem 1.2rem}.competition-tabs .nav-link.active{color:#fff;background:transparent;border-color:var(--red)}.panel{background:var(--panel);border:1px solid var(--line)}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.1rem 1.25rem;border-bottom:1px solid var(--line)}.panel-head h3{font-size:1.65rem;text-transform:uppercase}.panel-head span{font-size:.74rem;color:var(--muted);text-transform:uppercase}.ranking-table{--bs-table-bg:transparent;--bs-table-color:#fff;--bs-table-border-color:var(--line);font-size:.88rem}.ranking-table th{color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em}.ranking-table td,.ranking-table th{padding:1rem .8rem;vertical-align:middle}.ranking-table tbody tr:hover{--bs-table-bg:rgba(255,255,255,.025)}.position-pill{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:50%;font-weight:800;font-size:.78rem;background:#262a30}.position-pill.top{background:var(--red)}.team-cell{display:flex;align-items:center;gap:.75rem;font-weight:700}.team-badge{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line);background:#0b0c0e;font-family:"Barlow Condensed";font-weight:800;color:#fff}.game-list{padding:.5rem 1rem}.game-item{padding:1rem 0;border-bottom:1px solid var(--line)}.game-item:last-child{border:0}.game-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:.72rem;text-transform:uppercase;margin-bottom:.55rem}.game-score{display:grid;grid-template-columns:1fr auto 1fr;gap:.6rem;align-items:center;font-weight:700}.game-score span:last-child{text-align:right}.score{background:#fff;color:#08090b;padding:.25rem .55rem;font-family:"Barlow Condensed";font-size:1.35rem}.bracket{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:2rem;padding:2rem;overflow-x:auto;min-height:360px}.bracket-stage{display:flex;flex-direction:column;justify-content:space-around;gap:1.3rem}.bracket-stage h4{font-size:.75rem;text-align:center;text-transform:uppercase;color:var(--muted);letter-spacing:.15em}.bracket-game{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--red);padding:.75rem}.bracket-team{display:flex;justify-content:space-between;padding:.4rem 0;font-size:.86rem}.bracket-team+.bracket-team{border-top:1px solid var(--line)}.participant-card{height:100%;background:var(--panel);border:1px solid var(--line);padding:1.2rem;transition:.2s}.participant-card:hover{transform:translateY(-4px);border-color:#4a4f58}.participant-card .team-badge{width:52px;height:52px;background:var(--red);border:0;font-size:1.1rem;margin-bottom:1rem}.participant-card h3{font-family:"Barlow Condensed";font-weight:800;margin:0}.participant-card p{font-size:.82rem;color:var(--muted);margin:.3rem 0 0}.scorers-list{padding:0 1.25rem}.scorer{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--line)}.scorer:last-child{border:0}.scorer-rank{font-family:"Barlow Condensed";font-size:1.5rem;color:var(--muted)}.scorer small{display:block;color:var(--muted)}.scorer strong:last-child{font-family:"Barlow Condensed";font-size:1.6rem;color:var(--red)}.command-search{display:flex;align-items:center;background:#fff;color:#111;max-width:650px}.command-search span{font-family:"Barlow Condensed";font-size:2rem;font-weight:800;color:var(--red);padding-left:1rem}.command-search input{width:100%;background:transparent;border:0;outline:0;padding:1rem;font-weight:600}.command-card{height:100%;background:var(--panel);border:1px solid var(--line);padding:1.15rem}.command-card h3{font-family:"Barlow Condensed";font-size:1.3rem;font-weight:800;text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:.75rem}.command-item{padding:.55rem 0}.command-item code{display:block;color:#ff6d72;font-weight:700}.command-item span{font-size:.78rem;color:var(--muted)}.rule-card{height:100%;background:var(--panel);border:1px solid var(--line);padding:1.5rem;position:relative;overflow:hidden}.rule-card>b{position:absolute;right:.8rem;top:-.6rem;color:rgba(255,255,255,.05);font:800 4rem "Barlow Condensed"}.rule-card h3{font-size:1.5rem;margin-bottom:.65rem}.rule-card p{color:var(--muted);font-size:.88rem;margin:0}.video-card{background:var(--panel);border:1px solid var(--line);overflow:hidden}.video-card iframe{width:100%;aspect-ratio:16/9;display:block}.video-card h3{font:700 1.2rem "Barlow Condensed";padding:1rem;margin:0}footer{border-top:1px solid var(--line);padding:2rem 0;color:var(--muted);font-size:.78rem}.empty-state{padding:2rem;text-align:center;color:var(--muted)}@media(max-width:767px){.hero{min-height:650px}.hero h1{font-size:4.8rem}.section-pad{padding:72px 0}.section-title>span{font-size:2.8rem}.ranking-table td,.ranking-table th{padding:.75rem .55rem}.bracket{padding:1rem}}
+:root {
+    --red: #d71920;
+    --red2: #8f0e13;
+    --ink: #08090b;
+    --panel: #101216;
+    --panel2: #171a1f;
+    --line: #292d34;
+    --muted: #9298a2;
+    --white: #f7f7f4
+}
+
+* {
+    box-sizing: border-box
+}
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 76px
+}
+
+body {
+    background: var(--ink);
+    color: var(--white);
+    font-family: Inter, sans-serif
+}
+
+.navbar {
+    background: rgba(8, 9, 11, .9);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    backdrop-filter: blur(14px)
+}
+
+.navbar-brand {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 800;
+    letter-spacing: .08em
+}
+
+.navbar-brand b {
+    color: var(--red)
+}
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    background: var(--red);
+    transform: skew(-8deg);
+    font-size: .9rem
+}
+
+.nav-link {
+    font-size: .82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em
+}
+
+.btn-danger {
+    --bs-btn-bg: var(--red);
+    --bs-btn-border-color: var(--red);
+    --bs-btn-hover-bg: #ef222a;
+    --bs-btn-hover-border-color: #ef222a;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: .05em
+}
+
+.hero {
+    position: relative;
+    min-height: 720px;
+    padding-top: 76px;
+    overflow: hidden;
+    background: radial-gradient(circle at 76% 36%, rgba(215, 25, 32, .23), transparent 24%), linear-gradient(112deg, #08090b 0%, #0c0d10 55%, #171013 100%)
+}
+
+.hero:after {
+    content: "VG";
+    position: absolute;
+    right: -3vw;
+    bottom: -15vw;
+    font-family: "Barlow Condensed";
+    font-weight: 800;
+    font-size: 42vw;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, .055);
+    transform: skew(-8deg)
+}
+
+.hero-lines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(120deg, transparent 0 120px, rgba(255, 255, 255, .018) 121px 122px)
+}
+
+.eyebrow {
+    display: inline-block;
+    color: #f4b5b7;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    font-size: .76rem;
+    border-left: 3px solid var(--red);
+    padding-left: .75rem
+}
+
+.hero h1 {
+    font-family: "Barlow Condensed";
+    font-weight: 800;
+    font-size: clamp(4.8rem, 12vw, 10rem);
+    line-height: .76;
+    letter-spacing: -.035em;
+    margin: 1.4rem 0 2rem
+}
+
+.hero h1 span {
+    color: var(--red)
+}
+
+.hero .lead {
+    max-width: 650px
+}
+
+.status-card {
+    position: relative;
+    background: rgba(16, 18, 22, .88);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--red);
+    padding: 1.4rem;
+    display: grid;
+    gap: .65rem;
+    z-index: 2
+}
+
+.status-card small,
+.status-card span {
+    color: var(--muted);
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .08em
+}
+
+.status-card strong {
+    font-family: "Barlow Condensed";
+    font-size: 1.65rem;
+    letter-spacing: .04em
+}
+
+.status-card i {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    background: #32d278;
+    border-radius: 50%;
+    box-shadow: 0 0 14px #32d278;
+    margin-right: .4rem
+}
+
+.section-pad {
+    padding: 96px 0
+}
+
+.bg-panel {
+    background: #0d0f12
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem
+}
+
+.section-title>span {
+    font-family: "Barlow Condensed";
+    font-size: 3.8rem;
+    font-weight: 800;
+    color: var(--red);
+    line-height: 1
+}
+
+.section-title small {
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: .2em
+}
+
+.section-title h2,
+.panel h3,
+.rule-card h3 {
+    font-family: "Barlow Condensed";
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: .02em
+}
+
+.section-title h2 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem)
+}
+
+.competition-tabs {
+    gap: .5rem;
+    border-bottom: 1px solid var(--line)
+}
+
+.competition-tabs .nav-link {
+    color: var(--muted);
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: .9rem 1.2rem
+}
+
+.competition-tabs .nav-link.active {
+    color: #fff;
+    background: transparent;
+    border-color: var(--red)
+}
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--line)
+}
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--line)
+}
+
+.panel-head h3 {
+    font-size: 1.65rem;
+    text-transform: uppercase
+}
+
+.panel-head span {
+    font-size: .74rem;
+    color: var(--muted);
+    text-transform: uppercase
+}
+
+.ranking-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #fff;
+    --bs-table-border-color: var(--line);
+    font-size: .88rem
+}
+
+.ranking-table th {
+    color: var(--muted);
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .08em
+}
+
+.ranking-table td,
+.ranking-table th {
+    padding: 1rem .8rem;
+    vertical-align: middle
+}
+
+.ranking-table tbody tr:hover {
+    --bs-table-bg: rgba(255, 255, 255, .025)
+}
+
+.position-pill {
+    display: inline-grid;
+    place-items: center;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: .78rem;
+    background: #262a30
+}
+
+.position-pill.top {
+    background: var(--red)
+}
+
+.team-cell {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    font-weight: 700
+}
+
+.team-badge {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--line);
+    background: #0b0c0e;
+    font-family: "Barlow Condensed";
+    font-weight: 800;
+    color: #fff
+}
+
+.game-list {
+    padding: .5rem 1rem
+}
+
+.game-item {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--line)
+}
+
+.game-item:last-child {
+    border: 0
+}
+
+.game-meta {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    margin-bottom: .55rem
+}
+
+.game-score {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: .6rem;
+    align-items: center;
+    font-weight: 700
+}
+
+.game-score span:last-child {
+    text-align: right
+}
+
+.score {
+    background: #fff;
+    color: #08090b;
+    padding: .25rem .55rem;
+    font-family: "Barlow Condensed";
+    font-size: 1.35rem
+}
+
+.bracket {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(230px, 1fr);
+    gap: 2rem;
+    padding: 2rem;
+    overflow-x: auto;
+    min-height: 360px
+}
+
+.bracket-stage {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 1.3rem
+}
+
+.bracket-stage h4 {
+    font-size: .75rem;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: .15em
+}
+
+.bracket-game {
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--red);
+    padding: .75rem
+}
+
+.bracket-team {
+    display: flex;
+    justify-content: space-between;
+    padding: .4rem 0;
+    font-size: .86rem
+}
+
+.bracket-team+.bracket-team {
+    border-top: 1px solid var(--line)
+}
+
+.participant-card {
+    height: 100%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 1.2rem;
+    transition: .2s
+}
+
+.participant-card:hover {
+    transform: translateY(-4px);
+    border-color: #4a4f58
+}
+
+.participant-card .team-badge {
+    width: 52px;
+    height: 52px;
+    background: var(--red);
+    border: 0;
+    font-size: 1.1rem;
+    margin-bottom: 1rem
+}
+
+.participant-card h3 {
+    font-family: "Barlow Condensed";
+    font-weight: 800;
+    margin: 0
+}
+
+.participant-card p {
+    font-size: .82rem;
+    color: var(--muted);
+    margin: .3rem 0 0
+}
+
+.scorers-list {
+    padding: 0 1.25rem
+}
+
+.scorer {
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--line)
+}
+
+.scorer:last-child {
+    border: 0
+}
+
+.scorer-rank {
+    font-family: "Barlow Condensed";
+    font-size: 1.5rem;
+    color: var(--muted)
+}
+
+.scorer small {
+    display: block;
+    color: var(--muted)
+}
+
+.scorer strong:last-child {
+    font-family: "Barlow Condensed";
+    font-size: 1.6rem;
+    color: var(--red)
+}
+
+.command-search {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    color: #111;
+    max-width: 650px
+}
+
+.command-search span {
+    font-family: "Barlow Condensed";
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--red);
+    padding-left: 1rem
+}
+
+.command-search input {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    padding: 1rem;
+    font-weight: 600
+}
+
+.command-card {
+    height: 100%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 1.15rem
+}
+
+.command-card h3 {
+    font-family: "Barlow Condensed";
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: .75rem
+}
+
+.command-item {
+    padding: .55rem 0
+}
+
+.command-item code {
+    display: block;
+    color: #ff6d72;
+    font-weight: 700
+}
+
+.command-item span {
+    font-size: .78rem;
+    color: var(--muted)
+}
+
+.rule-card {
+    height: 100%;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden
+}
+
+.rule-card>b {
+    position: absolute;
+    right: .8rem;
+    top: -.6rem;
+    color: rgba(255, 255, 255, .05);
+    font: 800 4rem "Barlow Condensed"
+}
+
+.rule-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: .65rem
+}
+
+.rule-card p {
+    color: var(--muted);
+    font-size: .88rem;
+    margin: 0
+}
+
+.video-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    overflow: hidden
+}
+
+.video-card iframe {
+    width: 100%;
+    aspect-ratio: 16/9;
+    display: block
+}
+
+.video-card h3 {
+    font: 700 1.2rem "Barlow Condensed";
+    padding: 1rem;
+    margin: 0
+}
+
+footer {
+    border-top: 1px solid var(--line);
+    padding: 2rem 0;
+    color: var(--muted);
+    font-size: .78rem
+}
+
+.empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: var(--muted)
+}
+
+@media(max-width:767px) {
+    .hero {
+        min-height: 650px
+    }
+
+    .hero h1 {
+        font-size: 4.8rem
+    }
+
+    .section-pad {
+        padding: 72px 0
+    }
+
+    .section-title>span {
+        font-size: 2.8rem
+    }
+
+    .ranking-table td,
+    .ranking-table th {
+        padding: .75rem .55rem
+    }
+
+    .bracket {
+        padding: 1rem
+    }
+}

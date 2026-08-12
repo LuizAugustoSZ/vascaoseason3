@@ -1,1 +1,27 @@
-.competition-download{display:inline-grid;place-items:center;flex:0 0 38px;width:38px;height:38px;margin-left:auto;border:2px solid #ed1b2f;background:transparent;color:#ed1b2f;transition:.2s}.competition-download:hover{background:#ed1b2f;color:#08090b;box-shadow:0 0 18px rgba(237,27,47,.28)}.competition-download svg{width:20px;height:20px}.competition-download.d-none{display:none!important}
+.competition-download {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    margin-left: auto;
+    border: 2px solid #ed1b2f;
+    background: transparent;
+    color: #ed1b2f;
+    transition: .2s
+}
+
+.competition-download:hover {
+    background: #ed1b2f;
+    color: #08090b;
+    box-shadow: 0 0 18px rgba(237, 27, 47, .28)
+}
+
+.competition-download svg {
+    width: 20px;
+    height: 20px
+}
+
+.competition-download.d-none {
+    display: none !important
+}

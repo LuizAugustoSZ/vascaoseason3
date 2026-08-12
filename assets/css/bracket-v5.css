@@ -1,26 +1,153 @@
 /* Somente apresentação: nenhuma informação ou regra do chaveamento é alterada. */
-.bracket{grid-auto-columns:minmax(235px,1fr);gap:2.35rem;min-height:520px;align-items:stretch}
-.bracket-stage,.bracket-game,.bracket-decision{position:relative}
-.bracket-game{transition:opacity .25s,border-color .25s,box-shadow .25s}
-.bracket-team{align-items:center;transition:opacity .25s,filter .25s}
-.bracket-team-info{display:flex;align-items:center;gap:.55rem;min-width:0}
-.bracket-team-info>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bracket-team.is-eliminated{opacity:.28;filter:grayscale(1)}
-.bracket-team.is-qualified{opacity:1;font-weight:800}
-.bracket-penalty-score{color:#f4b5b7;font-size:.78em;font-weight:800}
-.bracket-game.is-decided{border-left-color:#ef222a}
-.bracket-game.is-decided:after{content:none}
-.bracket-outcome{flex:0 0 auto;margin-left:auto;margin-right:.45rem;padding:.13rem .38rem;border:1px solid currentColor;font-size:.5rem;font-weight:900;letter-spacing:.06em;line-height:1.2;white-space:nowrap}
-.bracket-outcome.qualified{color:#ff4b55}
-.bracket-outcome.champion{color:#e5b83c;background:rgba(229,184,60,.08)}
-.bracket-outcome.runner-up{color:#b9c0ca;background:rgba(185,192,202,.07)}
-.bracket-outcome.third-place{color:#c98a45;background:rgba(201,138,69,.08)}
-.bracket-final .bracket-team.is-eliminated{opacity:.62}
-.bracket-stage--decisions{justify-content:center;gap:3.5rem;min-width:275px}
-.bracket-decision>h4{margin-bottom:1rem;color:#fff;font-size:.9rem}
-.bracket-final .bracket-game{border-color:#59491f;border-left:4px solid #d5a62e;box-shadow:0 0 30px rgba(213,166,46,.1)}
-.bracket-final>h4:before{content:'🏆';display:block;font-size:2rem;margin-bottom:.35rem}
-.bracket-third{padding-top:2rem;border-top:1px solid var(--line)}
-.bracket-third>h4{color:#c79757}
-.bracket-third>h4:before{content:'3';display:inline-grid;place-items:center;width:25px;height:25px;margin-right:.45rem;border:1px solid #9b6d36;border-radius:50%;font-family:'Barlow Condensed',sans-serif;font-weight:800}
-@media(max-width:767px){.bracket{min-height:460px;gap:1.25rem}.bracket-stage--decisions{min-width:245px}}
+.bracket {
+    grid-auto-columns: minmax(235px, 1fr);
+    gap: 2.35rem;
+    min-height: 520px;
+    align-items: stretch
+}
+
+.bracket-stage,
+.bracket-game,
+.bracket-decision {
+    position: relative
+}
+
+.bracket-game {
+    transition: opacity .25s, border-color .25s, box-shadow .25s
+}
+
+.bracket-team {
+    align-items: center;
+    transition: opacity .25s, filter .25s
+}
+
+.bracket-team-info {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    min-width: 0
+}
+
+.bracket-team-info>span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.bracket-team.is-eliminated {
+    opacity: .28;
+    filter: grayscale(1)
+}
+
+.bracket-team.is-qualified {
+    opacity: 1;
+    font-weight: 800
+}
+
+.bracket-penalty-score {
+    color: #f4b5b7;
+    font-size: .78em;
+    font-weight: 800
+}
+
+.bracket-game.is-decided {
+    border-left-color: #ef222a
+}
+
+.bracket-game.is-decided:after {
+    content: none
+}
+
+.bracket-outcome {
+    flex: 0 0 auto;
+    margin-left: auto;
+    margin-right: .45rem;
+    padding: .13rem .38rem;
+    border: 1px solid currentColor;
+    font-size: .5rem;
+    font-weight: 900;
+    letter-spacing: .06em;
+    line-height: 1.2;
+    white-space: nowrap
+}
+
+.bracket-outcome.qualified {
+    color: #ff4b55
+}
+
+.bracket-outcome.champion {
+    color: #e5b83c;
+    background: rgba(229, 184, 60, .08)
+}
+
+.bracket-outcome.runner-up {
+    color: #b9c0ca;
+    background: rgba(185, 192, 202, .07)
+}
+
+.bracket-outcome.third-place {
+    color: #c98a45;
+    background: rgba(201, 138, 69, .08)
+}
+
+.bracket-final .bracket-team.is-eliminated {
+    opacity: .62
+}
+
+.bracket-stage--decisions {
+    justify-content: center;
+    gap: 3.5rem;
+    min-width: 275px
+}
+
+.bracket-decision>h4 {
+    margin-bottom: 1rem;
+    color: #fff;
+    font-size: .9rem
+}
+
+.bracket-final .bracket-game {
+    border-color: #59491f;
+    border-left: 4px solid #d5a62e;
+    box-shadow: 0 0 30px rgba(213, 166, 46, .1)
+}
+
+.bracket-final>h4:before {
+    content: '🏆';
+    display: block;
+    font-size: 2rem;
+    margin-bottom: .35rem
+}
+
+.bracket-third {
+    padding-top: 2rem;
+    border-top: 1px solid var(--line)
+}
+
+.bracket-third>h4 {
+    color: #c79757
+}
+
+.bracket-third>h4:before {
+    content: '3';
+    display: inline-grid;
+    place-items: center;
+    width: 25px;
+    height: 25px;
+    margin-right: .45rem;
+    border: 1px solid #9b6d36;
+    border-radius: 50%;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800
+}
+
+@media(max-width:767px) {
+    .bracket {
+        min-height: 460px;
+        gap: 1.25rem
+    }
+
+    .bracket-stage--decisions {
+        min-width: 245px
+    }
+}
