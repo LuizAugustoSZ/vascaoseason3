@@ -121,14 +121,30 @@ foreach ($jogadas as $j) {
     }
 }
 $stats["Saldo"] = $stats["Gols pró"] - $stats["Gols contra"];
-$rival = $opponents ? array_values($opponents)[0] : null;
-if ($jogadas) {
-    $last = $jogadas[0];
-    $oid =
-        (int) ((int) $last["mandante_id"] === $id
-            ? $last["visitante_id"]
-            : $last["mandante_id"]);
-    $rival = $opponents[$oid] ?? $rival;
+$rival = null;
+if ($proximas) {
+    $nextMatch = $proximas[0];
+    $teamIsHome = (int) $nextMatch["mandante_id"] === $id;
+    $opponentId = (int) ($teamIsHome
+        ? $nextMatch["visitante_id"]
+        : $nextMatch["mandante_id"]);
+
+    $rival = $opponents[$opponentId] ?? [
+        "id" => $opponentId,
+        "nome" => $teamIsHome
+            ? $nextMatch["visitante"]
+            : $nextMatch["mandante"],
+        "sigla" => $teamIsHome
+            ? $nextMatch["visitante_sigla"]
+            : $nextMatch["mandante_sigla"],
+        "escudo" => $teamIsHome
+            ? $nextMatch["visitante_escudo"]
+            : $nextMatch["mandante_escudo"],
+        "jogos" => 0,
+        "v" => 0,
+        "e" => 0,
+        "d" => 0,
+    ];
 }
 function shield(array $team, string $prefix = ""): string
 {
