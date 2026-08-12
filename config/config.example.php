@@ -16,6 +16,7 @@ return [
     'app' => [
         'name' => 'Servidor do Vascao | Season 3',
         'base_url' => rtrim(getenv('APP_URL') ?: '', '/'),
+        'environment' => getenv('APP_ENV') ?: 'local',
         'timezone' => 'America/Sao_Paulo',
     ],
 ];
