@@ -4,7 +4,14 @@
     justify-content: center;
     gap: 9px;
     min-height: 25px;
-    margin-top: 5px
+    margin: auto -12px -12px;
+    padding: 7px 12px;
+    border-top: 1px solid var(--line);
+    background: rgba(8, 10, 13, .45)
+}
+
+.card-pages:empty {
+    display: none
 }
 
 .card-pages button {
