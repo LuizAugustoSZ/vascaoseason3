@@ -237,8 +237,8 @@ $value > 0
      "e"
  ] ?> empates • <?= $rival[
      "d"
- ] ?> derrotas</p><?php else: ?><p class="empty-copy">Sem histórico disponível.</p><?php endif; ?></article><article class="overview-card scorers-card"><h3>Artilheiros</h3><?php
-foreach (array_slice($artilheiros, 0, 3) as $pos => $a): ?><div><b><?= str_pad(
+ ] ?> derrotas</p><?php else: ?><p class="empty-copy">Sem histórico disponível.</p><?php endif; ?></article><article class="overview-card scorers-card" data-card-pages="3"><h3>Artilheiros</h3><div class="card-page-items"><?php
+foreach ($artilheiros as $pos => $a): ?><div><b><?= str_pad(
     (string) ($pos + 1),
     2,
     "0",
@@ -249,7 +249,7 @@ foreach (array_slice($artilheiros, 0, 3) as $pos => $a): ?><div><b><?= str_pad(
 if (
     !$artilheiros
 ): ?><p class="empty-copy">Nenhum gol registrado.</p><?php endif;
-?></article></section>
+?></div><nav class="card-pages"></nav></article></section>
 <?php if ($titulos): ?>
   <section class="titles-strip">
     <h3>Títulos e campanhas</h3>
