@@ -151,6 +151,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
       if(!in_array($ehAdmin,[0,1,2],true)) throw new RuntimeException('Nível de acesso inválido.');
       if ($nome==='') throw new RuntimeException('Informe o nome do usuário.');
       if (!filter_var($email,FILTER_VALIDATE_EMAIL)) throw new RuntimeException('Informe um e-mail válido.');
+      if($participanteId>0){$linked=$pdo->prepare('SELECT id,nome FROM contas WHERE participante_id=? AND id<>? LIMIT 1');$linked->execute([$participanteId,$contaId]);if($other=$linked->fetch())throw new RuntimeException('Este time já está associado à conta de '.$other['nome'].'.');}
       if ($contaId>0) {
         if ($contaId===(int)$_SESSION['conta_id'] && $ehAdmin!==1) throw new RuntimeException('Você não pode remover o próprio acesso de Admin Master.');
         $duplicada=$pdo->prepare('SELECT id FROM contas WHERE email=? AND id<>? LIMIT 1');
@@ -172,6 +173,16 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
       $stmt=$pdo->prepare('INSERT INTO contas(participante_id,nome,email,senha_hash,eh_admin,trocar_senha) VALUES(?,?,?,?,?,1)');
       $stmt->execute([$participanteId>0?$participanteId:null,$nome,$email,password_hash($senha,PASSWORD_DEFAULT),$ehAdmin]);
       redirect_notice('Usuário cadastrado. Ele deverá criar uma senha própria no primeiro acesso.','usuarios');
+    }
+    // Confirma uma sugestão de vínculo entre uma conta já criada e um participante.
+    if ($action==='vincular_conta') {
+      $contaId=(int)($_POST['conta_id'] ?? 0);$participanteId=(int)($_POST['participante_id'] ?? 0);
+      if($contaId<1 || $participanteId<1)throw new RuntimeException('Conta ou time inválido.');
+      $linked=$pdo->prepare('SELECT id FROM contas WHERE participante_id=? AND id<>? LIMIT 1');$linked->execute([$participanteId,$contaId]);
+      if($linked->fetch())throw new RuntimeException('Este time já está associado a outra conta.');
+      $stmt=$pdo->prepare('UPDATE contas SET participante_id=? WHERE id=? AND ativo=1');$stmt->execute([$participanteId,$contaId]);
+      if($stmt->rowCount()!==1)throw new RuntimeException('Não foi possível associar esta conta.');
+      redirect_notice('Conta associada ao time.','usuarios');
     }
     // Ativa ou desativa uma conta sem remover seu histórico.
     if ($action==='status_conta') {
@@ -331,7 +342,8 @@ foreach($pdo->query('SELECT DISTINCT campeonato_id,fase,ordem FROM jogos_mata_ma
 // Busca os participantes ativos usados nos selects.
 $teams=$pdo->query('SELECT id,nome,time_nome FROM participantes WHERE ativo=1 ORDER BY time_nome')->fetchAll();
 $participantsAdmin=$pdo->query('SELECT id,nome,time_nome,sigla,escudo_url,descricao,ativo FROM participantes ORDER BY ativo DESC,time_nome,nome')->fetchAll();
-$accounts=account_is_master()?$pdo->query('SELECT c.id,c.nome,c.email,c.eh_admin,c.ativo,c.ultimo_acesso_em,p.time_nome FROM contas c LEFT JOIN participantes p ON p.id=c.participante_id ORDER BY c.ativo DESC,c.nome')->fetchAll():[];
+$accounts=account_is_master()?$pdo->query('SELECT c.id,c.participante_id,c.nome,c.email,c.eh_admin,c.ativo,c.ultimo_acesso_em,p.time_nome FROM contas c LEFT JOIN participantes p ON p.id=c.participante_id ORDER BY c.ativo DESC,c.nome')->fetchAll():[];
+if(account_is_master()){foreach($accounts as &$account){$account['sugestao']=null;if($account['participante_id']===null){foreach($teams as $team){if(mb_strtolower(trim($team['nome']))===mb_strtolower(trim($account['nome']))){$account['sugestao']=['id'=>(int)$team['id'],'time_nome'=>$team['time_nome'],'tecnico'=>$team['nome']];break;}}}}unset($account);}
 $championshipsAdmin=$pdo->query("SELECT c.*,(SELECT COUNT(*) FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1)+(SELECT COUNT(*) FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1) jogos FROM campeonatos c WHERE c.ativo=1 ORDER BY c.criado_em DESC,c.id DESC")->fetchAll();
 $scorersAdmin=$pdo->query("SELECT a.id,a.campeonato_id,a.jogador,a.participante_id,a.gols,c.nome campeonato,p.nome tecnico,p.time_nome FROM artilharia a JOIN campeonatos c ON c.id=a.campeonato_id JOIN participantes p ON p.id=a.participante_id ORDER BY c.status='ativo' DESC,c.criado_em DESC,a.gols DESC,a.jogador")->fetchAll();
 $videosAdmin=$pdo->query('SELECT id,titulo,youtube_url,ativo,criado_em FROM videos ORDER BY criado_em DESC,id DESC')->fetchAll();

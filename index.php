@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="assets/css/hero-feature.css?v=<?=filemtime(__DIR__.'/assets/css/hero-feature.css')?>">
 <link rel="stylesheet" href="assets/css/scorers-podium.css?v=<?=filemtime(__DIR__.'/assets/css/scorers-podium.css')?>">
   <link rel="stylesheet" href="assets/css/season3-update.css?v=<?=filemtime(__DIR__.'/assets/css/season3-update.css')?>">
+  <style>.participant-card-link,.team-link{color:inherit;text-decoration:none}.participant-card-link{display:block;height:100%}.team-link:hover{color:#ff555b}</style>
   <link rel="stylesheet" href="assets/css/games.css?v=<?=filemtime(__DIR__.'/assets/css/games.css')?>">
   <link rel="stylesheet" href="assets/css/news.css?v=<?=filemtime(__DIR__.'/assets/css/news.css')?>">
   <link rel="stylesheet" href="assets/css/shields.css?v=<?=filemtime(__DIR__.'/assets/css/shields.css')?>">
@@ -42,7 +43,7 @@
         <li class="nav-item"><a class="nav-link" href="comandos.php">Comandos</a></li>
         <li class="nav-item"><a class="nav-link" href="regulamento.php">Regulamento</a></li>
         <li class="nav-item"><a class="nav-link" href="noticias.php">Notícias</a></li>
-        <li class="nav-item ms-lg-2"><?php if(account_logged_in() && account_is_admin()):?><a class="btn btn-danger btn-sm px-3" href="admin/">Painel</a><?php elseif(account_logged_in()):?><a class="btn btn-danger btn-sm px-3" href="logout.php">Sair</a><?php else:?><a class="btn btn-danger btn-sm px-3" href="login.php">Login</a><?php endif?></li>
+        <li class="nav-item ms-lg-2"><?php if(account_logged_in() && account_is_admin()):?><a class="btn btn-danger btn-sm px-3" href="admin/">Painel</a><?php elseif(account_logged_in()):?><a class="btn btn-danger btn-sm px-3" href="logout.php">Sair</a><?php else:?><a class="btn btn-danger btn-sm px-3" href="login.php">Entrar / cadastrar</a><?php endif?></li>
       </ul>
     </div>
   </div>

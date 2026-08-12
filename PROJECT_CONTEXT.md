@@ -256,7 +256,19 @@ Consequências:
 - O número de versão só muda depois que a funcionalidade estiver implementada e testada.
 - Não declarar uma versão nova apenas por alterar este documento.
 
-## 14. Funcionalidades planejadas — ainda não implementadas
+## 14. Página de times e contas
+
+A primeira etapa está implementada para homologação:
+
+- cadastro público cria apenas contas comuns, sem vínculo automático com time;
+- o Admin Master associa manualmente uma conta a `contas.participante_id`;
+- a aba de usuários recomenda associações quando o nome da conta coincide exatamente com o nome do técnico;
+- um participante não pode ser associado simultaneamente a duas contas;
+- cada participante ativo possui página pública com identidade, escudo, técnico, descrição, artilheiros e partidas;
+- nomes de times nas áreas públicas com identidade disponível apontam para a página do time;
+- formação, cofre, grito do time e escalação aparecem apenas como módulos futuros, sem edição ou regra de negócio ativa.
+
+### Funcionalidades planejadas — próximas etapas
 
 ### Página oficial de cada time
 
