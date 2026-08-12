@@ -20,7 +20,7 @@
   box-shadow: 0 0 14px rgba(244, 185, 66, .65);
 }
 
-.game-score > span small,
+.game-score>span small,
 .bracket-team span small {
   display: block;
   margin-top: .2rem;
@@ -29,7 +29,7 @@
   font-weight: 500;
 }
 
-.game-score > span:last-child small {
+.game-score>span:last-child small {
   text-align: right;
 }
 
@@ -101,12 +101,12 @@
   margin: 0;
 }
 
-.title-card-head > strong {
+.title-card-head>strong {
   color: var(--red);
   font: 800 2rem "Barlow Condensed", sans-serif;
 }
 
-.title-list > div {
+.title-list>div {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -115,7 +115,7 @@
   font-size: .82rem;
 }
 
-.title-list > div:last-child {
+.title-list>div:last-child {
   border-bottom: 0;
 }
 
