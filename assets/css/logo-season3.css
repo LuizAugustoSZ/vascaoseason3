@@ -1,0 +1,21 @@
+.navbar-season-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 0 18px rgba(212, 175, 55, .22);
+}
+
+.hero-season-logo {
+  display: block;
+  width: min(100%, 430px);
+  margin: 0 auto 1.25rem;
+  filter: drop-shadow(0 22px 34px rgba(0, 0, 0, .5));
+}
+
+@media (max-width: 991.98px) {
+  .hero-season-logo {
+    width: min(78vw, 380px);
+    margin-top: 1rem;
+  }
+}

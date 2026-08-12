@@ -1,0 +1,90 @@
+/* Encaixa escudos enviados por arquivo nos cards e na classificação. */
+.team-badge-image {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  overflow: hidden;
+  flex: 0 0 34px;
+  padding: 0;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.team-badge-image img {
+  max-width: 26px;
+  max-height: 26px;
+  width: 26px;
+  height: 26px;
+  display: block;
+  margin: auto;
+  object-fit: contain;
+  background: transparent;
+}
+
+.team-badge-image b {
+  display: none;
+  position: absolute;
+  inset: 0;
+  place-items: center;
+}
+
+/* Na vitrine de participantes, o escudo fica livre: sem caixa e sem recorte. */
+.participant-card .team-badge-image {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  width: auto;
+  height: 58px;
+  overflow: visible;
+  padding: 0;
+  margin-bottom: .65rem;
+  border: 0;
+  background: transparent !important;
+}
+
+.participant-card .team-badge-image img {
+  width: auto;
+  max-width: 72px;
+  max-height: 58px;
+  height: 58px;
+  margin: 0;
+  object-fit: contain;
+  object-position: left bottom;
+}
+
+.bracket-team-info {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  min-width: 0;
+}
+
+.bracket-team-info > span:last-child {
+  min-width: 0;
+}
+
+.bracket-team-info .team-badge {
+  flex: 0 0 34px;
+}
+
+.bracket-wait {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.bracket-placeholder {
+  color: var(--muted);
+  font-size: .76rem;
+  font-style: italic;
+}
+
+.bracket-legs {
+  display: block;
+  padding-top: .55rem;
+  color: var(--muted);
+  font-size: .65rem;
+  text-align: center;
+  border-top: 1px dashed var(--line);
+}

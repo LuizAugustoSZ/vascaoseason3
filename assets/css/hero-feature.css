@@ -1,0 +1,32 @@
+.hero-feature-carousel{position:relative;border:1px solid var(--line);background:#090a0c;box-shadow:0 22px 55px rgba(0,0,0,.28);z-index:3}
+.hero-feature-carousel .carousel-inner,.hero-feature-carousel .carousel-item{aspect-ratio:16/9}
+.hero-feature-carousel .carousel-item{overflow:hidden}
+.hero-feature-carousel .carousel-indicators{top:auto;bottom:-48px;left:50%;right:auto;width:auto;margin:0;transform:translateX(-50%);z-index:8;gap:.45rem;pointer-events:none}
+.hero-feature-carousel .carousel-indicators [data-bs-target]{box-sizing:border-box;width:11px;height:11px;margin:0;border:1px solid rgba(255,255,255,.8);border-radius:50%;background:#30343b;opacity:1;pointer-events:auto}
+.hero-feature-carousel .carousel-indicators .active{background:var(--red);border-color:#fff;opacity:1;box-shadow:0 0 10px rgba(237,27,47,.8)}
+.hero-feature-carousel .carousel-control-prev,.hero-feature-carousel .carousel-control-next{display:flex;align-items:center;justify-content:center;top:auto;right:auto;bottom:-62px;width:38px;height:38px;padding:0;border:1px solid var(--red);background:#0d0f12;opacity:1;transform:none;z-index:9;transition:background .2s,transform .2s}
+.hero-feature-carousel .carousel-control-prev{left:calc(50% - 104px)}.hero-feature-carousel .carousel-control-next{left:calc(50% + 66px)}
+.hero-feature-carousel .carousel-control-prev:hover,.hero-feature-carousel .carousel-control-next:hover{background:var(--red);transform:scale(1.06)}
+.hero-feature-carousel .carousel-control-prev-icon,.hero-feature-carousel .carousel-control-next-icon{display:flex;align-items:center;justify-content:center;width:100%;height:100%;margin:0;background:none!important}
+.hero-feature-carousel .carousel-control-prev-icon:before{content:'‹'}.hero-feature-carousel .carousel-control-next-icon:before{content:'›'}
+.hero-feature-carousel .carousel-control-prev-icon:before,.hero-feature-carousel .carousel-control-next-icon:before{color:#fff;font:800 2rem/1 Arial,sans-serif;text-shadow:0 2px 5px #000}
+.hero-feature-carousel + .status-card{margin-top:5rem!important}
+.hero-news-slide{display:block;position:relative;width:100%;height:100%;color:#fff;text-decoration:none}
+.hero-news-slide img{width:100%;height:100%;object-fit:cover;transition:transform .45s}
+.hero-news-slide:hover img{transform:scale(1.035)}
+.hero-news-overlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent 20%,rgba(5,6,8,.9) 100%)}
+.hero-feature-caption{position:absolute;left:1.2rem;right:1.2rem;bottom:1.1rem;z-index:4;display:grid;gap:.25rem;padding-right:2.5rem;text-shadow:0 2px 12px #000}
+.hero-feature-caption small{color:#ff7177;font-size:.65rem;font-weight:800;letter-spacing:.15em}
+.hero-feature-caption strong{font:800 clamp(1.1rem,2.1vw,1.65rem)/1.05 'Barlow Condensed',sans-serif;text-transform:uppercase}
+.hero-feature-caption span{font-size:.72rem;color:#d3d7df}
+.hero-video-shell{position:relative;width:100%;height:100%;background:#000;z-index:3;transition:width .25s,height .25s,transform .25s}
+.hero-video-shell iframe{display:block;width:100%;height:100%;border:0}
+.hero-video-close{display:none;position:absolute;right:-.65rem;top:-.65rem;z-index:8;width:28px;height:28px;border:1px solid #ff3440;border-radius:50%;background:#0b0c0f;color:#fff;font-size:1.15rem;line-height:1;box-shadow:0 4px 18px #000}
+.hero-video-shell.is-floating{position:fixed;right:22px;bottom:22px;width:min(390px,calc(100vw - 36px));height:auto;aspect-ratio:16/9;border:2px solid var(--red);box-shadow:0 18px 55px rgba(0,0,0,.72);z-index:1080;animation:videoFloatIn .25s ease-out}
+.hero-video-shell.is-floating .hero-video-close{display:grid;place-items:center}
+.hero-feature-empty{height:100%;display:grid;place-items:center;align-content:center;gap:.6rem;color:var(--muted)}
+.hero-feature-empty span{display:grid;place-items:center;width:48px;height:48px;background:var(--red);color:#fff;font-weight:900;transform:skew(-7deg)}
+.hero-feature-empty p{margin:0;font-size:.82rem}
+@keyframes videoFloatIn{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+@media(max-width:991px){.hero-feature-carousel{margin-top:1rem}.hero-feature-caption{bottom:1.6rem}.hero-feature-carousel + .status-card{margin-top:5rem!important}}
+@media(max-width:575px){.hero-video-shell.is-floating{right:10px;bottom:12px;width:min(290px,calc(100vw - 20px))}.hero-video-close{right:.25rem;top:.25rem}.hero-feature-caption strong{font-size:1.05rem}}

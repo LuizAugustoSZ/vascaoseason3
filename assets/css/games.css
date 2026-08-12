@@ -1,0 +1,64 @@
+/* Filtros da lista de jogos dos pontos corridos. */
+.game-tools {
+  padding: 1rem 1rem .25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.game-tools .form-label {
+  color: var(--muted);
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.game-tools .form-select {
+  background-color: #0b0c0e;
+  border-color: var(--line);
+}
+
+.game-tools .command-search {
+  width: 100%;
+  max-width: none;
+}
+
+.game-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .7rem;
+  min-height: 58px;
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.game-pagination:empty {
+  display: none;
+}
+
+.game-pagination span {
+  color: var(--muted);
+  font-size: .7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.page-game {
+  border: 1px solid var(--line);
+  background: #0b0c0e;
+  color: #fff;
+  padding: .4rem .65rem;
+  font-size: .7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.page-game:hover:not(:disabled) {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.page-game:disabled {
+  cursor: not-allowed;
+  opacity: .35;
+}

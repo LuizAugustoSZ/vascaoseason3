@@ -1,0 +1,27 @@
+.commands-page {
+  min-height: calc(100vh - 90px);
+  padding-top: 145px;
+  background: radial-gradient(circle at 85% 5%, rgba(215, 25, 32, .14), transparent 28%);
+}
+
+.commands-intro {
+  max-width: 720px;
+  color: var(--muted);
+}
+
+.commands-page .command-search {
+  max-width: 100%;
+}
+
+.commands-count {
+  color: var(--muted);
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+@media (max-width: 767px) {
+  .commands-page {
+    padding-top: 115px;
+  }
+}
