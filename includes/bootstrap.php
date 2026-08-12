@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 // Inicia a sessão usada no login, CSRF e mensagens.
 session_start();
-$config = require __DIR__ . '/../config/config.php';
+$localConfig = __DIR__ . '/../config/config.php';
+$config = require (is_file($localConfig)
+    ? $localConfig
+    : __DIR__ . '/../config/config.example.php');
 date_default_timezone_set($config['app']['timezone']);
 
 // Cria e reutiliza a conexão PDO com o MySQL.
