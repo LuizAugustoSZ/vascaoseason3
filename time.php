@@ -201,14 +201,9 @@ function match_team(array $j, string $side): string
     $time["nome"],
 ) ?></strong></p><small>Participante da Season 3</small><div><?= e(
     $time["descricao"] ?: "Participante da Vascão Season 3.",
-) ?></div></div><aside class="claim-card"><small>Essa página tem dono?</small><h2><?= $responsavel
-    ? "Página vinculada"
-    : "Página não vinculada" ?></h2><p><?= $responsavel
-    ? "Responsável: " . e($responsavel)
-    : "A associação desta página é confirmada pela administração." ?></p><?php if (
-    !$responsavel &&
+) ?></div></div><?php if (!$responsavel): ?><aside class="claim-card"><small>Essa página tem dono?</small><h2>Página não vinculada</h2><p>A associação desta página é confirmada pela administração.</p><?php if (
     !account_logged_in()
-): ?><a class="btn btn-outline-danger" href="cadastro.php">Criar conta</a><?php endif; ?></aside><?php if (
+): ?><a class="btn btn-outline-danger" href="cadastro.php">Criar conta</a><?php endif; ?></aside><?php endif; ?><?php if (
     $time["escudo_url"]
 ): ?><img class="club-watermark" src="<?= e(
     $time["escudo_url"],
