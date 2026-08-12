@@ -1,7 +1,8 @@
 FROM php:8.3-apache
 
-RUN docker-php-ext-install pdo_mysql \
-    && a2enmod headers rewrite
+RUN a2dismod mpm_event mpm_worker \
+    && a2enmod mpm_prefork headers rewrite \
+    && docker-php-ext-install pdo_mysql
 
 WORKDIR /var/www/html
 COPY . /var/www/html
