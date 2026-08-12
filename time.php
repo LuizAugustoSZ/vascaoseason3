@@ -250,12 +250,18 @@ if (
     !$artilheiros
 ): ?><p class="empty-copy">Nenhum gol registrado.</p><?php endif;
 ?></article></section>
-<section class="titles-strip"><h3>Títulos e campanhas</h3><?php
-foreach ($titulos as $t): ?><div><span>🏆</span><b><?= e(
-    $t["titulo"],
-) ?></b><small><?= e($t["temporada"]) ?></small></div><?php endforeach;
-if (!$titulos): ?><p>Nenhum título registrado.</p><?php endif;
-?></section>
+<?php if ($titulos): ?>
+  <section class="titles-strip">
+    <h3>Títulos e campanhas</h3>
+    <?php foreach ($titulos as $titulo): ?>
+      <div>
+        <span>🏆</span>
+        <b><?= e($titulo["titulo"]) ?></b>
+        <small><?= e($titulo["temporada"]) ?></small>
+      </div>
+    <?php endforeach; ?>
+  </section>
+<?php endif; ?>
 <section class="future-label">Conteúdo mantido pelo técnico</section>
 <section class="future-grid">
   <article class="lineup-placeholder">
