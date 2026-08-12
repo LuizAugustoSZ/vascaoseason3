@@ -2,26 +2,37 @@
 declare(strict_types=1);
 
 const SYNC_TABLES = [
-    'participantes', 'campeonatos', 'configuracoes_site', 'partidas',
-    'jogos_mata_mata', 'gols_partida', 'gols_mata_mata', 'artilharia',
-    'titulos', 'noticias', 'videos',
+    "participantes",
+    "campeonatos",
+    "configuracoes_site",
+    "partidas",
+    "jogos_mata_mata",
+    "gols_partida",
+    "gols_mata_mata",
+    "artilharia",
+    "titulos",
+    "noticias",
+    "videos",
 ];
 
 function sync_environment(): string
 {
-    return strtolower(trim((string) (getenv('APP_ENV') ?: 'local')));
+    return strtolower(trim((string) (getenv("APP_ENV") ?: "local")));
 }
 
 function sync_user_allowed(): bool
 {
-    return sync_environment() === 'staging'
-        && account_is_master()
-        && mb_strtolower(trim((string) ($_SESSION['conta_nome'] ?? '')), 'UTF-8') === 'slower';
+    return sync_environment() === "staging" &&
+        account_is_master() &&
+        mb_strtolower(
+            trim((string) ($_SESSION["conta_nome"] ?? "")),
+            "UTF-8",
+        ) === "slower";
 }
 
 function sync_secret(): string
 {
-    return trim((string) (getenv('SYNC_SECRET') ?: ''));
+    return trim((string) (getenv("SYNC_SECRET") ?: ""));
 }
 
 function sync_ensure_history(PDO $pdo): void
@@ -48,21 +59,40 @@ function sync_snapshot(PDO $pdo): array
     foreach (SYNC_TABLES as $table) {
         $columns = $pdo->query("SHOW COLUMNS FROM `$table`")->fetchAll();
         if (!$columns) {
-            throw new RuntimeException("A tabela {$table} não está disponível para sincronização.");
+            throw new RuntimeException(
+                "A tabela {$table} não está disponível para sincronização.",
+            );
         }
-        $order = implode(',', array_map(static fn(array $column): string => '`' . str_replace('`', '``', (string) $column['Field']) . '`', $columns));
-        $snapshot[$table] = $pdo->query("SELECT * FROM `$table` ORDER BY $order")->fetchAll();
+        $order = implode(
+            ",",
+            array_map(
+                static fn(array $column): string => "`" .
+                    str_replace("`", "``", (string) $column["Field"]) .
+                    "`",
+                $columns,
+            ),
+        );
+        $snapshot[$table] = $pdo
+            ->query("SELECT * FROM `$table` ORDER BY $order")
+            ->fetchAll();
     }
     return $snapshot;
 }
 
 function sync_hash(array $snapshot): string
 {
-    $json = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+    $json = json_encode(
+        $snapshot,
+        JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES |
+            JSON_PRESERVE_ZERO_FRACTION,
+    );
     if ($json === false) {
-        throw new RuntimeException('Não foi possível calcular a assinatura dos dados.');
+        throw new RuntimeException(
+            "Não foi possível calcular a assinatura dos dados.",
+        );
     }
-    return hash('sha256', $json);
+    return hash("sha256", $json);
 }
 
 function sync_summary(array $snapshot): array
@@ -76,26 +106,38 @@ function sync_summary(array $snapshot): array
 
 function sync_remote_snapshot(bool $withData): array
 {
-    $baseUrl = rtrim((string) (getenv('SYNC_SOURCE_URL') ?: ''), '/');
+    $baseUrl = rtrim((string) (getenv("SYNC_SOURCE_URL") ?: ""), "/");
     $secret = sync_secret();
-    if ($baseUrl === '' || $secret === '') {
-        throw new RuntimeException('A sincronização ainda não foi configurada neste ambiente.');
+    if ($baseUrl === "" || $secret === "") {
+        throw new RuntimeException(
+            "A sincronização ainda não foi configurada neste ambiente.",
+        );
     }
-    $context = stream_context_create(['http' => [
-        'method' => 'GET',
-        'timeout' => 90,
-        'ignore_errors' => true,
-        'header' => "Accept: application/json\r\nX-Sync-Token: {$secret}\r\n",
-    ]]);
-    $url = $baseUrl . '/api/sync-snapshot.php?data=' . ($withData ? '1' : '0');
+    $context = stream_context_create([
+        "http" => [
+            "method" => "GET",
+            "timeout" => 90,
+            "ignore_errors" => true,
+            "header" => "Accept: application/json\r\nX-Sync-Token: {$secret}\r\n",
+        ],
+    ]);
+    $url = $baseUrl . "/api/sync-snapshot.php?data=" . ($withData ? "1" : "0");
     $body = @file_get_contents($url, false, $context);
-    $statusLine = $http_response_header[0] ?? '';
-    if ($body === false || !str_contains($statusLine, ' 200 ')) {
-        throw new RuntimeException('Não foi possível consultar o banco de produção.');
+    $statusLine = $http_response_header[0] ?? "";
+    if ($body === false || !str_contains($statusLine, " 200 ")) {
+        throw new RuntimeException(
+            "Não foi possível consultar o banco de produção.",
+        );
     }
     $payload = json_decode($body, true);
-    if (!is_array($payload) || empty($payload['ok']) || empty($payload['hash'])) {
-        throw new RuntimeException('A produção retornou uma resposta de sincronização inválida.');
+    if (
+        !is_array($payload) ||
+        empty($payload["ok"]) ||
+        empty($payload["hash"])
+    ) {
+        throw new RuntimeException(
+            "A produção retornou uma resposta de sincronização inválida.",
+        );
     }
     return $payload;
 }
@@ -104,12 +146,14 @@ function sync_replace_snapshot(PDO $pdo, array $snapshot): void
 {
     foreach (SYNC_TABLES as $table) {
         if (!isset($snapshot[$table]) || !is_array($snapshot[$table])) {
-            throw new RuntimeException("O snapshot não contém a tabela {$table}.");
+            throw new RuntimeException(
+                "O snapshot não contém a tabela {$table}.",
+            );
         }
     }
     $pdo->beginTransaction();
     try {
-        $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+        $pdo->exec("SET FOREIGN_KEY_CHECKS=0");
         foreach (array_reverse(SYNC_TABLES) as $table) {
             $pdo->exec("DELETE FROM `$table`");
         }
@@ -119,20 +163,38 @@ function sync_replace_snapshot(PDO $pdo, array $snapshot): void
                 continue;
             }
             $columns = array_keys($rows[0]);
-            $quoted = implode(',', array_map(static fn(string $column): string => '`' . str_replace('`', '``', $column) . '`', $columns));
-            $placeholders = implode(',', array_fill(0, count($columns), '?'));
-            $insert = $pdo->prepare("INSERT INTO `$table` ($quoted) VALUES ($placeholders)");
+            $quoted = implode(
+                ",",
+                array_map(
+                    static fn(string $column): string => "`" .
+                        str_replace("`", "``", $column) .
+                        "`",
+                    $columns,
+                ),
+            );
+            $placeholders = implode(",", array_fill(0, count($columns), "?"));
+            $insert = $pdo->prepare(
+                "INSERT INTO `$table` ($quoted) VALUES ($placeholders)",
+            );
             foreach ($rows as $row) {
-                $insert->execute(array_map(static fn(string $column) => $row[$column] ?? null, $columns));
+                $insert->execute(
+                    array_map(
+                        static fn(string $column) => $row[$column] ?? null,
+                        $columns,
+                    ),
+                );
             }
         }
-        $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+        $pdo->exec("SET FOREIGN_KEY_CHECKS=1");
         $pdo->commit();
     } catch (Throwable $error) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
-        try { $pdo->exec('SET FOREIGN_KEY_CHECKS=1'); } catch (Throwable $ignored) {}
+        try {
+            $pdo->exec("SET FOREIGN_KEY_CHECKS=1");
+        } catch (Throwable $ignored) {
+        }
         throw $error;
     }
 }
