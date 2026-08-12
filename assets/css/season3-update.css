@@ -1,0 +1,125 @@
+.command-search input {
+  color: #111 !important;
+  caret-color: #111;
+}
+
+.command-search input::placeholder {
+  color: #6c757d !important;
+  opacity: 1;
+}
+
+.status-card strong #season-status {
+  color: var(--white);
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+
+.status-card i.inactive {
+  background: #f4b942;
+  box-shadow: 0 0 14px rgba(244, 185, 66, .65);
+}
+
+.game-score > span small,
+.bracket-team span small {
+  display: block;
+  margin-top: .2rem;
+  color: var(--muted);
+  font-size: .65rem;
+  font-weight: 500;
+}
+
+.game-score > span:last-child small {
+  text-align: right;
+}
+
+/* Cabeçalho único: mandante sempre à esquerda e visitante à direita. */
+.game-sides-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
+  gap: .6rem;
+  align-items: center;
+  padding: .7rem 0 .25rem;
+  color: var(--muted);
+  font-size: .6rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.game-sides-head i {
+  width: 48px;
+}
+
+.game-sides-head span:first-child {
+  text-align: left;
+}
+
+.game-sides-head span:last-child {
+  text-align: right;
+}
+
+.participant-card .coach-name {
+  color: #ff7075;
+  font-weight: 700;
+}
+
+.title-card {
+  height: 100%;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 1.25rem;
+}
+
+.title-card-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.title-trophy {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  background: var(--red);
+  font-size: 1.4rem;
+}
+
+.title-card-head small,
+.title-card-head p {
+  color: var(--muted);
+  font-size: .72rem;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.title-card-head h3 {
+  font: 800 1.5rem "Barlow Condensed", sans-serif;
+  margin: 0;
+}
+
+.title-card-head > strong {
+  color: var(--red);
+  font: 800 2rem "Barlow Condensed", sans-serif;
+}
+
+.title-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .8rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: .82rem;
+}
+
+.title-list > div:last-child {
+  border-bottom: 0;
+}
+
+.title-list b {
+  color: #ff7075;
+  white-space: nowrap;
+}

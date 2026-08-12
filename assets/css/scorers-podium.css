@@ -1,0 +1,9 @@
+.scorer .scorer-rank{display:grid;place-items:center;width:42px;text-align:center}
+.scorer>strong:last-child{color:#aab5c9}
+.scorer.podium{position:relative}
+.scorer.podium:before{content:"";position:absolute;inset:0 auto 0 -1.25rem;width:3px;background:var(--podium-color)}
+.scorer.podium .scorer-rank{color:var(--podium-color);text-shadow:0 0 14px color-mix(in srgb,var(--podium-color) 45%,transparent)}
+.scorer.podium>strong:last-child{color:var(--podium-color);text-shadow:0 0 12px color-mix(in srgb,var(--podium-color) 30%,transparent)}
+.scorer.podium-1{--podium-color:#f1c84b;background:linear-gradient(90deg,rgba(241,200,75,.10),transparent 42%)}
+.scorer.podium-2{--podium-color:#c8d0da;background:linear-gradient(90deg,rgba(200,208,218,.08),transparent 42%)}
+.scorer.podium-3{--podium-color:#c47a3a;background:linear-gradient(90deg,rgba(196,122,58,.09),transparent 42%)}

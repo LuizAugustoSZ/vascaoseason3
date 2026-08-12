@@ -1,0 +1,11 @@
+# Local configuration containing database credentials
+config/config.php
+
+# Environment files and common local artifacts
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+
