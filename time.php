@@ -156,21 +156,27 @@ function shield(array $team, string $prefix = ""): string
                 e($sigla) .
                 "</span>";
 }
-function match_team(array $j, string $side): string
+function match_team(array $j, string $side, bool $showName = true): string
 {
     $prefix = $side === "home" ? "mandante_" : "visitante_";
-    return '<a class="match-team" href="time.php?id=' .
+    $name = $j[$prefix === "mandante_" ? "mandante" : "visitante"];
+    return '<a class="match-team' .
+        ($showName ? '' : ' match-team--shield-only') .
+        '" href="time.php?id=' .
         (int) $j[$prefix . "id"] .
+        '" aria-label="' . e($name) . '" title="' . e($name) .
         '">' .
-        ($side === "away"
+        (!$showName
+            ? shield($j, $prefix)
+            : ($side === "away"
             ? "<span>" .
-                e($j[$prefix === "mandante_" ? "mandante" : "visitante"]) .
+                e($name) .
                 "</span>" .
                 shield($j, $prefix)
             : shield($j, $prefix) .
                 "<span>" .
-                e($j[$prefix === "mandante_" ? "mandante" : "visitante"]) .
-                "</span>") .
+                e($name) .
+                "</span>")) .
         "</a>";
 }
 ?>
@@ -232,7 +238,8 @@ $value > 0
 ): ?><div class="next-item"><div class="versus"><?= match_team(
     $j,
     "home",
-) ?><b>VS</b><?= match_team($j, "away") ?></div><p><?= e(
+    false,
+) ?><b>VS</b><?= match_team($j, "away", false) ?></div><p><?= e(
     $j["origem"] === "pontos" ? "Rodada " . $j["etapa"] : $j["etapa"],
 ) ?><br><?= $j["data_jogo"]
     ? e(date("d/m • H:i", strtotime($j["data_jogo"])))

@@ -304,6 +304,16 @@
     height: 55px
 }
 
+.next-card .versus .match-team--shield-only {
+    display: grid;
+    place-items: center
+}
+
+.next-card .versus .match-team--shield-only .match-shield {
+    width: 64px;
+    height: 64px
+}
+
 .versus>b {
     font: 800 2rem "Barlow Condensed"
 }
