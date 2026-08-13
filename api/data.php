@@ -30,7 +30,7 @@ try {
         ->fetchAll();
     // Busca as partidas dos pontos corridos.
     $partidaStmt = $pdo->prepare(
-        "SELECT p.*,m.time_nome mandante,m.nome tecnico_mandante,v.time_nome visitante,v.nome tecnico_visitante FROM partidas p JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.campeonato_id=? AND p.ativo=1 ORDER BY p.rodada,p.data_partida",
+        "SELECT p.*,m.time_nome mandante,m.nome tecnico_mandante,m.sigla mandante_sigla,m.escudo_url mandante_escudo,v.time_nome visitante,v.nome tecnico_visitante,v.sigla visitante_sigla,v.escudo_url visitante_escudo FROM partidas p JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.campeonato_id=? AND p.ativo=1 ORDER BY p.rodada,p.data_partida",
     );
     $partidaStmt->execute([$campeonatoId]);
     $partidas = $partidaStmt->fetchAll();
