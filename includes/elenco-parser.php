@@ -27,6 +27,12 @@ function parse_elenco_dreamteam(string $texto): array
             }
             $jogadores[] = ['nome'=>$nome,'overall'=>$overall,'posicao'=>$posicao,'descricao'=>trim($match[2])];
             $nome = null;
+            continue;
+        }
+        if ($linha !== '' && !preg_match('/^\d{1,2}\s*\|/u',$linha)) {
+            $candidato = preg_replace('/\s*:.*/u','',$linha) ?? $linha;
+            $candidato = trim(str_replace(['**','⭐'],'',$candidato));
+            if ($candidato !== '') $nome = $candidato;
         }
     }
     if (!$jogadores) throw new RuntimeException('Nenhum jogador foi identificado no texto colado.');
