@@ -8,6 +8,7 @@ const SYNC_TABLES = [
     "partidas",
     "jogos_mata_mata",
     "gols_partida",
+    "sumulas_dreamteam",
     "gols_mata_mata",
     "artilharia",
     "titulos",

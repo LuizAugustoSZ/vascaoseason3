@@ -1,0 +1,25 @@
+(()=>{
+const text=document.getElementById('dreamteam-summary-text');
+const analyze=document.getElementById('dreamteam-analyze');
+const preview=document.getElementById('dreamteam-preview');
+const csrf=document.getElementById('dreamteam-summary-csrf');
+if(!text||!analyze||!preview||!csrf)return;
+const escape=value=>String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+const request=async action=>{
+  const payload=new FormData();payload.set('csrf',csrf.value);payload.set('action',action);payload.set('sumula',text.value);
+  if(action==='import')payload.set('match_key',preview.querySelector('[name="dreamteam_match"]')?.value||'');
+  const response=await fetch('sumula-importar.php',{method:'POST',body:payload,headers:{Accept:'application/json'},credentials:'same-origin'});
+  const data=await response.json().catch(()=>({ok:false,message:'Resposta inválida do servidor.'}));
+  if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível processar a súmula.');return data;
+};
+const render=data=>{
+  const p=data.parsed;
+  const options=data.candidates.map((item,index)=>`<option value="${escape(item.key)}" ${data.candidates.length===1||index===0?'selected':''}>${escape(item.label)} — ${escape(item.status)}</option>`).join('');
+  const warnings=p.warnings.map(item=>`<li>${escape(item)}</li>`).join('');
+  const goals=p.goals.map(goal=>`<li><b>${escape(goal.minute)}'</b> ${escape(goal.player)} (${escape(goal.team_code)}) — ${escape(goal.goal_type)}${goal.assist?` • assistência: ${escape(goal.assist)}`:''}</li>`).join('');
+  const stats=p.teams.map((team,index)=>`<div class="col-md-6"><div class="border p-3 h-100"><strong>${escape(index===0?p.home_name:p.away_name)} (${escape(team.code)})</strong><small class="d-block text-secondary mt-2">Finalizações: ${team.stats.shots??'-'} • No gol: ${team.stats.shots_on_target??'-'}<br>Posse: ${team.stats.possession??'-'}% • Escanteios: ${team.stats.corners??'-'}<br>Defesas: ${team.stats.saves??'-'} • Faltas sofridas: ${team.stats.fouls_suffered??'-'}<br>Cartões: ${team.stats.yellow_cards??'-'} amarelos, ${team.stats.red_cards??'-'} vermelhos</small></div></div>`).join('');
+  preview.innerHTML=`<span class="eyebrow">${escape(p.dreamteam_id)}</span><h2 class="mt-2">${escape(p.home_name)} ${p.home_goals} × ${p.away_goals} ${escape(p.away_name)}</h2><p class="text-secondary">${escape(p.stadium)} • ${escape(p.weather)} • ${p.duration??'-'} minutos</p>${warnings?`<div class="alert alert-warning"><strong>Revisão necessária</strong><ul class="mb-0 mt-2">${warnings}</ul></div>`:''}<div class="row g-2 mb-3">${stats}</div><h3>Gols válidos (${p.goals.length})</h3><ul class="small">${goals||'<li>Nenhum gol</li>'}</ul><p class="small text-secondary">Acontecimentos reconhecidos: ${p.events.length}.</p><label class="form-label">Partida identificada</label><select class="form-select" name="dreamteam_match">${options||'<option value="">Nenhuma partida compatível encontrada</option>'}</select><button type="button" class="btn btn-success mt-3 dreamteam-confirm" ${warnings||!options?'disabled':''}>Confirmar e importar tudo</button>`;
+};
+analyze.addEventListener('click',async()=>{const old=analyze.textContent;analyze.disabled=true;analyze.textContent='Analisando...';try{render(await request('analyze'));}catch(error){preview.innerHTML=`<div class="alert alert-danger mb-0">${escape(error.message)}</div>`;}finally{analyze.disabled=false;analyze.textContent=old;}});
+preview.addEventListener('click',async event=>{const button=event.target.closest('.dreamteam-confirm');if(!button)return;if(!confirm('Confirmar a importação e atualizar o resultado desta partida?'))return;button.disabled=true;button.textContent='Importando...';try{const data=await request('import');preview.innerHTML=`<div class="alert alert-success mb-0"><strong>Importação concluída.</strong><br>${escape(data.message)}</div>`;text.value='';}catch(error){button.disabled=false;button.textContent='Confirmar e importar tudo';alert(error.message);}});
+})();

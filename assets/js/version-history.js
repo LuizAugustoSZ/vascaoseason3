@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['8.8','Partidas do site agora podem abrir detalhes em modal, com placar, estatísticas, craque e linha do tempo completa importada do DreamTeam.'],
 ['8.7','Todos os escudos das páginas dos times agora são normalizados também na exibição e permanecem em caixas quadradas com dimensões idênticas.'],
 ['8.6','Uploads de escudos agora são recortados, ampliados proporcionalmente e centralizados automaticamente no padrão 500 × 500 px.'],
 ['8.5','Botão de retorno para a lista de times ganhou uma área de clique maior, mais contraste e melhor acessibilidade nas páginas dos clubes.'],
@@ -91,7 +92,7 @@ const siteVersions=[
 document.addEventListener('DOMContentLoaded',()=>{
  const footer=document.querySelector('footer .container');if(!footer)return;
  const adminVersions=Array.isArray(window.adminSiteVersions)?window.adminSiteVersions:[];
- if(adminVersions.length&&adminVersions[0][0]!=='a1.9')adminVersions.unshift(['a1.9','Rodada em andamento selecionada automaticamente e sincronização segura de produção para homologação exclusiva do Slower.']);
+ if(adminVersions.length&&adminVersions[0][0]!=='a2.0')adminVersions.unshift(['a2.0','Importador de súmulas do DreamTeam com análise, prévia, identificação automática da partida e bloqueio de duplicidade.']);
  const button=document.createElement('button');button.type='button';button.className='site-version-button';button.dataset.bsToggle='modal';button.dataset.bsTarget='#version-history-modal';button.textContent=adminVersions.length?`v${siteVersions[0][0]} • ADM ${adminVersions[0][0]}`:`v${siteVersions[0][0]}`;footer.appendChild(button);
  const adminHistory=adminVersions.length?`<div class="admin-version-history"><small>HISTÓRICO RESTRITO</small><div class="version-current"><span>VERSÃO ADMINISTRATIVA</span><strong>${adminVersions[0][0]}</strong></div><div class="version-list">${adminVersions.map(([version,description],index)=>`<article class="version-item ${index===0?'active':''}"><b>${version}</b><p>${description}</p></article>`).join('')}</div></div>`:'';
  document.body.insertAdjacentHTML('beforeend',`<div class="modal fade" id="version-history-modal" tabindex="-1" aria-labelledby="version-history-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content version-modal"><div class="modal-header"><div><small>HISTÓRICO DO SITE</small><h2 class="modal-title" id="version-history-title">VERSÕES</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><div class="version-current"><span>VERSÃO PÚBLICA</span><strong>v${siteVersions[0][0]}</strong></div><div class="version-list">${siteVersions.map(([version,description],index)=>`<article class="version-item ${index===0?'active':''}"><b>v${version}</b><p>${description}</p></article>`).join('')}</div>${adminHistory}</div></div></div></div>`);
