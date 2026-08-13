@@ -1,6 +1,15 @@
-// Um novo ZIP entregue representa uma nova versão do site.
+// Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
-['8.1','Páginas oficiais dos times lançadas com estatísticas, desempenho, jogos, confrontos, artilheiros, títulos e finanças; escudos agora funcionam como links diretos para cada perfil.'],
+['8.2','Escudos dos confrontos agora removem margens transparentes automaticamente e mantêm um tamanho visual equilibrado.'],
+['8.1','Nomes foram removidos debaixo dos escudos no próximo confronto, mantendo cada escudo como link para a página do time.'],
+['8.0','Próximos confrontos foram alinhados, ganharam paginação fixa e passaram a exibir corretamente o adversário seguinte.'],
+['7.9','Escudos e artilheiros foram padronizados nas páginas dos times, com paginação e estados vazios corrigidos.'],
+['7.8','Páginas dos times ganharam identidade visual completa, estatísticas, desempenho, confrontos, artilheiros, títulos e finanças.'],
+['7.7','Páginas dos times foram reorganizadas em um dashboard responsivo com módulos de informação do clube.'],
+['7.6','Resultados disputados e próximos jogos passaram a ser separados corretamente em cada perfil de time.'],
+['7.5','Campos de senha receberam controles para mostrar ou ocultar o conteúdo durante o acesso e o cadastro.'],
+['7.4','Contas passaram a poder ser vinculadas aos times, identificando o responsável por cada página oficial.'],
+['7.3','Páginas individuais dos times e o cadastro público de contas foram adicionados ao site.'],
 ['7.2','Nova identidade visual da Season 3 e jogos da rodada reorganizados com resultados concluídos primeiro e até cinco partidas por página.'],
 ['7.1','Notícias foram integradas como aba do painel, o Regulamento foi limpo e os níveis administrativos foram preservados.'],
 ['7.0','Artilharia agora diferencia jogadores de mesmo nome quando atuam por times diferentes no campeonato.'],
