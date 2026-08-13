@@ -25,7 +25,7 @@ try {
   $action=(string)($_POST['action']??'');
   if ($action==='configurar_inicial') {
    if ((bool)$clube['elenco_confirmado']) throw new RuntimeException('O elenco inicial já foi confirmado.');
-   $saldo=(float)str_replace(',','.',(string)($_POST['saldo']??0)); $formacao=(string)($_POST['formacao']??'4-3-3');
+   $saldo=mercado_parse_valor((string)($_POST['saldo']??'0')); $formacao=(string)($_POST['formacao']??'4-3-3');
    if ($saldo<0 || !in_array($formacao,MERCADO_FORMACOES,true)) throw new RuntimeException('Configuração inicial inválida.');
    $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,formacao=? WHERE campeonato_id=? AND participante_id=?")->execute([$saldo,$formacao,$campeonatoId,$participantId]);
    $message='Cofre e formação configurados.';
@@ -47,7 +47,7 @@ try {
   } elseif (in_array($action,['comprar','vender'],true)) {
    if (!mercado_pode_editar($clube,$rodada) || !(bool)$clube['elenco_confirmado']) throw new RuntimeException('O elenco está travado nesta rodada.');
    $pdo->beginTransaction(); $clube=mercado_clube($pdo,$campeonatoId,$participantId,true); $antes=(float)$clube['saldo'];
-   $valor=(float)str_replace(',','.',(string)($_POST['valor']??0)); if ($valor<0) throw new RuntimeException('Informe um valor válido.');
+   $valor=mercado_parse_valor((string)($_POST['valor']??'0')); if ($valor<0) throw new RuntimeException('Informe um valor válido.');
    if ($action==='comprar') {
     if ($valor>$antes) throw new RuntimeException('Saldo insuficiente no cofre.');
     $jogador=salvar_jogador($pdo,$campeonatoId,$participantId,$_POST); $depois=$antes-$valor;
