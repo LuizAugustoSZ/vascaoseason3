@@ -19,3 +19,13 @@ document.querySelectorAll('input[name="saldo"], input[name="valor"]').forEach(in
   }
   input.addEventListener('input', () => formatBRLInput(input));
 });
+
+const marketTitle = document.querySelector('.market-page h1');
+const championship = document.querySelector('input[name="campeonato_id"], select[name="campeonato_id"]');
+if (marketTitle && championship && document.querySelector('input[value="adicionar_inicial"]')) {
+  const link = document.createElement('a');
+  link.className = 'btn btn-outline-light mb-4';
+  link.href = `importar-elenco.php?campeonato_id=${encodeURIComponent(championship.value)}`;
+  link.textContent = 'Colar elenco completo';
+  marketTitle.insertAdjacentElement('afterend', link);
+}
