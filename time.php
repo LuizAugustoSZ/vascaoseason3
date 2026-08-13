@@ -10,6 +10,8 @@ $jogadas = [];
 $proximas = [];
 $titulos = [];
 $responsavel = null;
+$elencoPublico = [];
+$clubePublico = null;
 try {
     $pdo = db();
     $stmt = $pdo->prepare(
@@ -68,6 +70,18 @@ try {
         );
         $stmt->execute([$id]);
         $titulos = $stmt->fetchAll();
+        try {
+            $stmt = $pdo->prepare("SELECT cc.saldo,cc.formacao,cc.campeonato_id,c.nome campeonato FROM clubes_campeonato cc JOIN campeonatos c ON c.id=cc.campeonato_id WHERE cc.participante_id=? AND cc.elenco_confirmado=1 ORDER BY c.status='ativo' DESC,c.id DESC LIMIT 1");
+            $stmt->execute([$id]);
+            $clubePublico = $stmt->fetch() ?: null;
+            if ($clubePublico) {
+                $stmt = $pdo->prepare("SELECT nome,overall,posicao,grupo,ordem,campo_x,campo_y FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
+                $stmt->execute([(int)$clubePublico['campeonato_id'],$id]);
+                $elencoPublico = $stmt->fetchAll();
+            }
+        } catch (Throwable $ignored) {
+            // Mantém compatibilidade enquanto a migration v8.9 ainda não foi aplicada.
+        }
     }
 } catch (Throwable $e) {
     $databaseUnavailable = true;
@@ -293,21 +307,23 @@ if (
 <section class="future-grid">
   <article class="lineup-placeholder">
     <h3>Escalação atual</h3>
+    <?php if ($clubePublico): ?><strong class="public-formation"><?= e($clubePublico['formacao']) ?></strong><div class="public-roster"><?php foreach ($elencoPublico as $jogador): if ($jogador['grupo'] !== 'titular') continue; ?><div><b><?= e($jogador['nome']) ?></b><span><?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></span></div><?php endforeach; ?></div><?php else: ?>
     <div class="empty-pitch">
       <span></span><span></span><span></span><span></span>
       <span></span><span></span><span></span><span></span>
       <span></span><span></span><span></span>
       <p>Escalação ainda não informada</p>
     </div>
+    <?php endif; ?>
   </article>
   <article class="treasury-module">
     <h3>Cofre do clube</h3>
-    <strong>R$ —</strong>
-    <p>Saldo ainda não informado.</p>
+    <strong><?= $clubePublico ? 'R$ '.number_format((float)$clubePublico['saldo'],2,',','.') : 'R$ —' ?></strong>
+    <p><?= $clubePublico ? 'Saldo atualizado do clube.' : 'Saldo ainda não informado.' ?></p>
   </article>
   <article class="transfers-module">
-    <h3>Últimas contratações</h3>
-    <div class="module-empty">Nenhuma movimentação registrada.</div>
+    <h3>Banco de reservas</h3>
+    <?php $reservas = array_values(array_filter($elencoPublico, fn($j) => $j['grupo'] === 'banco')); foreach ($reservas as $jogador): ?><p><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></p><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado.</div><?php endif; ?>
   </article>
   <article class="wall-module">
     <h3>Mural do clube</h3>

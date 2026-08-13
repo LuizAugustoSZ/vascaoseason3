@@ -37,6 +37,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         "comandos" => ["comandos.php", "Comandos"],
         "regulamento" => ["regulamento.php", "Regulamento"],
         "noticias" => ["noticias.php", "Notícias"],
+        "mercado" => ["mercado.php", "Mercado"],
     ];
     ?>
 <nav class="navbar navbar-expand-lg fixed-top navbar-dark">

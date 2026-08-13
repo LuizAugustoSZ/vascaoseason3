@@ -1,0 +1,53 @@
+CREATE TABLE IF NOT EXISTS clubes_campeonato (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    campeonato_id INT UNSIGNED NOT NULL,
+    participante_id INT UNSIGNED NOT NULL,
+    saldo DECIMAL(12,2) NOT NULL DEFAULT 0,
+    formacao VARCHAR(20) NOT NULL DEFAULT '4-3-3',
+    elenco_confirmado TINYINT(1) NOT NULL DEFAULT 0,
+    atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_clube_campeonato (campeonato_id,participante_id),
+    CONSTRAINT fk_clube_campeonato FOREIGN KEY (campeonato_id) REFERENCES campeonatos(id),
+    CONSTRAINT fk_clube_participante FOREIGN KEY (participante_id) REFERENCES participantes(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS jogadores_elenco (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    campeonato_id INT UNSIGNED NOT NULL,
+    participante_id INT UNSIGNED NOT NULL,
+    nome VARCHAR(150) NOT NULL,
+    overall TINYINT UNSIGNED NOT NULL,
+    posicao VARCHAR(30) NOT NULL,
+    grupo ENUM('titular','banco') NOT NULL DEFAULT 'banco',
+    ordem TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    campo_x DECIMAL(5,2) NULL,
+    campo_y DECIMAL(5,2) NULL,
+    ativo TINYINT(1) NOT NULL DEFAULT 1,
+    entrou_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    saiu_em TIMESTAMP NULL,
+    KEY idx_elenco_publico (campeonato_id,participante_id,ativo,grupo,ordem),
+    CONSTRAINT fk_jogador_campeonato FOREIGN KEY (campeonato_id) REFERENCES campeonatos(id),
+    CONSTRAINT fk_jogador_participante FOREIGN KEY (participante_id) REFERENCES participantes(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS movimentacoes_elenco (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    campeonato_id INT UNSIGNED NOT NULL,
+    participante_id INT UNSIGNED NOT NULL,
+    jogador_id INT UNSIGNED NOT NULL,
+    tipo ENUM('compra','venda') NOT NULL,
+    jogador_nome VARCHAR(150) NOT NULL,
+    jogador_overall TINYINT UNSIGNED NOT NULL,
+    jogador_posicao VARCHAR(30) NOT NULL,
+    valor DECIMAL(12,2) NOT NULL,
+    saldo_anterior DECIMAL(12,2) NOT NULL,
+    saldo_posterior DECIMAL(12,2) NOT NULL,
+    rodada SMALLINT UNSIGNED NOT NULL,
+    conta_id INT UNSIGNED NOT NULL,
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_movimentacao_historico (campeonato_id,participante_id,criado_em),
+    CONSTRAINT fk_movimento_campeonato FOREIGN KEY (campeonato_id) REFERENCES campeonatos(id),
+    CONSTRAINT fk_movimento_participante FOREIGN KEY (participante_id) REFERENCES participantes(id),
+    CONSTRAINT fk_movimento_jogador FOREIGN KEY (jogador_id) REFERENCES jogadores_elenco(id),
+    CONSTRAINT fk_movimento_conta FOREIGN KEY (conta_id) REFERENCES contas(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
