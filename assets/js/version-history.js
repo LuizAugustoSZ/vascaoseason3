@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['9.7','Navbar e rodapé completo, incluindo redes sociais, versão e histórico, passaram a ser carregados automaticamente pelo layout de todas as páginas públicas.'],
 ['9.6','Importador de elenco agora reconhece também o texto bruto copiado diretamente dos cards do Discord, mesmo sem marcadores de negrito.'],
 ['9.5','Montagem inicial ganhou importação por copiar e colar, com leitura automática de nome, overall e posição e prévia antes de substituir o elenco.'],
 ['9.4','Cofre, compras e vendas agora usam valores em Real com pontos de milhar, vírgula decimal e máscara durante a digitação.'],
@@ -99,6 +100,7 @@ const siteVersions=[
 ];
 document.addEventListener('DOMContentLoaded',()=>{
  const footer=document.querySelector('footer .container');if(!footer)return;
+ if(footer.querySelector('.site-version-button'))return;
  const adminVersions=Array.isArray(window.adminSiteVersions)?window.adminSiteVersions:[];
  if(adminVersions.length&&adminVersions[0][0]!=='a2.0')adminVersions.unshift(['a2.0','Importador de súmulas do DreamTeam com análise, prévia, identificação automática da partida e bloqueio de duplicidade.']);
  const button=document.createElement('button');button.type='button';button.className='site-version-button';button.dataset.bsToggle='modal';button.dataset.bsTarget='#version-history-modal';button.textContent=adminVersions.length?`v${siteVersions[0][0]} • ADM ${adminVersions[0][0]}`:`v${siteVersions[0][0]}`;footer.appendChild(button);
