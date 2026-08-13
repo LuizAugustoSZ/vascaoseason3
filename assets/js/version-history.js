@@ -1,5 +1,6 @@
 // Um novo ZIP entregue representa uma nova versão do site.
 const siteVersions=[
+['8.1','Páginas oficiais dos times lançadas com estatísticas, desempenho, jogos, confrontos, artilheiros, títulos e finanças; escudos agora funcionam como links diretos para cada perfil.'],
 ['7.2','Nova identidade visual da Season 3 e jogos da rodada reorganizados com resultados concluídos primeiro e até cinco partidas por página.'],
 ['7.1','Notícias foram integradas como aba do painel, o Regulamento foi limpo e os níveis administrativos foram preservados.'],
 ['7.0','Artilharia agora diferencia jogadores de mesmo nome quando atuam por times diferentes no campeonato.'],
