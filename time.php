@@ -210,7 +210,7 @@ function match_score(array $j): string
     $time["time_nome"],
 ) ?>"><?php else: ?><span><?= e(
     $time["sigla"],
-) ?></span><?php endif; ?></div><div class="club-copy"><a href="index.php#participantes">← Todos os times</a><h1><?= e(
+) ?></span><?php endif; ?></div><div class="club-copy"><a class="club-back-link" href="index.php#participantes" aria-label="Voltar para todos os times"><span aria-hidden="true">←</span> Todos os times</a><h1><?= e(
     $time["time_nome"],
 ) ?></h1><p><b><?= e($time["sigla"]) ?></b><i></i>Técnico: <strong><?= e(
     $time["nome"],
