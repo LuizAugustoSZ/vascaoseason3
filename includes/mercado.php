@@ -4,6 +4,17 @@ declare(strict_types=1);
 const MERCADO_FORMACOES = ['4-3-3','4-3-3O Custom','4-4-2','4-2-3-1','3-5-2','3-4-3','5-3-2','5-4-1'];
 const MERCADO_POSICOES = ['GOL','LD','LE','ZAG','VOL','MC','MEI','PD','PE','ATA'];
 
+function mercado_parse_valor(string $valor): float
+{
+    $limpo = preg_replace('/[^0-9,.-]/','',trim($valor)) ?? '';
+    if (str_contains($limpo,',')) {
+        $limpo = str_replace('.','',$limpo);
+        $limpo = str_replace(',','.',$limpo);
+    }
+    if ($limpo === '' || !is_numeric($limpo)) throw new RuntimeException('Informe um valor válido em reais.');
+    return round((float)$limpo,2);
+}
+
 function mercado_garantir_estrutura(PDO $pdo): void
 {
     $migration = file_get_contents(__DIR__.'/../sql/atualizacao-v8.9-mercado-transferencias.sql');
