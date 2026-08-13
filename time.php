@@ -306,7 +306,7 @@ if (
 <section class="future-label">Conteúdo mantido pelo técnico</section>
 <section class="future-grid">
   <article class="lineup-placeholder">
-    <h3>Escalação atual</h3>
+    <div class="lineup-module-head"><h3>Escalação atual</h3><?php if (account_logged_in() && (int)($_SESSION['participante_id'] ?? 0) === $id): ?><a class="lineup-edit-button" href="mercado.php<?= $clubePublico ? '?campeonato_id='.(int)$clubePublico['campeonato_id'] : '' ?>">Editar escalação</a><?php endif; ?></div>
     <?php if ($clubePublico): ?><strong class="public-formation"><?= e($clubePublico['formacao']) ?></strong><div class="public-roster"><?php foreach ($elencoPublico as $jogador): if ($jogador['grupo'] !== 'titular') continue; ?><div><b><?= e($jogador['nome']) ?></b><span><?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></span></div><?php endforeach; ?></div><?php else: ?>
     <div class="empty-pitch">
       <span></span><span></span><span></span><span></span>
