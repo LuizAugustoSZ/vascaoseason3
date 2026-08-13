@@ -94,30 +94,29 @@ function normalizeShieldVisibleArea(image) {
       return;
     }
 
-    const visibleWidth = right - left + 1;
-    const visibleHeight = bottom - top + 1;
-    const padding = Math.round(Math.max(visibleWidth, visibleHeight) * .035);
-    left = Math.max(0, left - padding);
-    top = Math.max(0, top - padding);
-    right = Math.min(source.width - 1, right + padding);
-    bottom = Math.min(source.height - 1, bottom + padding);
-
     const cropWidth = right - left + 1;
     const cropHeight = bottom - top + 1;
     const output = document.createElement('canvas');
-    const scale = Math.min(1, 256 / cropWidth, 256 / cropHeight);
-    output.width = Math.max(1, Math.round(cropWidth * scale));
-    output.height = Math.max(1, Math.round(cropHeight * scale));
-    output.getContext('2d').drawImage(
+    output.width = 500;
+    output.height = 500;
+    const scale = Math.min(470 / cropWidth, 470 / cropHeight);
+    const drawWidth = Math.max(1, Math.round(cropWidth * scale));
+    const drawHeight = Math.max(1, Math.round(cropHeight * scale));
+    const drawX = Math.round((output.width - drawWidth) / 2);
+    const drawY = Math.round((output.height - drawHeight) / 2);
+    const outputContext = output.getContext('2d');
+    outputContext.imageSmoothingEnabled = true;
+    outputContext.imageSmoothingQuality = 'high';
+    outputContext.drawImage(
       source,
       left,
       top,
       cropWidth,
       cropHeight,
-      0,
-      0,
-      output.width,
-      output.height
+      drawX,
+      drawY,
+      drawWidth,
+      drawHeight
     );
 
     image.src = output.toDataURL('image/webp', .9);
