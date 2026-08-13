@@ -321,9 +321,9 @@ if (
     <strong><?= $clubePublico ? 'R$ '.number_format((float)$clubePublico['saldo'],2,',','.') : 'R$ —' ?></strong>
     <p><?= $clubePublico ? 'Saldo atualizado do clube.' : 'Saldo ainda não informado.' ?></p>
   </article>
-  <article class="transfers-module">
+  <article class="transfers-module" data-card-pages="5">
     <h3>Banco de reservas</h3>
-    <?php $reservas = array_values(array_filter($elencoPublico, fn($j) => $j['grupo'] === 'banco')); foreach ($reservas as $jogador): ?><p><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></p><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado.</div><?php endif; ?>
+    <div class="card-page-items"><?php $reservas = array_values(array_filter($elencoPublico, fn($j) => $j['grupo'] === 'banco')); foreach ($reservas as $jogador): ?><p><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></p><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado.</div><?php endif; ?></div><nav class="card-pages"></nav>
   </article>
   <article class="wall-module">
     <h3>Mural do clube</h3>

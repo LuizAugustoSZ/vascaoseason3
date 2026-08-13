@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['9.8','Banco de reservas ganhou paginação de cinco jogadores por página para preservar o tamanho e o alinhamento dos módulos do clube.'],
 ['9.7','Navbar e rodapé completo, incluindo redes sociais, versão e histórico, passaram a ser carregados automaticamente pelo layout de todas as páginas públicas.'],
 ['9.6','Importador de elenco agora reconhece também o texto bruto copiado diretamente dos cards do Discord, mesmo sem marcadores de negrito.'],
 ['9.5','Montagem inicial ganhou importação por copiar e colar, com leitura automática de nome, overall e posição e prévia antes de substituir o elenco.'],
