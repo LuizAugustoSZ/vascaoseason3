@@ -157,3 +157,4 @@
     color: var(--red);
     font: 800 2.5rem/1 "Barlow Condensed"
 }
+.public-formation{display:inline-block;margin-bottom:1rem;color:#ef3940;font-size:1.25rem}.public-roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.6rem}.public-roster>div{padding:.7rem;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(0,0,0,.25)}.public-roster b,.public-roster span{display:block}.public-roster span{color:#9ba0a8;font-size:.78rem;margin-top:.2rem}
