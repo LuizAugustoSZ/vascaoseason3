@@ -28,7 +28,7 @@ try {
         $stmt->execute([$id]);
         $artilheiros = $stmt->fetchAll();
         $stmt = $pdo->prepare(
-            "SELECT * FROM (SELECT p.id,p.campeonato_id,c.nome campeonato,p.data_partida data_jogo,p.rodada etapa,p.status,m.id mandante_id,m.time_nome mandante,m.sigla mandante_sigla,m.escudo_url mandante_escudo,v.id visitante_id,v.time_nome visitante,v.sigla visitante_sigla,v.escudo_url visitante_escudo,p.gols_mandante gols_a,p.gols_visitante gols_b,'pontos' origem FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND(p.mandante_id=? OR p.visitante_id=?) UNION ALL SELECT j.id,j.campeonato_id,c.nome,NULL,j.fase,j.status,a.id,a.time_nome,a.sigla,a.escudo_url,b.id,b.time_nome,b.sigla,b.escudo_url,j.gols_a,j.gols_b,'mata' FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND(j.time_a_id=? OR j.time_b_id=?)) jogos",
+            "SELECT * FROM (SELECT p.id,p.campeonato_id,c.nome campeonato,p.data_partida data_jogo,p.rodada etapa,p.status,m.id mandante_id,m.time_nome mandante,m.sigla mandante_sigla,m.escudo_url mandante_escudo,v.id visitante_id,v.time_nome visitante,v.sigla visitante_sigla,v.escudo_url visitante_escudo,p.gols_mandante gols_a,p.gols_visitante gols_b,NULL penaltis_a,NULL penaltis_b,'pontos' origem FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND(p.mandante_id=? OR p.visitante_id=?) UNION ALL SELECT j.id,j.campeonato_id,c.nome,NULL,j.fase,j.status,a.id,a.time_nome,a.sigla,a.escudo_url,b.id,b.time_nome,b.sigla,b.escudo_url,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,'mata' FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND(j.time_a_id=? OR j.time_b_id=?)) jogos",
         );
         $stmt->execute([$id, $id, $id, $id]);
         foreach ($stmt->fetchAll() as $jogo) {
@@ -179,6 +179,18 @@ function match_team(array $j, string $side, bool $showName = true): string
                 "</span>")) .
         "</a>";
 }
+function match_score(array $j): string
+{
+    $home = $j["gols_a"] ?? "-";
+    $away = $j["gols_b"] ?? "-";
+    $homePenalties = $j["penaltis_a"];
+    $awayPenalties = $j["penaltis_b"];
+    return e((string) $home) .
+        ($homePenalties !== null ? "(" . (int) $homePenalties . ")" : "") .
+        " × " .
+        e((string) $away) .
+        ($awayPenalties !== null ? "(" . (int) $awayPenalties . ")" : "");
+}
 ?>
 <!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e(
     $time ? $time["time_nome"] . " | Vascão S3" : "Time não encontrado",
@@ -225,9 +237,9 @@ $value > 0
 <section class="overview-grid"><article class="overview-card recent-card" data-card-pages="3"><h3>Últimos jogos</h3><div class="card-page-items"><?php foreach (
     $jogadas
     as $j
-): ?><div class="compact-match"><?= match_team($j, "home") ?><b><?= $j[
-    "gols_a"
-] ?> × <?= $j["gols_b"] ?></b><?= match_team(
+): ?><div class="compact-match"><?= match_team($j, "home") ?><b><?= match_score(
+    $j,
+) ?></b><?= match_team(
     $j,
     "away",
 ) ?></div><?php endforeach; ?></div><?php if (
