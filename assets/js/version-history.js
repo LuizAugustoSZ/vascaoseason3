@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['8.6','Uploads de escudos agora são recortados, ampliados proporcionalmente e centralizados automaticamente no padrão 500 × 500 px.'],
 ['8.5','Botão de retorno para a lista de times ganhou uma área de clique maior, mais contraste e melhor acessibilidade nas páginas dos clubes.'],
 ['8.4','Navbar e rodapé foram unificados em todas as páginas públicas e agora seguem automaticamente as configurações definidas no painel administrativo.'],
 ['8.3','Resultados decididos nos pênaltis agora exibem o placar da disputa entre parênteses nos últimos jogos das páginas dos times.'],
