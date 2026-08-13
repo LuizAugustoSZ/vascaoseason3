@@ -206,19 +206,21 @@ if(shieldData){
     const file=shieldFile.files[0]; if(!file)return;
     const image=new Image(); const url=URL.createObjectURL(file);
     image.onload=()=>{
-      // Recorta automaticamente a sobra transparente para o escudo ocupar o quadrado inteiro.
+      // Recorta a transparência e centraliza qualquer formato em um arquivo padrão de 500 × 500 px.
       const scan=document.createElement('canvas');scan.width=image.naturalWidth;scan.height=image.naturalHeight;
       const scanContext=scan.getContext('2d',{willReadFrequently:true});scanContext.drawImage(image,0,0);
       const pixels=scanContext.getImageData(0,0,scan.width,scan.height).data;
       let left=scan.width,top=scan.height,right=-1,bottom=-1;
       for(let y=0;y<scan.height;y++)for(let x=0;x<scan.width;x++)if(pixels[(y*scan.width+x)*4+3]>10){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
       if(right<left||bottom<top){left=0;top=0;right=scan.width-1;bottom=scan.height-1;}
-      const rawWidth=right-left+1,rawHeight=bottom-top+1,padding=Math.round(Math.max(rawWidth,rawHeight)*.035);
-      left=Math.max(0,left-padding);top=Math.max(0,top-padding);right=Math.min(scan.width-1,right+padding);bottom=Math.min(scan.height-1,bottom+padding);
-      const cropWidth=right-left+1,cropHeight=bottom-top+1,scale=Math.min(1,256/cropWidth,256/cropHeight);
-      const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(cropWidth*scale));canvas.height=Math.max(1,Math.round(cropHeight*scale));
-      canvas.getContext('2d').drawImage(image,left,top,cropWidth,cropHeight,0,0,canvas.width,canvas.height);
-      URL.revokeObjectURL(url);shieldData.value=canvas.toDataURL('image/webp',.86);preview.src=shieldData.value;preview.classList.remove('d-none');
+      const cropWidth=right-left+1,cropHeight=bottom-top+1;
+      const canvas=document.createElement('canvas');canvas.width=500;canvas.height=500;
+      const maxShieldSize=470,scale=Math.min(maxShieldSize/cropWidth,maxShieldSize/cropHeight);
+      const drawWidth=Math.max(1,Math.round(cropWidth*scale)),drawHeight=Math.max(1,Math.round(cropHeight*scale));
+      const drawX=Math.round((canvas.width-drawWidth)/2),drawY=Math.round((canvas.height-drawHeight)/2);
+      const context=canvas.getContext('2d');context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
+      context.drawImage(image,left,top,cropWidth,cropHeight,drawX,drawY,drawWidth,drawHeight);
+      URL.revokeObjectURL(url);shieldData.value=canvas.toDataURL('image/webp',.9);preview.src=shieldData.value;preview.classList.remove('d-none');
     };
     image.onerror=()=>{URL.revokeObjectURL(url);alert('Não foi possível abrir esse escudo.');}; image.src=url;
   });
