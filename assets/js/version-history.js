@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['9.3','Inicialização do mercado recebeu validação defensiva para impedir erro fatal enquanto a estrutura do banco é preparada.'],
 ['9.2','A página pública do clube ganhou acesso direto para o técnico vinculado editar formação, titulares e banco de reservas.'],
 ['9.1','O módulo de mercado agora instala e verifica automaticamente sua estrutura no banco de homologação ao ser aberto.'],
 ['9.0','Gestão de elenco e cofre adicionada aos clubes, com escalação pública, banco de reservas, contratações livres e ciclos automáticos de cinco rodadas travadas e três abertas.'],
