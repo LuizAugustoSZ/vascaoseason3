@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . "/includes/bootstrap.php";
+require __DIR__ . "/includes/public-layout.php";
 $id = (int) ($_GET["id"] ?? 0);
 $time = null;
 $databaseUnavailable = false;
@@ -196,12 +197,8 @@ function match_score(array $j): string
     $time ? $time["time_nome"] . " | Vascão S3" : "Time não encontrado",
 ) ?></title><link rel="icon" href="favicon.ico"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/branding.css?v=5"><link rel="stylesheet" href="assets/css/team-profile.css?v=<?= filemtime(
     __DIR__ . "/assets/css/team-profile.css",
-) ?>"></head><body>
-<nav class="navbar navbar-expand-lg fixed-top navbar-dark"><div class="wide-container"><a class="navbar-brand d-flex align-items-center gap-2" href="index.php"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt=""><span>VASCÃO <b>S3</b></span></a><button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu"><span class="navbar-toggler-icon"></span></button><div id="menu" class="collapse navbar-collapse"><ul class="navbar-nav ms-auto align-items-lg-center"><li><a class="nav-link" href="index.php#competicao">Competição</a></li><li><a class="nav-link" href="index.php#participantes">Participantes</a></li><li><a class="nav-link" href="index.php#artilharia">Artilharia</a></li><li><a class="nav-link" href="index.php#titulos">Títulos</a></li><li><a class="nav-link" href="noticias.php">Jornal</a></li><li><a class="nav-link" href="comandos.php">Comandos</a></li><li><a class="nav-link" href="regulamento.php">Regulamento</a></li><li class="ms-lg-2"><?php if (
-    account_is_admin()
-): ?><a class="btn btn-danger btn-sm" href="admin/">Painel</a><?php elseif (
-    account_logged_in()
-): ?><a class="btn btn-outline-light btn-sm" href="logout.php">Sair</a><?php else: ?><a class="btn btn-danger btn-sm" href="login.php">Entrar</a><?php endif; ?></li></ul></div></div></nav>
+) ?>"><link rel="stylesheet" href="assets/css/socials.css?v=<?= filemtime(__DIR__ . "/assets/css/socials.css") ?>"></head><body>
+<?php public_navbar(); ?>
 <?php if (
     !$time
 ): ?><main class="wide-container error-page"><h1><?= $databaseUnavailable
@@ -325,6 +322,6 @@ if (
   </article>
 </section>
 </main>
-<?php endif; ?><footer><div class="wide-container">Vascão dos Gigantes • Season 3</div></footer><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/team-page.js?v=<?= filemtime(
+<?php endif; ?><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/team-page.js?v=<?= filemtime(
     __DIR__ . "/assets/js/team-page.js",
 ) ?>"></script></body></html>

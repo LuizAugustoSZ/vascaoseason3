@@ -1,7 +1,8 @@
 <?php require __DIR__ . "/includes/bootstrap.php";
+require __DIR__ . "/includes/public-layout.php";
 $latestNews = [];
 $latestVideo = null;
-$siteConfig = [];
+$siteConfig = public_site_config();
 try {
     $latestNews = db()
         ->query(
@@ -15,12 +16,6 @@ try {
             )
             ->fetch() ?:
         null;
-    foreach (
-        db()->query("SELECT chave,valor FROM configuracoes_site")->fetchAll()
-        as $row
-    ) {
-        $siteConfig[$row["chave"]] = $row["valor"];
-    }
 } catch (Throwable $error) {
 }
 $heroVideoId = "";
@@ -92,29 +87,7 @@ if (
 <?php
 // Menu principal com atalhos para as seções da página.
 ?>
-<nav class="navbar navbar-expand-lg fixed-top navbar-dark">
-  <div class="container">
-    <a class="navbar-brand d-flex align-items-center gap-2" href="#inicio"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
-    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu"><span class="navbar-toggler-icon"></span></button>
-    <div id="menu" class="collapse navbar-collapse">
-      <ul class="navbar-nav ms-auto align-items-lg-center">
-        <li class="nav-item"><a class="nav-link" href="#competicao">Competição</a></li>
-        <li class="nav-item"><a class="nav-link" href="#participantes">Participantes</a></li>
-        <li class="nav-item"><a class="nav-link" href="#artilharia">Artilharia</a></li>
-        <li class="nav-item"><a class="nav-link" href="#titulos">Títulos</a></li>
-        <li class="nav-item"><a class="nav-link" href="comandos.php">Comandos</a></li>
-        <li class="nav-item"><a class="nav-link" href="regulamento.php">Regulamento</a></li>
-        <li class="nav-item"><a class="nav-link" href="noticias.php">Notícias</a></li>
-        <li class="nav-item ms-lg-2"><?php if (
-            account_logged_in() &&
-            account_is_admin()
-        ): ?><a class="btn btn-danger btn-sm px-3" href="admin/">Painel</a><?php elseif (
-            account_logged_in()
-        ): ?><a class="btn btn-danger btn-sm px-3" href="logout.php">Sair</a><?php else: ?><a class="btn btn-danger btn-sm px-3" href="login.php">Entrar / cadastrar</a><?php endif; ?></li>
-      </ul>
-    </div>
-  </div>
-</nav>
+<?php public_navbar('', true); ?>
 
 <?php
 // Apresentação da Season e resumo do status atual.
@@ -237,7 +210,7 @@ if (
   <section id="midia" class="section-pad bg-panel"><div class="container"><div class="section-title"><span>06</span><div><small>NA REDE</small><h2>VÍDEOS</h2></div></div><div id="videos-grid" class="row g-4"></div></div></section>
 </main>
 
-<footer><div class="container d-flex flex-wrap align-items-center justify-content-between gap-3"><span>Vascão dos Gigantes • Season 3</span><div class="footer-socials" aria-label="Redes sociais"><strong>REDES SOCIAIS</strong><a href="https://discord.gg/nkDynjHbMM" target="_blank" rel="noopener noreferrer" aria-label="Entrar no servidor do Discord" title="Discord"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.5 5.34A16.3 16.3 0 0 0 15.44 4l-.5 1.02a15 15 0 0 0-5.88 0L8.56 4A16.5 16.5 0 0 0 4.5 5.35C1.93 9.18 1.23 12.91 1.58 16.6a16.7 16.7 0 0 0 4.98 2.51l1.2-1.65a10.6 10.6 0 0 1-1.89-.9l.46-.36c3.65 1.69 7.61 1.69 11.22 0l.47.36c-.61.36-1.25.66-1.9.9l1.2 1.65a16.6 16.6 0 0 0 4.98-2.51c.42-4.28-.72-7.97-2.8-11.26ZM8.52 14.34c-1.1 0-2-1.01-2-2.25s.88-2.25 2-2.25c1.13 0 2.02 1.02 2 2.25 0 1.24-.88 2.25-2 2.25Zm6.96 0c-1.1 0-2-1.01-2-2.25s.88-2.25 2-2.25c1.13 0 2.02 1.02 2 2.25 0 1.24-.87 2.25-2 2.25Z"/></svg></a><a href="https://www.youtube.com/@DreamBotSeason2" target="_blank" rel="noopener noreferrer" aria-label="Acessar o canal no YouTube" title="YouTube"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"/></svg></a></div><span>Projeto independente para a comunidade DreamTeam</span></div></footer>
+<?php public_footer(); ?>
 <div id="app-alert" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
 <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>

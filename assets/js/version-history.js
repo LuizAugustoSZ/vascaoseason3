@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['8.4','Navbar e rodapé foram unificados em todas as páginas públicas e agora seguem automaticamente as configurações definidas no painel administrativo.'],
 ['8.3','Resultados decididos nos pênaltis agora exibem o placar da disputa entre parênteses nos últimos jogos das páginas dos times.'],
 ['8.2','Escudos dos confrontos agora removem margens transparentes automaticamente e mantêm um tamanho visual equilibrado.'],
 ['8.1','Nomes foram removidos debaixo dos escudos no próximo confronto, mantendo cada escudo como link para a página do time.'],
