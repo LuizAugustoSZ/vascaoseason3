@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['8.9','Listas e detalhes das partidas ganharam escudos; nomes e escudos agora abrem diretamente a página oficial de cada time.'],
 ['8.8','Partidas do site agora podem abrir detalhes em modal, com placar, estatísticas, craque e linha do tempo completa importada do DreamTeam.'],
 ['8.7','Todos os escudos das páginas dos times agora são normalizados também na exibição e permanecem em caixas quadradas com dimensões idênticas.'],
 ['8.6','Uploads de escudos agora são recortados, ampliados proporcionalmente e centralizados automaticamente no padrão 500 × 500 px.'],
