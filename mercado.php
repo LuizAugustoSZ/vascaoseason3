@@ -5,7 +5,7 @@ require __DIR__.'/includes/public-layout.php';
 require __DIR__.'/includes/mercado.php';
 if (!account_logged_in()) { header('Location: login.php'); exit; }
 if (account_must_change_password()) { header('Location: trocar-senha.php'); exit; }
-$pdo=db(); $participantId=(int)($_SESSION['participante_id']??0); $message=$error='';
+$pdo=db(); mercado_garantir_estrutura($pdo); $participantId=(int)($_SESSION['participante_id']??0); $message=$error='';
 $campeonatoId=(int)($_GET['campeonato_id']??$_POST['campeonato_id']??0);
 $campeonatos=$pdo->query("SELECT id,nome FROM campeonatos WHERE ativo=1 AND tipo='pontos_corridos' ORDER BY status='ativo' DESC,id DESC")->fetchAll();
 if (!$campeonatoId && $campeonatos) $campeonatoId=(int)$campeonatos[0]['id'];

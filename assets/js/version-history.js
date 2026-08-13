@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['9.1','O módulo de mercado agora instala e verifica automaticamente sua estrutura no banco de homologação ao ser aberto.'],
 ['9.0','Gestão de elenco e cofre adicionada aos clubes, com escalação pública, banco de reservas, contratações livres e ciclos automáticos de cinco rodadas travadas e três abertas.'],
 ['8.9','Listas e detalhes das partidas ganharam escudos; nomes e escudos agora abrem diretamente a página oficial de cada time.'],
 ['8.8','Partidas do site agora podem abrir detalhes em modal, com placar, estatísticas, craque e linha do tempo completa importada do DreamTeam.'],

@@ -4,6 +4,15 @@ declare(strict_types=1);
 const MERCADO_FORMACOES = ['4-3-3','4-3-3O Custom','4-4-2','4-2-3-1','3-5-2','3-4-3','5-3-2','5-4-1'];
 const MERCADO_POSICOES = ['GOL','LD','LE','ZAG','VOL','MC','MEI','PD','PE','ATA'];
 
+function mercado_garantir_estrutura(PDO $pdo): void
+{
+    $migration = file_get_contents(__DIR__.'/../sql/atualizacao-v8.9-mercado-transferencias.sql');
+    if ($migration === false) throw new RuntimeException('Migration do mercado não encontrada.');
+    foreach (preg_split('/;\s*(?:\r?\n|$)/',$migration,-1,PREG_SPLIT_NO_EMPTY) as $statement) {
+        $pdo->exec(trim($statement));
+    }
+}
+
 function mercado_rodada_atual(PDO $pdo, int $campeonatoId): int
 {
     $stmt = $pdo->prepare("SELECT MIN(rodada) FROM partidas WHERE campeonato_id=? AND ativo=1 AND status NOT IN ('finalizada','wo')");
