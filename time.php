@@ -234,7 +234,7 @@ $value > 0
 <section class="overview-grid"><article class="overview-card recent-card" data-card-pages="3"><h3>Últimos jogos</h3><div class="card-page-items"><?php foreach (
     $jogadas
     as $j
-): ?><div class="compact-match"><?= match_team($j, "home") ?><b><?= match_score(
+): ?><div class="compact-match match-open" tabindex="0" role="button" data-match-type="<?= $j["origem"] === "mata" ? "mata" : "pontos" ?>" data-match-id="<?= (int) $j["id"] ?>"><?= match_team($j, "home") ?><b><?= match_score(
     $j,
 ) ?></b><?= match_team(
     $j,
@@ -244,7 +244,7 @@ $value > 0
 ): ?><p class="empty-copy">Nenhum resultado.</p><?php endif; ?><nav class="card-pages"></nav></article><article class="overview-card next-card" data-card-pages="1"><h3>Próximo confronto</h3><div class="card-page-items"><?php foreach (
     $proximas
     as $j
-): ?><div class="next-item"><div class="versus"><?= match_team(
+): ?><div class="next-item match-open" tabindex="0" role="button" data-match-type="<?= $j["origem"] === "mata" ? "mata" : "pontos" ?>" data-match-id="<?= (int) $j["id"] ?>"><div class="versus"><?= match_team(
     $j,
     "home",
     false,
