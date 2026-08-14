@@ -426,8 +426,21 @@
 }
 
 .future-grid .transfer-history-module {
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
     grid-column: 2;
     grid-row: 2 / span 2
+}
+
+.transfer-history-module .transfer-page-items {
+    flex: 1;
+    min-height: 0
+}
+
+.transfer-history-module .transfer-pages {
+    flex: 0 0 auto;
+    margin-top: auto
 }
 
 .future-grid .favorite-player-module {
