@@ -98,7 +98,7 @@ try {
             $moedaOrigem = null;
             if ($action === 'comprar') {
                 $origem = (string)($_POST['origem'] ?? 'compra_direta');
-                if (!in_array($origem, ['compra_direta', 'pack', 'passe', 'sorteio'], true)) throw new RuntimeException('Selecione uma origem válida para o jogador.');
+                if (!in_array($origem, ['compra_direta', 'pack', 'passe', 'sorteio', 'prancheta'], true)) throw new RuntimeException('Selecione uma origem válida para o jogador.');
                 $valor = 0.0;
                 if ($origem === 'compra_direta') {
                     $valor = mercado_parse_valor((string)($_POST['valor'] ?? ''));
@@ -137,6 +137,7 @@ try {
                     'pack' => 'Jogador recebido por pack registrado sem alterar o cofre.',
                     'passe' => 'Jogador recebido pelo passe registrado sem alterar o cofre.',
                     'sorteio' => 'Jogador ganho em sorteio registrado sem alterar o cofre.',
+                    'prancheta' => 'Jogador recebido pela prancheta registrado sem alterar o cofre.',
                     default => 'Contratação registrada.',
                 }
                 : 'Venda registrada.';
@@ -227,7 +228,7 @@ if ($clube) {
                         <div class="col-md-2"><select class="form-select" name="grupo">
                                 <option value="titular">Titular</option>
                                 <option value="banco">Banco</option>
-                            </select></div><?php if ((bool)$clube['elenco_confirmado']): ?><div class="col-md-4"><label class="form-label">Origem do jogador</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option></select></div><div class="col-md-5 acquisition-pack-field" hidden><label class="form-label">Pack recebido</label><select class="form-select" name="pack"><option value="">Selecione o pack</option><?php foreach (MERCADO_PACKS as $packId => $pack): ?><option value="<?= e($packId) ?>" data-min-ovr="<?= $pack['min'] ?>" data-max-ovr="<?= $pack['max'] ?>"><?= e($pack['nome']) ?> · <?= number_format((float)$pack['dream_points'], 0, ',', '.') ?> DP · <?= $pack['min'] ?><?= $pack['min'] !== $pack['max'] ? '–' . $pack['max'] : '' ?> OVR</option><?php endforeach; ?></select></div><div class="col-md-3 acquisition-value-field"><label class="form-label">Valor da compra</label><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="R$ 0" required></div><div class="col-12 acquisition-note alert alert-info mb-0" hidden></div><?php endif; ?><div><button class="btn btn-danger">Salvar jogador</button></div>
+                            </select></div><?php if ((bool)$clube['elenco_confirmado']): ?><div class="col-md-4"><label class="form-label">Origem do jogador</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option><option value="prancheta">Recebido pela prancheta</option></select></div><div class="col-md-5 acquisition-pack-field" hidden><label class="form-label">Pack recebido</label><select class="form-select" name="pack"><option value="">Selecione o pack</option><?php foreach (MERCADO_PACKS as $packId => $pack): ?><option value="<?= e($packId) ?>" data-min-ovr="<?= $pack['min'] ?>" data-max-ovr="<?= $pack['max'] ?>"><?= e($pack['nome']) ?> · <?= number_format((float)$pack['dream_points'], 0, ',', '.') ?> DP · <?= $pack['min'] ?><?= $pack['min'] !== $pack['max'] ? '–' . $pack['max'] : '' ?> OVR</option><?php endforeach; ?></select></div><div class="col-md-3 acquisition-value-field"><label class="form-label">Valor da compra</label><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="R$ 0" required></div><div class="col-12 acquisition-note alert alert-info mb-0" hidden></div><?php endif; ?><div><button class="btn btn-danger">Salvar jogador</button></div>
                     </form>
                 </section><?php endif; ?>
             <section class="panel p-4 mb-4" id="elenco">
