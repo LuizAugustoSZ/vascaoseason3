@@ -88,8 +88,12 @@ try {
             mercado_validar_titulares_formacao($pdo, $campeonatoId, $participantId, $formacao);
             mercado_ordenar_elenco($pdo, $campeonatoId, $participantId);
             $pdo->prepare("UPDATE clubes_campeonato SET formacao=? WHERE id=?")->execute([$formacao, $clube['id']]);
+            $confirmarAposSalvar = !(bool)$clube['elenco_confirmado'] && isset($_POST['confirmar_elenco']);
+            if ($confirmarAposSalvar) {
+                $pdo->prepare("UPDATE clubes_campeonato SET elenco_confirmado=1 WHERE id=?")->execute([$clube['id']]);
+            }
             $pdo->commit();
-            $message = 'Escalação atualizada.';
+            $message = $confirmarAposSalvar ? 'Escalação salva e elenco confirmado.' : 'Escalação atualizada.';
         } elseif (in_array($action, ['comprar', 'vender'], true)) {
             if (!mercado_pode_editar($clube, $rodada) || $montagemInicial) throw new RuntimeException('O mercado está indisponível nesta rodada.');
             $pdo->beginTransaction();
@@ -237,10 +241,10 @@ if ($clube) {
                 </section><?php endif; ?>
             <section class="panel p-4 mb-4" id="elenco">
                 <div class="d-flex justify-content-between">
-                    <h2>ELENCO</h2><?php if (!(bool)$clube['elenco_confirmado'] && $podeEditarMercado): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="confirmar_elenco"><button class="btn btn-success">Confirmar 11 titulares</button></form><?php endif; ?>
+                    <h2>ELENCO</h2>
                 </div><?php if (mercado_pode_editar($clube, $rodada)): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_escalacao"><div class="formation-control mb-3"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">Três números que somem 10; “Custom” será adicionado automaticamente.</small></div>
                         <div class="lineup-selection-status"><strong><span data-selected-starters>0</span>/11 titulares selecionados</strong><small>Use <code>..time @seu_usuario</code> no Discord para visualizar apenas a imagem do seu time e conferir os titulares. Quem não estiver marcado será banco.</small></div><div class="lineup-limit-warning" role="alert" aria-live="assertive" hidden>Você já selecionou os 11 titulares. Desmarque um jogador antes de escolher outro.</div>
-                        <div class="roster-grid"><?php foreach ($elenco as $j): ?><article class="roster-select-card<?= $j['grupo'] === 'titular' ? ' is-starter' : '' ?>"><input type="hidden" name="jogador_id[]" value="<?= $j['id'] ?>"><label class="starter-toggle"><input type="checkbox" name="titular_id[]" value="<?= $j['id'] ?>" <?= $j['grupo'] === 'titular' ? 'checked' : '' ?>><span>Titular</span></label><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar escalação</button>
+                        <div class="roster-grid"><?php foreach ($elenco as $j): ?><article class="roster-select-card<?= $j['grupo'] === 'titular' ? ' is-starter' : '' ?>"><input type="hidden" name="jogador_id[]" value="<?= $j['id'] ?>"><label class="starter-toggle"><input type="checkbox" name="titular_id[]" value="<?= $j['id'] ?>" <?= $j['grupo'] === 'titular' ? 'checked' : '' ?>><span>Titular</span></label><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3" <?= !(bool)$clube['elenco_confirmado'] ? 'name="confirmar_elenco" value="1"' : '' ?>><?= !(bool)$clube['elenco_confirmado'] ? 'Salvar e confirmar 11 titulares' : 'Salvar escalação' ?></button>
                     </form><?php else: ?><div class="roster-grid"><?php foreach ($elenco as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?> · <?= e($j['grupo']) ?></span></article><?php endforeach; ?></div><?php endif; ?><?php if (!$montagemInicial && $ciclo['aberto']): ?>
                     <hr>
                     <h2>VENDER JOGADOR</h2>
