@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['13.6','Descrição Sobre o clube foi removida do cabeçalho do perfil e agora aparece somente em seu card dedicado, preservando um topo compacto mesmo com textos longos.'],
 ['13.5','Sobre do clube passou a aceitar corretamente textos longos de até 1.200 caracteres, corrigindo a falha que descartava a descrição e exibia Dados indisponíveis após salvar.'],
 ['13.4','Perfil do clube ganhou nova organização lateral em grade: Herói e Cofre no topo, com Banco de Reservas e Transferências alinhados em módulos maiores logo abaixo.'],
 ['13.3','Gerador de notícias ganhou padrão editorial completo, classificação e números acumulados, além de explorar posse, finalizações, cartões, VAR, pênaltis, assistências e destaques das súmulas.'],

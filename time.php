@@ -315,9 +315,6 @@ function match_score(array $j): string
                     <p><b><?= e($time["sigla"]) ?></b><i></i>Técnico: <strong><?= e(
                                                                                     $time["nome"],
                                                                                 ) ?></strong></p><small>Participante da Season 3</small>
-                    <div><?= e(
-                                $time["descricao"] ?: "Participante da Vascão Season 3.",
-                            ) ?></div>
                 </div><?php if (!$responsavel): ?><aside class="claim-card"><small>Essa página tem dono?</small>
                         <h2>Página não vinculada</h2>
                         <p>A associação desta página é confirmada pela administração.</p><?php if (
