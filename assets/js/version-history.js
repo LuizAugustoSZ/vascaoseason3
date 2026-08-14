@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['13.3','Gerador de notícias ganhou padrão editorial completo, classificação e números acumulados, além de explorar posse, finalizações, cartões, VAR, pênaltis, assistências e destaques das súmulas.'],
 ['13.2','Notícias ganhou um gerador inteligente que identifica a rodada atual e seu ciclo, reúne resultados, estatísticas e eventos das súmulas e entrega um prompt pronto para o ChatGPT.'],
 ['13.1','Campo de edição do cofre corrigiu a duplicação do prefixo monetário e agora exibe apenas um R$.'],
 ['13.0','Cofre virou a primeira etapa obrigatória; Sobre, Cofre e Herói ganharam lápis e modais independentes, substituindo a edição geral do perfil.'],
