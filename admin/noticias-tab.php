@@ -33,7 +33,7 @@
         <label class="form-label mt-3">Imagem de capa</label><input id="cover-file" class="form-control" type="file" accept="image/jpeg,image/png,image/webp"><img id="cover-preview" class="news-cover-preview d-none mt-3" alt="Prévia da capa">
         <label class="form-label mt-3">Conteúdo da matéria</label>
         <div class="editor-toolbar"><button type="button" data-command="bold"><strong>N</strong></button><button type="button" data-command="italic"><em>I</em></button><button type="button" data-block="h2">Título</button><button type="button" data-block="p">Texto</button><button type="button" id="insert-image">Inserir imagem</button><input id="body-image" class="d-none" type="file" accept="image/jpeg,image/png,image/webp"></div>
-        <div id="news-editor" class="news-editor" contenteditable="true"><p>Escreva a notícia aqui...</p></div>
+        <div id="news-editor" class="news-editor" contenteditable="true" data-placeholder="Escreva ou cole a matéria e encaixe imagens onde quiser." role="textbox" aria-multiline="true" aria-label="Conteúdo da matéria"></div>
         <p class="small text-secondary mt-2">As imagens são reduzidas e convertidas para WebP antes de serem salvas.</p><button id="news-submit" class="btn btn-danger mt-2">Publicar notícia</button>
       </form>
     </div>

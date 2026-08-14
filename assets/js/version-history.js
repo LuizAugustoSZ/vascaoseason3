@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['13.8','Editor de notícias ganhou inserção confiável de imagens no corpo, placeholder visual que não é publicado e reinicialização completa do editor e do gerador após salvar, editar ou apagar.'],
 ['13.7','Cards da seção Participantes deixaram de exibir o texto Sobre do clube e voltaram ao formato compacto com clube, técnico e temporada.'],
 ['13.6','Descrição Sobre o clube foi removida do cabeçalho do perfil e agora aparece somente em seu card dedicado, preservando um topo compacto mesmo com textos longos.'],
 ['13.5','Sobre do clube passou a aceitar corretamente textos longos de até 1.200 caracteres, corrigindo a falha que descartava a descrição e exibia Dados indisponíveis após salvar.'],
