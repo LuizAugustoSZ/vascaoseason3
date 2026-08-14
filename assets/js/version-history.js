@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['10.2','Perfil do time foi reenquadrado em três colunas, com Sobre abaixo da escalação, transferências abaixo do cofre e Herói abaixo do banco.'],
 ['10.1','Cofre e perfil do clube ficaram editáveis durante todo o campeonato; escalação ganhou seleção automática do banco e a página do time passou a exibir transferências paginadas com filtros de compras e vendas.'],
 ['10.0','Navegação do clube ganhou o submenu Time com atalhos para página pública, mercado, escalação, banco, mural e herói; os módulos do perfil também foram reenquadrados.'],
 ['9.9','Mercado passou a usar ciclos individuais por clube; navegação foi restrita a contas vinculadas e o perfil do time ganhou edição em modal para mural, descrição e jogador favorito.'],
