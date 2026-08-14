@@ -24,6 +24,11 @@
 
   const nativeFetch = window.fetch.bind(window);
   window.fetch = async (...args) => {
+    const request = args[0];
+    const requestUrl = typeof request === 'string' ? request : request?.url || '';
+    if (requestUrl.includes('api/partida-detalhes.php')) {
+      return nativeFetch(...args);
+    }
     showPageLoading();
     try {
       const response = await nativeFetch(...args);
