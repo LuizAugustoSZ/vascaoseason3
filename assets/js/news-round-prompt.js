@@ -1,6 +1,7 @@
 (() => {
   const championship = document.getElementById('round-prompt-championship');
   const round = document.getElementById('round-prompt-round');
+  const stageLabel = document.getElementById('round-prompt-stage-label');
   const generate = document.getElementById('generate-round-prompt');
   const result = document.getElementById('round-prompt-result');
   const output = document.getElementById('round-prompt-output');
@@ -21,8 +22,17 @@
       const response = await fetch(`${endpoint}?campeonato_id=${encodeURIComponent(championship.value)}`, {headers: {'Accept': 'application/json'}});
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível consultar as rodadas.');
-      round.innerHTML = data.rodadas.map(item => `<option value="${item.rodada}"${item.rodada === data.rodada_atual ? ' selected' : ''}>${item.rodada}ª rodada${item.tem_resultado ? '' : ' — sem resultado'}</option>`).join('');
-      round.disabled = !data.rodadas.length; generate.disabled = !data.rodadas.length;
+      const knockout = data.tipo === 'mata_mata';
+      const options = knockout ? data.fases : data.rodadas;
+      const current = knockout ? data.fase_atual : data.rodada_atual;
+      stageLabel.textContent = knockout ? 'Fase' : 'Rodada';
+      round.innerHTML = options.map(item => {
+        const value = knockout ? item.fase : item.rodada;
+        const label = knockout ? item.fase : `${item.rodada}ª rodada`;
+        return `<option value="${value}"${value === current ? ' selected' : ''}>${label}${item.tem_resultado ? '' : ' — sem resultado'}</option>`;
+      }).join('');
+      round.dataset.type = data.tipo;
+      round.disabled = !options.length; generate.disabled = !options.length;
       context.textContent = data.contexto;
     } catch (error) { showError(error.message); }
   };
@@ -30,7 +40,8 @@
   generate.addEventListener('click', async () => {
     generate.disabled = true; generate.textContent = 'GERANDO...'; status.textContent = '';
     try {
-      const response = await fetch(`${endpoint}?campeonato_id=${encodeURIComponent(championship.value)}&rodada=${encodeURIComponent(round.value)}`, {headers: {'Accept': 'application/json'}});
+      const stageParam = round.dataset.type === 'mata_mata' ? 'fase' : 'rodada';
+      const response = await fetch(`${endpoint}?campeonato_id=${encodeURIComponent(championship.value)}&${stageParam}=${encodeURIComponent(round.value)}`, {headers: {'Accept': 'application/json'}});
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível gerar o prompt.');
       output.value = data.prompt; title.textContent = data.contexto; count.textContent = `${data.partidas} partida(s) reunida(s)`;
