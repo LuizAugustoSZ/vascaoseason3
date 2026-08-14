@@ -39,9 +39,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         "regulamento" => ["regulamento.php", "Regulamento"],
         "noticias" => ["noticias.php", "Notícias"],
     ];
-    if (account_logged_in() && (int)(account_participant_id() ?? 0) > 0) {
-        $links["mercado"] = ["mercado.php", "Mercado"];
-    }
+    $participantId = account_logged_in() ? (int)(account_participant_id() ?? 0) : 0;
 ?>
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
         <div class="container">
@@ -52,6 +50,18 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
                     <?php foreach ($links as $key => [$href, $label]): ?>
                         <li class="nav-item"><a class="nav-link<?= $active === $key ? " active" : "" ?>" href="<?= e($href) ?>"><?= e($label) ?></a></li>
                     <?php endforeach; ?>
+                    <?php if ($participantId > 0): ?>
+                        <li class="nav-item dropdown team-nav-dropdown">
+                            <a class="nav-link dropdown-toggle<?= in_array($active, ['time', 'mercado'], true) ? ' active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Time</a>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                                <li><a class="dropdown-item" href="time.php?id=<?= $participantId ?>">Página do time</a></li>
+                                <li><a class="dropdown-item" href="mercado.php#mercado-transferencias">Mercado e cofre</a></li>
+                                <li><a class="dropdown-item" href="mercado.php#elenco">Titulares e banco</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="time.php?id=<?= $participantId ?>#conteudo-clube">Mural e herói do time</a></li>
+                            </ul>
+                        </li>
+                    <?php endif; ?>
                     <li class="nav-item ms-lg-2"><?php if (account_logged_in() && account_is_admin()): ?><a class="btn btn-danger btn-sm px-3" href="admin/">Painel</a><?php elseif (account_logged_in()): ?><a class="btn btn-danger btn-sm px-3" href="logout.php">Sair</a><?php else: ?><a class="btn btn-danger btn-sm px-3" href="login.php">Entrar / cadastrar</a><?php endif; ?></li>
                 </ul>
             </div>

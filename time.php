@@ -269,7 +269,7 @@ function match_score(array $j): string
 </head>
 
 <body>
-    <?php public_navbar(); ?>
+    <?php public_navbar('time'); ?>
     <?php if (
         !$time
     ): ?><main class="wide-container error-page">
@@ -389,7 +389,7 @@ function match_score(array $j): string
                     <?php endforeach; ?>
                 </section>
             <?php endif; ?>
-            <section class="future-label"><span>Conteúdo mantido pelo técnico</span><?php if ($canEditClubProfile && $clubePublico): ?><button class="lineup-edit-button" type="button" data-bs-toggle="modal" data-bs-target="#club-profile-edit-modal">Editar perfil do clube</button><?php endif; ?></section>
+            <section class="future-label" id="conteudo-clube"><span>Conteúdo mantido pelo técnico</span><?php if ($canEditClubProfile && $clubePublico): ?><button class="lineup-edit-button" type="button" data-bs-toggle="modal" data-bs-target="#club-profile-edit-modal">Editar perfil do clube</button><?php endif; ?></section>
             <section class="future-grid">
                 <article class="lineup-placeholder">
                     <div class="lineup-module-head">
@@ -421,7 +421,7 @@ function match_score(array $j): string
                     <blockquote><?= e($clubePublico['mural'] ?? '') ?: 'Nenhuma publicação do clube.' ?></blockquote>
                 </article>
                 <article class="favorite-player-module">
-                    <h3>Jogador favorito</h3>
+                    <h3>Herói do time</h3>
                     <?php if ($jogadorFavorito): ?><strong><?= e($jogadorFavorito['nome']) ?></strong><p><?= (int)$jogadorFavorito['overall'] ?> · <?= e($jogadorFavorito['posicao']) ?></p><?php else: ?><p class="module-empty">Nenhum jogador escolhido.</p><?php endif; ?>
                 </article>
                 <article class="about-module">
@@ -432,7 +432,7 @@ function match_score(array $j): string
                         ) ?></p>
                 </article>
             </section>
-            <?php if ($canEditClubProfile && $clubePublico): ?><div class="modal fade" id="club-profile-edit-modal" tabindex="-1" aria-labelledby="club-profile-edit-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><div><small class="eyebrow">Conteúdo do clube</small><h2 class="modal-title" id="club-profile-edit-title">EDITAR PERFIL</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_perfil_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><div class="mb-3"><label class="form-label" for="club-about">Sobre o clube</label><textarea class="form-control" id="club-about" name="descricao" maxlength="1200" rows="4" placeholder="Conte a história e a identidade do clube..."><?= e($time['descricao']) ?></textarea><small class="text-secondary">Este texto aparece publicamente no card Sobre o clube.</small></div><div class="mb-3"><label class="form-label" for="club-wall">Mural do clube</label><textarea class="form-control" id="club-wall" name="mural" maxlength="1200" rows="4" placeholder="Publique um aviso para visitantes e adversários..."><?= e($clubePublico['mural'] ?? '') ?></textarea><small class="text-secondary">Use para avisos, recados e novidades do clube.</small></div><div><label class="form-label" for="club-favorite">Jogador favorito</label><select class="form-select" id="club-favorite" name="jogador_favorito_id"><option value="">Nenhum jogador</option><?php foreach ($elencoPublico as $jogador): ?><option value="<?= (int)$jogador['id'] ?>" <?= (int)$jogador['id'] === (int)($clubePublico['jogador_favorito_id'] ?? 0) ? 'selected' : '' ?>><?= e($jogador['nome']) ?> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></option><?php endforeach; ?></select><small class="text-secondary">Apenas jogadores ativos do elenco podem ser escolhidos.</small></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar perfil</button></div></form></div></div></div><?php endif; ?>
+            <?php if ($canEditClubProfile && $clubePublico): ?><div class="modal fade" id="club-profile-edit-modal" tabindex="-1" aria-labelledby="club-profile-edit-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><div><small class="eyebrow">Conteúdo do clube</small><h2 class="modal-title" id="club-profile-edit-title">EDITAR PERFIL</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_perfil_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><div class="mb-3"><label class="form-label" for="club-about">Sobre o clube</label><textarea class="form-control" id="club-about" name="descricao" maxlength="1200" rows="4" placeholder="Conte a história e a identidade do clube..."><?= e($time['descricao']) ?></textarea><small class="text-secondary">Este texto aparece publicamente no card Sobre o clube.</small></div><div class="mb-3"><label class="form-label" for="club-wall">Mural do clube</label><textarea class="form-control" id="club-wall" name="mural" maxlength="1200" rows="4" placeholder="Publique um aviso para visitantes e adversários..."><?= e($clubePublico['mural'] ?? '') ?></textarea><small class="text-secondary">Use para avisos, recados e novidades do clube.</small></div><div><label class="form-label" for="club-favorite">Herói do time</label><select class="form-select" id="club-favorite" name="jogador_favorito_id"><option value="">Nenhum jogador</option><?php foreach ($elencoPublico as $jogador): ?><option value="<?= (int)$jogador['id'] ?>" <?= (int)$jogador['id'] === (int)($clubePublico['jogador_favorito_id'] ?? 0) ? 'selected' : '' ?>><?= e($jogador['nome']) ?> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></option><?php endforeach; ?></select><small class="text-secondary">Escolha entre os jogadores ativos do elenco quem representa o clube.</small></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar perfil</button></div></form></div></div></div><?php endif; ?>
         </main>
         <?php endif; ?><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <script src="assets/js/team-page.js?v=<?= filemtime(

@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['10.0','Navegação do clube ganhou o submenu Time com atalhos para página pública, mercado, escalação, banco, mural e herói; os módulos do perfil também foram reenquadrados.'],
 ['9.9','Mercado passou a usar ciclos individuais por clube; navegação foi restrita a contas vinculadas e o perfil do time ganhou edição em modal para mural, descrição e jogador favorito.'],
 ['9.8','Banco de reservas ganhou paginação de cinco jogadores por página para preservar o tamanho e o alinhamento dos módulos do clube.'],
 ['9.7','Navbar e rodapé completo, incluindo redes sociais, versão e histórico, passaram a ser carregados automaticamente pelo layout de todas as páginas públicas.'],

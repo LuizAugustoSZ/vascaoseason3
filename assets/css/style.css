@@ -596,3 +596,27 @@ footer {
         padding: 1rem
     }
 }
+.team-nav-dropdown .dropdown-menu {
+    min-width: 220px;
+    padding: 8px;
+    background: #101216;
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-top: 2px solid #e21b2d;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, .4)
+}
+
+.team-nav-dropdown .dropdown-item {
+    padding: 9px 11px;
+    border-radius: 2px;
+    color: rgba(255, 255, 255, .78);
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase
+}
+
+.team-nav-dropdown .dropdown-item:hover,
+.team-nav-dropdown .dropdown-item:focus {
+    color: #fff;
+    background: #e21b2d
+}

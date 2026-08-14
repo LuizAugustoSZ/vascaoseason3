@@ -161,7 +161,7 @@ if ($clube) {
 
 <body><?php public_navbar('mercado'); ?><main class="container market-page"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
         <h1>ELENCO E COFRE</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === $c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form>
-        <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif ($clube): ?><section class="market-summary">
+        <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif ($clube): ?><section class="market-summary" id="cofre">
                 <div><small>Cofre</small><strong>R$ <?= number_format((float)$clube['saldo'], 2, ',', '.') ?></strong></div>
                 <div><small>Próxima partida do clube</small><strong><?= $rodada ?>ª</strong></div>
                 <div><small>Ciclo <?= $ciclo['ciclo'] ?></small><strong><?= $ciclo['aberto'] ? 'ALTERAÇÕES LIBERADAS' : 'ELENCO TRAVADO' ?></strong></div>
@@ -181,6 +181,7 @@ if ($clube) {
                         <div><button class="btn btn-danger">Salvar configuração</button></div>
                     </form>
                 </section><?php endif; ?>
+            <div id="mercado-transferencias" class="market-anchor" aria-hidden="true"></div>
             <?php if (mercado_pode_editar($clube, $rodada)): ?><section class="panel p-4 mb-4">
                     <h2><?= !(bool)$clube['elenco_confirmado'] ? 'ADICIONAR JOGADOR' : 'CONTRATAR JOGADOR' ?></h2>
                     <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="<?= !(bool)$clube['elenco_confirmado'] ? 'adicionar_inicial' : 'comprar' ?>">
@@ -193,7 +194,7 @@ if ($clube) {
                             </select></div><?php if ((bool)$clube['elenco_confirmado']): ?><div class="col-md-2"><input class="form-control" type="number" step=".01" min="0" name="valor" placeholder="Valor" required></div><?php endif; ?><div><button class="btn btn-danger">Salvar jogador</button></div>
                     </form>
                 </section><?php endif; ?>
-            <section class="panel p-4 mb-4">
+            <section class="panel p-4 mb-4" id="elenco">
                 <div class="d-flex justify-content-between">
                     <h2>ELENCO</h2><?php if (!(bool)$clube['elenco_confirmado']): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="confirmar_elenco"><button class="btn btn-success">Confirmar 11 titulares</button></form><?php endif; ?>
                 </div><?php if (mercado_pode_editar($clube, $rodada)): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_escalacao"><label class="form-label">Formação</label><select class="form-select mb-3" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= $f ?></option><?php endforeach; ?></select>
