@@ -2,8 +2,45 @@
 
 declare(strict_types=1);
 
-const MERCADO_FORMACOES = ['4-3-3', '4-3-3O Custom', '4-4-2', '4-2-3-1', '3-5-2', '3-4-3', '5-3-2', '5-4-1'];
+const MERCADO_FORMACOES = [
+    '3-3-4',
+    '3-4-3',
+    '3-5-2',
+    '4-2-3-1',
+    '4-2-4 Ofensivo',
+    '4-2-4 Defensivo',
+    '4-3-3',
+    '4-3-3 Ofensivo',
+    '4-3-3 Equilibrado',
+    '4-3-3 Defensivo',
+    '4-4-2',
+    '4-4-2 Ofensivo',
+    '4-4-2 Equilibrado',
+    '4-4-2 Defensivo',
+    '4-5-1 Ofensivo',
+    '4-5-1 Defensivo',
+    '5-3-2',
+    '5-4-1',
+];
 const MERCADO_POSICOES = ['GOL', 'LD', 'LE', 'ZAG', 'VOL', 'MC', 'MEI', 'PD', 'PE', 'ATA'];
+
+function mercado_normalizar_formacao(string $formacao, string $custom = ''): string
+{
+    if (in_array($formacao, MERCADO_FORMACOES, true)) return $formacao;
+    if ($formacao !== '__custom__') throw new RuntimeException('Selecione uma formação válida.');
+
+    $valor = trim($custom);
+    if (preg_match('/^([1-9])([1-9])([1-9])$/', $valor, $partes)) {
+        $valor = $partes[1] . '-' . $partes[2] . '-' . $partes[3];
+    }
+    if (!preg_match('/^([1-9])-([1-9])-([1-9])(?:\s+Custom)?$/i', $valor, $partes)) {
+        throw new RuntimeException('A formação custom deve seguir o padrão 4-3-3 ou 433.');
+    }
+    if ((int)$partes[1] + (int)$partes[2] + (int)$partes[3] !== 10) {
+        throw new RuntimeException('A formação custom precisa totalizar 10 jogadores de linha.');
+    }
+    return $partes[1] . '-' . $partes[2] . '-' . $partes[3] . ' Custom';
+}
 
 function mercado_parse_valor(string $valor): float
 {

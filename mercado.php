@@ -55,8 +55,8 @@ try {
         } elseif ($action === 'configurar_inicial') {
             if ((bool)$clube['elenco_confirmado']) throw new RuntimeException('O elenco inicial já foi confirmado.');
             $saldo = mercado_parse_valor((string)($_POST['saldo'] ?? '0'));
-            $formacao = (string)($_POST['formacao'] ?? '4-3-3');
-            if ($saldo < 0 || !in_array($formacao, MERCADO_FORMACOES, true)) throw new RuntimeException('Configuração inicial inválida.');
+            $formacao = mercado_normalizar_formacao((string)($_POST['formacao'] ?? '4-3-3'), (string)($_POST['formacao_custom'] ?? ''));
+            if ($saldo < 0) throw new RuntimeException('Configuração inicial inválida.');
             $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,formacao=? WHERE campeonato_id=? AND participante_id=?")->execute([$saldo, $formacao, $campeonatoId, $participantId]);
             $message = 'Cofre e formação configurados.';
         } elseif ($action === 'adicionar_inicial') {
@@ -70,8 +70,7 @@ try {
             $message = 'Elenco confirmado e ciclo iniciado.';
         } elseif ($action === 'atualizar_escalacao') {
             if (!mercado_pode_editar($clube, $rodada)) throw new RuntimeException('A escalação está travada nesta rodada.');
-            $formacao = (string)($_POST['formacao'] ?? '');
-            if (!in_array($formacao, MERCADO_FORMACOES, true)) throw new RuntimeException('Formação inválida.');
+            $formacao = mercado_normalizar_formacao((string)($_POST['formacao'] ?? ''), (string)($_POST['formacao_custom'] ?? ''));
             $ids = array_map('intval', (array)($_POST['jogador_id'] ?? []));
             $titulares = array_values(array_unique(array_map('intval', (array)($_POST['titular_id'] ?? []))));
             $ordens = $_POST['ordem'] ?? [];
@@ -182,7 +181,7 @@ if ($clube) {
                     <h2>CONFIGURAÇÃO INICIAL</h2>
                     <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="configurar_inicial">
                         <div class="col-md-6"><label class="form-label">Saldo inicial</label><input class="form-control" type="number" step="1" min="0" name="saldo" value="<?= round((float)$clube['saldo']) ?>"></div>
-                        <div class="col-md-6"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= $f ?></option><?php endforeach; ?></select></div>
+                        <div class="col-md-6 formation-control"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">O sistema adiciona “Custom” automaticamente.</small></div>
                         <div><button class="btn btn-danger">Salvar configuração</button></div>
                     </form>
                 </section><?php endif; ?>
@@ -202,7 +201,7 @@ if ($clube) {
             <section class="panel p-4 mb-4" id="elenco">
                 <div class="d-flex justify-content-between">
                     <h2>ELENCO</h2><?php if (!(bool)$clube['elenco_confirmado']): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="confirmar_elenco"><button class="btn btn-success">Confirmar 11 titulares</button></form><?php endif; ?>
-                </div><?php if (mercado_pode_editar($clube, $rodada)): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_escalacao"><label class="form-label">Formação</label><select class="form-select mb-3" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= $f ?></option><?php endforeach; ?></select>
+                </div><?php if (mercado_pode_editar($clube, $rodada)): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_escalacao"><div class="formation-control mb-3"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">Três números que somem 10; “Custom” será adicionado automaticamente.</small></div>
                         <div class="lineup-selection-status"><strong><span data-selected-starters>0</span>/11 titulares selecionados</strong><small>Quem não estiver marcado será banco.</small></div>
                         <div class="roster-grid"><?php foreach ($elenco as $j): ?><article class="roster-select-card<?= $j['grupo'] === 'titular' ? ' is-starter' : '' ?>"><input type="hidden" name="jogador_id[]" value="<?= $j['id'] ?>"><label class="starter-toggle"><input type="checkbox" name="titular_id[]" value="<?= $j['id'] ?>" <?= $j['grupo'] === 'titular' ? 'checked' : '' ?>><span>Titular</span></label><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?></span><small class="text-secondary mt-2">Ordem de exibição</small><input class="form-control form-control-sm" type="number" min="1" max="99" name="ordem[]" value="<?= $j['ordem'] ?>" aria-label="Ordem de exibição"></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar escalação</button>
                     </form><?php else: ?><div class="roster-grid"><?php foreach ($elenco as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?> · <?= e($j['grupo']) ?></span></article><?php endforeach; ?></div><?php endif; ?><?php if ((bool)$clube['elenco_confirmado'] && $ciclo['aberto']): ?>
