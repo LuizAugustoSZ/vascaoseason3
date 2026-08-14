@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['12.4','Edição do perfil do clube passou a reunir Sobre, Cofre e Herói, com acesso para a conta vinculada e para a gestão Master.'],
 ['12.3','Página do clube deixou o próprio escudo e nome estáticos, mantendo links somente para adversários e evitando recarregamentos da página atual.'],
 ['12.2','Prancheta foi adicionada como origem de jogador sem custo, com registro próprio no histórico e sem alteração no cofre.'],
 ['12.1','Tutorial do importador corrigiu os comandos do Discord para ..elenco ou /elenco.'],

@@ -47,12 +47,7 @@ try {
         $rodada = mercado_rodada_atual($pdo, $campeonatoId, $participantId);
         $clube = mercado_clube($pdo, $campeonatoId, $participantId);
         $action = (string)($_POST['action'] ?? '');
-        if ($action === 'atualizar_cofre') {
-            $saldo = mercado_parse_valor((string)($_POST['saldo'] ?? '0'));
-            if ($saldo < 0) throw new RuntimeException('O saldo do cofre não pode ser negativo.');
-            $pdo->prepare("UPDATE clubes_campeonato SET saldo=? WHERE campeonato_id=? AND participante_id=?")->execute([$saldo, $campeonatoId, $participantId]);
-            $message = 'Saldo do cofre atualizado.';
-        } elseif ($action === 'configurar_inicial') {
+        if ($action === 'configurar_inicial') {
             if ((bool)$clube['elenco_confirmado']) throw new RuntimeException('O elenco inicial já foi confirmado.');
             $saldo = mercado_parse_valor((string)($_POST['saldo'] ?? '0'));
             $formacao = mercado_normalizar_formacao((string)($_POST['formacao'] ?? '4-3-3'), (string)($_POST['formacao_custom'] ?? ''));
@@ -199,7 +194,7 @@ if ($clube) {
 <body><?php public_navbar('mercado'); ?><main class="container market-page"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
         <h1>ELENCO E COFRE</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === $c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form>
         <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif ($clube): ?><section class="market-summary" id="cofre">
-                <div class="market-treasury-card"><small>Cofre</small><strong>R$ <?= number_format((float)$clube['saldo'], 0, ',', '.') ?></strong><button class="btn btn-sm btn-outline-light mt-2" type="button" data-bs-toggle="modal" data-bs-target="#treasury-edit-modal">Editar saldo</button></div>
+                <div class="market-treasury-card"><small>Cofre</small><strong>R$ <?= number_format((float)$clube['saldo'], 0, ',', '.') ?></strong></div>
                 <div><small>Próxima partida do clube</small><strong><?= $rodada ?>ª</strong></div>
                 <div><small>Ciclo <?= $ciclo['ciclo'] ?></small><strong><?= $ciclo['aberto'] ? 'ALTERAÇÕES LIBERADAS' : 'ELENCO TRAVADO' ?></strong></div>
                 <div><small>Formação</small><strong><?= e($clube['formacao']) ?></strong></div>
@@ -250,7 +245,7 @@ if ($clube) {
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2"><h2>HISTÓRICO</h2><div class="history-filters" role="group" aria-label="Filtrar histórico"><button class="active" type="button" data-history-filter="todas">Todas</button><button type="button" data-history-filter="compra">Compras</button><button type="button" data-history-filter="venda">Vendas</button></div></div>
                 <div class="history-items"><?php foreach ($historico as $m): ?><article data-history-type="<?= e($m['tipo']) ?>"><span class="history-kind <?= $m['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= e(mercado_rotulo_origem($m)) ?></span><div><strong><?= e($m['jogador_nome']) ?></strong><small><?= (int)$m['jogador_overall'] ?> · <?= e($m['jogador_posicao']) ?> · rodada <?= $m['rodada'] ?><?= !empty($m['origem_detalhe']) ? ' · ' . e($m['origem_detalhe']) : '' ?></small></div><b><?= e(mercado_valor_movimento($m)) ?></b></article><?php endforeach; ?><?php if (!$historico): ?><p class="text-secondary">Nenhuma movimentação.</p><?php endif; ?></div><nav class="history-pages card-pages"></nav>
             </section>
-            <div class="modal fade" id="treasury-edit-modal" tabindex="-1" aria-labelledby="treasury-edit-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><div><small class="eyebrow">Disponível a qualquer momento</small><h2 class="modal-title" id="treasury-edit-title">EDITAR COFRE</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_cofre"><label class="form-label" for="treasury-balance">Novo saldo</label><input class="form-control" id="treasury-balance" name="saldo" value="<?= e((string)$clube['saldo']) ?>" required><small class="text-secondary">Essa correção independe da janela de transferências.</small></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar saldo</button></div></form></div></div></div><?php endif; ?>
+            <?php endif; ?>
     </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
