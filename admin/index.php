@@ -1100,6 +1100,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 // Reconcilia resultados antigos ao abrir o painel e preenche as próximas chaves.
+reconcile_knockout_summaries($pdo);
 foreach (
     $pdo
         ->query(
