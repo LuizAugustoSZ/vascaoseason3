@@ -93,10 +93,11 @@ if (marketPage && lineupSection && marketSummary) {
   tabNav.className = 'market-tabs';
   tabNav.setAttribute('aria-label', 'Áreas da gestão do time');
   tabContent.className = 'market-tab-content';
+  const championshipForm = marketPage.querySelector('form.mb-4');
+  if (oldHelp && championshipForm) championshipForm.before(oldHelp);
   marketSummary.before(tabNav, tabContent);
-  oldHelp?.remove();
 
-  function createPane(id, label, tutorial) {
+  function createPane(id, label) {
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.marketTab = id;
@@ -104,15 +105,14 @@ if (marketPage && lineupSection && marketSummary) {
     const pane = document.createElement('section');
     pane.className = 'market-tab-pane';
     pane.dataset.marketPane = id;
-    pane.innerHTML = `<aside class="market-tab-tutorial"><span>COMO FUNCIONA</span><p>${tutorial}</p></aside>`;
     tabNav.append(button);
     tabContent.append(pane);
     return pane;
   }
 
-  marketTransferPane = createPane('transferencias', 'Transferências', 'Contrate e venda somente durante a janela do clube. Toda movimentação fica registrada no histórico abaixo.');
-  const lineupPane = createPane('escalacao', 'Escalação', 'Escolha a formação e marque exatamente 11 titulares. O sistema define o banco e ordena os setores automaticamente.');
-  const treasuryPane = createPane('cofre', 'Cofre', 'O saldo pode ser corrigido a qualquer momento. Compras descontam valores e vendas devolvem valores ao cofre.');
+  marketTransferPane = createPane('transferencias', 'Transferências');
+  const lineupPane = createPane('escalacao', 'Escalação');
+  const treasuryPane = createPane('cofre', 'Cofre');
 
   treasuryPane.append(marketSummary);
   if (configPanel) treasuryPane.append(configPanel);
