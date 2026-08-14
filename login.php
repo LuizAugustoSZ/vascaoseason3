@@ -7,9 +7,7 @@ if (account_logged_in()) {
         "Location: " .
             (account_must_change_password()
                 ? "trocar-senha.php"
-                : (account_is_admin()
-                    ? "admin/"
-                    : "index.php")),
+                : "index.php"),
     );
     exit();
 }
@@ -50,9 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "Location: " .
                     ((int) $conta["trocar_senha"] === 1
                         ? "trocar-senha.php"
-                        : ((int) $conta["eh_admin"] > 0
-                            ? "admin/"
-                            : "index.php")),
+                        : "index.php"),
             );
             exit();
         }

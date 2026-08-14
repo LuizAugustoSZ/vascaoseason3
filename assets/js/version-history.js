@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['10.8','Login e conclusão da troca de senha passaram a direcionar todos os perfis para a página inicial, mantendo o painel como acesso opcional.'],
 ['10.7','Seletor de escalação ganhou todos os presets ofensivos, equilibrados e defensivos, além de formação customizada com normalização e validação automática.'],
 ['10.6','Cofre e transferências passaram a usar valores inteiros sem centavos; a edição do Mural também foi removida após a retirada do módulo público.'],
 ['10.5','Todas as páginas públicas ganharam loading completo; tabelas do painel receberam indicador de dados e o perfil do time ganhou Sobre acima da escalação e transferências ampliadas.'],
