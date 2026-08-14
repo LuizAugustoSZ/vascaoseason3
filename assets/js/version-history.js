@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['12.7','Gestão ganhou ajudas com comandos do Discord, bloqueio imediato do 12º titular e venda restrita aos jogadores do banco, validada na tela e no servidor.'],
 ['12.6','Ciclo passou a contabilizar folgas pela rodada efetiva e bloquear toda alteração fora da janela; o menu Time agora exibe o nome do clube vinculado.'],
 ['12.5','Mercado ficou somente com Transferências e Escalação; próxima partida e ciclo foram movidos para Transferências, enquanto Cofre e Formação saíram do resumo.'],
 ['12.4','Edição do perfil do clube passou a reunir Sobre, Cofre e Herói, com acesso para a conta vinculada e para a gestão Master.'],

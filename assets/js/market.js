@@ -21,12 +21,34 @@ document.querySelectorAll('input[name="saldo"], input[name="valor"]').forEach(in
 
 const starterInputs = [...document.querySelectorAll('input[name="titular_id[]"]')];
 const starterCount = document.querySelector('[data-selected-starters]');
+const starterWarning = document.querySelector('.lineup-limit-warning');
+let starterWarningTimer = null;
 function updateStarterSelection() {
   const selected = starterInputs.filter(input => input.checked).length;
   if (starterCount) starterCount.textContent = selected;
   starterInputs.forEach(input => input.closest('.roster-select-card')?.classList.toggle('is-starter', input.checked));
 }
-starterInputs.forEach(input => input.addEventListener('change', updateStarterSelection));
+starterInputs.forEach(input => input.addEventListener('change', () => {
+  const selected = starterInputs.filter(item => item.checked).length;
+  if (input.checked && selected > 11) {
+    input.checked = false;
+    input.setCustomValidity('Você já selecionou os 11 titulares. Desmarque um jogador antes de escolher outro.');
+    input.reportValidity();
+    input.setCustomValidity('');
+    if (starterWarning) {
+      starterWarning.hidden = false;
+      starterWarning.classList.remove('is-flashing');
+      void starterWarning.offsetWidth;
+      starterWarning.classList.add('is-flashing');
+      clearTimeout(starterWarningTimer);
+      starterWarningTimer = setTimeout(() => {
+        starterWarning.hidden = true;
+        starterWarning.classList.remove('is-flashing');
+      }, 3200);
+    }
+  }
+  updateStarterSelection();
+}));
 updateStarterSelection();
 
 document.querySelectorAll('.formation-control').forEach(control => {
