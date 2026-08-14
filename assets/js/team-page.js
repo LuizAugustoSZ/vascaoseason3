@@ -63,7 +63,7 @@ document.querySelectorAll('[data-transfer-module]').forEach(module => {
   const items = [...module.querySelectorAll('.transfer-entry')];
   const pagination = module.querySelector('.transfer-pages');
   const filters = [...module.querySelectorAll('[data-transfer-filter]')];
-  const perPage = Number(module.dataset.itemsPerPage) || 3;
+  const perPage = Number(module.dataset.itemsPerPage) || 6;
   let activeFilter = 'todas';
   let currentPage = 1;
 
