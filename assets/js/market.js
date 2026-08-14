@@ -48,6 +48,37 @@ document.querySelectorAll('.formation-control').forEach(control => {
   updateCustomFormation();
 });
 
+document.querySelectorAll('[data-market-history]').forEach(history => {
+  const items = [...history.querySelectorAll('[data-history-type]')];
+  const filters = [...history.querySelectorAll('[data-history-filter]')];
+  const pagination = history.querySelector('.history-pages');
+  const perPage = Number(history.dataset.itemsPerPage) || 4;
+  let activeFilter = 'todas';
+  let currentPage = 1;
+
+  function renderHistory() {
+    const visible = items.filter(item => activeFilter === 'todas' || item.dataset.historyType === activeFilter);
+    const totalPages = Math.max(1, Math.ceil(visible.length / perPage));
+    currentPage = Math.min(currentPage, totalPages);
+    items.forEach(item => { item.hidden = true; });
+    visible.slice((currentPage - 1) * perPage, currentPage * perPage).forEach(item => { item.hidden = false; });
+    pagination.innerHTML = visible.length > perPage ? `<button type="button" data-go="-1" aria-label="Página anterior" ${currentPage === 1 ? 'disabled' : ''}>‹</button><span>${currentPage} / ${totalPages}</span><button type="button" data-go="1" aria-label="Próxima página" ${currentPage === totalPages ? 'disabled' : ''}>›</button>` : '';
+  }
+  filters.forEach(button => button.addEventListener('click', () => {
+    activeFilter = button.dataset.historyFilter;
+    currentPage = 1;
+    filters.forEach(filter => filter.classList.toggle('active', filter === button));
+    renderHistory();
+  }));
+  pagination.addEventListener('click', event => {
+    const button = event.target.closest('button[data-go]');
+    if (!button || button.disabled) return;
+    currentPage += Number(button.dataset.go);
+    renderHistory();
+  });
+  renderHistory();
+});
+
 const marketTitle = document.querySelector('.market-page h1');
 const championship = document.querySelector('input[name="campeonato_id"], select[name="campeonato_id"]');
 if (marketTitle && championship && document.querySelector('input[value="adicionar_inicial"]')) {

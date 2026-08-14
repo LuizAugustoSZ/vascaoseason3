@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['11.0','Histórico da gestão passou a carregar todas as movimentações, com filtros de compras e vendas e paginação de quatro registros.'],
 ['10.9','Escalação passou a validar a quantidade de atletas por setor conforme a formação e ordenar automaticamente ataque, meio, defesa e goleiro.'],
 ['10.8','Login e conclusão da troca de senha passaram a direcionar todos os perfis para a página inicial, mantendo o painel como acesso opcional.'],
 ['10.7','Seletor de escalação ganhou todos os presets ofensivos, equilibrados e defensivos, além de formação customizada com normalização e validação automática.'],
