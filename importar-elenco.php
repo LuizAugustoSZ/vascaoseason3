@@ -65,7 +65,7 @@ try {
                 <span class="eyebrow">Como copiar corretamente</span>
                 <h2>DO DISCORD PARA O SITE</h2>
                 <ol>
-                    <li>Use o comando <strong>.elenco</strong> no Discord.</li>
+                    <li>Use o comando <strong>..elenco</strong> ou <strong>/elenco</strong> no Discord.</li>
                     <li>Selecione e copie titulares e reservas que realmente fazem parte do seu time, incluindo nome, OVR e posição, como na imagem.</li>
                     <li>Cole todo o conteúdo no campo abaixo e clique em <strong>Analisar lista</strong>.</li>
                     <li>Confira a prévia. Todos entram primeiro no banco; depois você escolhe os 11 titulares.</li>
