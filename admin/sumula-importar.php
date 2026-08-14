@@ -66,8 +66,8 @@ function identify_summary_context(PDO $pdo, array $parsed): array
             'reversed' => (int) $match['mandante_id'] !== $homeId,
         ];
     }
-    $stmt = $pdo->prepare("SELECT j.id,j.campeonato_id,j.fase,j.ordem,j.jogo,j.time_a_id,j.time_b_id,j.status,c.nome campeonato,a.time_nome time_a,b.time_nome time_b FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND ((j.time_a_id=? AND j.time_b_id=?) OR (j.time_a_id=? AND j.time_b_id=?)) ORDER BY FIELD(j.status,'agendado','finalizado'),j.id DESC");
-    $stmt->execute([$homeId, $awayId, $awayId, $homeId]);
+    $stmt = $pdo->prepare("SELECT j.id,j.campeonato_id,j.fase,j.ordem,j.jogo,j.time_a_id,j.time_b_id,j.status,c.nome campeonato,a.time_nome time_a,b.time_nome time_b FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND ((j.time_a_id=? AND j.time_b_id=?) OR (j.time_a_id=? AND j.time_b_id=?)) ORDER BY (j.time_a_id=? AND j.time_b_id=?) DESC,FIELD(j.status,'agendado','finalizado'),j.id DESC");
+    $stmt->execute([$homeId, $awayId, $awayId, $homeId, $homeId, $awayId]);
     foreach ($stmt->fetchAll() as $match) {
         $candidates[] = [
             'key' => 'mata:' . $match['id'],
