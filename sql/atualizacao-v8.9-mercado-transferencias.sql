@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS clubes_campeonato (
     campeonato_id INT UNSIGNED NOT NULL,
     participante_id INT UNSIGNED NOT NULL,
     saldo DECIMAL(12,2) NOT NULL DEFAULT 0,
+    cofre_configurado TINYINT(1) NOT NULL DEFAULT 0,
     formacao VARCHAR(20) NOT NULL DEFAULT '4-3-3',
     elenco_confirmado TINYINT(1) NOT NULL DEFAULT 0,
     mural TEXT NULL,

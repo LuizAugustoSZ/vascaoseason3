@@ -173,3 +173,11 @@ const modulesStylesheet = document.createElement('link');
 modulesStylesheet.rel = 'stylesheet';
 modulesStylesheet.href = 'assets/css/team-profile-modules.css';
 document.head.append(modulesStylesheet);
+
+const queryParams = new URLSearchParams(location.search);
+const requestedClubEditor = queryParams.get('editar') || (queryParams.get('editar_perfil') === '1' ? 'cofre' : '');
+const requestedClubModal = { sobre: 'club-about-modal', cofre: 'club-treasury-modal', heroi: 'club-hero-modal' }[requestedClubEditor];
+if (requestedClubModal) {
+  const modal = document.getElementById(requestedClubModal);
+  if (modal) bootstrap.Modal.getOrCreateInstance(modal).show();
+}

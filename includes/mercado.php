@@ -161,6 +161,10 @@ function mercado_garantir_estrutura(PDO $pdo): void
         $pdo->exec(trim($statement));
     }
     $columns = $pdo->query("SHOW COLUMNS FROM clubes_campeonato")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('cofre_configurado', $columns, true)) {
+        $pdo->exec("ALTER TABLE clubes_campeonato ADD cofre_configurado TINYINT(1) NOT NULL DEFAULT 0 AFTER saldo");
+        $pdo->exec("UPDATE clubes_campeonato SET cofre_configurado=1 WHERE saldo<>0");
+    }
     if (!in_array('mural', $columns, true)) {
         $pdo->exec("ALTER TABLE clubes_campeonato ADD mural TEXT NULL AFTER elenco_confirmado");
     }

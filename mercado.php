@@ -46,6 +46,9 @@ try {
         if (!$participantId) throw new RuntimeException('Sua conta precisa estar vinculada a um time.');
         $rodada = mercado_rodada_atual($pdo, $campeonatoId, $participantId);
         $clube = mercado_clube($pdo, $campeonatoId, $participantId);
+        if (!(bool)($clube['cofre_configurado'] ?? false)) {
+            throw new RuntimeException('Informe primeiro o saldo inicial usando o lápis do Cofre do clube.');
+        }
         $montagemInicial = !(bool)$clube['elenco_confirmado'] && $rodada === 1;
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'configurar_inicial') {
@@ -191,7 +194,7 @@ if ($clube) {
 
 <body><?php public_navbar('mercado'); ?><main class="container market-page" data-market-editable="<?= $podeEditarMercado ? '1' : '0' ?>"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
         <h1>GESTÃO DO ELENCO</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === $c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form>
-        <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif ($clube): ?><section class="market-summary">
+        <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif ($clube && !(bool)($clube['cofre_configurado'] ?? false)): ?><section class="panel p-4 market-treasury-required"><span class="eyebrow">Primeira etapa obrigatória</span><h2>INFORME O SALDO DO COFRE</h2><p>Antes de montar o elenco ou registrar qualquer movimentação, informe o valor atual do cofre. O saldo pode ser zero, mas precisa ser confirmado pelo responsável.</p><a class="btn btn-danger" href="time.php?id=<?= $participantId ?>&editar_perfil=1">Abrir perfil e informar cofre</a></section><?php elseif ($clube): ?><section class="market-summary">
                 <div><small>Próxima partida do clube</small><strong><?= $rodada ?>ª</strong></div>
                 <div><small>Ciclo <?= $ciclo['ciclo'] ?></small><strong><?= $ciclo['aberto'] ? 'ALTERAÇÕES LIBERADAS' : 'ELENCO TRAVADO' ?></strong></div>
             </section>
@@ -199,7 +202,7 @@ if ($clube) {
                 <article><span>01</span><div><strong>Ciclo individual</strong><p>Este clube cumpriu <?= $ciclo['etapas_concluidas'] ?> rodada(s): <?= $ciclo['partidas_concluidas'] ?> jogo(s) e <?= $ciclo['folgas'] ?> folga(s). O mercado abre após a 5ª e fica liberado na 6ª, 7ª e 8ª rodadas do próprio ciclo.</p></div></article>
                 <article><span>02</span><div><strong>Titulares automáticos</strong><p>Marque somente os 11 titulares. Ao salvar, todos os jogadores não selecionados serão definidos automaticamente como banco.</p></div></article>
                 <article><span>03</span><div><strong>Formação e ordem automáticas</strong><p>Os titulares precisam respeitar os setores da formação. O sistema ordena ataque, meio, defesa e deixa o goleiro sempre por último.</p></div></article>
-                <article><span>04</span><div><strong>Cofre e janela</strong><p>Use <code>..cofre</code> no Discord para consultar o saldo. A correção do cofre fica em Editar perfil do clube; contratações, vendas e escalação dependem da janela.</p></div></article>
+                <article><span>04</span><div><strong>Cofre e janela</strong><p>Use <code>..cofre</code> no Discord para consultar o saldo. A correção fica no lápis do card Cofre do clube; contratações, vendas e escalação dependem da janela.</p></div></article>
             </section>
             <?php if ($montagemInicial): ?><section class="panel p-4 mb-4 market-config-panel">
                     <h2>CONFIGURAÇÃO INICIAL</h2>

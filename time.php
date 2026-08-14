@@ -33,7 +33,8 @@ $profileNotice = isset($_GET['perfil']) ? 'Perfil do clube atualizado.' : '';
 try {
     $pdo = db();
     mercado_garantir_estrutura($pdo);
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'atualizar_perfil_clube') {
+    $profileAction = (string)($_POST['action'] ?? '');
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_sobre_clube', 'atualizar_cofre_clube', 'atualizar_heroi_clube'], true)) {
         verify_csrf();
         if (!$canEditClubProfile) {
             throw new RuntimeException('Apenas o responsável associado pode editar este clube.');
@@ -44,24 +45,25 @@ try {
         if (!(int)$clubCheck->fetchColumn()) {
             throw new RuntimeException('O clube não participa deste campeonato.');
         }
-        $descricao = mb_substr(trim((string)($_POST['descricao'] ?? '')), 0, 1200);
-        $favoritoId = (int)($_POST['jogador_favorito_id'] ?? 0);
-        $saldo = mercado_parse_valor((string)($_POST['saldo'] ?? '0'));
-        if ($saldo < 0) {
-            throw new RuntimeException('O saldo do cofre não pode ser negativo.');
-        }
-        if ($favoritoId > 0) {
-            $favoriteStmt = $pdo->prepare("SELECT COUNT(*) FROM jogadores_elenco WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1");
-            $favoriteStmt->execute([$favoritoId, $campeonatoPerfilId, $id]);
-            if (!(int)$favoriteStmt->fetchColumn()) {
-                throw new RuntimeException('Escolha um jogador ativo do seu próprio elenco.');
-            }
-        }
-        $pdo->beginTransaction();
-        $pdo->prepare("UPDATE participantes SET descricao=? WHERE id=? AND ativo=1")->execute([$descricao ?: null, $id]);
         mercado_clube($pdo, $campeonatoPerfilId, $id, true);
-        $pdo->prepare("UPDATE clubes_campeonato SET jogador_favorito_id=?,saldo=? WHERE campeonato_id=? AND participante_id=?")->execute([$favoritoId ?: null, $saldo, $campeonatoPerfilId, $id]);
-        $pdo->commit();
+        if (in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_sobre_clube'], true)) {
+            $descricao = mb_substr(trim((string)($_POST['descricao'] ?? '')), 0, 1200);
+            $pdo->prepare("UPDATE participantes SET descricao=? WHERE id=? AND ativo=1")->execute([$descricao ?: null, $id]);
+        }
+        if (in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_cofre_clube'], true)) {
+            $saldo = mercado_parse_valor((string)($_POST['saldo'] ?? '0'));
+            if ($saldo < 0) throw new RuntimeException('O saldo do cofre não pode ser negativo.');
+            $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,cofre_configurado=1 WHERE campeonato_id=? AND participante_id=?")->execute([$saldo, $campeonatoPerfilId, $id]);
+        }
+        if (in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_heroi_clube'], true)) {
+            $favoritoId = (int)($_POST['jogador_favorito_id'] ?? 0);
+            if ($favoritoId > 0) {
+                $favoriteStmt = $pdo->prepare("SELECT COUNT(*) FROM jogadores_elenco WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1");
+                $favoriteStmt->execute([$favoritoId, $campeonatoPerfilId, $id]);
+                if (!(int)$favoriteStmt->fetchColumn()) throw new RuntimeException('Escolha um jogador ativo do seu próprio elenco.');
+            }
+            $pdo->prepare("UPDATE clubes_campeonato SET jogador_favorito_id=? WHERE campeonato_id=? AND participante_id=?")->execute([$favoritoId ?: null, $campeonatoPerfilId, $id]);
+        }
         header('Location: time.php?id=' . $id . '&perfil=salvo');
         exit;
     }
@@ -122,7 +124,7 @@ try {
         $stmt->execute([$id]);
         $titulos = $stmt->fetchAll();
         try {
-            $stmt = $pdo->prepare("SELECT cc.saldo,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,c.nome campeonato FROM clubes_campeonato cc JOIN campeonatos c ON c.id=cc.campeonato_id WHERE cc.participante_id=? ORDER BY c.status='ativo' DESC,c.id DESC LIMIT 1");
+            $stmt = $pdo->prepare("SELECT cc.saldo,cc.cofre_configurado,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,c.nome campeonato FROM clubes_campeonato cc JOIN campeonatos c ON c.id=cc.campeonato_id WHERE cc.participante_id=? ORDER BY c.status='ativo' DESC,c.id DESC LIMIT 1");
             $stmt->execute([$id]);
             $clubePublico = $stmt->fetch() ?: null;
             if ($clubePublico) {
@@ -407,7 +409,7 @@ function match_score(array $j): string
                     <?php endforeach; ?>
                 </section>
             <?php endif; ?>
-            <section class="future-label" id="conteudo-clube"><span>Conteúdo mantido pelo técnico</span><?php if ($canEditClubProfile && $clubePublico): ?><button class="lineup-edit-button" type="button" data-bs-toggle="modal" data-bs-target="#club-profile-edit-modal">Editar perfil do clube</button><?php endif; ?></section>
+            <section class="future-label" id="conteudo-clube"><span>Conteúdo mantido pelo técnico</span></section>
             <section class="future-grid">
                 <article class="lineup-placeholder">
                     <div class="lineup-module-head">
@@ -424,7 +426,7 @@ function match_score(array $j): string
                     <?php endif; ?>
                 </article>
                 <article class="treasury-module">
-                    <h3>Cofre do clube</h3>
+                    <div class="club-card-heading"><h3>Cofre do clube</h3><?php if ($canEditClubProfile && $clubePublico): ?><button class="club-card-edit" type="button" data-bs-toggle="modal" data-bs-target="#club-treasury-modal" aria-label="Editar cofre" title="Editar cofre">✎</button><?php endif; ?></div>
                     <strong><?= $clubePublico ? 'R$ ' . number_format((float)$clubePublico['saldo'], 0, ',', '.') : 'R$ —' ?></strong>
                     <p><?= $clubePublico ? 'Saldo atualizado do clube.' : 'Saldo ainda não informado.' ?></p>
                 </article>
@@ -441,11 +443,11 @@ function match_score(array $j): string
                     <nav class="card-pages"></nav>
                 </article>
                 <article class="favorite-player-module">
-                    <h3>Herói do time</h3>
+                    <div class="club-card-heading"><h3>Herói do time</h3><?php if ($canEditClubProfile && $clubePublico): ?><button class="club-card-edit" type="button" data-bs-toggle="modal" data-bs-target="#club-hero-modal" aria-label="Editar herói do time" title="Editar herói do time">✎</button><?php endif; ?></div>
                     <?php if ($jogadorFavorito): ?><strong><?= e($jogadorFavorito['nome']) ?></strong><p><?= (int)$jogadorFavorito['overall'] ?> · <?= e($jogadorFavorito['posicao']) ?></p><?php else: ?><p class="module-empty">Nenhum jogador escolhido.</p><?php endif; ?>
                 </article>
                 <article class="about-module">
-                    <h3>Sobre o clube</h3>
+                    <div class="club-card-heading"><h3>Sobre o clube</h3><?php if ($canEditClubProfile && $clubePublico): ?><button class="club-card-edit" type="button" data-bs-toggle="modal" data-bs-target="#club-about-modal" aria-label="Editar sobre o clube" title="Editar sobre o clube">✎</button><?php endif; ?></div>
                     <p><?= e(
                             $time["descricao"] ?:
                                 "As informações do clube ainda não foram publicadas pelo responsável.",
@@ -453,6 +455,11 @@ function match_score(array $j): string
                 </article>
             </section>
             <?php if ($canEditClubProfile && $clubePublico): ?><div class="modal fade" id="club-profile-edit-modal" tabindex="-1" aria-labelledby="club-profile-edit-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><div><small class="eyebrow">Conteúdo e finanças do clube</small><h2 class="modal-title" id="club-profile-edit-title">EDITAR PERFIL</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_perfil_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><div class="mb-3"><label class="form-label" for="club-about">Sobre o clube</label><textarea class="form-control" id="club-about" name="descricao" maxlength="1200" rows="4" placeholder="Conte a história e a identidade do clube..."><?= e($time['descricao']) ?></textarea><small class="text-secondary">Este texto aparece publicamente no card Sobre o clube.</small></div><div class="mb-3"><label class="form-label" for="club-treasury">Cofre do clube</label><div class="input-group"><span class="input-group-text">R$</span><input class="form-control" id="club-treasury" name="saldo" inputmode="numeric" value="<?= e(number_format((float)$clubePublico['saldo'], 0, ',', '.')) ?>" required></div><small class="text-secondary">O cofre pode ser corrigido a qualquer momento.</small></div><div><label class="form-label" for="club-favorite">Herói do time</label><select class="form-select" id="club-favorite" name="jogador_favorito_id"><option value="">Nenhum jogador</option><?php foreach ($elencoPublico as $jogador): ?><option value="<?= (int)$jogador['id'] ?>" <?= (int)$jogador['id'] === (int)($clubePublico['jogador_favorito_id'] ?? 0) ? 'selected' : '' ?>><?= e($jogador['nome']) ?> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></option><?php endforeach; ?></select><small class="text-secondary">Escolha entre os jogadores ativos do elenco quem representa o clube.</small></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar perfil</button></div></form></div></div></div><?php endif; ?>
+            <?php if ($canEditClubProfile && $clubePublico): ?>
+                <div class="modal fade club-card-modal" id="club-about-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title">EDITAR SOBRE O CLUBE</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_sobre_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><label class="form-label" for="club-about-only">Sobre o clube</label><textarea class="form-control" id="club-about-only" name="descricao" maxlength="1200" rows="8" placeholder="Conte a história e a identidade do clube..."><?= e($time['descricao']) ?></textarea></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar sobre</button></div></form></div></div></div>
+                <div class="modal fade club-card-modal" id="club-treasury-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title">EDITAR COFRE</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_cofre_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><label class="form-label" for="club-treasury-only">Saldo do cofre</label><div class="input-group"><span class="input-group-text">R$</span><input class="form-control" id="club-treasury-only" name="saldo" inputmode="numeric" value="<?= e(number_format((float)$clubePublico['saldo'], 0, ',', '.')) ?>" required></div><small class="text-secondary">Confirme o saldo antes de iniciar a gestão do elenco.</small></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar cofre</button></div></form></div></div></div>
+                <div class="modal fade club-card-modal" id="club-hero-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title">EDITAR HERÓI DO TIME</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_heroi_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><label class="form-label" for="club-hero-only">Herói do time</label><select class="form-select" id="club-hero-only" name="jogador_favorito_id"><option value="">Nenhum jogador</option><?php foreach ($elencoPublico as $jogador): ?><option value="<?= (int)$jogador['id'] ?>" <?= (int)$jogador['id'] === (int)($clubePublico['jogador_favorito_id'] ?? 0) ? 'selected' : '' ?>><?= e($jogador['nome']) ?> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></option><?php endforeach; ?></select></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar herói</button></div></form></div></div></div>
+            <?php endif; ?>
         </main>
         <?php endif; ?><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <script src="assets/js/team-page.js?v=<?= filemtime(
