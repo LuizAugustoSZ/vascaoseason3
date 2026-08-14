@@ -1599,6 +1599,8 @@ function mata_options(array $games): string
     __DIR__ . "/../assets/js/admin-loading.js",
 ) ?>"></script><script src="../assets/js/news-editor.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/news-editor.js",
+) ?>"></script><script src="../assets/js/news-round-prompt.js?v=<?= filemtime(
+    __DIR__ . "/../assets/js/news-round-prompt.js",
 ) ?>"></script><script src="../assets/js/sumula-importer.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/sumula-importer.js",
 ) ?>"></script><script src="../assets/js/admin.js?v=<?= filemtime(
