@@ -316,7 +316,7 @@ if (
                                                 $item["capa_base64"],
                                             ) ?>" alt=""></a>
                                 <div class="news-card-body"><span class="news-meta"><?= e(
-                                                                                        date("d/m/Y", strtotime($item["publicado_em"])),
+                                                                                        format_datetime_br($item["publicado_em"], "d/m/Y"),
                                                                                     ) ?></span>
                                     <h3 class="mt-2"><a class="text-white text-decoration-none" href="noticia.php?id=<?= $item["id"] ?>"><?= e($item["titulo"]) ?></a></h3><?php if ($item["resumo"]): ?><p><?= e(
                                                                                 $item["resumo"],

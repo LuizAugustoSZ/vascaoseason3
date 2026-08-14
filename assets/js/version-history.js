@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['14.0','Datas históricas e novas das notícias agora são convertidas corretamente de UTC para o horário de Brasília em todas as telas públicas e administrativas.'],
 ['13.9','Datas das notícias foram alinhadas ao fuso de Brasília, eliminando a diferença de três horas que fazia publicações aparecerem no futuro.'],
 ['13.8','Editor de notícias ganhou inserção confiável de imagens no corpo, placeholder visual que não é publicado e reinicialização completa do editor e do gerador após salvar, editar ou apagar.'],
 ['13.7','Cards da seção Participantes deixaram de exibir o texto Sobre do clube e voltaram ao formato compacto com clube, técnico e temporada.'],

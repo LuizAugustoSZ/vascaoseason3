@@ -46,7 +46,7 @@ if (!$article) {
                                                 ) ?></h1><?php if ($article["resumo"]): ?><p class="lead text-secondary"><?= e(
                                                                                 $article["resumo"],
                                                                             ) ?></p><?php endif; ?><p class="news-meta mb-4"><?= e(
-                                                        date("d/m/Y H:i", strtotime($article["publicado_em"])),
+                                                        format_datetime_br($article["publicado_em"]),
                                                     ) ?> • Por <?= e($article["autor"]) ?></p><img class="article-cover" src="<?= e(
                                                                                 $article["capa_base64"],
                                                                             ) ?>" alt="">
