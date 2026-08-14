@@ -415,7 +415,7 @@
 
 .future-grid .lineup-placeholder {
     grid-column: 1;
-    grid-row: 1 / span 3;
+    grid-row: 1 / span 4;
     min-height: 250px;
     background: linear-gradient(160deg, #10141a, #0b0d10)
 }
@@ -425,25 +425,92 @@
     grid-row: 1
 }
 
-.future-grid .wall-module {
+.future-grid .transfer-history-module {
     grid-column: 2;
     grid-row: 2
 }
 
-.future-grid .favorite-player-module {
+.future-grid .wall-module {
     grid-column: 2;
     grid-row: 3
 }
 
-.future-grid .transfers-module {
+.future-grid .favorite-player-module {
+    grid-column: 2;
+    grid-row: 4
+}
+
+.future-grid .reserves-module {
     grid-column: 3;
     grid-row: 1 / span 2
 }
 
 .future-grid .about-module {
     grid-column: 3;
-    grid-row: 3
+    grid-row: 3 / span 2
 }
+
+.transfer-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 8px 0
+}
+
+.transfer-filters button {
+    padding: 4px 7px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--line);
+    font: 700 .62rem "Inter";
+    text-transform: uppercase
+}
+
+.transfer-filters button.active,
+.transfer-filters button:hover {
+    color: #fff;
+    background: var(--red);
+    border-color: var(--red)
+}
+
+.transfer-entry {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 7px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line)
+}
+
+.transfer-entry b,
+.transfer-entry small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.transfer-entry small {
+    grid-column: 2;
+    color: var(--muted);
+    font-size: .65rem
+}
+
+.transfer-entry>strong {
+    grid-column: 1 / -1;
+    margin-top: 2px;
+    font-size: .95rem
+}
+
+.transfer-kind {
+    padding: 2px 4px;
+    color: #fff;
+    background: #3b414b;
+    font: 800 .55rem "Inter";
+    text-transform: uppercase
+}
+
+.transfer-kind.is-purchase { background: #16794a }
+.transfer-kind.is-sale { background: #a3202a }
 
 .future-grid strong {
     font: 800 1.6rem "Barlow Condensed"

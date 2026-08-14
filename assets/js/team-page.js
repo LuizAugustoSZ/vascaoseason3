@@ -59,6 +59,38 @@ document
   .querySelectorAll('[data-card-pages]')
   .forEach(initializeCardPagination);
 
+document.querySelectorAll('[data-transfer-module]').forEach(module => {
+  const items = [...module.querySelectorAll('.transfer-entry')];
+  const pagination = module.querySelector('.transfer-pages');
+  const filters = [...module.querySelectorAll('[data-transfer-filter]')];
+  const perPage = Number(module.dataset.itemsPerPage) || 4;
+  let activeFilter = 'todas';
+  let currentPage = 1;
+
+  function renderTransfers() {
+    const visible = items.filter(item => activeFilter === 'todas' || item.dataset.transferType === activeFilter);
+    const totalPages = Math.max(1, Math.ceil(visible.length / perPage));
+    currentPage = Math.min(currentPage, totalPages);
+    items.forEach(item => { item.hidden = true; });
+    visible.slice((currentPage - 1) * perPage, currentPage * perPage).forEach(item => { item.hidden = false; });
+    pagination.innerHTML = visible.length > perPage ? `<button type="button" data-go="-1" aria-label="Página anterior" ${currentPage === 1 ? 'disabled' : ''}>‹</button><span>${currentPage} / ${totalPages}</span><button type="button" data-go="1" aria-label="Próxima página" ${currentPage === totalPages ? 'disabled' : ''}>›</button>` : '';
+  }
+
+  filters.forEach(button => button.addEventListener('click', () => {
+    activeFilter = button.dataset.transferFilter;
+    currentPage = 1;
+    filters.forEach(filter => filter.classList.toggle('active', filter === button));
+    renderTransfers();
+  }));
+  pagination.addEventListener('click', event => {
+    const button = event.target.closest('button[data-go]');
+    if (!button || button.disabled) return;
+    currentPage += Number(button.dataset.go);
+    renderTransfers();
+  });
+  renderTransfers();
+});
+
 function normalizeShieldVisibleArea(image) {
   if (!image.naturalWidth || !image.naturalHeight || image.dataset.normalized) {
     return;
