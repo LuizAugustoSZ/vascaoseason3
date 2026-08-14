@@ -14,7 +14,7 @@ O **Vascão Season 3** é um sistema web para organizar campeonatos da comunidad
 - Frontend: HTML, CSS e JavaScript sem framework pesado
 - Idioma da interface: português do Brasil
 - Linha visual: fundo escuro, vermelho como cor principal e tipografia esportiva
-- Baseline deste documento: versão pública **v10.5** e painel **a2.2**
+- Baseline deste documento: versão pública **v10.6** e painel **a2.2**
 - Atualizado em: 14/08/2026
 
 ## 2. Princípios do projeto

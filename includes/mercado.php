@@ -7,13 +7,9 @@ const MERCADO_POSICOES = ['GOL', 'LD', 'LE', 'ZAG', 'VOL', 'MC', 'MEI', 'PD', 'P
 
 function mercado_parse_valor(string $valor): float
 {
-    $limpo = preg_replace('/[^0-9,.-]/', '', trim($valor)) ?? '';
-    if (str_contains($limpo, ',')) {
-        $limpo = str_replace('.', '', $limpo);
-        $limpo = str_replace(',', '.', $limpo);
-    }
-    if ($limpo === '' || !is_numeric($limpo)) throw new RuntimeException('Informe um valor válido em reais.');
-    return round((float)$limpo, 2);
+    $limpo = preg_replace('/\D/', '', trim($valor)) ?? '';
+    if ($limpo === '') throw new RuntimeException('Informe um valor inteiro em reais.');
+    return round((float)$limpo, 0);
 }
 
 function mercado_garantir_estrutura(PDO $pdo): void
