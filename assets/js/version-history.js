@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['11.7','Contratações ganharam origens Compra, Pack, Passe e Sorteio; packs validam OVR, registram custos em DP e não alteram o cofre em Real.'],
 ['11.6','Modal de titulares e banco foi ampliado e os cards ficaram mais espaçosos, removendo o aviso visual sobre ordenação automática.'],
 ['11.5','Tutoriais numerados com regras e situação dinâmica do clube voltaram a ficar fixos acima do campeonato e das abas do Mercado.'],
 ['11.4','Menu Time foi reduzido a duas páginas; Mercado ganhou abas com tutoriais e a edição de titulares e banco passou a abrir em modal.'],

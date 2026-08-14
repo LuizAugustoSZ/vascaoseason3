@@ -48,6 +48,48 @@ document.querySelectorAll('.formation-control').forEach(control => {
   updateCustomFormation();
 });
 
+document.querySelectorAll('.market-contract-panel form').forEach(form => {
+  const origin = form.querySelector('select[name="origem"]');
+  const packField = form.querySelector('.acquisition-pack-field');
+  const pack = form.querySelector('select[name="pack"]');
+  const valueField = form.querySelector('.acquisition-value-field');
+  const value = form.querySelector('input[name="valor"]');
+  const overall = form.querySelector('input[name="overall"]');
+  const note = form.querySelector('.acquisition-note');
+  if (!origin) return;
+
+  function updateAcquisitionFields() {
+    const type = origin.value;
+    const isDirect = type === 'compra_direta';
+    const isPack = type === 'pack';
+    packField.hidden = !isPack;
+    valueField.hidden = !isDirect;
+    pack.required = isPack;
+    value.required = isDirect;
+    if (isPack) {
+      updatePackRange();
+    } else if (overall) {
+      overall.min = '1';
+      overall.max = '99';
+    }
+    note.hidden = isDirect;
+    if (note) note.textContent = isPack
+      ? 'O custo do pack será registrado em DP e não altera o cofre em Real.'
+      : type === 'passe'
+        ? 'Jogador recebido pelo passe: entrada sem custo e sem alteração no cofre.'
+        : 'Jogador ganho em sorteio: entrada sem custo e sem alteração no cofre.';
+  }
+  function updatePackRange() {
+    const option = pack.selectedOptions[0];
+    if (!option?.dataset.minOvr || !overall) return;
+    overall.min = option.dataset.minOvr;
+    overall.max = option.dataset.maxOvr;
+  }
+  origin.addEventListener('change', updateAcquisitionFields);
+  pack?.addEventListener('change', updatePackRange);
+  updateAcquisitionFields();
+});
+
 document.querySelectorAll('[data-market-history]').forEach(history => {
   const items = [...history.querySelectorAll('[data-history-type]')];
   const filters = [...history.querySelectorAll('[data-history-filter]')];

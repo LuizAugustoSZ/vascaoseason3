@@ -92,13 +92,33 @@ try {
             $pdo->beginTransaction();
             $clube = mercado_clube($pdo, $campeonatoId, $participantId, true);
             $antes = (float)$clube['saldo'];
-            $valor = mercado_parse_valor((string)($_POST['valor'] ?? '0'));
-            if ($valor < 0) throw new RuntimeException('Informe um valor válido.');
+            $origem = 'venda';
+            $origemDetalhe = null;
+            $valorOrigem = null;
+            $moedaOrigem = null;
             if ($action === 'comprar') {
+                $origem = (string)($_POST['origem'] ?? 'compra_direta');
+                if (!in_array($origem, ['compra_direta', 'pack', 'passe', 'sorteio'], true)) throw new RuntimeException('Selecione uma origem válida para o jogador.');
+                $valor = 0.0;
+                if ($origem === 'compra_direta') {
+                    $valor = mercado_parse_valor((string)($_POST['valor'] ?? ''));
+                } elseif ($origem === 'pack') {
+                    $packId = (string)($_POST['pack'] ?? '');
+                    $pack = MERCADO_PACKS[$packId] ?? null;
+                    if (!$pack) throw new RuntimeException('Selecione o pack recebido.');
+                    $overall = (int)($_POST['overall'] ?? 0);
+                    if ($overall < $pack['min'] || $overall > $pack['max']) {
+                        throw new RuntimeException(sprintf('%s aceita jogadores com OVR entre %d e %d.', $pack['nome'], $pack['min'], $pack['max']));
+                    }
+                    $origemDetalhe = $pack['nome'];
+                    $valorOrigem = (float)$pack['dream_points'];
+                    $moedaOrigem = 'DreamPoints';
+                }
                 if ($valor > $antes) throw new RuntimeException('Saldo insuficiente no cofre.');
                 $jogador = salvar_jogador($pdo, $campeonatoId, $participantId, $_POST);
                 $depois = $antes - $valor;
             } else {
+                $valor = mercado_parse_valor((string)($_POST['valor'] ?? ''));
                 $jogador = (int)($_POST['jogador_id'] ?? 0);
                 $stmt = $pdo->prepare("SELECT * FROM jogadores_elenco WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1 FOR UPDATE");
                 $stmt->execute([$jogador, $campeonatoId, $participantId]);
@@ -110,9 +130,16 @@ try {
                 $_POST = $dados + $_POST;
             }
             $pdo->prepare("UPDATE clubes_campeonato SET saldo=? WHERE id=?")->execute([$depois, $clube['id']]);
-            $pdo->prepare("INSERT INTO movimentacoes_elenco(campeonato_id,participante_id,jogador_id,tipo,jogador_nome,jogador_overall,jogador_posicao,valor,saldo_anterior,saldo_posterior,rodada,conta_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")->execute([$campeonatoId, $participantId, $jogador, $action === 'comprar' ? 'compra' : 'venda', trim((string)$_POST['nome']), (int)$_POST['overall'], (string)$_POST['posicao'], $valor, $antes, $depois, $rodada, (int)$_SESSION['conta_id']]);
+            $pdo->prepare("INSERT INTO movimentacoes_elenco(campeonato_id,participante_id,jogador_id,tipo,origem,origem_detalhe,valor_origem,moeda_origem,jogador_nome,jogador_overall,jogador_posicao,valor,saldo_anterior,saldo_posterior,rodada,conta_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")->execute([$campeonatoId, $participantId, $jogador, $action === 'comprar' ? 'compra' : 'venda', $origem, $origemDetalhe, $valorOrigem, $moedaOrigem, trim((string)$_POST['nome']), (int)$_POST['overall'], (string)$_POST['posicao'], $valor, $antes, $depois, $rodada, (int)$_SESSION['conta_id']]);
             $pdo->commit();
-            $message = $action === 'comprar' ? 'Contratação registrada.' : 'Venda registrada.';
+            $message = $action === 'comprar'
+                ? match ($origem) {
+                    'pack' => 'Jogador recebido por pack registrado sem alterar o cofre.',
+                    'passe' => 'Jogador recebido pelo passe registrado sem alterar o cofre.',
+                    'sorteio' => 'Jogador ganho em sorteio registrado sem alterar o cofre.',
+                    default => 'Contratação registrada.',
+                }
+                : 'Venda registrada.';
         }
     }
 } catch (Throwable $e) {
@@ -200,7 +227,7 @@ if ($clube) {
                         <div class="col-md-2"><select class="form-select" name="grupo">
                                 <option value="titular">Titular</option>
                                 <option value="banco">Banco</option>
-                            </select></div><?php if ((bool)$clube['elenco_confirmado']): ?><div class="col-md-2"><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="Valor" required></div><?php endif; ?><div><button class="btn btn-danger">Salvar jogador</button></div>
+                            </select></div><?php if ((bool)$clube['elenco_confirmado']): ?><div class="col-md-4"><label class="form-label">Origem do jogador</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option></select></div><div class="col-md-5 acquisition-pack-field" hidden><label class="form-label">Pack recebido</label><select class="form-select" name="pack"><option value="">Selecione o pack</option><?php foreach (MERCADO_PACKS as $packId => $pack): ?><option value="<?= e($packId) ?>" data-min-ovr="<?= $pack['min'] ?>" data-max-ovr="<?= $pack['max'] ?>"><?= e($pack['nome']) ?> · <?= number_format((float)$pack['dream_points'], 0, ',', '.') ?> DP · <?= $pack['min'] ?><?= $pack['min'] !== $pack['max'] ? '–' . $pack['max'] : '' ?> OVR</option><?php endforeach; ?></select></div><div class="col-md-3 acquisition-value-field"><label class="form-label">Valor da compra</label><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="R$ 0" required></div><div class="col-12 acquisition-note alert alert-info mb-0" hidden></div><?php endif; ?><div><button class="btn btn-danger">Salvar jogador</button></div>
                     </form>
                 </section><?php endif; ?>
             <section class="panel p-4 mb-4" id="elenco">
@@ -220,7 +247,7 @@ if ($clube) {
             </section>
             <section class="panel p-4 market-history" data-market-history data-items-per-page="4">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2"><h2>HISTÓRICO</h2><div class="history-filters" role="group" aria-label="Filtrar histórico"><button class="active" type="button" data-history-filter="todas">Todas</button><button type="button" data-history-filter="compra">Compras</button><button type="button" data-history-filter="venda">Vendas</button></div></div>
-                <div class="history-items"><?php foreach ($historico as $m): ?><article data-history-type="<?= e($m['tipo']) ?>"><span class="history-kind <?= $m['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= $m['tipo'] === 'compra' ? 'Compra' : 'Venda' ?></span><div><strong><?= e($m['jogador_nome']) ?></strong><small><?= (int)$m['jogador_overall'] ?> · <?= e($m['jogador_posicao']) ?> · rodada <?= $m['rodada'] ?></small></div><b>R$ <?= number_format((float)$m['valor'], 0, ',', '.') ?></b></article><?php endforeach; ?><?php if (!$historico): ?><p class="text-secondary">Nenhuma movimentação.</p><?php endif; ?></div><nav class="history-pages card-pages"></nav>
+                <div class="history-items"><?php foreach ($historico as $m): ?><article data-history-type="<?= e($m['tipo']) ?>"><span class="history-kind <?= $m['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= e(mercado_rotulo_origem($m)) ?></span><div><strong><?= e($m['jogador_nome']) ?></strong><small><?= (int)$m['jogador_overall'] ?> · <?= e($m['jogador_posicao']) ?> · rodada <?= $m['rodada'] ?><?= !empty($m['origem_detalhe']) ? ' · ' . e($m['origem_detalhe']) : '' ?></small></div><b><?= e(mercado_valor_movimento($m)) ?></b></article><?php endforeach; ?><?php if (!$historico): ?><p class="text-secondary">Nenhuma movimentação.</p><?php endif; ?></div><nav class="history-pages card-pages"></nav>
             </section>
             <div class="modal fade" id="treasury-edit-modal" tabindex="-1" aria-labelledby="treasury-edit-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><div><small class="eyebrow">Disponível a qualquer momento</small><h2 class="modal-title" id="treasury-edit-title">EDITAR COFRE</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_cofre"><label class="form-label" for="treasury-balance">Novo saldo</label><input class="form-control" id="treasury-balance" name="saldo" value="<?= e((string)$clube['saldo']) ?>" required><small class="text-secondary">Essa correção independe da janela de transferências.</small></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar saldo</button></div></form></div></div></div><?php endif; ?>
     </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

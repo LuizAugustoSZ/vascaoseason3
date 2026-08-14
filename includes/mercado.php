@@ -23,6 +23,35 @@ const MERCADO_FORMACOES = [
     '5-4-1',
 ];
 const MERCADO_POSICOES = ['GOL', 'LD', 'LE', 'ZAG', 'VOL', 'MC', 'MEI', 'PD', 'PE', 'ATA'];
+const MERCADO_PACKS = [
+    'reforco' => ['nome' => 'Pack Reforço', 'min' => 87, 'max' => 88, 'dream_points' => 200],
+    'competitivo' => ['nome' => 'Pack Competitivo', 'min' => 87, 'max' => 89, 'dream_points' => 280],
+    'elite' => ['nome' => 'Pack Elite', 'min' => 88, 'max' => 89, 'dream_points' => 420],
+    'pre_meta' => ['nome' => 'Pack Pré-Meta', 'min' => 88, 'max' => 90, 'dream_points' => 650],
+    'quase_meta' => ['nome' => 'Pack Quase Meta', 'min' => 89, 'max' => 90, 'dream_points' => 900],
+    'meta' => ['nome' => 'Pack Meta', 'min' => 90, 'max' => 90, 'dream_points' => 1200],
+    'meta_posicional' => ['nome' => 'Pack Meta Posicional', 'min' => 90, 'max' => 90, 'dream_points' => 1700],
+];
+
+function mercado_rotulo_origem(array $movimento): string
+{
+    if (($movimento['tipo'] ?? '') === 'venda') return 'Venda';
+    return match ($movimento['origem'] ?? 'compra_direta') {
+        'pack' => (string)($movimento['origem_detalhe'] ?: 'Pack'),
+        'passe' => 'Passe',
+        'sorteio' => 'Sorteio',
+        default => 'Compra',
+    };
+}
+
+function mercado_valor_movimento(array $movimento): string
+{
+    if (($movimento['origem'] ?? '') === 'pack') {
+        return number_format((float)($movimento['valor_origem'] ?? 0), 0, ',', '.') . ' DP';
+    }
+    if (in_array(($movimento['origem'] ?? ''), ['passe', 'sorteio'], true)) return 'Sem custo';
+    return 'R$ ' . number_format((float)($movimento['valor'] ?? 0), 0, ',', '.');
+}
 
 function mercado_normalizar_formacao(string $formacao, string $custom = ''): string
 {
@@ -136,6 +165,19 @@ function mercado_garantir_estrutura(PDO $pdo): void
     }
     if (!in_array('jogador_favorito_id', $columns, true)) {
         $pdo->exec("ALTER TABLE clubes_campeonato ADD jogador_favorito_id INT UNSIGNED NULL AFTER mural");
+    }
+    $movementColumns = $pdo->query("SHOW COLUMNS FROM movimentacoes_elenco")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('origem', $movementColumns, true)) {
+        $pdo->exec("ALTER TABLE movimentacoes_elenco ADD origem VARCHAR(30) NOT NULL DEFAULT 'compra_direta' AFTER tipo");
+    }
+    if (!in_array('origem_detalhe', $movementColumns, true)) {
+        $pdo->exec("ALTER TABLE movimentacoes_elenco ADD origem_detalhe VARCHAR(120) NULL AFTER origem");
+    }
+    if (!in_array('valor_origem', $movementColumns, true)) {
+        $pdo->exec("ALTER TABLE movimentacoes_elenco ADD valor_origem DECIMAL(12,2) NULL AFTER origem_detalhe");
+    }
+    if (!in_array('moeda_origem', $movementColumns, true)) {
+        $pdo->exec("ALTER TABLE movimentacoes_elenco ADD moeda_origem VARCHAR(20) NULL AFTER valor_origem");
     }
 }
 
