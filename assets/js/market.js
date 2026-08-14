@@ -25,7 +25,8 @@ const championship = document.querySelector('input[name="campeonato_id"], select
 if (marketTitle && championship && document.querySelector('input[value="adicionar_inicial"]')) {
   const link = document.createElement('a');
   link.className = 'btn btn-outline-light mb-4';
-  link.href = `importar-elenco.php?campeonato_id=${encodeURIComponent(championship.value)}`;
+  const participant = new URLSearchParams(location.search).get('participante_id');
+  link.href = `importar-elenco.php?campeonato_id=${encodeURIComponent(championship.value)}${participant ? `&participante_id=${encodeURIComponent(participant)}` : ''}`;
   link.textContent = 'Colar elenco completo';
   marketTitle.insertAdjacentElement('afterend', link);
 }

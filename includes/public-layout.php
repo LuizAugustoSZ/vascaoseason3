@@ -38,8 +38,10 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         "comandos" => ["comandos.php", "Comandos"],
         "regulamento" => ["regulamento.php", "Regulamento"],
         "noticias" => ["noticias.php", "Notícias"],
-        "mercado" => ["mercado.php", "Mercado"],
     ];
+    if (account_logged_in() && (int)(account_participant_id() ?? 0) > 0) {
+        $links["mercado"] = ["mercado.php", "Mercado"];
+    }
 ?>
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
         <div class="container">

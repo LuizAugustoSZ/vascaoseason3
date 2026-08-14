@@ -147,6 +147,29 @@ function account_logged_in(): bool
     return !empty($_SESSION["conta_id"]);
 }
 
+// Atualiza o vínculo do clube a partir do banco para refletir associações sem exigir novo login.
+function account_participant_id(): ?int
+{
+    if (!account_logged_in()) {
+        return null;
+    }
+    static $participantId = false;
+    if ($participantId !== false) {
+        return $participantId;
+    }
+    try {
+        $stmt = db()->prepare("SELECT participante_id FROM contas WHERE id=? AND ativo=1 LIMIT 1");
+        $stmt->execute([(int)$_SESSION["conta_id"]]);
+        $value = $stmt->fetchColumn();
+        $participantId = $value === false || $value === null ? null : (int)$value;
+        $_SESSION["participante_id"] = $participantId;
+    } catch (Throwable $ignored) {
+        $sessionValue = $_SESSION["participante_id"] ?? null;
+        $participantId = $sessionValue === null ? null : (int)$sessionValue;
+    }
+    return $participantId;
+}
+
 // Informa se a conta ainda precisa substituir a senha temporária.
 function account_must_change_password(): bool
 {
