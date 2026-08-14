@@ -46,19 +46,15 @@ try {
         if (!$participantId) throw new RuntimeException('Sua conta precisa estar vinculada a um time.');
         $rodada = mercado_rodada_atual($pdo, $campeonatoId, $participantId);
         $clube = mercado_clube($pdo, $campeonatoId, $participantId);
+        $montagemInicial = !(bool)$clube['elenco_confirmado'] && $rodada === 1;
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'configurar_inicial') {
-            if ((bool)$clube['elenco_confirmado']) throw new RuntimeException('O elenco inicial já foi confirmado.');
-            $saldo = mercado_parse_valor((string)($_POST['saldo'] ?? '0'));
+            if (!$montagemInicial) throw new RuntimeException('A configuração inicial só pode ser alterada antes da primeira rodada.');
             $formacao = mercado_normalizar_formacao((string)($_POST['formacao'] ?? '4-3-3'), (string)($_POST['formacao_custom'] ?? ''));
-            if ($saldo < 0) throw new RuntimeException('Configuração inicial inválida.');
-            $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,formacao=? WHERE campeonato_id=? AND participante_id=?")->execute([$saldo, $formacao, $campeonatoId, $participantId]);
-            $message = 'Cofre e formação configurados.';
-        } elseif ($action === 'adicionar_inicial') {
-            if ((bool)$clube['elenco_confirmado']) throw new RuntimeException('O elenco está travado. Aguarde a janela.');
-            salvar_jogador($pdo, $campeonatoId, $participantId, $_POST);
-            $message = 'Jogador adicionado ao elenco inicial.';
+            $pdo->prepare("UPDATE clubes_campeonato SET formacao=? WHERE campeonato_id=? AND participante_id=?")->execute([$formacao, $campeonatoId, $participantId]);
+            $message = 'Formação inicial configurada.';
         } elseif ($action === 'confirmar_elenco') {
+            if (!mercado_pode_editar($clube, $rodada)) throw new RuntimeException('O elenco está travado nesta rodada. Só é possível visualizar.');
             $total = contar_titulares($pdo, $campeonatoId, $participantId);
             if ($total !== 11) throw new RuntimeException('Defina exatamente 11 titulares antes de confirmar.');
             mercado_validar_titulares_formacao($pdo, $campeonatoId, $participantId, (string)$clube['formacao']);
@@ -83,7 +79,7 @@ try {
             $pdo->commit();
             $message = 'Escalação atualizada.';
         } elseif (in_array($action, ['comprar', 'vender'], true)) {
-            if (!mercado_pode_editar($clube, $rodada) || !(bool)$clube['elenco_confirmado']) throw new RuntimeException('O elenco está travado nesta rodada.');
+            if (!mercado_pode_editar($clube, $rodada) || $montagemInicial) throw new RuntimeException('O mercado está indisponível nesta rodada.');
             $pdo->beginTransaction();
             $clube = mercado_clube($pdo, $campeonatoId, $participantId, true);
             $antes = (float)$clube['saldo'];
@@ -170,6 +166,8 @@ $ciclo = $campeonatoId && $participantId
     : mercado_estado_ciclo(1) + ['partidas_concluidas' => 0, 'proxima_partida' => 1];
 $elenco = [];
 $historico = [];
+$podeEditarMercado = $clube ? mercado_pode_editar($clube, $rodada) : false;
+$montagemInicial = $clube ? (!(bool)$clube['elenco_confirmado'] && $rodada === 1) : false;
 if ($clube) {
     $s = $pdo->prepare("SELECT * FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
     $s->execute([$campeonatoId, $participantId]);
@@ -191,30 +189,29 @@ if ($clube) {
     <link rel="stylesheet" href="assets/css/market.css">
 </head>
 
-<body><?php public_navbar('mercado'); ?><main class="container market-page"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
+<body><?php public_navbar('mercado'); ?><main class="container market-page" data-market-editable="<?= $podeEditarMercado ? '1' : '0' ?>"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
         <h1>GESTÃO DO ELENCO</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === $c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form>
         <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif ($clube): ?><section class="market-summary">
                 <div><small>Próxima partida do clube</small><strong><?= $rodada ?>ª</strong></div>
                 <div><small>Ciclo <?= $ciclo['ciclo'] ?></small><strong><?= $ciclo['aberto'] ? 'ALTERAÇÕES LIBERADAS' : 'ELENCO TRAVADO' ?></strong></div>
             </section>
             <section class="market-help-grid" aria-label="Ajuda para gestão do elenco">
-                <article><span>01</span><div><strong>Ciclo individual</strong><p>Este clube concluiu <?= $ciclo['partidas_concluidas'] ?> partida(s). O mercado abre após a 5ª e fica liberado para a 6ª, 7ª e 8ª partidas do próprio clube.</p></div></article>
+                <article><span>01</span><div><strong>Ciclo individual</strong><p>Este clube cumpriu <?= $ciclo['etapas_concluidas'] ?> rodada(s): <?= $ciclo['partidas_concluidas'] ?> jogo(s) e <?= $ciclo['folgas'] ?> folga(s). O mercado abre após a 5ª e fica liberado na 6ª, 7ª e 8ª rodadas do próprio ciclo.</p></div></article>
                 <article><span>02</span><div><strong>Titulares automáticos</strong><p>Marque somente os 11 titulares. Ao salvar, todos os jogadores não selecionados serão definidos automaticamente como banco.</p></div></article>
                 <article><span>03</span><div><strong>Formação e ordem automáticas</strong><p>Os titulares precisam respeitar os setores da formação. O sistema ordena ataque, meio, defesa e deixa o goleiro sempre por último.</p></div></article>
                 <article><span>04</span><div><strong>Cofre e janela</strong><p>O saldo do cofre pode ser corrigido a qualquer momento. Somente contratar, vender e alterar a escalação dependem da janela individual.</p></div></article>
             </section>
-            <?php if (!(bool)$clube['elenco_confirmado']): ?><section class="panel p-4 mb-4 market-config-panel">
+            <?php if ($montagemInicial): ?><section class="panel p-4 mb-4 market-config-panel">
                     <h2>CONFIGURAÇÃO INICIAL</h2>
                     <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="configurar_inicial">
-                        <div class="col-md-6"><label class="form-label">Saldo inicial</label><input class="form-control" type="number" step="1" min="0" name="saldo" value="<?= round((float)$clube['saldo']) ?>"></div>
                         <div class="col-md-6 formation-control"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">O sistema adiciona “Custom” automaticamente.</small></div>
                         <div><button class="btn btn-danger">Salvar configuração</button></div>
                     </form>
                 </section><?php endif; ?>
             <div id="mercado-transferencias" class="market-anchor" aria-hidden="true"></div>
-            <?php if (mercado_pode_editar($clube, $rodada)): ?><section class="panel p-4 mb-4 market-contract-panel">
-                    <h2><?= !(bool)$clube['elenco_confirmado'] ? 'ADICIONAR JOGADOR' : 'CONTRATAR JOGADOR' ?></h2>
-                    <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="<?= !(bool)$clube['elenco_confirmado'] ? 'adicionar_inicial' : 'comprar' ?>">
+            <?php if ($podeEditarMercado && !$montagemInicial): ?><section class="panel p-4 mb-4 market-contract-panel">
+                    <h2>ADICIONAR / CONTRATAR JOGADOR</h2>
+                    <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="comprar">
                         <div class="col-md-4"><input class="form-control" name="nome" placeholder="Nome do jogador" required></div>
                         <div class="col-md-2"><input class="form-control" type="number" min="1" max="99" name="overall" placeholder="Overall" required></div>
                         <div class="col-md-2"><select class="form-select" name="posicao"><?php foreach (MERCADO_POSICOES as $p): ?><option><?= $p ?></option><?php endforeach; ?></select></div>
@@ -222,15 +219,16 @@ if ($clube) {
                                 <option value="titular">Titular</option>
                                 <option value="banco">Banco</option>
                             </select></div><?php if ((bool)$clube['elenco_confirmado']): ?><div class="col-md-4"><label class="form-label">Origem do jogador</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option><option value="prancheta">Recebido pela prancheta</option></select></div><div class="col-md-5 acquisition-pack-field" hidden><label class="form-label">Pack recebido</label><select class="form-select" name="pack"><option value="">Selecione o pack</option><?php foreach (MERCADO_PACKS as $packId => $pack): ?><option value="<?= e($packId) ?>" data-min-ovr="<?= $pack['min'] ?>" data-max-ovr="<?= $pack['max'] ?>"><?= e($pack['nome']) ?> · <?= number_format((float)$pack['dream_points'], 0, ',', '.') ?> DP · <?= $pack['min'] ?><?= $pack['min'] !== $pack['max'] ? '–' . $pack['max'] : '' ?> OVR</option><?php endforeach; ?></select></div><div class="col-md-3 acquisition-value-field"><label class="form-label">Valor da compra</label><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="R$ 0" required></div><div class="col-12 acquisition-note alert alert-info mb-0" hidden></div><?php endif; ?><div><button class="btn btn-danger">Salvar jogador</button></div>
+                        <?php if (!(bool)$clube['elenco_confirmado'] && !$montagemInicial): ?><div class="col-md-4"><label class="form-label">Origem do jogador</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option><option value="prancheta">Recebido pela prancheta</option></select></div><div class="col-md-5 acquisition-pack-field" hidden><label class="form-label">Pack recebido</label><select class="form-select" name="pack"><option value="">Selecione o pack</option><?php foreach (MERCADO_PACKS as $packId => $pack): ?><option value="<?= e($packId) ?>" data-min-ovr="<?= $pack['min'] ?>" data-max-ovr="<?= $pack['max'] ?>"><?= e($pack['nome']) ?> · <?= number_format((float)$pack['dream_points'], 0, ',', '.') ?> DP · <?= $pack['min'] ?><?= $pack['min'] !== $pack['max'] ? '–' . $pack['max'] : '' ?> OVR</option><?php endforeach; ?></select></div><div class="col-md-3 acquisition-value-field"><label class="form-label">Valor da compra</label><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="R$ 0" required></div><div class="col-12 acquisition-note alert alert-info mb-0" hidden></div><?php endif; ?>
                     </form>
                 </section><?php endif; ?>
             <section class="panel p-4 mb-4" id="elenco">
                 <div class="d-flex justify-content-between">
-                    <h2>ELENCO</h2><?php if (!(bool)$clube['elenco_confirmado']): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="confirmar_elenco"><button class="btn btn-success">Confirmar 11 titulares</button></form><?php endif; ?>
+                    <h2>ELENCO</h2><?php if (!(bool)$clube['elenco_confirmado'] && $podeEditarMercado): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="confirmar_elenco"><button class="btn btn-success">Confirmar 11 titulares</button></form><?php endif; ?>
                 </div><?php if (mercado_pode_editar($clube, $rodada)): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_escalacao"><div class="formation-control mb-3"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">Três números que somem 10; “Custom” será adicionado automaticamente.</small></div>
                         <div class="lineup-selection-status"><strong><span data-selected-starters>0</span>/11 titulares selecionados</strong><small>Quem não estiver marcado será banco.</small></div>
                         <div class="roster-grid"><?php foreach ($elenco as $j): ?><article class="roster-select-card<?= $j['grupo'] === 'titular' ? ' is-starter' : '' ?>"><input type="hidden" name="jogador_id[]" value="<?= $j['id'] ?>"><label class="starter-toggle"><input type="checkbox" name="titular_id[]" value="<?= $j['id'] ?>" <?= $j['grupo'] === 'titular' ? 'checked' : '' ?>><span>Titular</span></label><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar escalação</button>
-                    </form><?php else: ?><div class="roster-grid"><?php foreach ($elenco as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?> · <?= e($j['grupo']) ?></span></article><?php endforeach; ?></div><?php endif; ?><?php if ((bool)$clube['elenco_confirmado'] && $ciclo['aberto']): ?>
+                    </form><?php else: ?><div class="roster-grid"><?php foreach ($elenco as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?> · <?= e($j['grupo']) ?></span></article><?php endforeach; ?></div><?php endif; ?><?php if (!$montagemInicial && $ciclo['aberto']): ?>
                     <hr>
                     <h2>VENDER JOGADOR</h2>
                     <form method="post" class="row g-2"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="vender">

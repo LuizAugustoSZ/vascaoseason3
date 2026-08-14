@@ -40,6 +40,15 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         "noticias" => ["noticias.php", "Notícias"],
     ];
     $participantId = account_logged_in() ? (int)(account_participant_id() ?? 0) : 0;
+    $teamNavLabel = 'Time';
+    if ($participantId > 0) {
+        try {
+            $teamLabelStmt = db()->prepare("SELECT time_nome FROM participantes WHERE id=? AND ativo=1 LIMIT 1");
+            $teamLabelStmt->execute([$participantId]);
+            $teamNavLabel = (string)($teamLabelStmt->fetchColumn() ?: 'Time');
+        } catch (Throwable $ignored) {
+        }
+    }
 ?>
     <div class="site-loading-screen" role="status" aria-live="polite" aria-label="Carregando página">
         <img src="assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true">
@@ -57,10 +66,10 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
                     <?php endforeach; ?>
                     <?php if ($participantId > 0): ?>
                         <li class="nav-item dropdown team-nav-dropdown">
-                            <a class="nav-link dropdown-toggle<?= in_array($active, ['time', 'mercado'], true) ? ' active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Time</a>
+                            <a class="nav-link dropdown-toggle<?= in_array($active, ['time', 'mercado'], true) ? ' active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><?= e($teamNavLabel) ?></a>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
                                 <li><a class="dropdown-item" href="time.php?id=<?= $participantId ?>">Página do time</a></li>
-                                <li><a class="dropdown-item" href="mercado.php">Mercado e cofre</a></li>
+                                <li><a class="dropdown-item" href="mercado.php">Transferências e escalação</a></li>
                             </ul>
                         </li>
                     <?php endif; ?>

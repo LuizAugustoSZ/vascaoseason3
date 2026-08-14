@@ -191,7 +191,60 @@ function mercado_partidas_concluidas(PDO $pdo, int $campeonatoId, int $participa
 
 function mercado_rodada_atual(PDO $pdo, int $campeonatoId, int $participanteId): int
 {
-    return mercado_partidas_concluidas($pdo, $campeonatoId, $participanteId) + 1;
+    return mercado_progresso_clube($pdo, $campeonatoId, $participanteId)['proxima_rodada'];
+}
+
+/**
+ * Calcula a rodada efetiva do clube. Uma rodada sem jogo entre dois compromissos
+ * do time é uma folga e conta normalmente no ciclo. Uma partida pendente sempre
+ * interrompe a progressão, mesmo que existam jogos cadastrados em rodadas futuras.
+ */
+function mercado_progresso_clube(PDO $pdo, int $campeonatoId, int $participanteId): array
+{
+    $stmt = $pdo->prepare("SELECT rodada,status FROM partidas WHERE campeonato_id=? AND ativo=1 AND (mandante_id=? OR visitante_id=?) ORDER BY rodada,id");
+    $stmt->execute([$campeonatoId, $participanteId, $participanteId]);
+    $porRodada = [];
+    foreach ($stmt->fetchAll() as $partida) {
+        $numero = (int)$partida['rodada'];
+        if ($numero < 1) continue;
+        $porRodada[$numero][] = (string)$partida['status'];
+    }
+
+    if (!$porRodada) {
+        return ['proxima_rodada' => 1, 'etapas_concluidas' => 0, 'partidas_concluidas' => 0, 'folgas' => 0];
+    }
+
+    $ultimaAgendada = max(array_keys($porRodada));
+    $etapas = $partidas = $folgas = 0;
+    for ($rodada = 1; $rodada <= $ultimaAgendada; $rodada++) {
+        if (!isset($porRodada[$rodada])) {
+            // Há compromisso posterior: esta lacuna é a folga oficial do clube.
+            $etapas++;
+            $folgas++;
+            continue;
+        }
+        $concluidas = array_filter(
+            $porRodada[$rodada],
+            static fn(string $status): bool => in_array($status, ['finalizada', 'wo'], true)
+        );
+        if (count($concluidas) !== count($porRodada[$rodada])) {
+            return [
+                'proxima_rodada' => $rodada,
+                'etapas_concluidas' => $etapas,
+                'partidas_concluidas' => $partidas,
+                'folgas' => $folgas,
+            ];
+        }
+        $etapas++;
+        $partidas += count($concluidas);
+    }
+
+    return [
+        'proxima_rodada' => $ultimaAgendada + 1,
+        'etapas_concluidas' => $etapas,
+        'partidas_concluidas' => $partidas,
+        'folgas' => $folgas,
+    ];
 }
 
 function mercado_aberto_na_rodada(int $rodada): bool
@@ -209,10 +262,12 @@ function mercado_estado_ciclo(int $rodada): array
 
 function mercado_estado_clube(PDO $pdo, int $campeonatoId, int $participanteId): array
 {
-    $concluidas = mercado_partidas_concluidas($pdo, $campeonatoId, $participanteId);
-    return mercado_estado_ciclo($concluidas + 1) + [
-        'partidas_concluidas' => $concluidas,
-        'proxima_partida' => $concluidas + 1,
+    $progresso = mercado_progresso_clube($pdo, $campeonatoId, $participanteId);
+    return mercado_estado_ciclo($progresso['proxima_rodada']) + [
+        'partidas_concluidas' => $progresso['partidas_concluidas'],
+        'etapas_concluidas' => $progresso['etapas_concluidas'],
+        'folgas' => $progresso['folgas'],
+        'proxima_partida' => $progresso['proxima_rodada'],
     ];
 }
 
@@ -226,5 +281,8 @@ function mercado_clube(PDO $pdo, int $campeonatoId, int $participanteId, bool $l
 
 function mercado_pode_editar(array $clube, int $rodada): bool
 {
-    return !(bool)$clube['elenco_confirmado'] || mercado_aberto_na_rodada($rodada);
+    // Antes do início da competição, a montagem inicial permanece disponível.
+    // Depois disso, até elenco ainda não confirmado obedece à janela do ciclo.
+    return (!(bool)$clube['elenco_confirmado'] && $rodada === 1)
+        || mercado_aberto_na_rodada($rodada);
 }

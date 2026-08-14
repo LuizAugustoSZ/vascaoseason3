@@ -223,6 +223,12 @@ if (marketTitle && championship && marketTransferPane) {
   const participant = new URLSearchParams(location.search).get('participante_id');
   link.href = `importar-elenco.php?campeonato_id=${encodeURIComponent(championship.value)}${participant ? `&participante_id=${encodeURIComponent(participant)}` : ''}`;
   link.textContent = 'Colar e analisar elenco';
+  if (marketPage.dataset.marketEditable !== '1') {
+    link.classList.add('disabled');
+    link.setAttribute('aria-disabled', 'true');
+    link.removeAttribute('href');
+    link.textContent = 'Elenco travado';
+  }
   panel.append(link);
   if (marketTransferPane) marketTransferPane.prepend(panel);
   else marketTitle.insertAdjacentElement('afterend', panel);

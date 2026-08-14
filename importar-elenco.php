@@ -22,12 +22,17 @@ if (!$participante || !$campeonato) {
     exit('Conta ou campeonato inválido.');
 }
 $clube = mercado_clube($pdo, $campeonato, $participante);
+$rodada = mercado_rodada_atual($pdo, $campeonato, $participante);
+$podeEditar = mercado_pode_editar($clube, $rodada);
 $erro = '';
 $preview = [];
 $texto = (string)($_POST['texto'] ?? '');
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         verify_csrf();
+        if (!$podeEditar) {
+            throw new RuntimeException('O elenco está travado nesta rodada. A importação está disponível somente durante a janela de transferências.');
+        }
         $preview = parse_elenco_dreamteam($texto);
         if (($_POST['action'] ?? '') === 'confirmar') {
             $pdo->beginTransaction();
