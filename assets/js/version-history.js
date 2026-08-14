@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['12.1','Tutorial do importador corrigiu os comandos do Discord para ..elenco ou /elenco.'],
 ['12.0','Importação completa passou a ficar sempre disponível ao técnico, permitindo substituir e reformular todo o elenco mesmo após uma importação anterior.'],
 ['11.9','Importador de elenco ganhou tutorial visual com o passo a passo para copiar a listagem do Discord, analisar a prévia e confirmar com segurança.'],
 ['11.8','Importação completa do elenco voltou ao topo de Transferências durante a montagem inicial, com limpeza automática de emojis, negrito e identificadores das cartas.'],
