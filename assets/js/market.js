@@ -185,12 +185,18 @@ if (marketPage && lineupSection && marketSummary) {
 
   const saleHeading = [...lineupSection.querySelectorAll('h2')].find(title => title.textContent.trim() === 'VENDER JOGADOR');
   if (saleHeading) {
-    const saleForm = saleHeading.nextElementSibling;
+    const saleHelp = saleHeading.nextElementSibling?.classList.contains('market-sale-help')
+      ? saleHeading.nextElementSibling
+      : null;
+    const saleForm = saleHelp?.nextElementSibling?.tagName === 'FORM'
+      ? saleHelp.nextElementSibling
+      : (saleHeading.nextElementSibling?.tagName === 'FORM' ? saleHeading.nextElementSibling : null);
     const saleDivider = saleHeading.previousElementSibling;
     const salePanel = document.createElement('section');
     salePanel.className = 'panel p-4 mb-4 market-sale-panel';
     salePanel.append(saleHeading);
-    if (saleForm?.tagName === 'FORM') salePanel.append(saleForm);
+    if (saleHelp) salePanel.append(saleHelp);
+    if (saleForm) salePanel.append(saleForm);
     if (saleDivider?.tagName === 'HR') saleDivider.remove();
     marketTransferPane.append(salePanel);
   }
