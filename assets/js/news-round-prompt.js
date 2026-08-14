@@ -28,7 +28,7 @@
       stageLabel.textContent = knockout ? 'Fase' : 'Rodada';
       round.innerHTML = options.map(item => {
         const value = knockout ? item.fase : item.rodada;
-        const label = knockout ? item.fase : `${item.rodada}ª rodada`;
+        const label = knockout ? (item.label || item.fase) : `${item.rodada}ª rodada`;
         return `<option value="${value}"${value === current ? ' selected' : ''}>${label}${item.tem_resultado ? '' : ' — sem resultado'}</option>`;
       }).join('');
       round.dataset.type = data.tipo;
