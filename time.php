@@ -53,7 +53,7 @@ try {
         if (in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_cofre_clube'], true)) {
             $saldo = mercado_parse_valor((string)($_POST['saldo'] ?? '0'));
             if ($saldo < 0) throw new RuntimeException('O saldo do cofre não pode ser negativo.');
-            $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,cofre_configurado=1 WHERE campeonato_id=? AND participante_id=?")->execute([$saldo, $campeonatoPerfilId, $id]);
+            $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,cofre_configurado=1 WHERE participante_id=?")->execute([$saldo, $id]);
         }
         if (in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_heroi_clube'], true)) {
             $favoritoId = (int)($_POST['jogador_favorito_id'] ?? 0);

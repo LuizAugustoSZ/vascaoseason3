@@ -281,7 +281,15 @@ function mercado_estado_clube(PDO $pdo, int $campeonatoId, int $participanteId):
 
 function mercado_clube(PDO $pdo, int $campeonatoId, int $participanteId, bool $lock = false): array
 {
-    $pdo->prepare("INSERT IGNORE INTO clubes_campeonato(campeonato_id,participante_id) VALUES(?,?)")->execute([$campeonatoId, $participanteId]);
+    $saldoAnterior = $pdo->prepare("SELECT saldo,cofre_configurado FROM clubes_campeonato WHERE participante_id=? AND cofre_configurado=1 ORDER BY atualizado_em DESC,id DESC LIMIT 1");
+    $saldoAnterior->execute([$participanteId]);
+    $cofre = $saldoAnterior->fetch() ?: ['saldo' => 0, 'cofre_configurado' => 0];
+    $pdo->prepare("INSERT IGNORE INTO clubes_campeonato(campeonato_id,participante_id,saldo,cofre_configurado) VALUES(?,?,?,?)")
+        ->execute([$campeonatoId, $participanteId, $cofre['saldo'], $cofre['cofre_configurado']]);
+    if ((bool)$cofre['cofre_configurado']) {
+        $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,cofre_configurado=1 WHERE campeonato_id=? AND participante_id=? AND cofre_configurado=0")
+            ->execute([$cofre['saldo'], $campeonatoId, $participanteId]);
+    }
     $stmt = $pdo->prepare("SELECT * FROM clubes_campeonato WHERE campeonato_id=? AND participante_id=?" . ($lock ? ' FOR UPDATE' : ''));
     $stmt->execute([$campeonatoId, $participanteId]);
     return $stmt->fetch();
