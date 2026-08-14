@@ -32,15 +32,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             )
         ) {
             session_regenerate_id(true);
-            $_SESSION["conta_id"] = (int) $conta["id"];
-            $_SESSION["conta_nome"] = $conta["nome"];
-            $_SESSION["conta_email"] = $conta["email"];
-            $_SESSION["conta_eh_admin"] = (int) $conta["eh_admin"];
-            $_SESSION["conta_trocar_senha"] = (int) $conta["trocar_senha"];
-            $_SESSION["participante_id"] =
-                $conta["participante_id"] === null
-                ? null
-                : (int) $conta["participante_id"];
+            auth_fill_session($conta);
+            if (!empty($_POST["manter_conectado"])) {
+                auth_remember_login((int)$conta["id"]);
+            } else {
+                auth_forget_login();
+            }
             db()
                 ->prepare("UPDATE contas SET ultimo_acesso_em=NOW() WHERE id=?")
                 ->execute([(int) $conta["id"]]);
@@ -86,7 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                                                                             csrf_token(),
                                                                                         ) ?>">
                 <div class="mb-3"><label class="form-label">E-mail</label><input class="form-control" type="email" name="email" autocomplete="email" required autofocus></div>
-                <div class="mb-4"><label class="form-label">Senha</label><input class="form-control" type="password" name="senha" autocomplete="current-password" required></div><button class="btn btn-danger w-100">Entrar</button>
+                <div class="mb-3"><label class="form-label">Senha</label><input class="form-control" type="password" name="senha" autocomplete="current-password" required></div><div class="form-check mb-4"><input class="form-check-input" type="checkbox" name="manter_conectado" value="1" id="manter-conectado" checked><label class="form-check-label" for="manter-conectado">Manter conectado neste dispositivo por 30 dias</label></div><button class="btn btn-danger w-100">Entrar</button>
             </form><small class="text-secondary d-block mt-3">Ainda não possui acesso? <a href="cadastro.php">Criar conta</a></small>
         </div>
     </main>
