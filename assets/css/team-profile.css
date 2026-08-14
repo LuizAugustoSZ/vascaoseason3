@@ -449,8 +449,21 @@
 }
 
 .future-grid .reserves-module {
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
     grid-column: 3;
     grid-row: 1 / span 2
+}
+
+.reserves-module .card-page-items {
+    flex: 1;
+    min-height: 0
+}
+
+.reserves-module .card-pages {
+    flex: 0 0 auto;
+    margin-top: auto
 }
 
 .future-grid .about-module {
