@@ -15,6 +15,7 @@ $responsavel = null;
 $elencoPublico = [];
 $clubePublico = null;
 $jogadorFavorito = null;
+$transferenciasPublicas = [];
 $canEditClubProfile = account_logged_in() && (int)(account_participant_id() ?? 0) === $id;
 $profileNotice = isset($_GET['perfil']) ? 'Perfil do clube atualizado.' : '';
 try {
@@ -108,6 +109,9 @@ try {
                 $stmt = $pdo->prepare("SELECT id,nome,overall,posicao,grupo,ordem,campo_x,campo_y FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
                 $stmt->execute([(int)$clubePublico['campeonato_id'], $id]);
                 $elencoPublico = $stmt->fetchAll();
+                $stmt = $pdo->prepare("SELECT tipo,jogador_nome,jogador_overall,jogador_posicao,valor,criado_em FROM movimentacoes_elenco WHERE campeonato_id=? AND participante_id=? AND tipo IN ('compra','venda') ORDER BY id DESC");
+                $stmt->execute([(int)$clubePublico['campeonato_id'], $id]);
+                $transferenciasPublicas = $stmt->fetchAll();
                 foreach ($elencoPublico as $jogadorElenco) {
                     if ((int)$jogadorElenco['id'] === (int)$clubePublico['jogador_favorito_id']) {
                         $jogadorFavorito = $jogadorElenco;
@@ -410,7 +414,13 @@ function match_score(array $j): string
                     <strong><?= $clubePublico ? 'R$ ' . number_format((float)$clubePublico['saldo'], 2, ',', '.') : 'R$ —' ?></strong>
                     <p><?= $clubePublico ? 'Saldo atualizado do clube.' : 'Saldo ainda não informado.' ?></p>
                 </article>
-                <article class="transfers-module" data-card-pages="5">
+                <article class="transfer-history-module" data-transfer-module data-items-per-page="4">
+                    <h3>Transferências</h3>
+                    <div class="transfer-filters" role="group" aria-label="Filtrar transferências"><button class="active" type="button" data-transfer-filter="todas">Todas</button><button type="button" data-transfer-filter="compra">Compras</button><button type="button" data-transfer-filter="venda">Vendas</button></div>
+                    <div class="transfer-page-items"><?php foreach ($transferenciasPublicas as $transferencia): ?><div class="transfer-entry" data-transfer-type="<?= e($transferencia['tipo']) ?>"><span class="transfer-kind <?= $transferencia['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= $transferencia['tipo'] === 'compra' ? 'Compra' : 'Venda' ?></span><b><?= e($transferencia['jogador_nome']) ?></b><small><?= (int)$transferencia['jogador_overall'] ?> · <?= e($transferencia['jogador_posicao']) ?></small><strong>R$ <?= number_format((float)$transferencia['valor'], 2, ',', '.') ?></strong></div><?php endforeach; ?><?php if (!$transferenciasPublicas): ?><p class="module-empty">Nenhuma transferência registrada.</p><?php endif; ?></div>
+                    <nav class="transfer-pages card-pages"></nav>
+                </article>
+                <article class="reserves-module" data-card-pages="5">
                     <h3>Banco de reservas</h3>
                     <div class="card-page-items"><?php $reservas = array_values(array_filter($elencoPublico, fn($j) => $j['grupo'] === 'banco'));
                                                     foreach ($reservas as $jogador): ?><p><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></p><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado.</div><?php endif; ?></div>

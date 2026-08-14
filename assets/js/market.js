@@ -20,6 +20,16 @@ document.querySelectorAll('input[name="saldo"], input[name="valor"]').forEach(in
   input.addEventListener('input', () => formatBRLInput(input));
 });
 
+const starterInputs = [...document.querySelectorAll('input[name="titular_id[]"]')];
+const starterCount = document.querySelector('[data-selected-starters]');
+function updateStarterSelection() {
+  const selected = starterInputs.filter(input => input.checked).length;
+  if (starterCount) starterCount.textContent = selected;
+  starterInputs.forEach(input => input.closest('.roster-select-card')?.classList.toggle('is-starter', input.checked));
+}
+starterInputs.forEach(input => input.addEventListener('change', updateStarterSelection));
+updateStarterSelection();
+
 const marketTitle = document.querySelector('.market-page h1');
 const championship = document.querySelector('input[name="campeonato_id"], select[name="campeonato_id"]');
 if (marketTitle && championship && document.querySelector('input[value="adicionar_inicial"]')) {
