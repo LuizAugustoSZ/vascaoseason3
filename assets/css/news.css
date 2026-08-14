@@ -43,6 +43,7 @@
 }
 
 .news-editor {
+    position: relative;
     min-height: 430px;
     padding: 1.25rem;
     background: #fff;
@@ -50,6 +51,12 @@
     border: 1px solid var(--line);
     outline: 0;
     line-height: 1.75
+}
+
+.news-editor:empty::before {
+    content: attr(data-placeholder);
+    color: #777;
+    pointer-events: none
 }
 
 .news-editor h2,
