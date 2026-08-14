@@ -59,7 +59,7 @@ $news = $stmt->fetchAll();
                                             $item["capa_base64"],
                                         ) ?>" alt=""></a>
                             <div class="news-card-body"><span class="news-meta"><?= e(
-                                                                                    date("d/m/Y H:i", strtotime($item["publicado_em"])),
+                                                                                    format_datetime_br($item["publicado_em"]),
                                                                                 ) ?> • <?= e(
                                             $item["autor"],
                                         ) ?></span>

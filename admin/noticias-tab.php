@@ -43,7 +43,7 @@
       <?php foreach ($newsAdmin as $item): ?><article><h3><?= e(
     $item["titulo"],
 ) ?></h3><small><?= e(
-    date("d/m/Y H:i", strtotime($item["publicado_em"])),
+    format_datetime_br($item["publicado_em"]),
 ) ?> • <?= e(
      $item["autor"],
  ) ?></small><div class="d-flex gap-2 mt-2"><button type="button" class="btn btn-sm btn-outline-light editar-noticia" data-id="<?= $item[
