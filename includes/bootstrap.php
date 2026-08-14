@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 // Inicia a sessão usada no login, CSRF e mensagens.

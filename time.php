@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 require __DIR__ . "/includes/bootstrap.php";
 require __DIR__ . "/includes/public-layout.php";
@@ -76,7 +77,7 @@ try {
             $clubePublico = $stmt->fetch() ?: null;
             if ($clubePublico) {
                 $stmt = $pdo->prepare("SELECT nome,overall,posicao,grupo,ordem,campo_x,campo_y FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
-                $stmt->execute([(int)$clubePublico['campeonato_id'],$id]);
+                $stmt->execute([(int)$clubePublico['campeonato_id'], $id]);
                 $elencoPublico = $stmt->fetchAll();
             }
         } catch (Throwable $ignored) {
@@ -168,8 +169,8 @@ function shield(array $team, string $prefix = ""): string
     return $url
         ? '<span class="match-shield"><img src="' . e($url) . '" alt=""></span>'
         : '<span class="match-shield match-shield--fallback">' .
-                e($sigla) .
-                "</span>";
+        e($sigla) .
+        "</span>";
 }
 function match_team(array $j, string $side, bool $showName = true): string
 {
@@ -184,11 +185,11 @@ function match_team(array $j, string $side, bool $showName = true): string
         (!$showName
             ? shield($j, $prefix)
             : ($side === "away"
-            ? "<span>" .
+                ? "<span>" .
                 e($name) .
                 "</span>" .
                 shield($j, $prefix)
-            : shield($j, $prefix) .
+                : shield($j, $prefix) .
                 "<span>" .
                 e($name) .
                 "</span>")) .
@@ -207,137 +208,192 @@ function match_score(array $j): string
         ($awayPenalties !== null ? "(" . (int) $awayPenalties . ")" : "");
 }
 ?>
-<!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e(
-    $time ? $time["time_nome"] . " | Vascão S3" : "Time não encontrado",
-) ?></title><link rel="icon" href="favicon.ico"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/branding.css?v=5"><link rel="stylesheet" href="assets/css/team-profile.css?v=<?= filemtime(
-    __DIR__ . "/assets/css/team-profile.css",
-) ?>"><link rel="stylesheet" href="assets/css/socials.css?v=<?= filemtime(__DIR__ . "/assets/css/socials.css") ?>"></head><body>
-<?php public_navbar(); ?>
-<?php if (
-    !$time
-): ?><main class="wide-container error-page"><h1><?= $databaseUnavailable
-    ? "Dados indisponíveis"
-    : "Time não encontrado" ?></h1><a class="btn btn-danger" href="index.php#participantes">Ver participantes</a></main><?php else: ?>
-<header class="club-hero"><div class="wide-container club-hero-grid"><div class="club-main-shield"><?php if (
-    $time["escudo_url"]
-): ?><img src="<?= e($time["escudo_url"]) ?>" alt="Escudo de <?= e(
-    $time["time_nome"],
-) ?>"><?php else: ?><span><?= e(
-    $time["sigla"],
-) ?></span><?php endif; ?></div><div class="club-copy"><a class="club-back-link" href="index.php#participantes" aria-label="Voltar para todos os times"><span aria-hidden="true">←</span> Todos os times</a><h1><?= e(
-    $time["time_nome"],
-) ?></h1><p><b><?= e($time["sigla"]) ?></b><i></i>Técnico: <strong><?= e(
-    $time["nome"],
-) ?></strong></p><small>Participante da Season 3</small><div><?= e(
-    $time["descricao"] ?: "Participante da Vascão Season 3.",
-) ?></div></div><?php if (!$responsavel): ?><aside class="claim-card"><small>Essa página tem dono?</small><h2>Página não vinculada</h2><p>A associação desta página é confirmada pela administração.</p><?php if (
-    !account_logged_in()
-): ?><a class="btn btn-outline-danger" href="cadastro.php">Criar conta</a><?php endif; ?></aside><?php endif; ?><?php if (
-    $time["escudo_url"]
-): ?><img class="club-watermark" src="<?= e(
-    $time["escudo_url"],
-) ?>" alt="" aria-hidden="true"><?php endif; ?></div></header>
-<main class="wide-container club-page"><section class="club-stats"><?php foreach (
-    $stats
-    as $label => $value
-): ?><div><small><?= e($label) ?></small><strong><?= ($label === "Saldo" &&
-$value > 0
-    ? "+"
-    : "") .
-    $value ?></strong></div><?php endforeach; ?></section><small class="auto-label">Atualizado automaticamente pelas competições</small>
-<section class="overview-grid"><article class="overview-card recent-card" data-card-pages="3"><h3>Últimos jogos</h3><div class="card-page-items"><?php foreach (
-    $jogadas
-    as $j
-): ?><div class="compact-match match-open" tabindex="0" role="button" data-match-type="<?= $j["origem"] === "mata" ? "mata" : "pontos" ?>" data-match-id="<?= (int) $j["id"] ?>"><?= match_team($j, "home") ?><b><?= match_score(
-    $j,
-) ?></b><?= match_team(
-    $j,
-    "away",
-) ?></div><?php endforeach; ?></div><?php if (
-    !$jogadas
-): ?><p class="empty-copy">Nenhum resultado.</p><?php endif; ?><nav class="card-pages"></nav></article><article class="overview-card next-card" data-card-pages="1"><h3>Próximo confronto</h3><div class="card-page-items"><?php foreach (
-    $proximas
-    as $j
-): ?><div class="next-item match-open" tabindex="0" role="button" data-match-type="<?= $j["origem"] === "mata" ? "mata" : "pontos" ?>" data-match-id="<?= (int) $j["id"] ?>"><div class="versus"><?= match_team(
-    $j,
-    "home",
-    false,
-) ?><b>VS</b><?= match_team($j, "away", false) ?></div><p><?= e(
-    $j["origem"] === "pontos" ? "Rodada " . $j["etapa"] : $j["etapa"],
-) ?><br><?= $j["data_jogo"]
-    ? e(date("d/m • H:i", strtotime($j["data_jogo"])))
-    : "Data a definir" ?></p></div><?php endforeach; ?></div><?php if (
-    !$proximas
-): ?><p class="empty-copy">Nenhum confronto agendado.</p><?php endif; ?><nav class="card-pages"></nav></article><article class="overview-card rivalry-card"><h3>Confronto direto</h3><?php if (
-    $rival
-): ?><div class="versus"><?= shield($time) ?><b>VS</b><?= shield(
-    $rival,
-) ?></div><strong><?= e($rival["nome"]) ?></strong><p><?= $rival[
-    "jogos"
-] ?> jogos • <?= $rival["v"] ?> vitórias • <?= $rival[
-     "e"
- ] ?> empates • <?= $rival[
-     "d"
- ] ?> derrotas</p><?php else: ?><p class="empty-copy">Sem histórico disponível.</p><?php endif; ?></article><article class="overview-card scorers-card" data-card-pages="3"><h3>Artilheiros</h3><div class="card-page-items"><?php
-foreach ($artilheiros as $pos => $a): ?><div><b><?= str_pad(
-    (string) ($pos + 1),
-    2,
-    "0",
-    STR_PAD_LEFT,
-) ?></b><span><?= e($a["jogador"]) ?></span><strong><?= $a[
-    "gols"
-] ?></strong></div><?php endforeach;
-if (
-    !$artilheiros
-): ?><p class="empty-copy">Nenhum gol registrado.</p><?php endif;
-?></div><nav class="card-pages"></nav></article></section>
-<?php if ($titulos): ?>
-  <section class="titles-strip">
-    <h3>Títulos e campanhas</h3>
-    <?php foreach ($titulos as $titulo): ?>
-      <div>
-        <span>🏆</span>
-        <b><?= e($titulo["titulo"]) ?></b>
-        <small><?= e($titulo["temporada"]) ?></small>
-      </div>
-    <?php endforeach; ?>
-  </section>
-<?php endif; ?>
-<section class="future-label">Conteúdo mantido pelo técnico</section>
-<section class="future-grid">
-  <article class="lineup-placeholder">
-    <div class="lineup-module-head"><h3>Escalação atual</h3><?php if (account_logged_in() && (int)($_SESSION['participante_id'] ?? 0) === $id): ?><a class="lineup-edit-button" href="mercado.php<?= $clubePublico ? '?campeonato_id='.(int)$clubePublico['campeonato_id'] : '' ?>">Editar escalação</a><?php endif; ?></div>
-    <?php if ($clubePublico): ?><strong class="public-formation"><?= e($clubePublico['formacao']) ?></strong><div class="public-roster"><?php foreach ($elencoPublico as $jogador): if ($jogador['grupo'] !== 'titular') continue; ?><div><b><?= e($jogador['nome']) ?></b><span><?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></span></div><?php endforeach; ?></div><?php else: ?>
-    <div class="empty-pitch">
-      <span></span><span></span><span></span><span></span>
-      <span></span><span></span><span></span><span></span>
-      <span></span><span></span><span></span>
-      <p>Escalação ainda não informada</p>
-    </div>
-    <?php endif; ?>
-  </article>
-  <article class="treasury-module">
-    <h3>Cofre do clube</h3>
-    <strong><?= $clubePublico ? 'R$ '.number_format((float)$clubePublico['saldo'],2,',','.') : 'R$ —' ?></strong>
-    <p><?= $clubePublico ? 'Saldo atualizado do clube.' : 'Saldo ainda não informado.' ?></p>
-  </article>
-  <article class="transfers-module" data-card-pages="5">
-    <h3>Banco de reservas</h3>
-    <div class="card-page-items"><?php $reservas = array_values(array_filter($elencoPublico, fn($j) => $j['grupo'] === 'banco')); foreach ($reservas as $jogador): ?><p><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></p><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado.</div><?php endif; ?></div><nav class="card-pages"></nav>
-  </article>
-  <article class="wall-module">
-    <h3>Mural do clube</h3>
-    <blockquote>Nenhuma publicação do clube.</blockquote>
-  </article>
-  <article class="about-module">
-    <h3>Sobre o clube</h3>
-    <p><?= e(
-    $time["descricao"] ?:
-    "As informações do clube ainda não foram publicadas pelo responsável.",
-) ?></p>
-  </article>
-</section>
-</main>
-<?php endif; ?><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/team-page.js?v=<?= filemtime(
-    __DIR__ . "/assets/js/team-page.js",
-) ?>"></script></body></html>
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="dark">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><?= e(
+                $time ? $time["time_nome"] . " | Vascão S3" : "Time não encontrado",
+            ) ?></title>
+    <link rel="icon" href="favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/branding.css?v=5">
+    <link rel="stylesheet" href="assets/css/team-profile.css?v=<?= filemtime(
+                                                                    __DIR__ . "/assets/css/team-profile.css",
+                                                                ) ?>">
+    <link rel="stylesheet" href="assets/css/socials.css?v=<?= filemtime(__DIR__ . "/assets/css/socials.css") ?>">
+</head>
+
+<body>
+    <?php public_navbar(); ?>
+    <?php if (
+        !$time
+    ): ?><main class="wide-container error-page">
+            <h1><?= $databaseUnavailable
+                    ? "Dados indisponíveis"
+                    : "Time não encontrado" ?></h1><a class="btn btn-danger" href="index.php#participantes">Ver participantes</a>
+        </main><?php else: ?>
+        <header class="club-hero">
+            <div class="wide-container club-hero-grid">
+                <div class="club-main-shield"><?php if (
+                                                    $time["escudo_url"]
+                                                ): ?><img src="<?= e($time["escudo_url"]) ?>" alt="Escudo de <?= e(
+                                                                                                                    $time["time_nome"],
+                                                                                                                ) ?>"><?php else: ?><span><?= e(
+                                                                                                $time["sigla"],
+                                                                                            ) ?></span><?php endif; ?></div>
+                <div class="club-copy"><a class="club-back-link" href="index.php#participantes" aria-label="Voltar para todos os times"><span aria-hidden="true">←</span> Todos os times</a>
+                    <h1><?= e(
+                            $time["time_nome"],
+                        ) ?></h1>
+                    <p><b><?= e($time["sigla"]) ?></b><i></i>Técnico: <strong><?= e(
+                                                                                    $time["nome"],
+                                                                                ) ?></strong></p><small>Participante da Season 3</small>
+                    <div><?= e(
+                                $time["descricao"] ?: "Participante da Vascão Season 3.",
+                            ) ?></div>
+                </div><?php if (!$responsavel): ?><aside class="claim-card"><small>Essa página tem dono?</small>
+                        <h2>Página não vinculada</h2>
+                        <p>A associação desta página é confirmada pela administração.</p><?php if (
+                                                                                                !account_logged_in()
+                                                                                            ): ?><a class="btn btn-outline-danger" href="cadastro.php">Criar conta</a><?php endif; ?>
+                    </aside><?php endif; ?><?php if (
+                                                $time["escudo_url"]
+                                            ): ?><img class="club-watermark" src="<?= e(
+                                                                                        $time["escudo_url"],
+                                                                                    ) ?>" alt="" aria-hidden="true"><?php endif; ?>
+            </div>
+        </header>
+        <main class="wide-container club-page">
+            <section class="club-stats"><?php foreach (
+                                            $stats
+                                            as $label => $value
+                                        ): ?><div><small><?= e($label) ?></small><strong><?= ($label === "Saldo" &&
+                                                                                                $value > 0
+                                                                                                ? "+"
+                                                                                                : "") .
+                                                                                                $value ?></strong></div><?php endforeach; ?></section><small class="auto-label">Atualizado automaticamente pelas competições</small>
+            <section class="overview-grid">
+                <article class="overview-card recent-card" data-card-pages="3">
+                    <h3>Últimos jogos</h3>
+                    <div class="card-page-items"><?php foreach (
+                                                        $jogadas
+                                                        as $j
+                                                    ): ?><div class="compact-match match-open" tabindex="0" role="button" data-match-type="<?= $j["origem"] === "mata" ? "mata" : "pontos" ?>" data-match-id="<?= (int) $j["id"] ?>"><?= match_team($j, "home") ?><b><?= match_score(
+                                                                                                                                                                                                                                                                            $j,
+                                                                                                                                                                                                                                                                        ) ?></b><?= match_team(
+                                                                                                                                                                                                                                $j,
+                                                                                                                                                                                                                                "away",
+                                                                                                                                                                                                                            ) ?></div><?php endforeach; ?></div><?php if (
+                                                                                                !$jogadas
+                                                                                            ): ?><p class="empty-copy">Nenhum resultado.</p><?php endif; ?><nav class="card-pages"></nav>
+                </article>
+                <article class="overview-card next-card" data-card-pages="1">
+                    <h3>Próximo confronto</h3>
+                    <div class="card-page-items"><?php foreach (
+                                                        $proximas
+                                                        as $j
+                                                    ): ?><div class="next-item match-open" tabindex="0" role="button" data-match-type="<?= $j["origem"] === "mata" ? "mata" : "pontos" ?>" data-match-id="<?= (int) $j["id"] ?>">
+                                <div class="versus"><?= match_team(
+                                                            $j,
+                                                            "home",
+                                                            false,
+                                                        ) ?><b>VS</b><?= match_team($j, "away", false) ?></div>
+                                <p><?= e(
+                                                            $j["origem"] === "pontos" ? "Rodada " . $j["etapa"] : $j["etapa"],
+                                                        ) ?><br><?= $j["data_jogo"]
+                                                                    ? e(date("d/m • H:i", strtotime($j["data_jogo"])))
+                                                                    : "Data a definir" ?></p>
+                            </div><?php endforeach; ?></div><?php if (
+                                                                !$proximas
+                                                            ): ?><p class="empty-copy">Nenhum confronto agendado.</p><?php endif; ?><nav class="card-pages"></nav>
+                </article>
+                <article class="overview-card rivalry-card">
+                    <h3>Confronto direto</h3><?php if (
+                                                    $rival
+                                                ): ?><div class="versus"><?= shield($time) ?><b>VS</b><?= shield(
+                                                                                                            $rival,
+                                                                                                        ) ?></div><strong><?= e($rival["nome"]) ?></strong>
+                        <p><?= $rival["jogos"] ?> jogos • <?= $rival["v"] ?> vitórias • <?= $rival["e"] ?> empates • <?= $rival["d"] ?> derrotas</p><?php else: ?><p class="empty-copy">Sem histórico disponível.</p><?php endif; ?>
+                </article>
+                <article class="overview-card scorers-card" data-card-pages="3">
+                    <h3>Artilheiros</h3>
+                    <div class="card-page-items"><?php
+                                                    foreach ($artilheiros as $pos => $a): ?><div><b><?= str_pad(
+                                                                                                        (string) ($pos + 1),
+                                                                                                        2,
+                                                                                                        "0",
+                                                                                                        STR_PAD_LEFT,
+                                                                                                    ) ?></b><span><?= e($a["jogador"]) ?></span><strong><?= $a["gols"] ?></strong></div><?php endforeach;
+                                                                                                                                        if (
+                                                                                                                                            !$artilheiros
+                                                                                                                                        ): ?><p class="empty-copy">Nenhum gol registrado.</p><?php endif;
+                                                                                                            ?></div>
+                    <nav class="card-pages"></nav>
+                </article>
+            </section>
+            <?php if ($titulos): ?>
+                <section class="titles-strip">
+                    <h3>Títulos e campanhas</h3>
+                    <?php foreach ($titulos as $titulo): ?>
+                        <div>
+                            <span>🏆</span>
+                            <b><?= e($titulo["titulo"]) ?></b>
+                            <small><?= e($titulo["temporada"]) ?></small>
+                        </div>
+                    <?php endforeach; ?>
+                </section>
+            <?php endif; ?>
+            <section class="future-label">Conteúdo mantido pelo técnico</section>
+            <section class="future-grid">
+                <article class="lineup-placeholder">
+                    <div class="lineup-module-head">
+                        <h3>Escalação atual</h3><?php if (account_logged_in() && (int)($_SESSION['participante_id'] ?? 0) === $id): ?><a class="lineup-edit-button" href="mercado.php<?= $clubePublico ? '?campeonato_id=' . (int)$clubePublico['campeonato_id'] : '' ?>">Editar escalação</a><?php endif; ?>
+                    </div>
+                    <?php if ($clubePublico): ?><strong class="public-formation"><?= e($clubePublico['formacao']) ?></strong>
+                        <div class="public-roster"><?php foreach ($elencoPublico as $jogador): if ($jogador['grupo'] !== 'titular') continue; ?><div><b><?= e($jogador['nome']) ?></b><span><?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></span></div><?php endforeach; ?></div><?php else: ?>
+                        <div class="empty-pitch">
+                            <span></span><span></span><span></span><span></span>
+                            <span></span><span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
+                            <p>Escalação ainda não informada</p>
+                        </div>
+                    <?php endif; ?>
+                </article>
+                <article class="treasury-module">
+                    <h3>Cofre do clube</h3>
+                    <strong><?= $clubePublico ? 'R$ ' . number_format((float)$clubePublico['saldo'], 2, ',', '.') : 'R$ —' ?></strong>
+                    <p><?= $clubePublico ? 'Saldo atualizado do clube.' : 'Saldo ainda não informado.' ?></p>
+                </article>
+                <article class="transfers-module" data-card-pages="5">
+                    <h3>Banco de reservas</h3>
+                    <div class="card-page-items"><?php $reservas = array_values(array_filter($elencoPublico, fn($j) => $j['grupo'] === 'banco'));
+                                                    foreach ($reservas as $jogador): ?><p><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></p><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado.</div><?php endif; ?></div>
+                    <nav class="card-pages"></nav>
+                </article>
+                <article class="wall-module">
+                    <h3>Mural do clube</h3>
+                    <blockquote>Nenhuma publicação do clube.</blockquote>
+                </article>
+                <article class="about-module">
+                    <h3>Sobre o clube</h3>
+                    <p><?= e(
+                            $time["descricao"] ?:
+                                "As informações do clube ainda não foram publicadas pelo responsável.",
+                        ) ?></p>
+                </article>
+            </section>
+        </main>
+        <?php endif; ?><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="assets/js/team-page.js?v=<?= filemtime(
+                                                    __DIR__ . "/assets/js/team-page.js",
+                                                ) ?>"></script>
+</body>
+
+</html>

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 function dreamteam_clean_line(string $line): string
@@ -73,16 +74,18 @@ function dreamteam_parse_summary(string $raw): array
         $code = $line;
         $block = implode("\n", array_slice($lines, $index + 1, 12));
         $stats = [];
-        foreach ([
-            'shots' => 'Finalizações',
-            'shots_on_target' => 'No gol',
-            'saves' => 'Defesas',
-            'corners' => 'Escanteios',
-            'possession' => 'Posse',
-            'fouls_suffered' => 'Faltas Sofridas',
-            'yellow_cards' => 'Amarelos',
-            'red_cards' => 'Vermelhos',
-        ] as $key => $label) {
+        foreach (
+            [
+                'shots' => 'Finalizações',
+                'shots_on_target' => 'No gol',
+                'saves' => 'Defesas',
+                'corners' => 'Escanteios',
+                'possession' => 'Posse',
+                'fouls_suffered' => 'Faltas Sofridas',
+                'yellow_cards' => 'Amarelos',
+                'red_cards' => 'Vermelhos',
+            ] as $key => $label
+        ) {
             $stats[$key] = preg_match('/' . preg_quote($label, '/') . ':\s*(\d+)/ui', $block, $value) ? (int) $value[1] : null;
         }
         $scorers = [];
