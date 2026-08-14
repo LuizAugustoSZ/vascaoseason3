@@ -5,6 +5,16 @@ require __DIR__ . "/includes/bootstrap.php";
 require __DIR__ . "/includes/public-layout.php";
 require __DIR__ . "/includes/mercado.php";
 $id = (int) ($_GET["id"] ?? 0);
+if ($id <= 0 && account_logged_in()) {
+    $linkedParticipantId = (int)(account_participant_id() ?? 0);
+    if ($linkedParticipantId > 0) {
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            header('Location: time.php?id=' . $linkedParticipantId);
+            exit;
+        }
+        $id = $linkedParticipantId;
+    }
+}
 $time = null;
 $databaseUnavailable = false;
 $artilheiros = [];
