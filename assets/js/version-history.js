@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['11.9','Importador de elenco ganhou tutorial visual com o passo a passo para copiar a listagem do Discord, analisar a prévia e confirmar com segurança.'],
 ['11.8','Importação completa do elenco voltou ao topo de Transferências durante a montagem inicial, com limpeza automática de emojis, negrito e identificadores das cartas.'],
 ['11.7','Contratações ganharam origens Compra, Pack, Passe e Sorteio; packs validam OVR, registram custos em DP e não alteram o cofre em Real.'],
 ['11.6','Modal de titulares e banco foi ampliado e os cards ficaram mais espaçosos, removendo o aviso visual sobre ordenação automática.'],
