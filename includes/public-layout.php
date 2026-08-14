@@ -60,10 +60,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
                             <a class="nav-link dropdown-toggle<?= in_array($active, ['time', 'mercado'], true) ? ' active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Time</a>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
                                 <li><a class="dropdown-item" href="time.php?id=<?= $participantId ?>">Página do time</a></li>
-                                <li><a class="dropdown-item" href="mercado.php#mercado-transferencias">Mercado e cofre</a></li>
-                                <li><a class="dropdown-item" href="mercado.php#elenco">Titulares e banco</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="time.php?id=<?= $participantId ?>#conteudo-clube">Mural e herói do time</a></li>
+                                <li><a class="dropdown-item" href="mercado.php">Mercado e cofre</a></li>
                             </ul>
                         </li>
                     <?php endif; ?>

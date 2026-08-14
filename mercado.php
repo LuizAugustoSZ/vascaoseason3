@@ -182,7 +182,7 @@ if ($clube) {
                 <article><span>03</span><div><strong>Formação e ordem automáticas</strong><p>Os titulares precisam respeitar os setores da formação. O sistema ordena ataque, meio, defesa e deixa o goleiro sempre por último.</p></div></article>
                 <article><span>04</span><div><strong>Cofre e janela</strong><p>O saldo do cofre pode ser corrigido a qualquer momento. Somente contratar, vender e alterar a escalação dependem da janela individual.</p></div></article>
             </section>
-            <?php if (!(bool)$clube['elenco_confirmado']): ?><section class="panel p-4 mb-4">
+            <?php if (!(bool)$clube['elenco_confirmado']): ?><section class="panel p-4 mb-4 market-config-panel">
                     <h2>CONFIGURAÇÃO INICIAL</h2>
                     <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="configurar_inicial">
                         <div class="col-md-6"><label class="form-label">Saldo inicial</label><input class="form-control" type="number" step="1" min="0" name="saldo" value="<?= round((float)$clube['saldo']) ?>"></div>
@@ -191,7 +191,7 @@ if ($clube) {
                     </form>
                 </section><?php endif; ?>
             <div id="mercado-transferencias" class="market-anchor" aria-hidden="true"></div>
-            <?php if (mercado_pode_editar($clube, $rodada)): ?><section class="panel p-4 mb-4">
+            <?php if (mercado_pode_editar($clube, $rodada)): ?><section class="panel p-4 mb-4 market-contract-panel">
                     <h2><?= !(bool)$clube['elenco_confirmado'] ? 'ADICIONAR JOGADOR' : 'CONTRATAR JOGADOR' ?></h2>
                     <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="<?= !(bool)$clube['elenco_confirmado'] ? 'adicionar_inicial' : 'comprar' ?>">
                         <div class="col-md-4"><input class="form-control" name="nome" placeholder="Nome do jogador" required></div>
