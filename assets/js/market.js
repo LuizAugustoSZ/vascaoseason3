@@ -4,9 +4,8 @@ function formatBRLInput(input) {
     input.value = '';
     return;
   }
-  const padded = digits.padStart(3, '0');
-  const integer = padded.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  input.value = `R$ ${integer},${padded.slice(-2)}`;
+  const integer = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  input.value = `R$ ${integer}`;
 }
 
 document.querySelectorAll('input[name="saldo"], input[name="valor"]').forEach(input => {
@@ -15,7 +14,7 @@ document.querySelectorAll('input[name="saldo"], input[name="valor"]').forEach(in
   input.placeholder = 'R$ 0,00';
   if (input.value) {
     const value = Number(input.value.replace(',', '.'));
-    if (Number.isFinite(value)) input.value = `R$ ${value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    if (Number.isFinite(value)) input.value = `R$ ${Math.round(value).toLocaleString('pt-BR', {maximumFractionDigits: 0})}`;
   }
   input.addEventListener('input', () => formatBRLInput(input));
 });

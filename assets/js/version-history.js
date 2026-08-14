@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['10.6','Cofre e transferências passaram a usar valores inteiros sem centavos; a edição do Mural também foi removida após a retirada do módulo público.'],
 ['10.5','Todas as páginas públicas ganharam loading completo; tabelas do painel receberam indicador de dados e o perfil do time ganhou Sobre acima da escalação e transferências ampliadas.'],
 ['10.4','Páginas públicas ganharam uma tela de carregamento que aguarda estilos, fontes, imagens e scripts antes de revelar o layout final.'],
 ['10.3','Mural e Herói do time foram separados no grid do perfil, eliminando a sobreposição entre os módulos na linha inferior.'],

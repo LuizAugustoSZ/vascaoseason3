@@ -167,7 +167,7 @@ if ($clube) {
 <body><?php public_navbar('mercado'); ?><main class="container market-page"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
         <h1>ELENCO E COFRE</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === $c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form>
         <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif ($clube): ?><section class="market-summary" id="cofre">
-                <div class="market-treasury-card"><small>Cofre</small><strong>R$ <?= number_format((float)$clube['saldo'], 2, ',', '.') ?></strong><button class="btn btn-sm btn-outline-light mt-2" type="button" data-bs-toggle="modal" data-bs-target="#treasury-edit-modal">Editar saldo</button></div>
+                <div class="market-treasury-card"><small>Cofre</small><strong>R$ <?= number_format((float)$clube['saldo'], 0, ',', '.') ?></strong><button class="btn btn-sm btn-outline-light mt-2" type="button" data-bs-toggle="modal" data-bs-target="#treasury-edit-modal">Editar saldo</button></div>
                 <div><small>Próxima partida do clube</small><strong><?= $rodada ?>ª</strong></div>
                 <div><small>Ciclo <?= $ciclo['ciclo'] ?></small><strong><?= $ciclo['aberto'] ? 'ALTERAÇÕES LIBERADAS' : 'ELENCO TRAVADO' ?></strong></div>
                 <div><small>Formação</small><strong><?= e($clube['formacao']) ?></strong></div>
@@ -181,7 +181,7 @@ if ($clube) {
             <?php if (!(bool)$clube['elenco_confirmado']): ?><section class="panel p-4 mb-4">
                     <h2>CONFIGURAÇÃO INICIAL</h2>
                     <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="configurar_inicial">
-                        <div class="col-md-6"><label class="form-label">Saldo inicial</label><input class="form-control" type="number" step=".01" min="0" name="saldo" value="<?= $clube['saldo'] ?>"></div>
+                        <div class="col-md-6"><label class="form-label">Saldo inicial</label><input class="form-control" type="number" step="1" min="0" name="saldo" value="<?= round((float)$clube['saldo']) ?>"></div>
                         <div class="col-md-6"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= $f ?></option><?php endforeach; ?></select></div>
                         <div><button class="btn btn-danger">Salvar configuração</button></div>
                     </form>
@@ -196,7 +196,7 @@ if ($clube) {
                         <div class="col-md-2"><select class="form-select" name="grupo">
                                 <option value="titular">Titular</option>
                                 <option value="banco">Banco</option>
-                            </select></div><?php if ((bool)$clube['elenco_confirmado']): ?><div class="col-md-2"><input class="form-control" type="number" step=".01" min="0" name="valor" placeholder="Valor" required></div><?php endif; ?><div><button class="btn btn-danger">Salvar jogador</button></div>
+                            </select></div><?php if ((bool)$clube['elenco_confirmado']): ?><div class="col-md-2"><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="Valor" required></div><?php endif; ?><div><button class="btn btn-danger">Salvar jogador</button></div>
                     </form>
                 </section><?php endif; ?>
             <section class="panel p-4 mb-4" id="elenco">
@@ -210,12 +210,12 @@ if ($clube) {
                     <h2>VENDER JOGADOR</h2>
                     <form method="post" class="row g-2"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="vender">
                         <div class="col-md-7"><select class="form-select" name="jogador_id"><?php foreach ($elenco as $j): ?><option value="<?= $j['id'] ?>"><?= e($j['nome']) ?> · <?= $j['overall'] ?></option><?php endforeach; ?></select></div>
-                        <div class="col-md-3"><input class="form-control" type="number" step=".01" min="0" name="valor" placeholder="Valor da venda" required></div>
+                        <div class="col-md-3"><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="Valor da venda" required></div>
                         <div class="col-md-2"><button class="btn btn-outline-danger w-100">Vender</button></div>
                     </form><?php endif; ?>
             </section>
             <section class="panel p-4">
-                <h2>HISTÓRICO</h2><?php foreach ($historico as $m): ?><p class="mb-2"><strong><?= e($m['jogador_nome']) ?></strong> · <?= e($m['tipo']) ?> · R$ <?= number_format((float)$m['valor'], 2, ',', '.') ?> · rodada <?= $m['rodada'] ?></p><?php endforeach; ?><?php if (!$historico): ?><p class="text-secondary">Nenhuma movimentação.</p><?php endif; ?>
+                <h2>HISTÓRICO</h2><?php foreach ($historico as $m): ?><p class="mb-2"><strong><?= e($m['jogador_nome']) ?></strong> · <?= e($m['tipo']) ?> · R$ <?= number_format((float)$m['valor'], 0, ',', '.') ?> · rodada <?= $m['rodada'] ?></p><?php endforeach; ?><?php if (!$historico): ?><p class="text-secondary">Nenhuma movimentação.</p><?php endif; ?>
             </section>
             <div class="modal fade" id="treasury-edit-modal" tabindex="-1" aria-labelledby="treasury-edit-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><div><small class="eyebrow">Disponível a qualquer momento</small><h2 class="modal-title" id="treasury-edit-title">EDITAR COFRE</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_cofre"><label class="form-label" for="treasury-balance">Novo saldo</label><input class="form-control" id="treasury-balance" name="saldo" value="<?= e((string)$clube['saldo']) ?>" required><small class="text-secondary">Essa correção independe da janela de transferências.</small></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar saldo</button></div></form></div></div></div><?php endif; ?>
     </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
