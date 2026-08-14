@@ -24,6 +24,57 @@ body {
     font-family: Inter, sans-serif
 }
 
+.site-loading-screen {
+    position: fixed;
+    z-index: 10000;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 14px;
+    color: #fff;
+    background: #08090b;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity .25s ease, visibility .25s ease
+}
+
+.site-loading-screen img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain
+}
+
+.site-loading-screen strong {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: .85rem;
+    letter-spacing: .18em
+}
+
+.site-loading-spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid rgba(255, 255, 255, .15);
+    border-top-color: var(--red);
+    border-radius: 50%;
+    animation: site-loading-spin .75s linear infinite
+}
+
+.site-loading-screen.is-finished {
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden
+}
+
+@keyframes site-loading-spin {
+    to { transform: rotate(360deg) }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .site-loading-spinner { animation-duration: 1.5s }
+    .site-loading-screen { transition: none }
+}
+
 .navbar {
     background: rgba(8, 9, 11, .9);
     border-bottom: 1px solid rgba(255, 255, 255, .08);

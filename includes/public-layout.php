@@ -41,6 +41,11 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
     ];
     $participantId = account_logged_in() ? (int)(account_participant_id() ?? 0) : 0;
 ?>
+    <div class="site-loading-screen" role="status" aria-live="polite" aria-label="Carregando página">
+        <img src="assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true">
+        <span class="site-loading-spinner"></span>
+        <strong>CARREGANDO</strong>
+    </div>
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2" href="<?= $onLandingPage ? "#inicio" : "index.php" ?>"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
@@ -99,5 +104,6 @@ function public_footer(): void
     <link rel="stylesheet" href="assets/css/match-details.css?v=<?= filemtime(__DIR__ . '/../assets/css/match-details.css') ?>">
     <script defer src="assets/js/match-details.js?v=<?= filemtime(__DIR__ . '/../assets/js/match-details.js') ?>"></script>
     <script defer src="assets/js/market.js?v=<?= filemtime(__DIR__ . '/../assets/js/market.js') ?>"></script>
+    <script defer src="assets/js/site-loader.js?v=<?= filemtime(__DIR__ . '/../assets/js/site-loader.js') ?>"></script>
 <?php
 }

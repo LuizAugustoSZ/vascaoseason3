@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['10.4','Páginas públicas ganharam uma tela de carregamento que aguarda estilos, fontes, imagens e scripts antes de revelar o layout final.'],
 ['10.3','Mural e Herói do time foram separados no grid do perfil, eliminando a sobreposição entre os módulos na linha inferior.'],
 ['10.2','Perfil do time foi reenquadrado em três colunas, com Sobre abaixo da escalação, transferências abaixo do cofre e Herói abaixo do banco.'],
 ['10.1','Cofre e perfil do clube ficaram editáveis durante todo o campeonato; escalação ganhou seleção automática do banco e a página do time passou a exibir transferências paginadas com filtros de compras e vendas.'],
