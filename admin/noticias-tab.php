@@ -10,7 +10,7 @@
         <option value="">Selecione</option>
         <?php foreach ($championshipsAdmin as $championship): ?><option value="<?= (int) $championship['id'] ?>" <?= ($championship['status'] ?? '') === 'ativo' ? 'selected' : '' ?>><?= e($championship['nome']) ?></option><?php endforeach; ?>
       </select></div>
-      <div class="col-lg-2"><label class="form-label" for="round-prompt-round">Rodada</label><select id="round-prompt-round" class="form-select" disabled><option>Carregando...</option></select></div>
+      <div class="col-lg-2"><label id="round-prompt-stage-label" class="form-label" for="round-prompt-round">Rodada</label><select id="round-prompt-round" class="form-select" disabled><option>Carregando...</option></select></div>
       <div class="col-lg-3"><button id="generate-round-prompt" type="button" class="btn btn-danger w-100" disabled>GERAR DADOS E PROMPT</button></div>
     </div>
     <div id="round-prompt-result" class="mt-3 d-none">
