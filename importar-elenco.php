@@ -35,6 +35,7 @@ try {
             $pdo->prepare("UPDATE jogadores_elenco SET ativo=0,saiu_em=NOW() WHERE campeonato_id=? AND participante_id=? AND ativo=1")->execute([$campeonato, $participante]);
             $insert = $pdo->prepare("INSERT INTO jogadores_elenco(campeonato_id,participante_id,nome,overall,posicao,grupo,ordem) VALUES(?,?,?,?,?,'banco',?)");
             foreach ($preview as $ordem => $j) $insert->execute([$campeonato, $participante, $j['nome'], $j['overall'], $j['posicao'], $ordem + 1]);
+            mercado_ordenar_elenco($pdo, $campeonato, $participante);
             $pdo->commit();
             header('Location: mercado.php?campeonato_id=' . $campeonato . (account_is_master() && $participante !== $participanteSessao ? '&participante_id=' . $participante : ''));
             exit;

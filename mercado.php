@@ -66,6 +66,7 @@ try {
         } elseif ($action === 'confirmar_elenco') {
             $total = contar_titulares($pdo, $campeonatoId, $participantId);
             if ($total !== 11) throw new RuntimeException('Defina exatamente 11 titulares antes de confirmar.');
+            mercado_validar_titulares_formacao($pdo, $campeonatoId, $participantId, (string)$clube['formacao']);
             $pdo->prepare("UPDATE clubes_campeonato SET elenco_confirmado=1 WHERE campeonato_id=? AND participante_id=?")->execute([$campeonatoId, $participantId]);
             $message = 'Elenco confirmado e ciclo iniciado.';
         } elseif ($action === 'atualizar_escalacao') {
@@ -73,15 +74,16 @@ try {
             $formacao = mercado_normalizar_formacao((string)($_POST['formacao'] ?? ''), (string)($_POST['formacao_custom'] ?? ''));
             $ids = array_map('intval', (array)($_POST['jogador_id'] ?? []));
             $titulares = array_values(array_unique(array_map('intval', (array)($_POST['titular_id'] ?? []))));
-            $ordens = $_POST['ordem'] ?? [];
             if (count($titulares) !== 11) throw new RuntimeException('Selecione exatamente 11 titulares. Todos os demais serão definidos como banco.');
             $pdo->beginTransaction();
-            $update = $pdo->prepare("UPDATE jogadores_elenco SET grupo=?,ordem=? WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1");
-            foreach ($ids as $i => $id) {
+            $update = $pdo->prepare("UPDATE jogadores_elenco SET grupo=? WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1");
+            foreach ($ids as $id) {
                 $grupo = in_array($id, $titulares, true) ? 'titular' : 'banco';
-                $update->execute([$grupo, max(1, (int)($ordens[$i] ?? 1)), (int)$id, $campeonatoId, $participantId]);
+                $update->execute([$grupo, (int)$id, $campeonatoId, $participantId]);
             }
             if (contar_titulares($pdo, $campeonatoId, $participantId) !== 11) throw new RuntimeException('A escalação precisa ter exatamente 11 titulares.');
+            mercado_validar_titulares_formacao($pdo, $campeonatoId, $participantId, $formacao);
+            mercado_ordenar_elenco($pdo, $campeonatoId, $participantId);
             $pdo->prepare("UPDATE clubes_campeonato SET formacao=? WHERE id=?")->execute([$formacao, $clube['id']]);
             $pdo->commit();
             $message = 'Escalação atualizada.';
@@ -103,6 +105,7 @@ try {
                 $dados = $stmt->fetch();
                 if (!$dados) throw new RuntimeException('Jogador não encontrado no seu elenco.');
                 $pdo->prepare("UPDATE jogadores_elenco SET ativo=0,saiu_em=NOW() WHERE id=?")->execute([$jogador]);
+                mercado_ordenar_elenco($pdo, $campeonatoId, $participantId);
                 $depois = $antes + $valor;
                 $_POST = $dados + $_POST;
             }
@@ -126,7 +129,9 @@ function salvar_jogador(PDO $pdo, int $campeonato, int $participante, array $dat
     if ($nome === '' || $overall < 1 || $overall > 99 || !in_array($posicao, MERCADO_POSICOES, true) || !in_array($grupo, ['titular', 'banco'], true)) throw new RuntimeException('Preencha nome, overall, posição e grupo corretamente.');
     $stmt = $pdo->prepare("INSERT INTO jogadores_elenco(campeonato_id,participante_id,nome,overall,posicao,grupo,ordem) VALUES(?,?,?,?,?,?,?)");
     $stmt->execute([$campeonato, $participante, $nome, $overall, $posicao, $grupo, max(1, (int)($data['ordem'] ?? 1))]);
-    return (int)$pdo->lastInsertId();
+    $id = (int)$pdo->lastInsertId();
+    mercado_ordenar_elenco($pdo, $campeonato, $participante);
+    return $id;
 }
 function contar_titulares(PDO $pdo, int $campeonato, int $participante): int
 {
@@ -174,7 +179,7 @@ if ($clube) {
             <section class="market-help-grid" aria-label="Ajuda para gestão do elenco">
                 <article><span>01</span><div><strong>Ciclo individual</strong><p>Este clube concluiu <?= $ciclo['partidas_concluidas'] ?> partida(s). O mercado abre após a 5ª e fica liberado para a 6ª, 7ª e 8ª partidas do próprio clube.</p></div></article>
                 <article><span>02</span><div><strong>Titulares automáticos</strong><p>Marque somente os 11 titulares. Ao salvar, todos os jogadores não selecionados serão definidos automaticamente como banco.</p></div></article>
-                <article><span>03</span><div><strong>Número de ordem</strong><p>O número define apenas a ordem em que o jogador aparece na escalação e no banco; não é número de camisa.</p></div></article>
+                <article><span>03</span><div><strong>Formação e ordem automáticas</strong><p>Os titulares precisam respeitar os setores da formação. O sistema ordena ataque, meio, defesa e deixa o goleiro sempre por último.</p></div></article>
                 <article><span>04</span><div><strong>Cofre e janela</strong><p>O saldo do cofre pode ser corrigido a qualquer momento. Somente contratar, vender e alterar a escalação dependem da janela individual.</p></div></article>
             </section>
             <?php if (!(bool)$clube['elenco_confirmado']): ?><section class="panel p-4 mb-4">
@@ -203,7 +208,7 @@ if ($clube) {
                     <h2>ELENCO</h2><?php if (!(bool)$clube['elenco_confirmado']): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="confirmar_elenco"><button class="btn btn-success">Confirmar 11 titulares</button></form><?php endif; ?>
                 </div><?php if (mercado_pode_editar($clube, $rodada)): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_escalacao"><div class="formation-control mb-3"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">Três números que somem 10; “Custom” será adicionado automaticamente.</small></div>
                         <div class="lineup-selection-status"><strong><span data-selected-starters>0</span>/11 titulares selecionados</strong><small>Quem não estiver marcado será banco.</small></div>
-                        <div class="roster-grid"><?php foreach ($elenco as $j): ?><article class="roster-select-card<?= $j['grupo'] === 'titular' ? ' is-starter' : '' ?>"><input type="hidden" name="jogador_id[]" value="<?= $j['id'] ?>"><label class="starter-toggle"><input type="checkbox" name="titular_id[]" value="<?= $j['id'] ?>" <?= $j['grupo'] === 'titular' ? 'checked' : '' ?>><span>Titular</span></label><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?></span><small class="text-secondary mt-2">Ordem de exibição</small><input class="form-control form-control-sm" type="number" min="1" max="99" name="ordem[]" value="<?= $j['ordem'] ?>" aria-label="Ordem de exibição"></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar escalação</button>
+                        <div class="roster-grid"><?php foreach ($elenco as $j): ?><article class="roster-select-card<?= $j['grupo'] === 'titular' ? ' is-starter' : '' ?>"><input type="hidden" name="jogador_id[]" value="<?= $j['id'] ?>"><label class="starter-toggle"><input type="checkbox" name="titular_id[]" value="<?= $j['id'] ?>" <?= $j['grupo'] === 'titular' ? 'checked' : '' ?>><span>Titular</span></label><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?></span><small class="text-secondary mt-2">Ordem definida automaticamente pela posição</small></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar escalação</button>
                     </form><?php else: ?><div class="roster-grid"><?php foreach ($elenco as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?> · <?= e($j['grupo']) ?></span></article><?php endforeach; ?></div><?php endif; ?><?php if ((bool)$clube['elenco_confirmado'] && $ciclo['aberto']): ?>
                     <hr>
                     <h2>VENDER JOGADOR</h2>

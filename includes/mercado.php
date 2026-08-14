@@ -42,6 +42,80 @@ function mercado_normalizar_formacao(string $formacao, string $custom = ''): str
     return $partes[1] . '-' . $partes[2] . '-' . $partes[3] . ' Custom';
 }
 
+function mercado_prioridade_posicao(string $posicao): int
+{
+    return match ($posicao) {
+        'PE' => 10,
+        'ATA' => 20,
+        'PD' => 30,
+        'MEI' => 40,
+        'MC' => 50,
+        'VOL' => 60,
+        'LE' => 70,
+        'ZAG' => 80,
+        'LD' => 90,
+        'GOL' => 100,
+        default => 65,
+    };
+}
+
+function mercado_ordenar_elenco(PDO $pdo, int $campeonatoId, int $participanteId): void
+{
+    $stmt = $pdo->prepare("SELECT id,nome,posicao,grupo,ordem FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1");
+    $stmt->execute([$campeonatoId, $participanteId]);
+    $grupos = ['titular' => [], 'banco' => []];
+    foreach ($stmt->fetchAll() as $jogador) {
+        $grupos[$jogador['grupo'] === 'titular' ? 'titular' : 'banco'][] = $jogador;
+    }
+    $update = $pdo->prepare("UPDATE jogadores_elenco SET ordem=? WHERE id=? AND campeonato_id=? AND participante_id=?");
+    foreach ($grupos as $jogadores) {
+        usort($jogadores, static function (array $a, array $b): int {
+            $prioridade = mercado_prioridade_posicao((string)$a['posicao']) <=> mercado_prioridade_posicao((string)$b['posicao']);
+            if ($prioridade !== 0) return $prioridade;
+            $ordemAnterior = (int)$a['ordem'] <=> (int)$b['ordem'];
+            return $ordemAnterior !== 0 ? $ordemAnterior : strcasecmp((string)$a['nome'], (string)$b['nome']);
+        });
+        foreach ($jogadores as $indice => $jogador) {
+            $update->execute([$indice + 1, (int)$jogador['id'], $campeonatoId, $participanteId]);
+        }
+    }
+}
+
+function mercado_validar_titulares_formacao(PDO $pdo, int $campeonatoId, int $participanteId, string $formacao): void
+{
+    if (!preg_match('/^([1-9](?:-[1-9]){2,3})/', $formacao, $match)) {
+        throw new RuntimeException('Não foi possível interpretar os setores da formação.');
+    }
+    $linhas = array_map('intval', explode('-', $match[1]));
+    $esperado = [
+        'defesa' => $linhas[0],
+        'meio' => array_sum(array_slice($linhas, 1, -1)),
+        'ataque' => $linhas[array_key_last($linhas)],
+    ];
+    $stmt = $pdo->prepare("SELECT posicao,COUNT(*) total FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND grupo='titular' GROUP BY posicao");
+    $stmt->execute([$campeonatoId, $participanteId]);
+    $atual = ['goleiro' => 0, 'defesa' => 0, 'meio' => 0, 'ataque' => 0];
+    foreach ($stmt->fetchAll() as $linha) {
+        $setor = match ((string)$linha['posicao']) {
+            'GOL' => 'goleiro',
+            'LE', 'ZAG', 'LD' => 'defesa',
+            'VOL', 'MC', 'MEI' => 'meio',
+            'PE', 'ATA', 'PD' => 'ataque',
+            default => 'meio',
+        };
+        $atual[$setor] += (int)$linha['total'];
+    }
+    if ($atual['goleiro'] !== 1 || $atual['defesa'] !== $esperado['defesa'] || $atual['meio'] !== $esperado['meio'] || $atual['ataque'] !== $esperado['ataque']) {
+        throw new RuntimeException(sprintf(
+            'A formação %s exige 1 goleiro, %d defensores, %d meias e %d atacantes.',
+            $formacao,
+            $esperado['defesa'],
+            $esperado['meio'],
+            $esperado['ataque'],
+        ));
+    }
+}
+
 function mercado_parse_valor(string $valor): float
 {
     $limpo = preg_replace('/\D/', '', trim($valor)) ?? '';
