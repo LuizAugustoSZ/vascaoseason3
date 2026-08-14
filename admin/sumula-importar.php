@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/../includes/bootstrap.php';
 require __DIR__ . '/../includes/dreamteam-parser.php';
+require __DIR__ . '/../includes/knockout.php';
 admin_required();
 
 function ensure_summary_table(PDO $pdo): void
@@ -126,6 +127,10 @@ function replace_imported_goals(PDO $pdo, array $parsed, array $context, string 
         $goalsB = $reversed ? $parsed['home_goals'] : $parsed['away_goals'];
         $winner = $goalsA === $goalsB ? null : ($goalsA > $goalsB ? (int) $row['time_a_id'] : (int) $row['time_b_id']);
         $pdo->prepare("UPDATE jogos_mata_mata SET gols_a=?,gols_b=?,vencedor_id=?,status='finalizado' WHERE id=?")->execute([$goalsA,$goalsB,$winner,$matchId]);
+        $tie = $pdo->prepare("SELECT fase,ordem FROM jogos_mata_mata WHERE id=?");
+        $tie->execute([$matchId]);
+        $tieData = $tie->fetch();
+        advance_knockout($pdo, (int)$row['campeonato_id'], (string)$tieData['fase'], (int)$tieData['ordem']);
         $championshipId = (int) $row['campeonato_id'];
     }
     $deltas = [];
