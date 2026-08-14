@@ -23,17 +23,25 @@ function mercado_garantir_estrutura(PDO $pdo): void
     foreach (preg_split('/;\s*(?:\r?\n|$)/', $migration, -1, PREG_SPLIT_NO_EMPTY) as $statement) {
         $pdo->exec(trim($statement));
     }
+    $columns = $pdo->query("SHOW COLUMNS FROM clubes_campeonato")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('mural', $columns, true)) {
+        $pdo->exec("ALTER TABLE clubes_campeonato ADD mural TEXT NULL AFTER elenco_confirmado");
+    }
+    if (!in_array('jogador_favorito_id', $columns, true)) {
+        $pdo->exec("ALTER TABLE clubes_campeonato ADD jogador_favorito_id INT UNSIGNED NULL AFTER mural");
+    }
 }
 
-function mercado_rodada_atual(PDO $pdo, int $campeonatoId): int
+function mercado_partidas_concluidas(PDO $pdo, int $campeonatoId, int $participanteId): int
 {
-    $stmt = $pdo->prepare("SELECT MIN(rodada) FROM partidas WHERE campeonato_id=? AND ativo=1 AND status NOT IN ('finalizada','wo')");
-    $stmt->execute([$campeonatoId]);
-    $rodada = $stmt->fetchColumn();
-    if ($rodada !== false && $rodada !== null) return max(1, (int)$rodada);
-    $stmt = $pdo->prepare("SELECT COALESCE(MAX(rodada),0)+1 FROM partidas WHERE campeonato_id=? AND ativo=1");
-    $stmt->execute([$campeonatoId]);
-    return max(1, (int)$stmt->fetchColumn());
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM partidas WHERE campeonato_id=? AND ativo=1 AND status IN ('finalizada','wo') AND (mandante_id=? OR visitante_id=?)");
+    $stmt->execute([$campeonatoId, $participanteId, $participanteId]);
+    return (int)$stmt->fetchColumn();
+}
+
+function mercado_rodada_atual(PDO $pdo, int $campeonatoId, int $participanteId): int
+{
+    return mercado_partidas_concluidas($pdo, $campeonatoId, $participanteId) + 1;
 }
 
 function mercado_aberto_na_rodada(int $rodada): bool
@@ -47,6 +55,15 @@ function mercado_estado_ciclo(int $rodada): array
     $posicao = (($rodada - 1) % 8) + 1;
     $ciclo = intdiv($rodada - 1, 8) + 1;
     return ['ciclo' => $ciclo, 'posicao' => $posicao, 'aberto' => $posicao >= 6, 'restantes' => $posicao >= 6 ? 9 - $posicao : 6 - $posicao];
+}
+
+function mercado_estado_clube(PDO $pdo, int $campeonatoId, int $participanteId): array
+{
+    $concluidas = mercado_partidas_concluidas($pdo, $campeonatoId, $participanteId);
+    return mercado_estado_ciclo($concluidas + 1) + [
+        'partidas_concluidas' => $concluidas,
+        'proxima_partida' => $concluidas + 1,
+    ];
 }
 
 function mercado_clube(PDO $pdo, int $campeonatoId, int $participanteId, bool $lock = false): array

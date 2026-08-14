@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['9.9','Mercado passou a usar ciclos individuais por clube; navegação foi restrita a contas vinculadas e o perfil do time ganhou edição em modal para mural, descrição e jogador favorito.'],
 ['9.8','Banco de reservas ganhou paginação de cinco jogadores por página para preservar o tamanho e o alinhamento dos módulos do clube.'],
 ['9.7','Navbar e rodapé completo, incluindo redes sociais, versão e histórico, passaram a ser carregados automaticamente pelo layout de todas as páginas públicas.'],
 ['9.6','Importador de elenco agora reconhece também o texto bruto copiado diretamente dos cards do Discord, mesmo sem marcadores de negrito.'],
@@ -103,7 +104,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  const footer=document.querySelector('footer .container');if(!footer)return;
  if(footer.querySelector('.site-version-button'))return;
  const adminVersions=Array.isArray(window.adminSiteVersions)?window.adminSiteVersions:[];
- if(adminVersions.length&&adminVersions[0][0]!=='a2.0')adminVersions.unshift(['a2.0','Importador de súmulas do DreamTeam com análise, prévia, identificação automática da partida e bloqueio de duplicidade.']);
+ if(adminVersions.length&&!adminVersions.some(([version])=>version==='a2.0'))adminVersions.unshift(['a2.0','Importador de súmulas do DreamTeam com análise, prévia, identificação automática da partida e bloqueio de duplicidade.']);
+ if(adminVersions.length&&adminVersions[0][0]!=='a2.1')adminVersions.unshift(['a2.1','Admin Master ganhou gestão central de mercado para acessar todos os clubes, campeonatos, elencos e cofres.']);
  const button=document.createElement('button');button.type='button';button.className='site-version-button';button.dataset.bsToggle='modal';button.dataset.bsTarget='#version-history-modal';button.textContent=adminVersions.length?`v${siteVersions[0][0]} • ADM ${adminVersions[0][0]}`:`v${siteVersions[0][0]}`;footer.appendChild(button);
  const adminHistory=adminVersions.length?`<div class="admin-version-history"><small>HISTÓRICO RESTRITO</small><div class="version-current"><span>VERSÃO ADMINISTRATIVA</span><strong>${adminVersions[0][0]}</strong></div><div class="version-list">${adminVersions.map(([version,description],index)=>`<article class="version-item ${index===0?'active':''}"><b>${version}</b><p>${description}</p></article>`).join('')}</div></div>`:'';
  document.body.insertAdjacentHTML('beforeend',`<div class="modal fade" id="version-history-modal" tabindex="-1" aria-labelledby="version-history-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content version-modal"><div class="modal-header"><div><small>HISTÓRICO DO SITE</small><h2 class="modal-title" id="version-history-title">VERSÕES</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><div class="version-current"><span>VERSÃO PÚBLICA</span><strong>v${siteVersions[0][0]}</strong></div><div class="version-list">${siteVersions.map(([version,description],index)=>`<article class="version-item ${index===0?'active':''}"><b>v${version}</b><p>${description}</p></article>`).join('')}</div>${adminHistory}</div></div></div></div>`);

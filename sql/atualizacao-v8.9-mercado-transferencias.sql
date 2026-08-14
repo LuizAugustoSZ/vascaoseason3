@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS clubes_campeonato (
     saldo DECIMAL(12,2) NOT NULL DEFAULT 0,
     formacao VARCHAR(20) NOT NULL DEFAULT '4-3-3',
     elenco_confirmado TINYINT(1) NOT NULL DEFAULT 0,
+    mural TEXT NULL,
+    jogador_favorito_id INT UNSIGNED NULL,
     atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uk_clube_campeonato (campeonato_id,participante_id),
     CONSTRAINT fk_clube_campeonato FOREIGN KEY (campeonato_id) REFERENCES campeonatos(id),

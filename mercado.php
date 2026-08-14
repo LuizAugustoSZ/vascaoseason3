@@ -19,7 +19,22 @@ try {
     http_response_code(503);
     exit('O módulo de mercado está sendo preparado na homologação. Tente novamente em instantes.');
 }
-$participantId = (int)($_SESSION['participante_id'] ?? 0);
+$sessionParticipantId = (int)(account_participant_id() ?? 0);
+$requestedParticipantId = (int)($_GET['participante_id'] ?? $_POST['participante_id'] ?? 0);
+$participantId = account_is_master() && $requestedParticipantId > 0
+    ? $requestedParticipantId
+    : $sessionParticipantId;
+$managedTeam = null;
+if ($participantId > 0) {
+    $teamStmt = $pdo->prepare("SELECT id,time_nome,nome FROM participantes WHERE id=? AND ativo=1 LIMIT 1");
+    $teamStmt->execute([$participantId]);
+    $managedTeam = $teamStmt->fetch() ?: null;
+    if (!$managedTeam) {
+        http_response_code(404);
+        exit('Clube não encontrado.');
+    }
+}
+$isMasterManagement = account_is_master() && $participantId !== $sessionParticipantId;
 $message = $error = '';
 $campeonatoId = (int)($_GET['campeonato_id'] ?? $_POST['campeonato_id'] ?? 0);
 $campeonatos = $pdo->query("SELECT id,nome FROM campeonatos WHERE ativo=1 AND tipo='pontos_corridos' ORDER BY status='ativo' DESC,id DESC")->fetchAll();
@@ -29,7 +44,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         verify_csrf();
         if (!$participantId) throw new RuntimeException('Sua conta precisa estar vinculada a um time.');
-        $rodada = mercado_rodada_atual($pdo, $campeonatoId);
+        $rodada = mercado_rodada_atual($pdo, $campeonatoId, $participantId);
         $clube = mercado_clube($pdo, $campeonatoId, $participantId);
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'configurar_inicial') {
@@ -117,8 +132,10 @@ function contar_titulares(PDO $pdo, int $campeonato, int $participante): int
 }
 
 $clube = $participantId && $campeonatoId ? mercado_clube($pdo, $campeonatoId, $participantId) : null;
-$rodada = $campeonatoId ? mercado_rodada_atual($pdo, $campeonatoId) : 1;
-$ciclo = mercado_estado_ciclo($rodada);
+$rodada = $campeonatoId && $participantId ? mercado_rodada_atual($pdo, $campeonatoId, $participantId) : 1;
+$ciclo = $campeonatoId && $participantId
+    ? mercado_estado_clube($pdo, $campeonatoId, $participantId)
+    : mercado_estado_ciclo(1) + ['partidas_concluidas' => 0, 'proxima_partida' => 1];
 $elenco = [];
 $historico = [];
 if ($clube) {
@@ -142,13 +159,19 @@ if ($clube) {
     <link rel="stylesheet" href="assets/css/market.css">
 </head>
 
-<body><?php public_navbar('mercado'); ?><main class="container market-page"><span class="eyebrow">Gestão do clube</span>
-        <h1>ELENCO E COFRE</h1><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><form method="get" class="mb-4"><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === $c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form>
+<body><?php public_navbar('mercado'); ?><main class="container market-page"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
+        <h1>ELENCO E COFRE</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === $c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form>
         <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif ($clube): ?><section class="market-summary">
                 <div><small>Cofre</small><strong>R$ <?= number_format((float)$clube['saldo'], 2, ',', '.') ?></strong></div>
-                <div><small>Rodada</small><strong><?= $rodada ?></strong></div>
+                <div><small>Próxima partida do clube</small><strong><?= $rodada ?>ª</strong></div>
                 <div><small>Ciclo <?= $ciclo['ciclo'] ?></small><strong><?= $ciclo['aberto'] ? 'ALTERAÇÕES LIBERADAS' : 'ELENCO TRAVADO' ?></strong></div>
                 <div><small>Formação</small><strong><?= e($clube['formacao']) ?></strong></div>
+            </section>
+            <section class="market-help-grid" aria-label="Ajuda para gestão do elenco">
+                <article><span>01</span><div><strong>Ciclo individual</strong><p>Este clube concluiu <?= $ciclo['partidas_concluidas'] ?> partida(s). O mercado abre após a 5ª e fica liberado para a 6ª, 7ª e 8ª partidas do próprio clube.</p></div></article>
+                <article><span>02</span><div><strong>Titular ou banco</strong><p>Marque exatamente 11 jogadores como titulares. Todos os demais devem ficar no banco de reservas.</p></div></article>
+                <article><span>03</span><div><strong>Número de ordem</strong><p>O número define apenas a ordem em que o jogador aparece na escalação e no banco; não é número de camisa.</p></div></article>
+                <article><span>04</span><div><strong>Cofre e janela</strong><p>Contratações descontam o valor do cofre e vendas devolvem o valor informado. Essas ações só aparecem durante a janela individual.</p></div></article>
             </section>
             <?php if (!(bool)$clube['elenco_confirmado']): ?><section class="panel p-4 mb-4">
                     <h2>CONFIGURAÇÃO INICIAL</h2>
@@ -177,7 +200,7 @@ if ($clube) {
                         <div class="roster-grid"><?php foreach ($elenco as $j): ?><article><input type="hidden" name="jogador_id[]" value="<?= $j['id'] ?>"><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?></span><select class="form-select form-select-sm" name="grupo[]">
                                         <option value="titular" <?= $j['grupo'] === 'titular' ? 'selected' : '' ?>>Titular</option>
                                         <option value="banco" <?= $j['grupo'] === 'banco' ? 'selected' : '' ?>>Banco</option>
-                                    </select><input class="form-control form-control-sm mt-2" type="number" min="1" max="99" name="ordem[]" value="<?= $j['ordem'] ?>" aria-label="Ordem"></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar escalação</button>
+                                    </select><small class="text-secondary mt-2">Ordem de exibição</small><input class="form-control form-control-sm" type="number" min="1" max="99" name="ordem[]" value="<?= $j['ordem'] ?>" aria-label="Ordem de exibição"></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar escalação</button>
                     </form><?php else: ?><div class="roster-grid"><?php foreach ($elenco as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?> · <?= e($j['grupo']) ?></span></article><?php endforeach; ?></div><?php endif; ?><?php if ((bool)$clube['elenco_confirmado'] && $ciclo['aberto']): ?>
                     <hr>
                     <h2>VENDER JOGADOR</h2>

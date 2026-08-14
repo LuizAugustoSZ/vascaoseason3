@@ -282,6 +282,7 @@ if(new URLSearchParams(location.search).get('tab')==='times') document.querySele
 if(new URLSearchParams(location.search).get('tab')==='usuarios') document.querySelector('[data-bs-target="#tab-usuarios"]')?.click();
 if(new URLSearchParams(location.search).get('tab')==='campeonatos') document.querySelector('[data-bs-target="#tab-campeonatos"]')?.click();
 if(new URLSearchParams(location.search).get('tab')==='extra') document.querySelector('[data-bs-target="#tab-extra"]')?.click();
+if(new URLSearchParams(location.search).get('tab')==='mercado') document.querySelector('[data-bs-target="#tab-mercado"]')?.click();
 
 // Filtra os artilheiros pelo campeonato e numera o ranking pela quantidade de gols.
 const scorerFilter=document.getElementById('artilheiros-admin-filter');

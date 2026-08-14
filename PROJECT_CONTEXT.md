@@ -14,7 +14,7 @@ O **Vascão Season 3** é um sistema web para organizar campeonatos da comunidad
 - Frontend: HTML, CSS e JavaScript sem framework pesado
 - Idioma da interface: português do Brasil
 - Linha visual: fundo escuro, vermelho como cor principal e tipografia esportiva
-- Baseline deste documento: versão pública **v9.8** e painel **a2.0**
+- Baseline deste documento: versão pública **v9.9** e painel **a2.1**
 - Atualizado em: 13/08/2026
 
 ## 2. Princípios do projeto
@@ -302,32 +302,18 @@ Fluxo proposto:
 
 ### Mercado de transferências
 
-Regra de negócio conhecida:
+Regras implementadas:
 
-- o elenco começa bloqueado por 5 partidas;
-- depois abre uma janela de transferências por 3 rodadas;
-- toda contratação, saída ou troca precisa ser notificada e registrada;
-- o próprio responsável pelo time informa a movimentação;
-- o sistema valida janela aberta, vínculo do jogador, duplicidade, saldo/cofre e permissões;
-- depois da confirmação, elenco, escalação, cofre e histórico são atualizados automaticamente;
-- uma aprovação por Admin Master ou Editor da Competição é recomendada antes da efetivação;
-- futuramente pode haver notificação automática no Discord por webhook.
-
-Entidades candidatas para essa fase:
-
-- `team_claim_requests`;
-- `user_participants`;
-- `players`;
-- `rosters`;
-- `transfer_windows`;
-- `transfers`;
-- `transfer_items`;
-- `treasury_movements`;
-- `lineups`;
-- `lineup_players`;
-- `notifications`.
-
-Esses nomes são proposta de arquitetura. Antes de criar migrations, revisar o esquema atual para evitar tabelas ou conceitos duplicados.
+- o ciclo é individual por clube e usa somente as partidas concluídas daquele participante;
+- as primeiras 5 partidas ficam travadas, as próximas 3 ficam abertas e o ciclo de 8 partidas se repete;
+- assim que o clube conclui a 5ª partida, pode alterar o elenco sem esperar os demais jogos da rodada;
+- o técnico cadastra livremente nome, overall e posição, sem catálogo interno de cartas;
+- compras debitam o cofre, vendas creditam o valor e todas as movimentações ficam no histórico;
+- escalação exige exatamente 11 titulares; os demais jogadores ficam no banco;
+- somente a conta associada ao participante pode acessar o Mercado pela navegação pública;
+- o Admin Master pode gerenciar qualquer clube e campeonato pela aba Mercado do painel;
+- mural, descrição e jogador favorito são editados em modal na página pública pelo responsável associado;
+- elenco, banco, cofre, mural e jogador favorito são públicos depois da configuração.
 
 ## 15. Produção de notícias
 
