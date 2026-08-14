@@ -156,10 +156,9 @@ if (marketPage && lineupSection && marketSummary) {
 
   marketTransferPane = createPane('transferencias', 'Transferências');
   const lineupPane = createPane('escalacao', 'Escalação');
-  const treasuryPane = createPane('cofre', 'Cofre');
 
-  treasuryPane.append(marketSummary);
-  if (configPanel) treasuryPane.append(configPanel);
+  marketTransferPane.append(marketSummary);
+  if (configPanel) lineupPane.append(configPanel);
   if (contractPanel) marketTransferPane.append(contractPanel);
 
   const saleHeading = [...lineupSection.querySelectorAll('h2')].find(title => title.textContent.trim() === 'VENDER JOGADOR');
@@ -207,7 +206,10 @@ if (marketPage && lineupSection && marketSummary) {
   });
   const requestedTab = new URLSearchParams(location.search).get('aba');
   const savedTab = sessionStorage.getItem(tabKey);
-  activateMarketTab(['transferencias', 'escalacao', 'cofre'].includes(requestedTab) ? requestedTab : (savedTab || 'transferencias'));
+  const initialTab = ['transferencias', 'escalacao'].includes(requestedTab)
+    ? requestedTab
+    : (['transferencias', 'escalacao'].includes(savedTab) ? savedTab : 'transferencias');
+  activateMarketTab(initialTab);
 }
 
 const marketTitle = document.querySelector('.market-page h1');
