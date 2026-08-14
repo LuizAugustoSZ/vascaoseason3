@@ -266,6 +266,24 @@
     font-weight: 600
 }
 
+.match-team--current {
+    cursor: default
+}
+
+.match-team[href]:hover {
+    color: var(--red)
+}
+
+.rival-team-link {
+    color: #fff;
+    font-weight: 800;
+    text-decoration: none
+}
+
+.rival-team-link:hover {
+    color: var(--red)
+}
+
 .compact-match>.match-team:last-child,
 .detail-match>.match-team:last-child {
     justify-content: flex-end;

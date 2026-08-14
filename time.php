@@ -215,26 +215,22 @@ function shield(array $team, string $prefix = ""): string
 }
 function match_team(array $j, string $side, bool $showName = true): string
 {
+    global $id;
     $prefix = $side === "home" ? "mandante_" : "visitante_";
     $name = $j[$prefix === "mandante_" ? "mandante" : "visitante"];
-    return '<a class="match-team' .
+    $teamId = (int) $j[$prefix . "id"];
+    $classes = 'match-team' .
         ($showName ? '' : ' match-team--shield-only') .
-        '" href="time.php?id=' .
-        (int) $j[$prefix . "id"] .
-        '" aria-label="' . e($name) . '" title="' . e($name) .
-        '">' .
-        (!$showName
-            ? shield($j, $prefix)
-            : ($side === "away"
-                ? "<span>" .
-                e($name) .
-                "</span>" .
-                shield($j, $prefix)
-                : shield($j, $prefix) .
-                "<span>" .
-                e($name) .
-                "</span>")) .
-        "</a>";
+        ($teamId === $id ? ' match-team--current' : '');
+    $content = !$showName
+        ? shield($j, $prefix)
+        : ($side === "away"
+            ? "<span>" . e($name) . "</span>" . shield($j, $prefix)
+            : shield($j, $prefix) . "<span>" . e($name) . "</span>");
+    if ($teamId === $id) {
+        return '<span class="' . $classes . '" data-current-team aria-current="page">' . $content . '</span>';
+    }
+    return '<a class="' . $classes . '" href="time.php?id=' . $teamId . '" aria-label="' . e($name) . '" title="' . e($name) . '">' . $content . '</a>';
 }
 function match_score(array $j): string
 {
@@ -359,9 +355,7 @@ function match_score(array $j): string
                 <article class="overview-card rivalry-card">
                     <h3>Confronto direto</h3><?php if (
                                                     $rival
-                                                ): ?><div class="versus"><?= shield($time) ?><b>VS</b><?= shield(
-                                                                                                            $rival,
-                                                                                                        ) ?></div><strong><?= e($rival["nome"]) ?></strong>
+                                                ): ?><div class="versus"><span class="match-team match-team--shield-only match-team--current" data-current-team aria-current="page"><?= shield($time) ?></span><b>VS</b><a class="match-team match-team--shield-only" href="time.php?id=<?= (int)$rival['id'] ?>" aria-label="<?= e($rival['nome']) ?>" title="<?= e($rival['nome']) ?>"><?= shield($rival) ?></a></div><a class="rival-team-link" href="time.php?id=<?= (int)$rival['id'] ?>"><?= e($rival["nome"]) ?></a>
                         <p><?= $rival["jogos"] ?> jogos • <?= $rival["v"] ?> vitórias • <?= $rival["e"] ?> empates • <?= $rival["d"] ?> derrotas</p><?php else: ?><p class="empty-copy">Sem histórico disponível.</p><?php endif; ?>
                 </article>
                 <article class="overview-card scorers-card" data-card-pages="3">
