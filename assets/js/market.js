@@ -29,6 +29,25 @@ function updateStarterSelection() {
 starterInputs.forEach(input => input.addEventListener('change', updateStarterSelection));
 updateStarterSelection();
 
+document.querySelectorAll('.formation-control').forEach(control => {
+  const select = control.querySelector('select[name="formacao"]');
+  const custom = control.querySelector('input[name="formacao_custom"]');
+  if (!select || !custom) return;
+
+  function updateCustomFormation() {
+    const enabled = select.value === '__custom__';
+    custom.hidden = !enabled;
+    custom.required = enabled;
+    control.querySelector('small')?.classList.toggle('d-none', !enabled);
+  }
+  custom.addEventListener('input', () => {
+    const digits = custom.value.replace(/\D/g, '').slice(0, 3);
+    custom.value = digits.length > 1 ? digits.split('').join('-') : digits;
+  });
+  select.addEventListener('change', updateCustomFormation);
+  updateCustomFormation();
+});
+
 const marketTitle = document.querySelector('.market-page h1');
 const championship = document.querySelector('input[name="campeonato_id"], select[name="campeonato_id"]');
 if (marketTitle && championship && document.querySelector('input[value="adicionar_inicial"]')) {
