@@ -413,7 +413,7 @@ function match_score(array $j): string
                     <strong><?= $clubePublico ? 'R$ ' . number_format((float)$clubePublico['saldo'], 0, ',', '.') : 'R$ —' ?></strong>
                     <p><?= $clubePublico ? 'Saldo atualizado do clube.' : 'Saldo ainda não informado.' ?></p>
                 </article>
-                <article class="transfer-history-module" data-transfer-module data-items-per-page="3">
+                <article class="transfer-history-module" data-transfer-module data-items-per-page="6">
                     <h3>Transferências</h3>
                     <div class="transfer-filters" role="group" aria-label="Filtrar transferências"><button class="active" type="button" data-transfer-filter="todas">Todas</button><button type="button" data-transfer-filter="compra">Compras</button><button type="button" data-transfer-filter="venda">Vendas</button></div>
                     <div class="transfer-page-items"><?php foreach ($transferenciasPublicas as $transferencia): ?><div class="transfer-entry" data-transfer-type="<?= e($transferencia['tipo']) ?>"><span class="transfer-kind <?= $transferencia['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= $transferencia['tipo'] === 'compra' ? 'Compra' : 'Venda' ?></span><b><?= e($transferencia['jogador_nome']) ?></b><small><?= (int)$transferencia['jogador_overall'] ?> · <?= e($transferencia['jogador_posicao']) ?></small><strong>R$ <?= number_format((float)$transferencia['valor'], 0, ',', '.') ?></strong></div><?php endforeach; ?><?php if (!$transferenciasPublicas): ?><p class="module-empty">Nenhuma transferência registrada.</p><?php endif; ?></div>
