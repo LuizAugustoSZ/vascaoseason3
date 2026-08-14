@@ -1,4 +1,24 @@
 <section id="tab-noticias" class="tab-pane fade">
+  <div class="panel news-prompt-generator mb-4">
+    <div class="panel-head">
+      <div><small>ASSISTENTE DE NOTÍCIAS</small><h3>GERAR PROMPT DA RODADA</h3></div>
+      <span id="round-prompt-context">Identificando a rodada atual...</span>
+    </div>
+    <p class="text-secondary">O sistema reúne placares, estatísticas, artilheiros e todos os acontecimentos registrados nas súmulas. Depois é só copiar e colar no ChatGPT.</p>
+    <div class="row g-3 align-items-end">
+      <div class="col-lg-7"><label class="form-label" for="round-prompt-championship">Campeonato</label><select id="round-prompt-championship" class="form-select">
+        <option value="">Selecione</option>
+        <?php foreach ($championshipsAdmin as $championship): ?><option value="<?= (int) $championship['id'] ?>" <?= ($championship['status'] ?? '') === 'ativo' ? 'selected' : '' ?>><?= e($championship['nome']) ?></option><?php endforeach; ?>
+      </select></div>
+      <div class="col-lg-2"><label class="form-label" for="round-prompt-round">Rodada</label><select id="round-prompt-round" class="form-select" disabled><option>Carregando...</option></select></div>
+      <div class="col-lg-3"><button id="generate-round-prompt" type="button" class="btn btn-danger w-100" disabled>GERAR DADOS E PROMPT</button></div>
+    </div>
+    <div id="round-prompt-result" class="mt-3 d-none">
+      <div class="round-prompt-summary"><strong id="round-prompt-title"></strong><span id="round-prompt-count"></span></div>
+      <textarea id="round-prompt-output" class="form-control" rows="14" readonly></textarea>
+      <div class="d-flex align-items-center gap-3 mt-3"><button id="copy-round-prompt" type="button" class="btn btn-outline-light">COPIAR PROMPT</button><span id="round-prompt-status" class="small text-secondary"></span></div>
+    </div>
+  </div>
   <div class="row g-4">
     <div class="col-xl-8">
       <form id="news-form" class="panel admin-news-form" method="post">

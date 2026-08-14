@@ -171,3 +171,12 @@
 .article-content a {
     color: #b20f16
 }
+
+.news-prompt-generator { padding: 1.25rem }
+.news-prompt-generator .panel-head { align-items: flex-end }
+.news-prompt-generator .panel-head small { color: var(--red); font-size: .68rem; font-weight: 800; letter-spacing: .12em }
+.news-prompt-generator .panel-head h3 { margin-top: .2rem; font-size: 1.65rem }
+.news-prompt-generator textarea { margin-top: .75rem; background: #090a0c; border-color: #343941; color: #dce2e9; font-family: Consolas, monospace; font-size: .82rem; line-height: 1.55 }
+.round-prompt-summary { display: flex; justify-content: space-between; gap: 1rem; padding: .75rem 0; color: #fff }
+.round-prompt-summary span { color: var(--muted) }
+@media (max-width: 700px) { .news-prompt-generator .panel-head,.round-prompt-summary { align-items: flex-start; flex-direction: column } }
