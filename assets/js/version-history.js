@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['12.2','Prancheta foi adicionada como origem de jogador sem custo, com registro próprio no histórico e sem alteração no cofre.'],
 ['12.1','Tutorial do importador corrigiu os comandos do Discord para ..elenco ou /elenco.'],
 ['12.0','Importação completa passou a ficar sempre disponível ao técnico, permitindo substituir e reformular todo o elenco mesmo após uma importação anterior.'],
 ['11.9','Importador de elenco ganhou tutorial visual com o passo a passo para copiar a listagem do Discord, analisar a prévia e confirmar com segurança.'],

@@ -77,7 +77,9 @@ document.querySelectorAll('.market-contract-panel form').forEach(form => {
       ? 'O custo do pack será registrado em DP e não altera o cofre em Real.'
       : type === 'passe'
         ? 'Jogador recebido pelo passe: entrada sem custo e sem alteração no cofre.'
-        : 'Jogador ganho em sorteio: entrada sem custo e sem alteração no cofre.';
+        : type === 'prancheta'
+          ? 'Jogador recebido pela prancheta: entrada sem custo e sem alteração no cofre.'
+          : 'Jogador ganho em sorteio: entrada sem custo e sem alteração no cofre.';
   }
   function updatePackRange() {
     const option = pack.selectedOptions[0];
