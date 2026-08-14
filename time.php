@@ -112,7 +112,7 @@ try {
         $stmt->execute([$id]);
         $titulos = $stmt->fetchAll();
         try {
-            $stmt = $pdo->prepare("SELECT cc.saldo,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,c.nome campeonato FROM clubes_campeonato cc JOIN campeonatos c ON c.id=cc.campeonato_id WHERE cc.participante_id=? AND cc.elenco_confirmado=1 ORDER BY c.status='ativo' DESC,c.id DESC LIMIT 1");
+            $stmt = $pdo->prepare("SELECT cc.saldo,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,c.nome campeonato FROM clubes_campeonato cc JOIN campeonatos c ON c.id=cc.campeonato_id WHERE cc.participante_id=? ORDER BY c.status='ativo' DESC,c.id DESC LIMIT 1");
             $stmt->execute([$id]);
             $clubePublico = $stmt->fetch() ?: null;
             if ($clubePublico) {

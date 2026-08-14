@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['12.5','Mercado ficou somente com Transferências e Escalação; próxima partida e ciclo foram movidos para Transferências, enquanto Cofre e Formação saíram do resumo.'],
 ['12.4','Edição do perfil do clube passou a reunir Sobre, Cofre e Herói, com acesso para a conta vinculada e para a gestão Master.'],
 ['12.3','Página do clube deixou o próprio escudo e nome estáticos, mantendo links somente para adversários e evitando recarregamentos da página atual.'],
 ['12.2','Prancheta foi adicionada como origem de jogador sem custo, com registro próprio no histórico e sem alteração no cofre.'],
