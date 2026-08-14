@@ -151,7 +151,7 @@ if ($clube) {
     $s = $pdo->prepare("SELECT * FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
     $s->execute([$campeonatoId, $participantId]);
     $elenco = $s->fetchAll();
-    $s = $pdo->prepare("SELECT * FROM movimentacoes_elenco WHERE campeonato_id=? AND participante_id=? ORDER BY id DESC LIMIT 20");
+    $s = $pdo->prepare("SELECT * FROM movimentacoes_elenco WHERE campeonato_id=? AND participante_id=? ORDER BY id DESC");
     $s->execute([$campeonatoId, $participantId]);
     $historico = $s->fetchAll();
 }
@@ -218,8 +218,9 @@ if ($clube) {
                         <div class="col-md-2"><button class="btn btn-outline-danger w-100">Vender</button></div>
                     </form><?php endif; ?>
             </section>
-            <section class="panel p-4">
-                <h2>HISTÓRICO</h2><?php foreach ($historico as $m): ?><p class="mb-2"><strong><?= e($m['jogador_nome']) ?></strong> · <?= e($m['tipo']) ?> · R$ <?= number_format((float)$m['valor'], 0, ',', '.') ?> · rodada <?= $m['rodada'] ?></p><?php endforeach; ?><?php if (!$historico): ?><p class="text-secondary">Nenhuma movimentação.</p><?php endif; ?>
+            <section class="panel p-4 market-history" data-market-history data-items-per-page="4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2"><h2>HISTÓRICO</h2><div class="history-filters" role="group" aria-label="Filtrar histórico"><button class="active" type="button" data-history-filter="todas">Todas</button><button type="button" data-history-filter="compra">Compras</button><button type="button" data-history-filter="venda">Vendas</button></div></div>
+                <div class="history-items"><?php foreach ($historico as $m): ?><article data-history-type="<?= e($m['tipo']) ?>"><span class="history-kind <?= $m['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= $m['tipo'] === 'compra' ? 'Compra' : 'Venda' ?></span><div><strong><?= e($m['jogador_nome']) ?></strong><small><?= (int)$m['jogador_overall'] ?> · <?= e($m['jogador_posicao']) ?> · rodada <?= $m['rodada'] ?></small></div><b>R$ <?= number_format((float)$m['valor'], 0, ',', '.') ?></b></article><?php endforeach; ?><?php if (!$historico): ?><p class="text-secondary">Nenhuma movimentação.</p><?php endif; ?></div><nav class="history-pages card-pages"></nav>
             </section>
             <div class="modal fade" id="treasury-edit-modal" tabindex="-1" aria-labelledby="treasury-edit-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><div><small class="eyebrow">Disponível a qualquer momento</small><h2 class="modal-title" id="treasury-edit-title">EDITAR COFRE</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_cofre"><label class="form-label" for="treasury-balance">Novo saldo</label><input class="form-control" id="treasury-balance" name="saldo" value="<?= e((string)$clube['saldo']) ?>" required><small class="text-secondary">Essa correção independe da janela de transferências.</small></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar saldo</button></div></form></div></div></div><?php endif; ?>
     </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
