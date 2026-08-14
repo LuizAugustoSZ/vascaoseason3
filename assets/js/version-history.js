@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['12.6','Ciclo passou a contabilizar folgas pela rodada efetiva e bloquear toda alteração fora da janela; o menu Time agora exibe o nome do clube vinculado.'],
 ['12.5','Mercado ficou somente com Transferências e Escalação; próxima partida e ciclo foram movidos para Transferências, enquanto Cofre e Formação saíram do resumo.'],
 ['12.4','Edição do perfil do clube passou a reunir Sobre, Cofre e Herói, com acesso para a conta vinculada e para a gestão Master.'],
 ['12.3','Página do clube deixou o próprio escudo e nome estáticos, mantendo links somente para adversários e evitando recarregamentos da página atual.'],
