@@ -211,11 +211,15 @@ if (marketPage && lineupSection && marketSummary) {
 const marketTitle = document.querySelector('.market-page h1');
 const championship = document.querySelector('input[name="campeonato_id"], select[name="campeonato_id"]');
 if (marketTitle && championship && document.querySelector('input[value="adicionar_inicial"]')) {
+  const panel = document.createElement('section');
+  panel.className = 'panel p-4 mb-4 market-import-panel';
+  panel.innerHTML = '<div><h2>IMPORTAR ELENCO COMPLETO</h2><p class="text-secondary mb-0">Cole a lista do DreamTeam e o sistema removerá negrito, emojis e identificadores das cartas para reconhecer nome, OVR e posição.</p></div>';
   const link = document.createElement('a');
-  link.className = 'btn btn-outline-light mb-4';
+  link.className = 'btn btn-danger';
   const participant = new URLSearchParams(location.search).get('participante_id');
   link.href = `importar-elenco.php?campeonato_id=${encodeURIComponent(championship.value)}${participant ? `&participante_id=${encodeURIComponent(participant)}` : ''}`;
-  link.textContent = 'Colar elenco completo';
-  if (marketTransferPane) marketTransferPane.append(link);
-  else marketTitle.insertAdjacentElement('afterend', link);
+  link.textContent = 'Colar e analisar elenco';
+  panel.append(link);
+  if (marketTransferPane) marketTransferPane.prepend(panel);
+  else marketTitle.insertAdjacentElement('afterend', panel);
 }
