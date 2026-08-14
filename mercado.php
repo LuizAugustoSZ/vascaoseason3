@@ -66,15 +66,24 @@ try {
         } elseif ($action === 'atualizar_escalacao') {
             if (!mercado_pode_editar($clube, $rodada)) throw new RuntimeException('A escalação está travada nesta rodada.');
             $formacao = mercado_normalizar_formacao((string)($_POST['formacao'] ?? ''), (string)($_POST['formacao_custom'] ?? ''));
-            $ids = array_map('intval', (array)($_POST['jogador_id'] ?? []));
-            $titulares = array_values(array_unique(array_map('intval', (array)($_POST['titular_id'] ?? []))));
+            $titulares = array_values(array_unique(array_filter(
+                array_map('intval', (array)($_POST['titular_id'] ?? [])),
+                static fn(int $id): bool => $id > 0,
+            )));
             if (count($titulares) !== 11) throw new RuntimeException('Selecione exatamente 11 titulares. Todos os demais serão definidos como banco.');
-            $pdo->beginTransaction();
-            $update = $pdo->prepare("UPDATE jogadores_elenco SET grupo=? WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1");
-            foreach ($ids as $id) {
-                $grupo = in_array($id, $titulares, true) ? 'titular' : 'banco';
-                $update->execute([$grupo, (int)$id, $campeonatoId, $participantId]);
+
+            $placeholders = implode(',', array_fill(0, count($titulares), '?'));
+            $validarTitulares = $pdo->prepare("SELECT COUNT(*) FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND id IN ($placeholders)");
+            $validarTitulares->execute([$campeonatoId, $participantId, ...$titulares]);
+            if ((int)$validarTitulares->fetchColumn() !== 11) {
+                throw new RuntimeException('Um dos titulares selecionados não está mais no elenco ativo. Atualize a página e selecione os 11 novamente.');
             }
+
+            $pdo->beginTransaction();
+            $pdo->prepare("UPDATE jogadores_elenco SET grupo='banco' WHERE campeonato_id=? AND participante_id=? AND ativo=1")
+                ->execute([$campeonatoId, $participantId]);
+            $definirTitulares = $pdo->prepare("UPDATE jogadores_elenco SET grupo='titular' WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND id IN ($placeholders)");
+            $definirTitulares->execute([$campeonatoId, $participantId, ...$titulares]);
             if (contar_titulares($pdo, $campeonatoId, $participantId) !== 11) throw new RuntimeException('A escalação precisa ter exatamente 11 titulares.');
             mercado_validar_titulares_formacao($pdo, $campeonatoId, $participantId, $formacao);
             mercado_ordenar_elenco($pdo, $campeonatoId, $participantId);
