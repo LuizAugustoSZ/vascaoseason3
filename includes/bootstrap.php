@@ -26,6 +26,11 @@ function db(): PDO
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
+    $timezone = new DateTimeZone((string)$config["app"]["timezone"]);
+    $offset = $timezone->getOffset(new DateTimeImmutable("now", $timezone));
+    $sign = $offset < 0 ? "-" : "+";
+    $offset = abs($offset);
+    $pdo->exec("SET time_zone=" . $pdo->quote(sprintf("%s%02d:%02d", $sign, intdiv($offset, 3600), intdiv($offset % 3600, 60))));
     return $pdo;
 }
 
@@ -33,8 +38,7 @@ function format_datetime_br(string $value, string $format = "d/m/Y H:i"): string
 {
     global $config;
     if ($value === "") return "";
-    $date = new DateTimeImmutable($value, new DateTimeZone("UTC"));
-    return $date->setTimezone(new DateTimeZone((string)$config["app"]["timezone"]))->format($format);
+    return (new DateTimeImmutable($value, new DateTimeZone((string)$config["app"]["timezone"])))->format($format);
 }
 
 // Escapa textos antes de exibir no HTML.
