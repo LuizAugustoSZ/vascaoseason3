@@ -66,6 +66,39 @@ body {
     visibility: hidden
 }
 
+.admin-loading-screen {
+    inset: 76px 22px auto auto;
+    display: flex;
+    place-content: unset;
+    align-items: center;
+    gap: 9px;
+    width: auto;
+    min-width: 190px;
+    padding: 10px 14px;
+    background: #15181d;
+    border: 1px solid #343941;
+    border-left: 3px solid var(--red);
+    border-radius: 4px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .42)
+}
+
+.admin-loading-screen img {
+    width: 30px;
+    height: 30px
+}
+
+.admin-loading-screen .site-loading-spinner {
+    width: 20px;
+    height: 20px;
+    border-width: 2px
+}
+
+body[aria-busy="true"] .table-responsive {
+    pointer-events: none;
+    opacity: .38;
+    transition: opacity .18s ease
+}
+
 @keyframes site-loading-spin {
     to { transform: rotate(360deg) }
 }

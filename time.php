@@ -426,10 +426,6 @@ function match_score(array $j): string
                                                     foreach ($reservas as $jogador): ?><p><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></p><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado.</div><?php endif; ?></div>
                     <nav class="card-pages"></nav>
                 </article>
-                <article class="wall-module">
-                    <h3>Mural do clube</h3>
-                    <blockquote><?= e($clubePublico['mural'] ?? '') ?: 'Nenhuma publicação do clube.' ?></blockquote>
-                </article>
                 <article class="favorite-player-module">
                     <h3>Herói do time</h3>
                     <?php if ($jogadorFavorito): ?><strong><?= e($jogadorFavorito['nome']) ?></strong><p><?= (int)$jogadorFavorito['overall'] ?> · <?= e($jogadorFavorito['posicao']) ?></p><?php else: ?><p class="module-empty">Nenhum jogador escolhido.</p><?php endif; ?>

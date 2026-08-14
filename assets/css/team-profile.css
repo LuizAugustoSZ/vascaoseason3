@@ -415,7 +415,7 @@
 
 .future-grid .lineup-placeholder {
     grid-column: 1;
-    grid-row: 1 / span 2;
+    grid-row: 2 / span 2;
     min-height: 250px;
     background: linear-gradient(160deg, #10141a, #0b0d10)
 }
@@ -427,12 +427,7 @@
 
 .future-grid .transfer-history-module {
     grid-column: 2;
-    grid-row: 2
-}
-
-.future-grid .wall-module {
-    grid-column: 2;
-    grid-row: 3
+    grid-row: 2 / span 2
 }
 
 .future-grid .favorite-player-module {
@@ -447,7 +442,7 @@
 
 .future-grid .about-module {
     grid-column: 1;
-    grid-row: 3
+    grid-row: 1
 }
 
 .transfer-filters {
