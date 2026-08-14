@@ -51,7 +51,30 @@ try {
         }
         $montagemInicial = !(bool)$clube['elenco_confirmado'] && $rodada === 1;
         $action = (string)($_POST['action'] ?? '');
-        if ($action === 'configurar_inicial') {
+        if ($action === 'importar_elenco_campeonato') {
+            if (!$montagemInicial) throw new RuntimeException('A importação de outro campeonato está disponível somente na montagem inicial.');
+            $campeonatoOrigemId = (int)($_POST['campeonato_origem_id'] ?? 0);
+            if ($campeonatoOrigemId < 1 || $campeonatoOrigemId === $campeonatoId) throw new RuntimeException('Selecione um campeonato de origem válido.');
+            $origem = $pdo->prepare("SELECT c.nome,COUNT(j.id) total
+                FROM campeonatos c
+                JOIN jogadores_elenco j ON j.campeonato_id=c.id AND j.participante_id=? AND j.ativo=1
+                WHERE c.id=? AND c.ativo=1 GROUP BY c.id,c.nome");
+            $origem->execute([$participantId, $campeonatoOrigemId]);
+            $dadosOrigem = $origem->fetch();
+            if (!$dadosOrigem || (int)$dadosOrigem['total'] < 1) throw new RuntimeException('Esse clube não possui jogadores ativos no campeonato escolhido.');
+
+            $pdo->beginTransaction();
+            $pdo->prepare("UPDATE jogadores_elenco SET ativo=0,saiu_em=NOW() WHERE campeonato_id=? AND participante_id=? AND ativo=1")
+                ->execute([$campeonatoId, $participantId]);
+            $copiar = $pdo->prepare("INSERT INTO jogadores_elenco(campeonato_id,participante_id,nome,overall,posicao,grupo,ordem)
+                SELECT ?,participante_id,nome,overall,posicao,'banco',ordem
+                FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY ordem,id");
+            $copiar->execute([$campeonatoId, $campeonatoOrigemId, $participantId]);
+            mercado_ordenar_elenco($pdo, $campeonatoId, $participantId);
+            $pdo->prepare("UPDATE clubes_campeonato SET elenco_confirmado=0 WHERE id=?")->execute([$clube['id']]);
+            $pdo->commit();
+            $message = sprintf('%d jogadores importados de %s. Agora escolha os 11 titulares.', (int)$dadosOrigem['total'], (string)$dadosOrigem['nome']);
+        } elseif ($action === 'configurar_inicial') {
             if (!$montagemInicial) throw new RuntimeException('A configuração inicial só pode ser alterada antes da primeira rodada.');
             $formacao = mercado_normalizar_formacao((string)($_POST['formacao'] ?? '4-3-3'), (string)($_POST['formacao_custom'] ?? ''));
             $pdo->prepare("UPDATE clubes_campeonato SET formacao=? WHERE campeonato_id=? AND participante_id=?")->execute([$formacao, $campeonatoId, $participantId]);
@@ -97,7 +120,11 @@ try {
         } elseif (in_array($action, ['comprar', 'vender'], true)) {
             if (!mercado_pode_editar($clube, $rodada) || $montagemInicial) throw new RuntimeException('O mercado está indisponível nesta rodada.');
             $pdo->beginTransaction();
-            $clube = mercado_clube($pdo, $campeonatoId, $participantId, true);
+            $cofres = $pdo->prepare("SELECT * FROM clubes_campeonato WHERE participante_id=? ORDER BY id FOR UPDATE");
+            $cofres->execute([$participantId]);
+            foreach ($cofres->fetchAll() as $cofreDoCampeonato) {
+                if ((int)$cofreDoCampeonato['campeonato_id'] === $campeonatoId) $clube = $cofreDoCampeonato;
+            }
             $antes = (float)$clube['saldo'];
             $origem = 'venda';
             $origemDetalhe = null;
@@ -154,7 +181,8 @@ try {
                 $depois = $antes + $valor;
                 $_POST = $dados + $_POST;
             }
-            $pdo->prepare("UPDATE clubes_campeonato SET saldo=? WHERE id=?")->execute([$depois, $clube['id']]);
+            $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,cofre_configurado=1 WHERE participante_id=?")
+                ->execute([$depois, $participantId]);
             $pdo->prepare("INSERT INTO movimentacoes_elenco(campeonato_id,participante_id,jogador_id,tipo,origem,origem_detalhe,valor_origem,moeda_origem,jogador_nome,jogador_overall,jogador_posicao,valor,saldo_anterior,saldo_posterior,rodada,conta_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")->execute([$campeonatoId, $participantId, $jogador, $action === 'comprar' ? 'compra' : 'venda', $origem, $origemDetalhe, $valorOrigem, $moedaOrigem, trim((string)$_POST['nome']), (int)$_POST['overall'], (string)$_POST['posicao'], $valor, $antes, $depois, $rodada, (int)$_SESSION['conta_id']]);
             $pdo->commit();
             $message = $action === 'comprar'
@@ -201,6 +229,7 @@ $ciclo = $campeonatoId && $participantId
 $elenco = [];
 $historico = [];
 $totalTitularesAtual = 0;
+$campeonatosComElenco = [];
 $podeEditarMercado = $clube ? mercado_pode_editar($clube, $rodada) : false;
 $montagemInicial = $clube ? (!(bool)$clube['elenco_confirmado'] && $rodada === 1) : false;
 if ($clube) {
@@ -211,6 +240,14 @@ if ($clube) {
     $s = $pdo->prepare("SELECT * FROM movimentacoes_elenco WHERE campeonato_id=? AND participante_id=? ORDER BY id DESC");
     $s->execute([$campeonatoId, $participantId]);
     $historico = $s->fetchAll();
+    if ($montagemInicial) {
+        $s = $pdo->prepare("SELECT c.id,c.nome,COUNT(j.id) total
+            FROM campeonatos c
+            JOIN jogadores_elenco j ON j.campeonato_id=c.id AND j.participante_id=? AND j.ativo=1
+            WHERE c.ativo=1 AND c.id<>? GROUP BY c.id,c.nome ORDER BY c.id DESC");
+        $s->execute([$participantId, $campeonatoId]);
+        $campeonatosComElenco = $s->fetchAll();
+    }
 }
 ?>
 <!doctype html>
@@ -243,6 +280,11 @@ if ($clube) {
                         <div class="col-md-6 formation-control"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">O sistema adiciona “Custom” automaticamente.</small></div>
                         <div><button class="btn btn-danger">Salvar configuração</button></div>
                     </form>
+                </section>
+                <section class="panel p-4 mb-4 market-config-panel">
+                    <span class="eyebrow">Mesmo clube, novo campeonato</span>
+                    <h2>IMPORTAR ELENCO ANTERIOR</h2>
+                    <?php if ($campeonatosComElenco): ?><p class="text-secondary">Copie os jogadores ativos de outro campeonato. Todos entrarão no banco para você escolher novamente os 11 titulares.</p><form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="importar_elenco_campeonato"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><div class="col-md-8"><label class="form-label">Campeonato de origem</label><select class="form-select" name="campeonato_origem_id" required><option value="">Selecione o campeonato</option><?php foreach ($campeonatosComElenco as $origem): ?><option value="<?= (int)$origem['id'] ?>"><?= e($origem['nome']) ?> · <?= (int)$origem['total'] ?> jogadores</option><?php endforeach; ?></select></div><div class="col-md-4 d-flex align-items-end"><button class="btn btn-outline-danger w-100">Importar elenco</button></div></form><?php else: ?><p class="text-secondary mb-0">Este clube ainda não possui elenco ativo em outro campeonato.</p><?php endif; ?>
                 </section><?php endif; ?>
             <div id="mercado-transferencias" class="market-anchor" aria-hidden="true"></div>
             <?php if ($podeEditarMercado && !$montagemInicial): ?><section class="panel p-4 mb-4 market-contract-panel">
