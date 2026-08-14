@@ -26,7 +26,6 @@ $erro = '';
 $preview = [];
 $texto = (string)($_POST['texto'] ?? '');
 try {
-    if ((bool)$clube['elenco_confirmado']) throw new RuntimeException('A importação em massa é exclusiva da montagem do elenco inicial.');
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         verify_csrf();
         $preview = parse_elenco_dreamteam($texto);
@@ -36,6 +35,7 @@ try {
             $insert = $pdo->prepare("INSERT INTO jogadores_elenco(campeonato_id,participante_id,nome,overall,posicao,grupo,ordem) VALUES(?,?,?,?,?,'banco',?)");
             foreach ($preview as $ordem => $j) $insert->execute([$campeonato, $participante, $j['nome'], $j['overall'], $j['posicao'], $ordem + 1]);
             mercado_ordenar_elenco($pdo, $campeonato, $participante);
+            $pdo->prepare("UPDATE clubes_campeonato SET elenco_confirmado=0 WHERE campeonato_id=? AND participante_id=?")->execute([$campeonato, $participante]);
             $pdo->commit();
             header('Location: mercado.php?campeonato_id=' . $campeonato . (account_is_master() && $participante !== $participanteSessao ? '&participante_id=' . $participante : ''));
             exit;
@@ -79,7 +79,7 @@ try {
                 <h2>PRÉVIA · <?= count($preview) ?> JOGADORES</h2>
                 <div class="roster-grid"><?php foreach ($preview as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['descricao']) ?> · <?= e($j['posicao']) ?></span></article><?php endforeach; ?></div>
                 <form method="post" class="mt-4"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonato ?>"><?php if (account_is_master() && $participante !== $participanteSessao): ?><input type="hidden" name="participante_id" value="<?= $participante ?>"><?php endif; ?><input type="hidden" name="action" value="confirmar"><textarea class="d-none" name="texto"><?= e($texto) ?></textarea>
-                    <div class="alert alert-warning">Ao confirmar, esta lista substituirá o elenco inicial atualmente cadastrado. Todos entrarão primeiro no banco para você escolher os 11 titulares.</div><button class="btn btn-success">Confirmar importação</button>
+                    <div class="alert alert-warning"><strong>Atenção:</strong> ao confirmar, esta lista substituirá todo o elenco atualmente cadastrado. Todos entrarão primeiro no banco para você escolher novamente os 11 titulares.</div><button class="btn btn-success">Confirmar importação</button>
                 </form>
             </section><?php endif; ?>
     </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

@@ -210,10 +210,10 @@ if (marketPage && lineupSection && marketSummary) {
 
 const marketTitle = document.querySelector('.market-page h1');
 const championship = document.querySelector('input[name="campeonato_id"], select[name="campeonato_id"]');
-if (marketTitle && championship && document.querySelector('input[value="adicionar_inicial"]')) {
+if (marketTitle && championship && marketTransferPane) {
   const panel = document.createElement('section');
   panel.className = 'panel p-4 mb-4 market-import-panel';
-  panel.innerHTML = '<div><h2>IMPORTAR ELENCO COMPLETO</h2><p class="text-secondary mb-0">Cole a lista do DreamTeam e o sistema removerá negrito, emojis e identificadores das cartas para reconhecer nome, OVR e posição.</p></div>';
+  panel.innerHTML = '<div><h2>IMPORTAR OU SUBSTITUIR ELENCO</h2><p class="text-secondary mb-0">Cole a lista do DreamTeam para montar ou reformular todo o elenco. O sistema reconhece nome, OVR e posição automaticamente.</p></div>';
   const link = document.createElement('a');
   link.className = 'btn btn-danger';
   const participant = new URLSearchParams(location.search).get('participante_id');
