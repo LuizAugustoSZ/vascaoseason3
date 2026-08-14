@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['11.3','Paginação do Banco de Reservas foi fixada definitivamente no rodapé do módulo, inclusive em páginas com apenas um jogador.'],
 ['11.2','Transferências do perfil foram compactadas para seis registros por página, mantendo valores alinhados e paginação fixa a partir da sétima movimentação.'],
 ['11.1','Transferências do perfil passaram a exibir três registros por página, com paginação fixa no rodapé a partir da quarta movimentação.'],
 ['11.0','Histórico da gestão passou a carregar todas as movimentações, com filtros de compras e vendas e paginação de quatro registros.'],
