@@ -5,16 +5,21 @@ function formatBRLInput(input) {
     return;
   }
   const integer = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  input.value = `R$ ${integer}`;
+  input.value = input.dataset.externalCurrencyPrefix === '1' ? integer : `R$ ${integer}`;
 }
 
 document.querySelectorAll('input[name="saldo"], input[name="valor"]').forEach(input => {
+  const prefix = input.closest('.input-group')?.querySelector('.input-group-text');
+  if (prefix?.textContent.trim() === 'R$') input.dataset.externalCurrencyPrefix = '1';
   input.type = 'text';
   input.inputMode = 'decimal';
-  input.placeholder = 'R$ 0,00';
+  input.placeholder = input.dataset.externalCurrencyPrefix === '1' ? '0' : 'R$ 0';
   if (input.value) {
     const value = Number(input.value.replace(',', '.'));
-    if (Number.isFinite(value)) input.value = `R$ ${Math.round(value).toLocaleString('pt-BR', {maximumFractionDigits: 0})}`;
+    if (Number.isFinite(value)) {
+      const formatted = Math.round(value).toLocaleString('pt-BR', {maximumFractionDigits: 0});
+      input.value = input.dataset.externalCurrencyPrefix === '1' ? formatted : `R$ ${formatted}`;
+    }
   }
   input.addEventListener('input', () => formatBRLInput(input));
 });
