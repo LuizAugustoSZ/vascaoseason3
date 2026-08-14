@@ -160,6 +160,10 @@ function mercado_garantir_estrutura(PDO $pdo): void
     foreach (preg_split('/;\s*(?:\r?\n|$)/', $migration, -1, PREG_SPLIT_NO_EMPTY) as $statement) {
         $pdo->exec(trim($statement));
     }
+    $descriptionColumn = $pdo->query("SHOW COLUMNS FROM participantes LIKE 'descricao'")->fetch();
+    if ($descriptionColumn && !preg_match('/^(?:tiny|medium|long)?text$/i', (string)$descriptionColumn['Type'])) {
+        $pdo->exec("ALTER TABLE participantes MODIFY descricao TEXT NULL");
+    }
     $columns = $pdo->query("SHOW COLUMNS FROM clubes_campeonato")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('cofre_configurado', $columns, true)) {
         $pdo->exec("ALTER TABLE clubes_campeonato ADD cofre_configurado TINYINT(1) NOT NULL DEFAULT 0 AFTER saldo");
