@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['13.0','Cofre virou a primeira etapa obrigatória; Sobre, Cofre e Herói ganharam lápis e modais independentes, substituindo a edição geral do perfil.'],
 ['12.9','Página do clube passou a recuperar automaticamente o time vinculado ao abrir sem ID ou salvar o perfil, eliminando a tela de dados indisponíveis após a edição.'],
 ['12.8','Venda ganhou atalho direto para o modal de escalação, facilitando mover titulares ao banco, e o formulário voltou a aparecer corretamente com sua orientação.'],
 ['12.7','Gestão ganhou ajudas com comandos do Discord, bloqueio imediato do 12º titular e venda restrita aos jogadores do banco, validada na tela e no servidor.'],
