@@ -44,7 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ->execute([$novoHash, (int) $_SESSION["conta_id"]]);
         $_SESSION["conta_trocar_senha"] = 0;
         session_regenerate_id(true);
-        header("Location: " . (account_is_admin() ? "admin/" : "index.php"));
+        header("Location: index.php");
         exit();
     } catch (Throwable $e) {
         $error =
@@ -93,9 +93,7 @@ $obrigatoria = account_must_change_password();
                 <div class="mb-4"><label class="form-label">Confirmar nova senha</label><input class="form-control" type="password" name="confirmar_senha" minlength="8" autocomplete="new-password" required></div><button class="btn btn-danger w-100">Salvar minha nova senha</button>
             </form><?php if (
                         !$obrigatoria
-                    ): ?><a class="btn btn-link text-secondary w-100 mt-2" href="<?= account_is_admin()
-                                                                    ? "admin/"
-                                                                    : "index.php" ?>">Cancelar</a><?php endif; ?><a class="btn btn-link text-secondary w-100" href="logout.php">Sair da conta</a>
+                    ): ?><a class="btn btn-link text-secondary w-100 mt-2" href="index.php">Cancelar</a><?php endif; ?><a class="btn btn-link text-secondary w-100" href="logout.php">Sair da conta</a>
         </div>
     </main>
 </body>
