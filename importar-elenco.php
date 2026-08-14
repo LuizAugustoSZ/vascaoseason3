@@ -60,7 +60,22 @@ try {
 
 <body><?php public_navbar('mercado'); ?><main class="container market-page"><a href="mercado.php?campeonato_id=<?= $campeonato ?><?= account_is_master() && $participante !== $participanteSessao ? '&participante_id=' . $participante : '' ?>" class="text-secondary text-decoration-none">← Voltar</a>
         <h1>IMPORTAR ELENCO</h1>
-        <p class="text-secondary">Cole a lista copiada do DreamTeam. Emojis e identificadores das cartas serão ignorados.</p><?php if ($erro): ?><div class="alert alert-danger"><?= e($erro) ?></div><?php endif; ?><form method="post" class="panel p-4 mb-4"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonato ?>"><?php if (account_is_master() && $participante !== $participanteSessao): ?><input type="hidden" name="participante_id" value="<?= $participante ?>"><?php endif; ?><input type="hidden" name="action" value="preview"><label class="form-label">Lista completa do elenco</label><textarea class="form-control" name="texto" rows="14" required><?= e($texto) ?></textarea><button class="btn btn-danger mt-3">Analisar lista</button></form><?php if ($preview): ?><section class="panel p-4">
+        <section class="panel p-4 mb-4 roster-import-tutorial">
+            <div class="roster-import-guide">
+                <span class="eyebrow">Como copiar corretamente</span>
+                <h2>DO DISCORD PARA O SITE</h2>
+                <ol>
+                    <li>Use o comando <strong>.elenco</strong> no Discord.</li>
+                    <li>Selecione e copie titulares e reservas que realmente fazem parte do seu time, incluindo nome, OVR e posição, como na imagem.</li>
+                    <li>Cole todo o conteúdo no campo abaixo e clique em <strong>Analisar lista</strong>.</li>
+                    <li>Confira a prévia. Todos entram primeiro no banco; depois você escolhe os 11 titulares.</li>
+                </ol>
+                <div class="alert alert-warning roster-import-tip"><strong>Recomendação:</strong> não importe cartas que você não usa. Elas só deixam a organização do elenco mais demorada. Se o jogador faz parte das suas substituições, inclua-o para ficar no banco de reservas.</div>
+                <p>Negrito, emojis e identificadores das cartas são removidos automaticamente. O elenco só será substituído quando você confirmar.</p>
+            </div>
+            <figure><img src="assets/img/tutorial-importar-elenco.png" alt="Exemplo de seleção do elenco no Discord para copiar e colar"><figcaption>Copie a listagem dos jogadores conforme a área selecionada.</figcaption></figure>
+        </section>
+        <?php if ($erro): ?><div class="alert alert-danger"><?= e($erro) ?></div><?php endif; ?><form method="post" class="panel p-4 mb-4"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonato ?>"><?php if (account_is_master() && $participante !== $participanteSessao): ?><input type="hidden" name="participante_id" value="<?= $participante ?>"><?php endif; ?><input type="hidden" name="action" value="preview"><label class="form-label">Lista completa do elenco</label><textarea class="form-control" name="texto" rows="14" placeholder="Cole aqui a lista copiada do Discord..." required><?= e($texto) ?></textarea><button class="btn btn-danger mt-3">Analisar lista</button></form><?php if ($preview): ?><section class="panel p-4">
                 <h2>PRÉVIA · <?= count($preview) ?> JOGADORES</h2>
                 <div class="roster-grid"><?php foreach ($preview as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['descricao']) ?> · <?= e($j['posicao']) ?></span></article><?php endforeach; ?></div>
                 <form method="post" class="mt-4"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonato ?>"><?php if (account_is_master() && $participante !== $participanteSessao): ?><input type="hidden" name="participante_id" value="<?= $participante ?>"><?php endif; ?><input type="hidden" name="action" value="confirmar"><textarea class="d-none" name="texto"><?= e($texto) ?></textarea>
