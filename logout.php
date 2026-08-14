@@ -1,6 +1,7 @@
 <?php
 // Carrega a sessão que será encerrada.
 require __DIR__ . "/includes/bootstrap.php";
+auth_forget_login();
 // Limpa os dados da sessão.
 $_SESSION = [];
 if (ini_get("session.use_cookies")) {

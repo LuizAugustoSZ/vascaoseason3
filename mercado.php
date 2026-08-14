@@ -122,7 +122,25 @@ try {
                     $moedaOrigem = 'DreamPoints';
                 }
                 if ($valor > $antes) throw new RuntimeException('Saldo insuficiente no cofre.');
+                if (($_POST['grupo'] ?? 'banco') === 'titular') {
+                    $totalTitularesAntes = contar_titulares($pdo, $campeonatoId, $participantId);
+                    if ($totalTitularesAntes > 11) {
+                        throw new RuntimeException("A escalação já possui $totalTitularesAntes titulares. Corrija-a para 11 antes de contratar outro titular.");
+                    }
+                    if ($totalTitularesAntes === 11) {
+                        $substituidoId = (int)($_POST['substituir_titular_id'] ?? 0);
+                        $substituido = $pdo->prepare("SELECT id FROM jogadores_elenco WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1 AND grupo='titular' FOR UPDATE");
+                        $substituido->execute([$substituidoId, $campeonatoId, $participantId]);
+                        if (!$substituido->fetchColumn()) {
+                            throw new RuntimeException('Escolha qual titular será substituído pelo novo jogador.');
+                        }
+                        $pdo->prepare("UPDATE jogadores_elenco SET grupo='banco' WHERE id=?")->execute([$substituidoId]);
+                    }
+                }
                 $jogador = salvar_jogador($pdo, $campeonatoId, $participantId, $_POST);
+                if (contar_titulares($pdo, $campeonatoId, $participantId) > 11) {
+                    throw new RuntimeException('A contratação não pode deixar a escalação com mais de 11 titulares.');
+                }
                 $depois = $antes - $valor;
             } else {
                 $valor = mercado_parse_valor((string)($_POST['valor'] ?? ''));
@@ -182,12 +200,14 @@ $ciclo = $campeonatoId && $participantId
     : mercado_estado_ciclo(1) + ['partidas_concluidas' => 0, 'proxima_partida' => 1];
 $elenco = [];
 $historico = [];
+$totalTitularesAtual = 0;
 $podeEditarMercado = $clube ? mercado_pode_editar($clube, $rodada) : false;
 $montagemInicial = $clube ? (!(bool)$clube['elenco_confirmado'] && $rodada === 1) : false;
 if ($clube) {
     $s = $pdo->prepare("SELECT * FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
     $s->execute([$campeonatoId, $participantId]);
     $elenco = $s->fetchAll();
+    $totalTitularesAtual = count(array_filter($elenco, static fn(array $jogador): bool => $jogador['grupo'] === 'titular'));
     $s = $pdo->prepare("SELECT * FROM movimentacoes_elenco WHERE campeonato_id=? AND participante_id=? ORDER BY id DESC");
     $s->execute([$campeonatoId, $participantId]);
     $historico = $s->fetchAll();
@@ -228,14 +248,14 @@ if ($clube) {
             <?php if ($podeEditarMercado && !$montagemInicial): ?><section class="panel p-4 mb-4 market-contract-panel">
                     <h2>ADICIONAR / CONTRATAR JOGADOR</h2>
                     <div class="market-inline-help"><strong>Como registrar:</strong> use <code>/contratar</code> no Discord e copie nome, OVR, posição e valor. Compra direta desconta Reais do cofre; Pack registra DP; Passe, Sorteio e Prancheta entram sem custo em Reais.</div>
-                    <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="comprar">
+                    <form method="post" class="row g-3" data-current-starters="<?= $totalTitularesAtual ?>"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="comprar">
                         <div class="col-md-4"><input class="form-control" name="nome" placeholder="Nome do jogador" required></div>
                         <div class="col-md-2"><input class="form-control" type="number" min="1" max="99" name="overall" placeholder="Overall" required></div>
                         <div class="col-md-2"><select class="form-select" name="posicao"><?php foreach (MERCADO_POSICOES as $p): ?><option><?= $p ?></option><?php endforeach; ?></select></div>
                         <div class="col-md-2"><select class="form-select" name="grupo">
                                 <option value="titular">Titular</option>
                                 <option value="banco">Banco</option>
-                            </select></div><?php if ((bool)$clube['elenco_confirmado']): ?><div class="col-md-4"><label class="form-label">Origem do jogador</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option><option value="prancheta">Recebido pela prancheta</option></select></div><div class="col-md-5 acquisition-pack-field" hidden><label class="form-label">Pack recebido</label><select class="form-select" name="pack"><option value="">Selecione o pack</option><?php foreach (MERCADO_PACKS as $packId => $pack): ?><option value="<?= e($packId) ?>" data-min-ovr="<?= $pack['min'] ?>" data-max-ovr="<?= $pack['max'] ?>"><?= e($pack['nome']) ?> · <?= number_format((float)$pack['dream_points'], 0, ',', '.') ?> DP · <?= $pack['min'] ?><?= $pack['min'] !== $pack['max'] ? '–' . $pack['max'] : '' ?> OVR</option><?php endforeach; ?></select></div><div class="col-md-3 acquisition-value-field"><label class="form-label">Valor da compra</label><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="R$ 0" required></div><div class="col-12 acquisition-note alert alert-info mb-0" hidden></div><?php endif; ?><div><button class="btn btn-danger">Salvar jogador</button></div>
+                            </select></div><div class="col-md-4 acquisition-replacement-field" hidden><label class="form-label">Titular que sairá</label><select class="form-select" name="substituir_titular_id"><option value="">Selecione o substituído</option><?php foreach ($elenco as $j): ?><?php if ($j['grupo'] !== 'titular') continue; ?><option value="<?= $j['id'] ?>"><?= e($j['nome']) ?> · <?= e($j['posicao']) ?></option><?php endforeach; ?></select></div><?php if ((bool)$clube['elenco_confirmado']): ?><div class="col-md-4"><label class="form-label">Origem do jogador</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option><option value="prancheta">Recebido pela prancheta</option></select></div><div class="col-md-5 acquisition-pack-field" hidden><label class="form-label">Pack recebido</label><select class="form-select" name="pack"><option value="">Selecione o pack</option><?php foreach (MERCADO_PACKS as $packId => $pack): ?><option value="<?= e($packId) ?>" data-min-ovr="<?= $pack['min'] ?>" data-max-ovr="<?= $pack['max'] ?>"><?= e($pack['nome']) ?> · <?= number_format((float)$pack['dream_points'], 0, ',', '.') ?> DP · <?= $pack['min'] ?><?= $pack['min'] !== $pack['max'] ? '–' . $pack['max'] : '' ?> OVR</option><?php endforeach; ?></select></div><div class="col-md-3 acquisition-value-field"><label class="form-label">Valor da compra</label><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="R$ 0" required></div><div class="col-12 acquisition-note alert alert-info mb-0" hidden></div><?php endif; ?><div><button class="btn btn-danger">Salvar jogador</button></div>
                         <?php if (!(bool)$clube['elenco_confirmado'] && !$montagemInicial): ?><div class="col-md-4"><label class="form-label">Origem do jogador</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option><option value="prancheta">Recebido pela prancheta</option></select></div><div class="col-md-5 acquisition-pack-field" hidden><label class="form-label">Pack recebido</label><select class="form-select" name="pack"><option value="">Selecione o pack</option><?php foreach (MERCADO_PACKS as $packId => $pack): ?><option value="<?= e($packId) ?>" data-min-ovr="<?= $pack['min'] ?>" data-max-ovr="<?= $pack['max'] ?>"><?= e($pack['nome']) ?> · <?= number_format((float)$pack['dream_points'], 0, ',', '.') ?> DP · <?= $pack['min'] ?><?= $pack['min'] !== $pack['max'] ? '–' . $pack['max'] : '' ?> OVR</option><?php endforeach; ?></select></div><div class="col-md-3 acquisition-value-field"><label class="form-label">Valor da compra</label><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="R$ 0" required></div><div class="col-12 acquisition-note alert alert-info mb-0" hidden></div><?php endif; ?>
                     </form>
                 </section><?php endif; ?>

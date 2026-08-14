@@ -83,7 +83,17 @@ document.querySelectorAll('.market-contract-panel form').forEach(form => {
   const value = form.querySelector('input[name="valor"]');
   const overall = form.querySelector('input[name="overall"]');
   const note = form.querySelector('.acquisition-note');
+  const group = form.querySelector('select[name="grupo"]');
+  const replacementField = form.querySelector('.acquisition-replacement-field');
+  const replacement = form.querySelector('select[name="substituir_titular_id"]');
   if (!origin) return;
+
+  function updateReplacementField() {
+    if (!group || !replacementField || !replacement) return;
+    const needed = group.value === 'titular' && Number(form.dataset.currentStarters) >= 11;
+    replacementField.hidden = !needed;
+    replacement.required = needed;
+  }
 
   function updateAcquisitionFields() {
     const type = origin.value;
@@ -115,8 +125,10 @@ document.querySelectorAll('.market-contract-panel form').forEach(form => {
     overall.max = option.dataset.maxOvr;
   }
   origin.addEventListener('change', updateAcquisitionFields);
+  group?.addEventListener('change', updateReplacementField);
   pack?.addEventListener('change', updatePackRange);
   updateAcquisitionFields();
+  updateReplacementField();
 });
 
 document.querySelectorAll('[data-market-history]').forEach(history => {

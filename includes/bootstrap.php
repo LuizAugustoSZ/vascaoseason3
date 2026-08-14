@@ -153,6 +153,93 @@ function verify_csrf(): void
     }
 }
 
+const REMEMBER_LOGIN_COOKIE = "vascao_remember";
+
+function auth_fill_session(array $conta): void
+{
+    $_SESSION["conta_id"] = (int)$conta["id"];
+    $_SESSION["conta_nome"] = $conta["nome"];
+    $_SESSION["conta_email"] = $conta["email"];
+    $_SESSION["conta_eh_admin"] = (int)$conta["eh_admin"];
+    $_SESSION["conta_trocar_senha"] = (int)$conta["trocar_senha"];
+    $_SESSION["participante_id"] = $conta["participante_id"] === null ? null : (int)$conta["participante_id"];
+}
+
+function auth_ensure_persistent_table(): void
+{
+    db()->exec("CREATE TABLE IF NOT EXISTS login_persistente (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        conta_id INT UNSIGNED NOT NULL,
+        token_hash CHAR(64) NOT NULL,
+        expira_em DATETIME NOT NULL,
+        criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_login_token (token_hash),
+        KEY idx_login_conta (conta_id,expira_em),
+        CONSTRAINT fk_login_conta FOREIGN KEY (conta_id) REFERENCES contas(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
+function auth_set_remember_cookie(string $token, int $expires): void
+{
+    setcookie(REMEMBER_LOGIN_COOKIE, $token, [
+        "expires" => $expires,
+        "path" => "/",
+        "secure" => !empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off",
+        "httponly" => true,
+        "samesite" => "Lax",
+    ]);
+}
+
+function auth_remember_login(int $contaId): void
+{
+    auth_ensure_persistent_table();
+    $token = bin2hex(random_bytes(32));
+    $expires = time() + 60 * 60 * 24 * 30;
+    db()->prepare("DELETE FROM login_persistente WHERE expira_em<NOW()") ->execute();
+    db()->prepare("INSERT INTO login_persistente(conta_id,token_hash,expira_em) VALUES(?,?,FROM_UNIXTIME(?))")
+        ->execute([$contaId, hash("sha256", $token), $expires]);
+    auth_set_remember_cookie($token, $expires);
+}
+
+function auth_forget_login(): void
+{
+    $token = (string)($_COOKIE[REMEMBER_LOGIN_COOKIE] ?? "");
+    if ($token !== "") {
+        try {
+            auth_ensure_persistent_table();
+            db()->prepare("DELETE FROM login_persistente WHERE token_hash=?")->execute([hash("sha256", $token)]);
+        } catch (Throwable $ignored) {
+        }
+    }
+    auth_set_remember_cookie("", time() - 3600);
+}
+
+function auth_restore_login(): void
+{
+    if (!empty($_SESSION["conta_id"])) return;
+    $token = (string)($_COOKIE[REMEMBER_LOGIN_COOKIE] ?? "");
+    if (!preg_match('/^[a-f0-9]{64}$/', $token)) return;
+    try {
+        auth_ensure_persistent_table();
+        $stmt = db()->prepare("SELECT c.id,c.participante_id,c.nome,c.email,c.eh_admin,c.trocar_senha
+            FROM login_persistente lp
+            JOIN contas c ON c.id=lp.conta_id AND c.ativo=1
+            WHERE lp.token_hash=? AND lp.expira_em>NOW() LIMIT 1");
+        $stmt->execute([hash("sha256", $token)]);
+        $conta = $stmt->fetch();
+        if ($conta) {
+            session_regenerate_id(true);
+            auth_fill_session($conta);
+            return;
+        }
+    } catch (Throwable $ignored) {
+        return;
+    }
+    auth_set_remember_cookie("", time() - 3600);
+}
+
+auth_restore_login();
+
 // Informa se existe uma conta autenticada na sessão atual.
 function account_logged_in(): bool
 {
