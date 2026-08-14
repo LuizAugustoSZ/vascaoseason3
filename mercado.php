@@ -111,10 +111,10 @@ try {
             } else {
                 $valor = mercado_parse_valor((string)($_POST['valor'] ?? ''));
                 $jogador = (int)($_POST['jogador_id'] ?? 0);
-                $stmt = $pdo->prepare("SELECT * FROM jogadores_elenco WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1 FOR UPDATE");
+                $stmt = $pdo->prepare("SELECT * FROM jogadores_elenco WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1 AND grupo='banco' FOR UPDATE");
                 $stmt->execute([$jogador, $campeonatoId, $participantId]);
                 $dados = $stmt->fetch();
-                if (!$dados) throw new RuntimeException('Jogador não encontrado no seu elenco.');
+                if (!$dados) throw new RuntimeException('Somente jogadores que estão no banco de reservas podem ser vendidos.');
                 $pdo->prepare("UPDATE jogadores_elenco SET ativo=0,saiu_em=NOW() WHERE id=?")->execute([$jogador]);
                 mercado_ordenar_elenco($pdo, $campeonatoId, $participantId);
                 $depois = $antes + $valor;
@@ -199,7 +199,7 @@ if ($clube) {
                 <article><span>01</span><div><strong>Ciclo individual</strong><p>Este clube cumpriu <?= $ciclo['etapas_concluidas'] ?> rodada(s): <?= $ciclo['partidas_concluidas'] ?> jogo(s) e <?= $ciclo['folgas'] ?> folga(s). O mercado abre após a 5ª e fica liberado na 6ª, 7ª e 8ª rodadas do próprio ciclo.</p></div></article>
                 <article><span>02</span><div><strong>Titulares automáticos</strong><p>Marque somente os 11 titulares. Ao salvar, todos os jogadores não selecionados serão definidos automaticamente como banco.</p></div></article>
                 <article><span>03</span><div><strong>Formação e ordem automáticas</strong><p>Os titulares precisam respeitar os setores da formação. O sistema ordena ataque, meio, defesa e deixa o goleiro sempre por último.</p></div></article>
-                <article><span>04</span><div><strong>Cofre e janela</strong><p>O saldo do cofre pode ser corrigido a qualquer momento. Somente contratar, vender e alterar a escalação dependem da janela individual.</p></div></article>
+                <article><span>04</span><div><strong>Cofre e janela</strong><p>Use <code>..cofre</code> no Discord para consultar o saldo. A correção do cofre fica em Editar perfil do clube; contratações, vendas e escalação dependem da janela.</p></div></article>
             </section>
             <?php if ($montagemInicial): ?><section class="panel p-4 mb-4 market-config-panel">
                     <h2>CONFIGURAÇÃO INICIAL</h2>
@@ -211,6 +211,7 @@ if ($clube) {
             <div id="mercado-transferencias" class="market-anchor" aria-hidden="true"></div>
             <?php if ($podeEditarMercado && !$montagemInicial): ?><section class="panel p-4 mb-4 market-contract-panel">
                     <h2>ADICIONAR / CONTRATAR JOGADOR</h2>
+                    <div class="market-inline-help"><strong>Como registrar:</strong> use <code>/contratar</code> no Discord e copie nome, OVR, posição e valor. Compra direta desconta Reais do cofre; Pack registra DP; Passe, Sorteio e Prancheta entram sem custo em Reais.</div>
                     <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="comprar">
                         <div class="col-md-4"><input class="form-control" name="nome" placeholder="Nome do jogador" required></div>
                         <div class="col-md-2"><input class="form-control" type="number" min="1" max="99" name="overall" placeholder="Overall" required></div>
@@ -226,13 +227,14 @@ if ($clube) {
                 <div class="d-flex justify-content-between">
                     <h2>ELENCO</h2><?php if (!(bool)$clube['elenco_confirmado'] && $podeEditarMercado): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="confirmar_elenco"><button class="btn btn-success">Confirmar 11 titulares</button></form><?php endif; ?>
                 </div><?php if (mercado_pode_editar($clube, $rodada)): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_escalacao"><div class="formation-control mb-3"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">Três números que somem 10; “Custom” será adicionado automaticamente.</small></div>
-                        <div class="lineup-selection-status"><strong><span data-selected-starters>0</span>/11 titulares selecionados</strong><small>Quem não estiver marcado será banco.</small></div>
+                        <div class="lineup-selection-status"><strong><span data-selected-starters>0</span>/11 titulares selecionados</strong><small>Use <code>..time @seu_usuario</code> no Discord para visualizar apenas a imagem do seu time e conferir os titulares. Quem não estiver marcado será banco.</small></div><div class="lineup-limit-warning" role="alert" aria-live="assertive" hidden>Você já selecionou os 11 titulares. Desmarque um jogador antes de escolher outro.</div>
                         <div class="roster-grid"><?php foreach ($elenco as $j): ?><article class="roster-select-card<?= $j['grupo'] === 'titular' ? ' is-starter' : '' ?>"><input type="hidden" name="jogador_id[]" value="<?= $j['id'] ?>"><label class="starter-toggle"><input type="checkbox" name="titular_id[]" value="<?= $j['id'] ?>" <?= $j['grupo'] === 'titular' ? 'checked' : '' ?>><span>Titular</span></label><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar escalação</button>
                     </form><?php else: ?><div class="roster-grid"><?php foreach ($elenco as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?> · <?= e($j['grupo']) ?></span></article><?php endforeach; ?></div><?php endif; ?><?php if (!$montagemInicial && $ciclo['aberto']): ?>
                     <hr>
                     <h2>VENDER JOGADOR</h2>
+                    <div class="market-inline-help"><strong>Regra da venda:</strong> somente jogadores do banco de reservas podem ser vendidos. Para vender um titular, primeiro mova-o para o banco e salve a escalação.</div>
                     <form method="post" class="row g-2"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="vender">
-                        <div class="col-md-7"><select class="form-select" name="jogador_id"><?php foreach ($elenco as $j): ?><option value="<?= $j['id'] ?>"><?= e($j['nome']) ?> · <?= $j['overall'] ?></option><?php endforeach; ?></select></div>
+                        <div class="col-md-7"><select class="form-select" name="jogador_id" required><option value="">Selecione um jogador do banco</option><?php foreach ($elenco as $j): ?><?php if ($j['grupo'] !== 'banco') continue; ?><option value="<?= $j['id'] ?>"><?= e($j['nome']) ?> · <?= $j['overall'] ?> · <?= e($j['posicao']) ?></option><?php endforeach; ?></select></div>
                         <div class="col-md-3"><input class="form-control" type="number" step="1" min="0" name="valor" placeholder="Valor da venda" required></div>
                         <div class="col-md-2"><button class="btn btn-outline-danger w-100">Vender</button></div>
                     </form><?php endif; ?>
