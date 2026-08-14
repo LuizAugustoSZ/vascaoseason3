@@ -73,7 +73,7 @@ function renderSite(data) {
   // Monta a tabela de classificação.
   $('#standings-body').html(data.classificacao.length ? data.classificacao.map(t=>`<tr><td><span class="position-pill ${t.posicao<=4?'top':''}">${t.posicao}</span></td><td><div class="team-cell">${badge(t)}<span>${teamLink(t.id,t.time_nome)}</span></div></td><td>${esc(t.nome)}</td><td><strong>${t.pts}</strong></td><td>${t.j}</td><td>${t.v}</td><td>${t.e}</td><td>${t.d}</td><td>${t.sg>0?'+':''}${t.sg}</td></tr>`).join('') : `<tr><td colspan="9">${publicEmpty('A classificação será exibida assim que a competição começar.')}</td></tr>`);
   // Monta os cards dos participantes.
-  $('#participants-grid').html(data.participantes.length ? data.participantes.map(t=>`<div class="col-6 col-lg-3"><a class="participant-card-link" href="time.php?id=${t.id}"><article class="participant-card">${badge(t)}<h3>${esc(t.time_nome)}</h3><p class="coach-name">Técnico: ${esc(t.nome)}</p><p>${esc(t.descricao || 'Participante da Season 3')}</p></article></a></div>`).join('') : publicEmpty('Os participantes da temporada serão apresentados em breve.'));
+  $('#participants-grid').html(data.participantes.length ? data.participantes.map(t=>`<div class="col-6 col-lg-3"><a class="participant-card-link" href="time.php?id=${t.id}"><article class="participant-card">${badge(t)}<h3>${esc(t.time_nome)}</h3><p class="coach-name">Técnico: ${esc(t.nome)}</p><p>Participante da Season 3</p></article></a></div>`).join('') : publicEmpty('Os participantes da temporada serão apresentados em breve.'));
   // Monta o seletor e exibe apenas os jogos da rodada escolhida.
   leagueGames=data.partidas || [];
   prepareRoundSelect(leagueGames);
