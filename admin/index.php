@@ -1345,6 +1345,7 @@ function mata_options(array $games): string
 ) ?>"><style>.admin-shell{padding:95px 0 60px}.form-control,.form-select{background:#0b0c0e;border-color:#343941}.admin-form{padding:1.25rem}.admin-form h2{font:800 1.5rem 'Barlow Condensed',sans-serif;text-transform:uppercase}.nav-pills .nav-link.active{background:#d71920}.editor-role #tab-campeonatos,.editor-role #tab-times,.editor-role #tab-titulos,.editor-role #tab-videos,.editor-role #tab-configuracoes,.editor-role #tab-usuarios,.editor-role #tab-extra .col-lg-5>form:nth-of-type(2){display:none!important}</style></head><body class="<?= account_is_editor()
     ? "editor-role"
     : "master-role" ?>">
+<div class="site-loading-screen admin-loading-screen" role="status" aria-live="polite" aria-label="Carregando painel"><img src="../assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true"><span class="site-loading-spinner"></span><strong data-loading-label>CARREGANDO DADOS</strong></div>
 <nav class="navbar fixed-top navbar-dark"><div class="container"><a class="navbar-brand" href="../index.php"><img class="brand-mark d-inline-block me-2" src="../assets/img/logo-season3.webp?v=5" alt="Vascao Season 3"> PAINEL S3</a><div><span class="text-secondary me-3 d-none d-md-inline">Olá, <?= e(
     $_SESSION["conta_nome"] ?? "",
 ) ?></span><a href="../logout.php" class="btn btn-outline-light btn-sm">Sair</a></div></div></nav>
@@ -1594,7 +1595,9 @@ function mata_options(array $games): string
 ) ?>"></div><div class="col-12"><label class="form-label">Ordem das seções</label><input class="form-control" name="ordem_secoes" value="<?= e(
     $siteConfig["ordem_secoes"],
 ) ?>"><small class="text-secondary">Use os nomes separados por vírgula: noticias, competicao, participantes, artilharia, titulos, midia.</small></div></div><button class="btn btn-danger mt-3">Salvar configurações</button></form></section>
-</div></div></main><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="../assets/js/news-editor.js?v=<?= filemtime(
+</div></div></main><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="../assets/js/admin-loading.js?v=<?= filemtime(
+    __DIR__ . "/../assets/js/admin-loading.js",
+) ?>"></script><script src="../assets/js/news-editor.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/news-editor.js",
 ) ?>"></script><script src="../assets/js/sumula-importer.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/sumula-importer.js",
