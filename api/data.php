@@ -7,7 +7,7 @@ try {
     $pdo = db();
     $campeonatos = $pdo
         ->query(
-            "SELECT id,nome,tipo,formato,status,criado_em FROM campeonatos WHERE ativo=1 ORDER BY criado_em DESC,id DESC",
+            "SELECT c.id,c.nome,c.tipo,c.formato,c.status,c.criado_em,CASE WHEN EXISTS(SELECT 1 FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND(p.status IN('finalizada','wo') OR(p.gols_mandante IS NOT NULL AND p.gols_visitante IS NOT NULL))) OR EXISTS(SELECT 1 FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1 AND(j.status='finalizado' OR(j.gols_a IS NOT NULL AND j.gols_b IS NOT NULL))) THEN 1 ELSE 0 END iniciado FROM campeonatos c WHERE c.ativo=1 ORDER BY iniciado DESC,c.criado_em DESC,c.id DESC",
         )
         ->fetchAll();
     $requested = (int) ($_GET["campeonato_id"] ?? 0);
@@ -46,6 +46,38 @@ try {
     );
     $artilhariaStmt->execute([$campeonatoId]);
     $artilharia = $artilhariaStmt->fetchAll();
+    // Soma as assistências registradas nas súmulas e preserva o clube de cada jogador.
+    $assistenciasStmt = $pdo->prepare(
+        "SELECT s.dados_json,p.mandante_id time_a_id,p.visitante_id time_b_id,m.time_nome time_a,v.time_nome time_b FROM sumulas_dreamteam s JOIN partidas p ON s.origem='pontos' AND p.id=s.partida_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.campeonato_id=? UNION ALL SELECT s.dados_json,j.time_a_id,j.time_b_id,a.time_nome,b.time_nome FROM sumulas_dreamteam s JOIN jogos_mata_mata j ON s.origem='mata' AND j.id=s.jogo_mata_mata_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.campeonato_id=?",
+    );
+    $assistenciasStmt->execute([$campeonatoId, $campeonatoId]);
+    $assistenciasAgrupadas = [];
+    $normalizarJogador = static function (string $nome): string {
+        $nome = mb_strtolower(trim($nome), 'UTF-8');
+        $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $nome);
+        return preg_replace('/[^a-z0-9]+/', '', $ascii !== false ? $ascii : $nome) ?? '';
+    };
+    foreach ($assistenciasStmt->fetchAll() as $row) {
+        $sumula = json_decode((string)$row['dados_json'], true);
+        if (!is_array($sumula)) continue;
+        $times = array_values($sumula['teams'] ?? []);
+        foreach (($sumula['events'] ?? []) as $evento) {
+            $jogador = trim((string)($evento['assist'] ?? ''));
+            if (($evento['type'] ?? '') !== 'goal' || !empty($evento['cancelled']) || $jogador === '') continue;
+            $codigo = (string)($evento['team_code'] ?? '');
+            $indice = null;
+            foreach ($times as $i => $timeSumula) if ((string)($timeSumula['code'] ?? '') === $codigo) $indice = $i;
+            if ($indice !== 0 && $indice !== 1) continue;
+            $participanteId = (int)$row[$indice === 0 ? 'time_a_id' : 'time_b_id'];
+            $timeNome = (string)$row[$indice === 0 ? 'time_a' : 'time_b'];
+            $chave = $participanteId . ':' . $normalizarJogador($jogador);
+            if (!isset($assistenciasAgrupadas[$chave])) $assistenciasAgrupadas[$chave] = ['participante_id' => $participanteId, 'jogador' => $jogador, 'participante' => $timeNome, 'assistencias' => 0];
+            $assistenciasAgrupadas[$chave]['assistencias']++;
+        }
+    }
+    $assistencias = array_values($assistenciasAgrupadas);
+    usort($assistencias, static fn(array $a, array $b): int => $b['assistencias'] <=> $a['assistencias'] ?: strcasecmp($a['jogador'], $b['jogador']));
+    $assistencias = array_slice($assistencias, 0, 10);
     // Busca as conquistas dos técnicos.
     $titulos = $pdo
         ->query(
@@ -117,6 +149,7 @@ try {
         "partidas" => $partidas,
         "mata_mata" => $mataMata,
         "artilharia" => $artilharia,
+        "assistencias" => $assistencias,
         "titulos" => $titulos,
         "videos" => $videos,
     ]);

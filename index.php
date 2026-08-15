@@ -259,19 +259,19 @@ if (
             </div>
         </section>
         <?php
-        // Ranking dos jogadores com mais gols.
+        // Rankings dos jogadores com mais gols e assistências.
         ?>
         <section id="artilharia" class="section-pad">
             <div class="container">
                 <div class="section-title"><span>03</span>
                     <div><small>QUEM DECIDE</small>
-                        <h2>ARTILHARIA</h2>
+                        <h2>JOGADORES</h2>
                     </div>
                 </div>
                 <div class="panel p-3 mb-3"><label class="form-label small" for="scorers-championship-select">CAMPEONATO</label><select id="scorers-championship-select" class="form-select"></select><small id="scorers-championship-title" class="text-secondary"></small></div>
                 <div class="panel">
                     <div class="panel-head">
-                        <h3>Ranking de artilheiros</h3><button id="scorers-download" class="competition-download" type="button" title="Baixar artilharia completa como PNG" aria-label="Baixar artilharia completa como PNG"><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <div class="player-ranking-tabs" role="tablist" aria-label="Ranking de jogadores"><button type="button" class="active" data-ranking="goals" role="tab" aria-selected="true">Artilheiros</button><button type="button" data-ranking="assists" role="tab" aria-selected="false">Assistências</button></div><button id="scorers-download" class="competition-download" type="button" title="Baixar ranking completo como PNG" aria-label="Baixar ranking completo como PNG"><svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M12 3v12m0 0 5-5m-5 5-5-5M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg></button>
                     </div>
