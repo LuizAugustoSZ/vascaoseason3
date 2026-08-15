@@ -63,6 +63,49 @@
   opacity: .35;
 }
 
+.scorers-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.scorers-pagination:empty {
+  display: none;
+}
+
+.scorers-pagination .page-scorer {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: #171b21;
+  color: #fff;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.scorers-pagination .page-scorer:hover:not(:disabled) {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+.scorers-pagination .page-scorer:disabled {
+  cursor: not-allowed;
+  opacity: .35;
+}
+
+.scorers-pagination span {
+  min-width: 34px;
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 800;
+  text-align: center;
+}
+
 .game-team-side { display:flex; align-items:center; gap:.55rem; min-width:0 }
 .game-team-side:last-child { flex-direction:row-reverse }
 .game-team-shield { flex:0 0 34px; text-decoration:none }

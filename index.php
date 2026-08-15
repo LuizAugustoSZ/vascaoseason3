@@ -276,7 +276,7 @@ if (
                             </svg></button>
                     </div>
                     <div id="scorers-list" class="scorers-list"></div>
-                    <div id="scorers-pagination" class="game-pagination"></div>
+                    <div id="scorers-pagination" class="scorers-pagination"></div>
                 </div>
             </div>
         </section>

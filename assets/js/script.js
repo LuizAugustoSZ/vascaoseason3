@@ -26,7 +26,7 @@ function renderScorers() {
   const visible=topScorers.slice((scorersPage-1)*scorersPerPage,scorersPage*scorersPerPage);
   $('#scorers-list').html(visible.length ? visible.map((a,index)=>{const position=(scorersPage-1)*scorersPerPage+index+1;return `<button type="button" class="scorer player-open ${position<=3?`podium podium-${position}`:''}" data-player-name="${esc(a.jogador)}" data-player-team="${Number(a.participante_id)}"><strong class="scorer-rank">${String(position).padStart(2,'0')}</strong><div><strong>${esc(a.jogador)}</strong><small>${esc(a.participante)}</small></div><strong>${a.gols} gols</strong></button>`}).join('') : '<div class="empty-state">A artilharia começa com o primeiro gol.</div>');
   $('#scorers-download').toggleClass('d-none',!topScorers.length).prop('disabled',!topScorers.length);
-  $('#scorers-pagination').html(topScorers.length>scorersPerPage ? `<button type="button" class="page-scorer" data-page="${scorersPage-1}" ${scorersPage===1?'disabled':''}>Anterior</button><span>Página ${scorersPage} de ${totalPages}</span><button type="button" class="page-scorer" data-page="${scorersPage+1}" ${scorersPage===totalPages?'disabled':''}>Próxima</button>` : '');
+  $('#scorers-pagination').html(topScorers.length>scorersPerPage ? `<button type="button" class="page-scorer" data-page="${scorersPage-1}" ${scorersPage===1?'disabled':''} aria-label="Página anterior">‹</button><span>${scorersPage} / ${totalPages}</span><button type="button" class="page-scorer" data-page="${scorersPage+1}" ${scorersPage===totalPages?'disabled':''} aria-label="Próxima página">›</button>` : '');
 }
 
 // Informa se todos os confrontos de uma rodada já receberam resultado.
