@@ -67,3 +67,4 @@
 .game-team-side:last-child { flex-direction:row-reverse }
 .game-team-shield { flex:0 0 34px; text-decoration:none }
 .game-team-side .team-badge { width:34px; height:34px }
+.game-team-side .team-link,.bracket-team-info .team-link{display:inline;color:#fff;text-decoration:none}.game-team-side .team-link:hover,.bracket-team-info .team-link:hover,.game-team-shield:hover+.team-link{color:var(--red)}.bracket-team-shield{display:inline-grid;text-decoration:none}.bracket-team-shield:hover .team-badge,.game-team-shield:hover .team-badge{border-color:var(--red);color:var(--red)}

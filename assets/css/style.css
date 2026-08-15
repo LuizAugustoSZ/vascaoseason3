@@ -351,6 +351,7 @@ body[aria-busy="true"] .table-responsive {
 .ranking-table tbody tr:hover {
     --bs-table-bg: rgba(255, 255, 255, .025)
 }
+.standings-team-row{cursor:pointer}.standings-team-row:focus-visible{outline:2px solid var(--red);outline-offset:-2px}.standings-team-row:hover .team-cell{color:var(--red)}
 
 .position-pill {
     display: inline-grid;
