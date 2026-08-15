@@ -26,7 +26,7 @@
   window.fetch = async (...args) => {
     const request = args[0];
     const requestUrl = typeof request === 'string' ? request : request?.url || '';
-    if (requestUrl.includes('api/partida-detalhes.php')) {
+    if (requestUrl.includes('api/partida-detalhes.php') || requestUrl.includes('api/jogador-detalhes.php')) {
       return nativeFetch(...args);
     }
     showPageLoading();
