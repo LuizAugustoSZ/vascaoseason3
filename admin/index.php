@@ -1205,7 +1205,7 @@ $games = $pdo
 // Busca os confrontos existentes para permitir editar os jogos sorteados.
 $mataGames = $pdo
     ->query(
-        "SELECT j.id,j.fase,j.ordem,j.jogo,j.time_a_id,j.time_b_id,a.time_nome time_a,b.time_nome time_b,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,j.status FROM jogos_mata_mata j JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND j.time_a_id IS NOT NULL AND j.time_b_id IS NOT NULL ORDER BY FIELD(j.fase,'Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id",
+        "SELECT j.id,j.fase,j.ordem,j.jogo,j.time_a_id,j.time_b_id,a.time_nome time_a,b.time_nome time_b,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,j.status FROM jogos_mata_mata j JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND j.time_a_id IS NOT NULL AND j.time_b_id IS NOT NULL ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id",
     )
     ->fetchAll();
 // Monta as opções dos selects de técnicos e times.
@@ -1325,7 +1325,7 @@ function mata_options(array $games): string
 ] ?>"><button class="btn btn-sm btn-outline-danger">Apagar</button></form></div></td></tr><?php endforeach; ?></tbody></table></div></div></div></div></section>
 <section id="tab-mata" class="tab-pane fade"><form id="form-mata" class="panel admin-form" method="post"><h2>Registrar ou editar mata-mata</h2><input type="hidden" name="jogo_mata_id" value=""><div id="mata-edicao" class="alert alert-info d-none justify-content-between align-items-center"><span></span><button type="button" class="btn btn-sm btn-outline-info cancelar-edicao" data-form="form-mata">Cancelar edição</button></div><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
-) ?>"><input type="hidden" name="action" value="mata_mata"><div class="row g-2"><div class="col-md-3"><label class="form-label">Fase</label><select name="fase" class="form-select"><option>Oitavas</option><option>Quartas</option><option>Semifinal</option><option>Final</option></select></div><div class="col-md-2"><label class="form-label">Ordem</label><input class="form-control" type="number" name="ordem" value="1" min="1"></div><div class="col-md-3"><label class="form-label">Time A</label><select name="time_a_id" class="form-select"><?= team_options(
+) ?>"><input type="hidden" name="action" value="mata_mata"><div class="row g-2"><div class="col-md-3"><label class="form-label">Fase</label><select name="fase" class="form-select"><option>Preliminar</option><option>Oitavas</option><option>Quartas</option><option>Semifinal</option><option>Final</option></select></div><div class="col-md-2"><label class="form-label">Ordem</label><input class="form-control" type="number" name="ordem" value="1" min="1"></div><div class="col-md-3"><label class="form-label">Time A</label><select name="time_a_id" class="form-select"><?= team_options(
     $teams,
 ) ?></select></div><div class="col-md-3"><label class="form-label">Time B</label><select name="time_b_id" class="form-select"><?= team_options(
     $teams,

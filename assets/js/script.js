@@ -80,7 +80,7 @@ function renderSite(data) {
   leagueGames=data.partidas || [];
   prepareRoundSelect(leagueGames);
   renderLeagueGames();
-  const phases = ['Oitavas','Quartas','Semifinal'];
+  const phases = ['Preliminar','Oitavas','Quartas','Semifinal'];
   // Mantém todas as informações e reúne Final e 3º Lugar na coluna decisiva.
   const phaseColumns=phases.map(phase=>{const games=data.mata_mata.filter(g=>g.fase===phase);if(!games.length)return '';const ties=games.reduce((groups,game)=>{(groups[game.ordem]??=[]).push(game);return groups;},{});return `<div class="bracket-stage" data-stage="${phase}"><h4>${phase}</h4>${Object.values(ties).map(bracketTieCard).join('')}</div>`}).join('');
   const decisionBlock=['Final','Terceiro lugar'].map(phase=>{const games=data.mata_mata.filter(g=>g.fase===phase);if(!games.length)return '';const ties=games.reduce((groups,game)=>{(groups[game.ordem]??=[]).push(game);return groups;},{});return `<section class="bracket-decision ${phase==='Final'?'bracket-final':'bracket-third'}"><h4>${phase==='Terceiro lugar'?'3º LUGAR':'FINAL'}</h4>${Object.values(ties).map(bracketTieCard).join('')}</section>`}).join('');
