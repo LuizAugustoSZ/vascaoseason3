@@ -8,6 +8,88 @@ function formatBRLInput(input) {
   input.value = input.dataset.externalCurrencyPrefix === '1' ? integer : `R$ ${integer}`;
 }
 
+// Centraliza confirmações de ações que alteram o clube.
+const clubConfirmationCopy = {
+  comprar: ['CONFIRMAR CONTRATAÇÃO', 'Você realmente quer contratar este jogador?', 'Confirmar contratação'],
+  vender: ['CONFIRMAR VENDA', 'Você realmente quer vender este jogador? Esta ação altera o elenco e o saldo do cofre.', 'Confirmar venda'],
+  atualizar_escalacao: ['SALVAR ESCALAÇÃO', 'Confirma a formação e os 11 titulares selecionados?', 'Salvar escalação'],
+  confirmar_elenco: ['CONFIRMAR ELENCO', 'Confirma os 11 titulares e deseja iniciar o ciclo deste elenco?', 'Confirmar elenco'],
+  configurar_inicial: ['SALVAR CONFIGURAÇÃO', 'Confirma a formação escolhida para o clube?', 'Salvar configuração'],
+  importar_elenco_campeonato: ['IMPORTAR ELENCO', 'Deseja importar este elenco? Os jogadores entrarão inicialmente no banco.', 'Confirmar importação'],
+  confirmar: ['SUBSTITUIR ELENCO', 'Você realmente quer substituir o elenco atual pelos jogadores desta importação?', 'Confirmar substituição'],
+  atualizar_perfil_clube: ['SALVAR PERFIL', 'Confirma as alterações no perfil e no cofre do clube?', 'Salvar perfil'],
+  atualizar_sobre_clube: ['SALVAR SOBRE O CLUBE', 'Confirma a publicação deste texto no perfil do clube?', 'Salvar sobre'],
+  atualizar_cofre_clube: ['SALVAR COFRE', 'Confirma o novo saldo do cofre do clube?', 'Salvar cofre'],
+  atualizar_heroi_clube: ['SALVAR HERÓI', 'Confirma este jogador como herói do time?', 'Salvar herói']
+};
+
+let clubConfirmationModal = null;
+let clubConfirmationResolve = null;
+function getClubConfirmationModal() {
+  if (clubConfirmationModal) return clubConfirmationModal;
+  const element = document.createElement('div');
+  element.className = 'modal fade club-confirmation-modal';
+  element.id = 'club-confirmation-modal';
+  element.tabIndex = -1;
+  element.setAttribute('aria-hidden', 'true');
+  element.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><small class="eyebrow">Revise antes de continuar</small><h2 class="modal-title" data-confirm-title>CONFIRMAR AÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><p data-confirm-message></p><div class="alert alert-secondary mb-0" data-confirm-detail hidden></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Voltar</button><button type="button" class="btn btn-danger" data-confirm-accept>Confirmar</button></div></div></div>';
+  document.body.append(element);
+  clubConfirmationModal = bootstrap.Modal.getOrCreateInstance(element, {backdrop: 'static'});
+  element.querySelector('[data-confirm-accept]').addEventListener('click', () => {
+    const resolve = clubConfirmationResolve;
+    clubConfirmationResolve = null;
+    clubConfirmationModal.hide();
+    resolve?.(true);
+  });
+  element.addEventListener('hidden.bs.modal', () => {
+    if (!clubConfirmationResolve) return;
+    const resolve = clubConfirmationResolve;
+    clubConfirmationResolve = null;
+    resolve(false);
+  });
+  return clubConfirmationModal;
+}
+
+function askClubConfirmation(title, message, acceptLabel, detail = '') {
+  const modal = getClubConfirmationModal();
+  const element = document.getElementById('club-confirmation-modal');
+  element.querySelector('[data-confirm-title]').textContent = title;
+  element.querySelector('[data-confirm-message]').textContent = message;
+  element.querySelector('[data-confirm-accept]').textContent = acceptLabel;
+  const detailBox = element.querySelector('[data-confirm-detail]');
+  detailBox.textContent = detail;
+  detailBox.hidden = !detail;
+  return new Promise(resolve => {
+    clubConfirmationResolve = resolve;
+    modal.show();
+  });
+}
+
+function confirmationDetail(form, action) {
+  const selectedText = name => form.querySelector(`[name="${name}"]`)?.selectedOptions?.[0]?.textContent.trim() || '';
+  const value = name => form.querySelector(`[name="${name}"]`)?.value.trim() || '';
+  if (action === 'comprar') return [value('nome'), value('overall') && `OVR ${value('overall')}`, selectedText('posicao'), value('valor')].filter(Boolean).join(' · ');
+  if (action === 'vender') return [selectedText('jogador_id'), value('valor')].filter(Boolean).join(' · ');
+  if (action === 'atualizar_escalacao') return `${form.querySelectorAll('input[name="titular_id[]"]:checked').length} titulares selecionados · Formação ${selectedText('formacao')}`;
+  if (action === 'importar_elenco_campeonato') return selectedText('campeonato_origem_id');
+  return '';
+}
+
+document.querySelectorAll('form[method="post"]').forEach(form => {
+  const action = form.querySelector('input[name="action"]')?.value;
+  const copy = clubConfirmationCopy[action];
+  if (!copy) return;
+  form.addEventListener('submit', async event => {
+    if (form.dataset.confirmedSubmit === '1' || event.defaultPrevented) return;
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+    const confirmed = await askClubConfirmation(copy[0], copy[1], copy[2], confirmationDetail(form, action));
+    if (!confirmed) return;
+    form.dataset.confirmedSubmit = '1';
+    form.requestSubmit(event.submitter || undefined);
+  });
+});
+
 document.querySelectorAll('input[name="saldo"], input[name="valor"]').forEach(input => {
   const prefix = input.closest('.input-group')?.querySelector('.input-group-text');
   if (prefix?.textContent.trim() === 'R$') input.dataset.externalCurrencyPrefix = '1';
@@ -233,6 +315,26 @@ if (marketPage && lineupSection && marketSummary) {
   lineupSection.classList.remove('mb-4');
   lineupModal.querySelector('.modal-body').append(lineupSection);
   document.body.append(lineupModal);
+
+  const lineupForm = lineupSection.querySelector('form input[name="action"][value="atualizar_escalacao"]')?.closest('form');
+  if (lineupForm) {
+    let lineupSnapshot = '';
+    let allowLineupClose = false;
+    const snapshot = () => [...new FormData(lineupForm).entries()].map(([key, value]) => `${key}=${value}`).sort().join('&');
+    lineupModal.addEventListener('shown.bs.modal', () => {
+      lineupSnapshot = snapshot();
+      allowLineupClose = false;
+    });
+    lineupModal.addEventListener('hide.bs.modal', event => {
+      if (allowLineupClose || snapshot() === lineupSnapshot || lineupForm.dataset.confirmedSubmit === '1') return;
+      event.preventDefault();
+      askClubConfirmation('SAIR SEM SALVAR?', 'Você alterou a escalação. Tem certeza que deseja fechar e perder essas alterações?', 'Sair sem salvar').then(confirmed => {
+        if (!confirmed) return;
+        allowLineupClose = true;
+        bootstrap.Modal.getOrCreateInstance(lineupModal).hide();
+      });
+    });
+  }
 
   const tabChampionship = marketPage.querySelector('select[name="campeonato_id"], input[name="campeonato_id"]');
   const tabKey = `market-tab-${tabChampionship?.value || 'default'}`;
