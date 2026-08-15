@@ -401,6 +401,8 @@
 .rivalry-history-game>small { display: block; margin-bottom: 6px; color: var(--muted) }
 .rivalry-history-game>div { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px }
 .rivalry-history-game>div>.match-team:last-child { justify-content: flex-end; text-align: right }
+.rivalry-history-list,.rivalry-history-game { text-align: left }
+.rivalry-history-game>div>b { text-align: center }
 .player-total-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px }
 .player-total-grid>div { display: grid; padding: 9px 5px; border: 1px solid var(--line); text-align: center }
 .player-total-grid strong { color: var(--red); font: 800 1.45rem "Barlow Condensed" }
