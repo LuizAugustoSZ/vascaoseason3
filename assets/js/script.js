@@ -15,16 +15,18 @@ let currentChampionship = null;
 let allChampionships = [];
 const gamesPerPage = 5;
 let scorers = [];
+let assists = [];
+let playerRanking = 'goals';
 let scorersPage = 1;
 const scorersPerPage = 5;
 
 // Exibe os dez maiores artilheiros em duas páginas com cinco jogadores cada.
 function renderScorers() {
-  const topScorers=scorers.slice(0,10);
+  const topScorers=(playerRanking==='assists'?assists:scorers).slice(0,10);
   const totalPages=Math.max(1,Math.ceil(topScorers.length/scorersPerPage));
   scorersPage=Math.min(Math.max(1,scorersPage),totalPages);
   const visible=topScorers.slice((scorersPage-1)*scorersPerPage,scorersPage*scorersPerPage);
-  $('#scorers-list').html(visible.length ? visible.map((a,index)=>{const position=(scorersPage-1)*scorersPerPage+index+1;return `<button type="button" class="scorer player-open ${position<=3?`podium podium-${position}`:''}" data-player-name="${esc(a.jogador)}" data-player-team="${Number(a.participante_id)}"><strong class="scorer-rank">${String(position).padStart(2,'0')}</strong><div><strong>${esc(a.jogador)}</strong><small>${esc(a.participante)}</small></div><strong>${a.gols} gols</strong></button>`}).join('') : '<div class="empty-state">A artilharia começa com o primeiro gol.</div>');
+  $('#scorers-list').html(visible.length ? visible.map((a,index)=>{const position=(scorersPage-1)*scorersPerPage+index+1,value=playerRanking==='assists'?a.assistencias:a.gols,label=playerRanking==='assists'?'assistências':'gols';return `<button type="button" class="scorer player-open ${position<=3?`podium podium-${position}`:''}" data-player-name="${esc(a.jogador)}" data-player-team="${Number(a.participante_id)}"><strong class="scorer-rank">${String(position).padStart(2,'0')}</strong><div><strong>${esc(a.jogador)}</strong><small>${esc(a.participante)}</small></div><strong>${value} ${label}</strong></button>`}).join('') : `<div class="empty-state">O ranking de ${playerRanking==='assists'?'assistências':'artilheiros'} começa com o primeiro registro.</div>`);
   $('#scorers-download').toggleClass('d-none',!topScorers.length).prop('disabled',!topScorers.length);
   $('#scorers-pagination').html(topScorers.length>scorersPerPage ? `<button type="button" class="page-scorer" data-page="${scorersPage-1}" ${scorersPage===1?'disabled':''} aria-label="Página anterior">‹</button><span>${scorersPage} / ${totalPages}</span><button type="button" class="page-scorer" data-page="${scorersPage+1}" ${scorersPage===totalPages?'disabled':''} aria-label="Próxima página">›</button>` : '');
 }
@@ -65,7 +67,7 @@ function renderSite(data) {
   currentChampionship=data.campeonato || null;
   allChampionships=data.campeonatos || [];
   const selector=$('#championship-select');
-  if(selector.length){const sameType=allChampionships.filter(c=>c.tipo===data.campeonato?.tipo);selector.html(sameType.map(c=>`<option value="${c.id}" ${Number(c.id)===Number(data.campeonato?.id)?'selected':''}>${esc(c.nome)} — ${c.status==='finalizado'?'Finalizado':'Em andamento'}</option>`).join(''));$('#championship-title').text(data.campeonato?.nome || 'As próximas competições serão anunciadas em breve.');$('.competition-download').addClass('d-none').prop('disabled',true);if(data.campeonato?.tipo==='pontos_corridos')$('.competition-download[data-export="pontos"]').removeClass('d-none').prop('disabled',false);if(data.campeonato?.tipo==='mata_mata')$('.competition-download[data-export="mata"]').removeClass('d-none').prop('disabled',false);}
+  if(selector.length){const sameType=allChampionships.filter(c=>c.tipo===data.campeonato?.tipo),statusLabel=c=>c.status==='finalizado'?'Finalizado':Number(c.iniciado)===1?'Em andamento':'Ainda não iniciado';selector.html(sameType.map(c=>`<option value="${c.id}" ${Number(c.id)===Number(data.campeonato?.id)?'selected':''}>${esc(c.nome)} — ${statusLabel(c)}</option>`).join(''));$('#championship-title').text(data.campeonato?.nome || 'As próximas competições serão anunciadas em breve.');$('.competition-download').addClass('d-none').prop('disabled',true);if(data.campeonato?.tipo==='pontos_corridos')$('.competition-download[data-export="pontos"]').removeClass('d-none').prop('disabled',false);if(data.campeonato?.tipo==='mata_mata')$('.competition-download[data-export="mata"]').removeClass('d-none').prop('disabled',false);}
   selector.prop('disabled',selector.children().length===0);
   $('#season-status').text(data.resumo?.status || 'Temporada zerada');
   $('#season-summary').text(`${data.resumo?.participantes || 0} técnicos • ${data.resumo?.partidas_finalizadas || 0} partidas finalizadas`);
@@ -84,9 +86,9 @@ function renderSite(data) {
   const decisionBlock=['Final','Terceiro lugar'].map(phase=>{const games=data.mata_mata.filter(g=>g.fase===phase);if(!games.length)return '';const ties=games.reduce((groups,game)=>{(groups[game.ordem]??=[]).push(game);return groups;},{});return `<section class="bracket-decision ${phase==='Final'?'bracket-final':'bracket-third'}"><h4>${phase==='Terceiro lugar'?'3º LUGAR':'FINAL'}</h4>${Object.values(ties).map(bracketTieCard).join('')}</section>`}).join('');
   $('#bracket').html((phaseColumns+(decisionBlock?`<div class="bracket-stage bracket-stage--decisions">${decisionBlock}</div>`:'')) || publicEmpty('O chaveamento será revelado em breve.'));
   // Monta o ranking e o seletor independente de campeonatos da artilharia.
-  scorers=data.artilharia || []; scorersPage=1; renderScorers();
+  scorers=data.artilharia || []; assists=data.assistencias || []; scorersPage=1; renderScorers();
   const scorerSelector=$('#scorers-championship-select');
-  if(scorerSelector.length){scorerSelector.html(allChampionships.map(c=>`<option value="${c.id}" ${Number(c.id)===Number(data.campeonato?.id)?'selected':''}>${esc(c.nome)} — ${c.status==='finalizado'?'Finalizado':'Em andamento'}</option>`).join(''));scorerSelector.prop('disabled',!allChampionships.length);$('#scorers-championship-title').text(data.campeonato?.nome || 'Os rankings serão apresentados quando houver um campeonato.');}
+  if(scorerSelector.length){scorerSelector.html(allChampionships.map(c=>`<option value="${c.id}" ${Number(c.id)===Number(data.campeonato?.id)?'selected':''}>${esc(c.nome)} — ${c.status==='finalizado'?'Finalizado':Number(c.iniciado)===1?'Em andamento':'Ainda não iniciado'}</option>`).join(''));scorerSelector.prop('disabled',!allChampionships.length);$('#scorers-championship-title').text(data.campeonato?.nome || 'Os rankings serão apresentados quando houver um campeonato.');}
   // Agrupa os títulos pelo técnico e pelo time, mesmo quando o time histórico não foi informado.
   const titlesByCoach = (data.titulos || []).reduce((groups, title) => { const coach=title.tecnico || 'Técnico não informado'; const team=title.time_nome || ''; const key=JSON.stringify([coach,team,title.participante_id||null]); (groups[key] ||= []).push(title); return groups; }, {});
   $('#titles-grid').html(Object.keys(titlesByCoach).length ? Object.entries(titlesByCoach).map(([key,titles])=>{const [coach,team,participantId]=JSON.parse(key);return `<div class="col-md-6 col-xl-4"><article class="title-card"><div class="title-card-head"><span class="title-trophy">🏆</span><div><small>Técnico</small><h3>${esc(coach)}</h3>${team ? `<p>${participantId?teamLink(participantId,team):esc(team)}</p>` : ''}</div><strong>${titles.length}</strong></div><div class="title-list">${titles.map(t=>`<div><span>${esc(t.titulo)}</span><b>${esc(t.temporada)}</b></div>`).join('')}</div></article></div>`}).join('') : publicEmpty('A história dos campeões será apresentada em breve.'));
@@ -99,7 +101,7 @@ function renderSite(data) {
 }
 
 function loadChampionship(id=''){$.getJSON('api/data.php',id?{campeonato_id:id}:{}).done(res=>{if(res.ok)renderSite(res)});}
-function openCompetitionType(type){const candidates=allChampionships.filter(item=>item.tipo===type);const preferred=candidates.find(item=>item.status==='ativo')||candidates[0];if(preferred&&Number(preferred.id)!==Number(currentChampionship?.id))loadChampionship(preferred.id);}
+function openCompetitionType(type){const candidates=allChampionships.filter(item=>item.tipo===type);const preferred=candidates.find(item=>Number(item.iniciado)===1&&item.status==='ativo')||candidates.find(item=>Number(item.iniciado)===1)||candidates[0];if(preferred&&Number(preferred.id)!==Number(currentChampionship?.id))loadChampionship(preferred.id);}
 async function downloadCompetition(type){
   if(!currentChampionship)return;
   if(!window.html2canvas){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';script.onload=resolve;script.onerror=reject;document.head.appendChild(script);});}
@@ -109,7 +111,7 @@ async function downloadCompetition(type){
 
 // Gera uma imagem com os dez maiores artilheiros, independentemente da página visível.
 async function downloadScorers(){
-  const topScorers=scorers.slice(0,10);
+  const topScorers=(playerRanking==='assists'?assists:scorers).slice(0,10);
   if(!topScorers.length)return;
   if(!window.html2canvas){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';script.onload=resolve;script.onerror=reject;document.head.appendChild(script);});}
   const championshipName=$('#scorers-championship-title').text() || 'Campeonato';
@@ -117,7 +119,7 @@ async function downloadScorers(){
   const podiumBackgrounds=['rgba(241,200,75,.10)','rgba(200,208,218,.08)','rgba(196,122,58,.09)'];
   const exportArea=document.createElement('div');
   exportArea.style.cssText='position:fixed;left:-10000px;top:0;width:1000px;padding:44px;background:#101318;color:#fff;z-index:-1;font-family:Inter,Arial,sans-serif';
-  exportArea.innerHTML=`<div style="border-left:4px solid #ed1c2b;padding-left:18px;margin-bottom:28px"><small style="color:#9ca8bd;letter-spacing:2px">ARTILHARIA</small><h1 style="margin:6px 0 0;font-size:44px;font-weight:800">${esc(championshipName)}</h1></div><div style="border:1px solid #303640">${topScorers.map((item,index)=>{const podiumColor=podiumColors[index],positionColor=podiumColor||'#8fa2bf',goalsColor=podiumColor||'#aab5c9',background=podiumBackgrounds[index]||'transparent';return `<div style="display:grid;grid-template-columns:70px 1fr 180px 120px;align-items:center;gap:18px;padding:18px 22px;border-left:3px solid ${index<3?podiumColor:'transparent'};border-bottom:${index===topScorers.length-1?'0':'1px solid #303640'};background:${background}"><strong style="font-size:24px;color:${positionColor}">${String(index+1).padStart(2,'0')}</strong><strong style="font-size:20px">${esc(item.jogador)}</strong><span style="color:#aab5c9">${esc(item.participante)}</span><strong style="text-align:right;font-size:20px;color:${goalsColor}">${item.gols} gols</strong></div>`}).join('')}</div><p style="margin:24px 0 0;color:#7f8ba0;font-size:13px">Vascão dos Gigantes • Season 3</p>`;
+  exportArea.innerHTML=`<div style="border-left:4px solid #ed1c2b;padding-left:18px;margin-bottom:28px"><small style="color:#9ca8bd;letter-spacing:2px">${playerRanking==='assists'?'ASSISTÊNCIAS':'ARTILHARIA'}</small><h1 style="margin:6px 0 0;font-size:44px;font-weight:800">${esc(championshipName)}</h1></div><div style="border:1px solid #303640">${topScorers.map((item,index)=>{const podiumColor=podiumColors[index],positionColor=podiumColor||'#8fa2bf',goalsColor=podiumColor||'#aab5c9',background=podiumBackgrounds[index]||'transparent',value=playerRanking==='assists'?item.assistencias:item.gols,label=playerRanking==='assists'?'assistências':'gols';return `<div style="display:grid;grid-template-columns:70px 1fr 180px 120px;align-items:center;gap:18px;padding:18px 22px;border-left:3px solid ${index<3?podiumColor:'transparent'};border-bottom:${index===topScorers.length-1?'0':'1px solid #303640'};background:${background}"><strong style="font-size:24px;color:${positionColor}">${String(index+1).padStart(2,'0')}</strong><strong style="font-size:20px">${esc(item.jogador)}</strong><span style="color:#aab5c9">${esc(item.participante)}</span><strong style="text-align:right;font-size:20px;color:${goalsColor}">${value} ${label}</strong></div>`}).join('')}</div><p style="margin:24px 0 0;color:#7f8ba0;font-size:13px">Vascão dos Gigantes • Season 3</p>`;
   document.body.appendChild(exportArea);
   const canvas=await html2canvas(exportArea,{backgroundColor:'#101318',scale:2,useCORS:true});
   exportArea.remove();
@@ -134,9 +136,10 @@ $(function(){
   $('#game-search').on('input', function(){leaguePage=1;renderLeagueGames()});
   $('#league-pagination').on('click','.page-game',function(){if(this.disabled)return;leaguePage=Number(this.dataset.page);renderLeagueGames()});
   $('#scorers-pagination').on('click','.page-scorer',function(){if(this.disabled)return;scorersPage=Number(this.dataset.page);renderScorers()});
+  $('.player-ranking-tabs').on('click','[data-ranking]',function(){playerRanking=this.dataset.ranking;scorersPage=1;$('.player-ranking-tabs [data-ranking]').removeClass('active').attr('aria-selected','false');$(this).addClass('active').attr('aria-selected','true');renderScorers()});
   $('#scorers-download').on('click',downloadScorers);
   $('#standings-body').on('click','.standings-team-row',function(){location.href=this.dataset.teamHref}).on('keydown','.standings-team-row',function(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();location.href=this.dataset.teamHref}});
-  $('#scorers-championship-select').on('change',function(){$.getJSON('api/data.php',{campeonato_id:this.value}).done(res=>{if(!res.ok)return;scorers=res.artilharia||[];scorersPage=1;$('#scorers-championship-title').text(res.campeonato?.nome||'');renderScorers();});});
+  $('#scorers-championship-select').on('change',function(){$.getJSON('api/data.php',{campeonato_id:this.value}).done(res=>{if(!res.ok)return;scorers=res.artilharia||[];assists=res.assistencias||[];scorersPage=1;$('#scorers-championship-title').text(res.campeonato?.nome||'');renderScorers();});});
   // Monta a tabela de classificação.
   $('#championship-select').on('change',function(){loadChampionship(this.value)});$('.competition-download').on('click',function(){downloadCompetition(this.dataset.export)});
   $('[data-bs-target="#pontos-corridos"]').on('shown.bs.tab',()=>openCompetitionType('pontos_corridos'));
