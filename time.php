@@ -18,6 +18,8 @@ if ($id <= 0 && account_logged_in()) {
 $time = null;
 $databaseUnavailable = false;
 $artilheiros = [];
+$assistentes = [];
+$campeonatosRanking = [];
 $jogadas = [];
 $proximas = [];
 $titulos = [];
@@ -25,6 +27,8 @@ $responsavel = null;
 $elencoPublico = [];
 $clubePublico = null;
 $jogadorFavorito = null;
+$jogadorFavoritoGols = 0;
+$jogadorFavoritoAssistencias = 0;
 $transferenciasPublicas = [];
 $canEditClubProfile = account_logged_in() && (
     account_is_master() || (int)(account_participant_id() ?? 0) === $id
@@ -79,10 +83,42 @@ try {
         $stmt->execute([$id]);
         $responsavel = $stmt->fetchColumn() ?: null;
         $stmt = $pdo->prepare(
-            "SELECT a.jogador,SUM(a.gols) gols,GROUP_CONCAT(DISTINCT c.nome ORDER BY c.criado_em DESC SEPARATOR ', ') campeonatos FROM artilharia a JOIN campeonatos c ON c.id=a.campeonato_id WHERE a.participante_id=? AND a.gols>0 GROUP BY a.jogador ORDER BY gols DESC,a.jogador LIMIT 10",
+            "SELECT a.jogador,a.gols,a.campeonato_id,c.nome campeonato FROM artilharia a JOIN campeonatos c ON c.id=a.campeonato_id WHERE a.participante_id=? AND a.gols>0 ORDER BY a.gols DESC,a.jogador",
         );
         $stmt->execute([$id]);
         $artilheiros = $stmt->fetchAll();
+        foreach ($artilheiros as $row) $campeonatosRanking[(int)$row['campeonato_id']] = (string)$row['campeonato'];
+        try {
+            $summaryStmt = $pdo->prepare("SELECT s.dados_json,c.id campeonato_id,c.nome campeonato FROM sumulas_dreamteam s JOIN partidas p ON s.origem='pontos' AND p.id=s.partida_id JOIN campeonatos c ON c.id=p.campeonato_id WHERE p.mandante_id=? OR p.visitante_id=? UNION ALL SELECT s.dados_json,c.id,c.nome FROM sumulas_dreamteam s JOIN jogos_mata_mata j ON s.origem='mata' AND j.id=s.jogo_mata_mata_id JOIN campeonatos c ON c.id=j.campeonato_id WHERE j.time_a_id=? OR j.time_b_id=?");
+            $summaryStmt->execute([$id, $id, $id, $id]);
+            $assistMap = [];
+            foreach ($summaryStmt->fetchAll() as $summaryRow) {
+                $summary = json_decode((string)$summaryRow['dados_json'], true);
+                if (!is_array($summary)) continue;
+                $championshipId = (int)$summaryRow['campeonato_id'];
+                $campeonatosRanking[$championshipId] = (string)$summaryRow['campeonato'];
+                $teamCode = null;
+                $normalize = static function (string $value): string {
+                    $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', mb_strtolower(trim($value), 'UTF-8'));
+                    return preg_replace('/[^a-z0-9]+/', '', $ascii !== false ? $ascii : $value) ?? '';
+                };
+                if ($normalize((string)($summary['home_name'] ?? '')) === $normalize((string)$time['time_nome'])) $teamCode = $summary['teams'][0]['code'] ?? null;
+                if ($normalize((string)($summary['away_name'] ?? '')) === $normalize((string)$time['time_nome'])) $teamCode = $summary['teams'][1]['code'] ?? null;
+                if (!$teamCode) continue;
+                foreach (($summary['events'] ?? []) as $event) {
+                    if (($event['type'] ?? '') !== 'goal' || !empty($event['cancelled']) || ($event['team_code'] ?? '') !== $teamCode) continue;
+                    $player = trim((string)($event['assist'] ?? ''));
+                    if ($player === '') continue;
+                    $key = $championshipId . '|' . mb_strtolower($player, 'UTF-8');
+                    if (!isset($assistMap[$key])) $assistMap[$key] = ['jogador' => $player, 'assistencias' => 0, 'campeonato_id' => $championshipId, 'campeonato' => $summaryRow['campeonato']];
+                    $assistMap[$key]['assistencias']++;
+                }
+            }
+            $assistentes = array_values($assistMap);
+            usort($assistentes, static fn($a, $b) => $b['assistencias'] <=> $a['assistencias'] ?: strcasecmp($a['jogador'], $b['jogador']));
+        } catch (Throwable $ignored) {
+            // A página continua disponível antes da instalação do módulo de súmulas.
+        }
         $stmt = $pdo->prepare(
             "SELECT * FROM (SELECT p.id,p.campeonato_id,c.nome campeonato,p.data_partida data_jogo,p.rodada etapa,p.status,m.id mandante_id,m.time_nome mandante,m.sigla mandante_sigla,m.escudo_url mandante_escudo,v.id visitante_id,v.time_nome visitante,v.sigla visitante_sigla,v.escudo_url visitante_escudo,p.gols_mandante gols_a,p.gols_visitante gols_b,NULL penaltis_a,NULL penaltis_b,'pontos' origem FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND(p.mandante_id=? OR p.visitante_id=?) UNION ALL SELECT j.id,j.campeonato_id,c.nome,NULL,j.fase,j.status,a.id,a.time_nome,a.sigla,a.escudo_url,b.id,b.time_nome,b.sigla,b.escudo_url,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,'mata' FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND(j.time_a_id=? OR j.time_b_id=?)) jogos",
         );
@@ -139,6 +175,10 @@ try {
                         $jogadorFavorito = $jogadorElenco;
                         break;
                     }
+                }
+                if ($jogadorFavorito) {
+                    foreach ($artilheiros as $row) if (mb_strtolower((string)$row['jogador']) === mb_strtolower((string)$jogadorFavorito['nome'])) $jogadorFavoritoGols += (int)$row['gols'];
+                    foreach ($assistentes as $row) if (mb_strtolower((string)$row['jogador']) === mb_strtolower((string)$jogadorFavorito['nome'])) $jogadorFavoritoAssistencias += (int)$row['assistencias'];
                 }
             }
         } catch (Throwable $ignored) {
@@ -364,7 +404,7 @@ function match_score(array $j): string
                                                             false,
                                                         ) ?><b>VS</b><?= match_team($j, "away", false) ?></div>
                                 <p><?= e(
-                                                            $j["origem"] === "pontos" ? "Rodada " . $j["etapa"] : $j["etapa"],
+                                                            ($j["origem"] === "pontos" ? "Rodada " . $j["etapa"] : $j["etapa"]) . " - " . $j["campeonato"],
                                                         ) ?><br><?= $j["data_jogo"]
                                                                     ? e(date("d/m • H:i", strtotime($j["data_jogo"])))
                                                                     : "Data a definir" ?></p>
@@ -372,28 +412,20 @@ function match_score(array $j): string
                                                                 !$proximas
                                                             ): ?><p class="empty-copy">Nenhum confronto agendado.</p><?php endif; ?><nav class="card-pages"></nav>
                 </article>
-                <article class="overview-card rivalry-card">
+                <article class="overview-card rivalry-card<?= $rival ? ' rivalry-open' : '' ?>" <?= $rival ? 'tabindex="0" role="button" data-bs-toggle="modal" data-bs-target="#rivalry-history-modal"' : '' ?>>
                     <h3>Confronto direto</h3><?php if (
                                                     $rival
-                                                ): ?><div class="versus"><span class="match-team match-team--shield-only match-team--current" data-current-team aria-current="page"><?= shield($time) ?></span><b>VS</b><a class="match-team match-team--shield-only" href="time.php?id=<?= (int)$rival['id'] ?>" aria-label="<?= e($rival['nome']) ?>" title="<?= e($rival['nome']) ?>"><?= shield($rival) ?></a></div><a class="rival-team-link" href="time.php?id=<?= (int)$rival['id'] ?>"><?= e($rival["nome"]) ?></a>
+                                                ): ?><div class="versus"><span class="match-team match-team--shield-only match-team--current" aria-current="page"><?= shield($time) ?></span><b>VS</b><span class="match-team match-team--shield-only" aria-label="<?= e($rival['nome']) ?>" title="<?= e($rival['nome']) ?>"><?= shield($rival) ?></span></div><strong class="rival-team-link"><?= e($rival["nome"]) ?></strong>
                         <p><?= $rival["jogos"] ?> jogos • <?= $rival["v"] ?> vitórias • <?= $rival["e"] ?> empates • <?= $rival["d"] ?> derrotas</p><?php else: ?><p class="empty-copy">Sem histórico disponível.</p><?php endif; ?>
                 </article>
-                <article class="overview-card scorers-card" data-card-pages="3">
-                    <h3>Artilheiros</h3>
-                    <div class="card-page-items"><?php
-                                                    foreach ($artilheiros as $pos => $a): ?><div><b><?= str_pad(
-                                                                                                        (string) ($pos + 1),
-                                                                                                        2,
-                                                                                                        "0",
-                                                                                                        STR_PAD_LEFT,
-                                                                                                    ) ?></b><span><?= e($a["jogador"]) ?></span><strong><?= $a["gols"] ?></strong></div><?php endforeach;
-                                                                                                                                        if (
-                                                                                                                                            !$artilheiros
-                                                                                                                                        ): ?><p class="empty-copy">Nenhum gol registrado.</p><?php endif;
-                                                                                                            ?></div>
+                <article class="overview-card scorers-card" data-player-ranking data-team-id="<?= $id ?>" data-scorers="<?= e(json_encode($artilheiros, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>" data-assists="<?= e(json_encode($assistentes, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>">
+                    <div class="ranking-tabs" role="tablist"><button class="active" type="button" data-ranking="goals">Artilheiros</button><button type="button" data-ranking="assists">Assistências</button></div>
+                    <select class="ranking-championship" aria-label="Filtrar ranking por campeonato"><option value="all">Todos os campeonatos</option><?php foreach ($campeonatosRanking as $championshipId => $championshipName): ?><option value="<?= (int)$championshipId ?>" <?= (int)($clubePublico['campeonato_id'] ?? 0) === (int)$championshipId ? 'selected' : '' ?>><?= e($championshipName) ?></option><?php endforeach; ?></select>
+                    <div class="card-page-items ranking-items"></div>
                     <nav class="card-pages"></nav>
                 </article>
             </section>
+            <?php if ($rival): ?><div class="modal fade compact-stats-modal" id="rivalry-history-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><small>Confronto direto</small><h2 class="modal-title"><?= e($time['time_nome']) ?> × <?= e($rival['nome']) ?></h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body rivalry-history-list"><?php $rivalGames = array_values(array_filter($jogadas, static fn($game) => in_array((int)$rival['id'], [(int)$game['mandante_id'], (int)$game['visitante_id']], true))); foreach ($rivalGames as $game): ?><div class="rivalry-history-game"><small><?= e(($game['origem'] === 'pontos' ? 'Rodada ' . $game['etapa'] : $game['etapa']) . ' - ' . $game['campeonato']) ?></small><div><?= match_team($game, 'home') ?><b><?= match_score($game) ?></b><?= match_team($game, 'away') ?></div></div><?php endforeach; ?><?php if (!$rivalGames): ?><p class="empty-copy">Nenhum confronto finalizado entre os times.</p><?php endif; ?></div></div></div></div><?php endif; ?>
             <?php if ($titulos): ?>
                 <section class="titles-strip">
                     <h3>Títulos e campanhas</h3>
@@ -413,7 +445,7 @@ function match_score(array $j): string
                         <h3>Escalação atual</h3><?php if ($canEditClubProfile): ?><a class="lineup-edit-button" href="mercado.php<?= $clubePublico ? '?campeonato_id=' . (int)$clubePublico['campeonato_id'] : '' ?>">Editar escalação</a><?php endif; ?>
                     </div>
                     <?php if ($clubePublico): ?><strong class="public-formation"><?= e($clubePublico['formacao']) ?></strong>
-                        <div class="public-roster"><?php foreach ($elencoPublico as $jogador): if ($jogador['grupo'] !== 'titular') continue; ?><div><b><?= e($jogador['nome']) ?></b><span><?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></span></div><?php endforeach; ?></div><?php else: ?>
+                        <div class="public-roster"><?php foreach ($elencoPublico as $jogador): if ($jogador['grupo'] !== 'titular') continue; ?><button class="player-open" type="button" data-player-name="<?= e($jogador['nome']) ?>" data-player-team="<?= $id ?>"><b><?= e($jogador['nome']) ?></b><span><?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></span></button><?php endforeach; ?></div><?php else: ?>
                         <div class="empty-pitch">
                             <span></span><span></span><span></span><span></span>
                             <span></span><span></span><span></span><span></span>
@@ -430,18 +462,18 @@ function match_score(array $j): string
                 <article class="transfer-history-module" data-transfer-module data-items-per-page="6">
                     <h3>Transferências</h3>
                     <div class="transfer-filters" role="group" aria-label="Filtrar transferências"><button class="active" type="button" data-transfer-filter="todas">Todas</button><button type="button" data-transfer-filter="compra">Compras</button><button type="button" data-transfer-filter="venda">Vendas</button></div>
-                    <div class="transfer-page-items"><?php foreach ($transferenciasPublicas as $transferencia): ?><div class="transfer-entry" data-transfer-type="<?= e($transferencia['tipo']) ?>"><span class="transfer-kind <?= $transferencia['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= e(($transferencia['tipo'] === 'venda' ? 'Venda' : (($transferencia['origem'] ?? '') === 'pack' ? 'Pack' : mercado_rotulo_origem($transferencia)))) ?></span><b><?= e($transferencia['jogador_nome']) ?></b><small><?= (int)$transferencia['jogador_overall'] ?> · <?= e($transferencia['jogador_posicao']) ?><?= !empty($transferencia['origem_detalhe']) ? ' · ' . e($transferencia['origem_detalhe']) : '' ?></small><strong><?= e(mercado_valor_movimento($transferencia)) ?></strong></div><?php endforeach; ?><?php if (!$transferenciasPublicas): ?><p class="module-empty">Nenhuma transferência registrada.</p><?php endif; ?></div>
+                    <div class="transfer-page-items"><?php foreach ($transferenciasPublicas as $transferencia): ?><button type="button" class="transfer-entry player-open" data-transfer-type="<?= e($transferencia['tipo']) ?>" data-player-name="<?= e($transferencia['jogador_nome']) ?>" data-player-team="<?= $id ?>"><span class="transfer-kind <?= $transferencia['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= e(($transferencia['tipo'] === 'venda' ? 'Venda' : (($transferencia['origem'] ?? '') === 'pack' ? 'Pack' : mercado_rotulo_origem($transferencia)))) ?></span><b><?= e($transferencia['jogador_nome']) ?></b><small><?= (int)$transferencia['jogador_overall'] ?> · <?= e($transferencia['jogador_posicao']) ?><?= !empty($transferencia['origem_detalhe']) ? ' · ' . e($transferencia['origem_detalhe']) : '' ?></small><strong><?= e(mercado_valor_movimento($transferencia)) ?></strong></button><?php endforeach; ?><?php if (!$transferenciasPublicas): ?><p class="module-empty">Nenhuma transferência registrada.</p><?php endif; ?></div>
                     <nav class="transfer-pages card-pages"></nav>
                 </article>
                 <article class="reserves-module" data-card-pages="5">
                     <h3>Banco de reservas</h3>
                     <div class="card-page-items"><?php $reservas = array_values(array_filter($elencoPublico, fn($j) => $j['grupo'] === 'banco'));
-                                                    foreach ($reservas as $jogador): ?><p><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></p><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado.</div><?php endif; ?></div>
+                                                    foreach ($reservas as $jogador): ?><button class="player-open reserve-player" type="button" data-player-name="<?= e($jogador['nome']) ?>" data-player-team="<?= $id ?>"><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></button><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado.</div><?php endif; ?></div>
                     <nav class="card-pages"></nav>
                 </article>
                 <article class="favorite-player-module">
                     <div class="club-card-heading"><h3>Herói do time</h3><?php if ($canEditClubProfile && $clubePublico): ?><button class="club-card-edit" type="button" data-bs-toggle="modal" data-bs-target="#club-hero-modal" aria-label="Editar herói do time" title="Editar herói do time">✎</button><?php endif; ?></div>
-                    <?php if ($jogadorFavorito): ?><strong><?= e($jogadorFavorito['nome']) ?></strong><p><?= (int)$jogadorFavorito['overall'] ?> · <?= e($jogadorFavorito['posicao']) ?></p><?php else: ?><p class="module-empty">Nenhum jogador escolhido.</p><?php endif; ?>
+                    <?php if ($jogadorFavorito): ?><button class="player-open favorite-player-button" type="button" data-player-name="<?= e($jogadorFavorito['nome']) ?>" data-player-team="<?= $id ?>"><strong><?= e($jogadorFavorito['nome']) ?></strong><span><?= (int)$jogadorFavorito['overall'] ?> · <?= e($jogadorFavorito['posicao']) ?></span><small><?= $jogadorFavoritoGols ?> gols · <?= $jogadorFavoritoAssistencias ?> assistências</small></button><?php else: ?><p class="module-empty">Nenhum jogador escolhido.</p><?php endif; ?>
                 </article>
                 <article class="about-module">
                     <div class="club-card-heading"><h3>Sobre o clube</h3><?php if ($canEditClubProfile && $clubePublico): ?><button class="club-card-edit" type="button" data-bs-toggle="modal" data-bs-target="#club-about-modal" aria-label="Editar sobre o clube" title="Editar sobre o clube">✎</button><?php endif; ?></div>

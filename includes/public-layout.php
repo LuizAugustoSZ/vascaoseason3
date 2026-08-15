@@ -107,8 +107,11 @@ function public_footer(): void
             </div>
         </div>
     </div>
+    <div class="modal fade compact-stats-modal" id="player-stats-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><div><small>Histórico individual</small><h2 class="modal-title" id="player-stats-title">Jogador</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body" id="player-stats-body"></div></div></div></div>
+    <link rel="stylesheet" href="assets/css/player-details.css?v=<?= filemtime(__DIR__ . '/../assets/css/player-details.css') ?>">
     <link rel="stylesheet" href="assets/css/match-details.css?v=<?= filemtime(__DIR__ . '/../assets/css/match-details.css') ?>">
     <script defer src="assets/js/match-details.js?v=<?= filemtime(__DIR__ . '/../assets/js/match-details.js') ?>"></script>
+    <script defer src="assets/js/player-details.js?v=<?= filemtime(__DIR__ . '/../assets/js/player-details.js') ?>"></script>
     <script defer src="assets/js/market.js?v=<?= filemtime(__DIR__ . '/../assets/js/market.js') ?>"></script>
     <script defer src="assets/js/site-loader.js?v=<?= filemtime(__DIR__ . '/../assets/js/site-loader.js') ?>"></script>
 <?php
