@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['14.4','Partidas priorizam a abertura da súmula, links de clubes ficaram restritos ao nome e escudo, classificação ganhou linhas inteiras clicáveis e o visual do confronto direto e da escalação foi corrigido.'],
 ['14.3','Histórico individual ganhou tamanho responsivo, paginação de partidas e notas coloridas quando disponíveis; confronto direto teve seu alinhamento corrigido.'],
 ['14.2','Detalhes da partida ganhou linha do tempo dividida entre mandante e visitante; modais de estatísticas abrem sem loading ou piscadas e a artilharia recuperou seu fundo original.'],
 ['14.1','Conversão de horário das notícias foi consolidada em uma única etapa no MySQL, eliminando tanto o avanço quanto a redução duplicada de três horas.'],

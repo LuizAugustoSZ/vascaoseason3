@@ -226,6 +226,7 @@
 .rivalry-card {
     text-align: center
 }
+.rivalry-card>h3 { text-align: left }
 
 .rivalry-open { cursor: pointer }
 .rivalry-open:hover { border-color: var(--red) }
@@ -290,8 +291,10 @@
 .compact-match>.match-team:last-child,
 .detail-match>.match-team:last-child {
     justify-content: flex-end;
+    justify-self: end;
     text-align: right
 }
+.compact-match>.match-team:first-child,.detail-match>.match-team:first-child { justify-self: start }
 
 .match-shield {
     position: relative;
@@ -417,7 +420,7 @@
 .player-game li { display: grid; grid-template-columns: 34px 1fr; gap: 5px; padding: 3px 0; color: #ddd }
 .player-game time { color: var(--red); font-weight: 700 }
 .player-open { cursor: pointer }
-.public-roster .player-open { color: inherit; background: transparent; border: 0; text-align: left }
+.public-roster .player-open { color: inherit; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: .7rem; text-align: left }
 .reserve-player { display: block; width: 100%; padding: 6px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--muted); text-align: left; font-size: .75rem }
 .favorite-player-button { display: grid; width: 100%; padding: 0; border: 0; background: transparent; color: #fff; text-align: left }
 .favorite-player-button span,.favorite-player-button small { color: var(--muted); font-size: .72rem }

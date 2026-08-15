@@ -59,6 +59,8 @@ document
   .querySelectorAll('[data-card-pages]')
   .forEach(initializeCardPagination);
 
+document.querySelectorAll('.rivalry-card a').forEach(link => link.addEventListener('click', event => event.stopPropagation()));
+
 document.querySelectorAll('[data-transfer-module]').forEach(module => {
   const items = [...module.querySelectorAll('.transfer-entry')];
   const pagination = module.querySelector('.transfer-pages');
