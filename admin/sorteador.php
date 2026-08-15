@@ -79,6 +79,7 @@ function knockout_phases(int $count): array
     return match ($count) {
         4 => ["Semifinal", "Final"],
         8 => ["Quartas", "Semifinal", "Final"],
+        10 => ["Preliminar", "Quartas", "Semifinal", "Final"],
         16 => ["Oitavas", "Quartas", "Semifinal", "Final"],
     };
 }
@@ -135,9 +136,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $format = $_POST["formato"] ?? "unico";
             $finalFormat = $_POST["formato_final"] ?? "unico";
             $thirdFormat = $_POST["formato_terceiro"] ?? "unico";
-            if (!in_array($count, [4, 8, 16], true)) {
+            if (!in_array($count, [4, 8, 10, 16], true)) {
                 throw new RuntimeException(
-                    "Selecione 4, 8 ou 16 participantes.",
+                    "Selecione 4, 8, 10 ou 16 participantes.",
                 );
             }
             foreach ([$format, $finalFormat, $thirdFormat] as $selectedFormat) {
@@ -155,9 +156,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "INSERT INTO jogos_mata_mata(campeonato_id,fase,ordem,jogo,time_a_id,time_b_id,origem_a_fase,origem_a_ordem,origem_b_fase,origem_b_ordem,gols_a,gols_b,vencedor_id,status) VALUES(?,?,?,?,?,?,?,?,?,?,NULL,NULL,NULL,'agendado')",
             );
             foreach ($phases as $phaseIndex => $phase) {
-                $ties = intdiv($count, 2 ** ($phaseIndex + 1));
+                if ($count === 10 && $phase === "Preliminar") {
+                    $ties = 2;
+                } elseif ($count === 10) {
+                    $ties = ["Quartas" => 4, "Semifinal" => 2, "Final" => 1][$phase];
+                } else {
+                    $ties = intdiv($count, 2 ** ($phaseIndex + 1));
+                }
                 for ($order = 1; $order <= $ties; $order++) {
-                    if ($phaseIndex === 0) {
+                    if ($count === 10 && $phase === "Quartas") {
+                        if ($order <= 2) {
+                            $timeA = null;
+                            $timeB = $ids[$order + 3];
+                            $originPhase = "Preliminar";
+                            $originA = $order;
+                            $originB = null;
+                        } else {
+                            $offset = 2 + (($order - 3) * 2);
+                            $timeA = $ids[$offset + 4];
+                            $timeB = $ids[$offset + 5];
+                            $originPhase = null;
+                            $originA = null;
+                            $originB = null;
+                        }
+                    } elseif ($phaseIndex === 0) {
                         $timeA = $ids[($order - 1) * 2];
                         $timeB = $ids[($order - 1) * 2 + 1];
                         $originPhase = null;
@@ -177,9 +199,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         1,
                         $timeA,
                         $timeB,
-                        $originPhase,
+                        $originA !== null ? $originPhase : null,
                         $originA,
-                        $originPhase,
+                        $originB !== null ? $originPhase : null,
                         $originB,
                     ]);
                     $phaseFormat = $phase === "Final" ? $finalFormat : $format;
@@ -191,9 +213,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             2,
                             $timeB,
                             $timeA,
-                            $originPhase,
+                            $originB !== null ? $originPhase : null,
                             $originB,
-                            $originPhase,
+                            $originA !== null ? $originPhase : null,
                             $originA,
                         ]);
                     }
@@ -264,7 +286,7 @@ function checks(array $teams): string
 ) ?></div><label class="form-label">Formato</label><select class="form-select" name="formato"><option value="ida">Somente ida</option><option value="ida_volta">Ida e volta</option></select><button class="btn btn-danger mt-3">Iniciar sorteio</button></form></div>
 <div class="col-xl-6"><form class="panel sorteio-form sorteio-mata" method="post" onsubmit="return confirm('Sortear e gravar o chaveamento?')"><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
-) ?>"><input type="hidden" name="action" value="mata"><h2>Mata-mata</h2><p class="text-secondary">Selecione exatamente 4, 8 ou 16 participantes.</p><div class="alert alert-info small"><strong class="selected-count"></strong><br>O mata-mata precisa ter 4, 8 ou 16 participantes para formar todas as chaves sem folgas. A Final e o 3º Lugar podem ter formatos diferentes das fases anteriores.</div><div class="row g-2 mb-3"><?= checks(
+) ?>"><input type="hidden" name="action" value="mata"><h2>Mata-mata</h2><p class="text-secondary">Selecione exatamente 4, 8, 10 ou 16 participantes.</p><div class="alert alert-info small"><strong class="selected-count"></strong><br>Com 10 participantes, quatro disputam duas vagas na Preliminar e os outros seis avançam diretamente às Quartas. A Final e o 3º Lugar podem ter formatos diferentes das fases anteriores.</div><div class="row g-2 mb-3"><?= checks(
     $teams,
 ) ?></div><div class="row g-2"><div class="col-12"><label class="form-label">Formato das fases anteriores</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div><div class="col-md-6"><label class="form-label">Formato da Final</label><select class="form-select" name="formato_final"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div><div class="col-md-6"><label class="form-label">Formato do 3º Lugar</label><select class="form-select" name="formato_terceiro"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div></div><button class="btn btn-danger mt-3">Iniciar sorteio</button></form></div>
 </div></div></main><script>document.querySelectorAll('.sorteio-form').forEach(form=>{const title=form.querySelector('h2');title.insertAdjacentHTML('afterend','<label class="form-label mt-2">Nome do campeonato</label><input class="form-control mb-3" name="nome_campeonato" maxlength="150" placeholder="Ex.: Copa Vascão S3" required>');const update=()=>{const total=form.querySelectorAll('input[name="participantes[]"]:checked').length;form.querySelector('.selected-count').textContent=`${total} participante${total===1?'':'s'} selecionado${total===1?'':'s'}.`;};form.addEventListener('change',update);update();form.addEventListener('submit',async event=>{if(event.defaultPrevented)return;event.preventDefault();const button=event.submitter||form.querySelector('button');const old=button.textContent;button.disabled=true;button.textContent='Sorteando...';try{const payload=new FormData(form);payload.set('_ajax','1');const response=await fetch('sorteador.php',{method:'POST',body:payload,headers:{'Accept':'application/json'},credentials:'same-origin'});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível sortear.');form.nome_campeonato.value='';alert(data.message);}catch(error){alert(error.message);}finally{button.disabled=false;button.textContent=old;}});});</script></body></html>

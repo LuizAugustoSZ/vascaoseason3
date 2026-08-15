@@ -36,7 +36,7 @@ try {
     $partidas = $partidaStmt->fetchAll();
     // Busca os confrontos do chaveamento.
     $mataStmt = $pdo->prepare(
-        "SELECT j.*,a.time_nome time_a,a.nome tecnico_a,a.sigla sigla_a,a.escudo_url escudo_a,b.time_nome time_b,b.nome tecnico_b,b.sigla sigla_b,b.escudo_url escudo_b,w.time_nome vencedor FROM jogos_mata_mata j LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id LEFT JOIN participantes w ON w.id=j.vencedor_id WHERE j.campeonato_id=? AND j.ativo=1 ORDER BY FIELD(j.fase,'Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id",
+        "SELECT j.*,a.time_nome time_a,a.nome tecnico_a,a.sigla sigla_a,a.escudo_url escudo_a,b.time_nome time_b,b.nome tecnico_b,b.sigla sigla_b,b.escudo_url escudo_b,w.time_nome vencedor FROM jogos_mata_mata j LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id LEFT JOIN participantes w ON w.id=j.vencedor_id WHERE j.campeonato_id=? AND j.ativo=1 ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id",
     );
     $mataStmt->execute([$campeonatoId]);
     $mataMata = $mataStmt->fetchAll();

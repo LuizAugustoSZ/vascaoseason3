@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 function knockout_prompt_response(PDO $pdo, int $championshipId, string $championship, string $phase): never
 {
-    $stmt = $pdo->prepare("SELECT fase,COUNT(*) jogos,SUM(status='finalizado') finalizados,MAX(status='finalizado') tem_resultado FROM jogos_mata_mata WHERE campeonato_id=? AND ativo=1 GROUP BY fase ORDER BY FIELD(fase,'Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),MIN(id)");
+    $stmt = $pdo->prepare("SELECT fase,COUNT(*) jogos,SUM(status='finalizado') finalizados,MAX(status='finalizado') tem_resultado FROM jogos_mata_mata WHERE campeonato_id=? AND ativo=1 GROUP BY fase ORDER BY FIELD(fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),MIN(id)");
     $stmt->execute([$championshipId]);
     $phases = array_map(static fn(array $row): array => [
         'fase' => (string)$row['fase'],
@@ -33,7 +33,7 @@ function knockout_prompt_response(PDO $pdo, int $championshipId, string $champio
 
     $isComplete = $phase === 'Campeonato completo';
     $phaseFilter = $isComplete ? '' : ' AND j.fase=?';
-    $stmt = $pdo->prepare("SELECT j.fase,j.ordem,j.jogo,j.status,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,a.time_nome time_a,a.nome tecnico_a,b.time_nome time_b,b.nome tecnico_b,w.time_nome vencedor,s.estadio,s.clima,s.duracao,s.craque,s.craque_nota,s.dados_json,s.texto_original FROM jogos_mata_mata j JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id LEFT JOIN participantes w ON w.id=j.vencedor_id LEFT JOIN sumulas_dreamteam s ON s.origem='mata' AND s.jogo_mata_mata_id=j.id WHERE j.campeonato_id=?{$phaseFilter} AND j.ativo=1 ORDER BY FIELD(j.fase,'Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id");
+    $stmt = $pdo->prepare("SELECT j.fase,j.ordem,j.jogo,j.status,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,a.time_nome time_a,a.nome tecnico_a,b.time_nome time_b,b.nome tecnico_b,w.time_nome vencedor,s.estadio,s.clima,s.duracao,s.craque,s.craque_nota,s.dados_json,s.texto_original FROM jogos_mata_mata j JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id LEFT JOIN participantes w ON w.id=j.vencedor_id LEFT JOIN sumulas_dreamteam s ON s.origem='mata' AND s.jogo_mata_mata_id=j.id WHERE j.campeonato_id=?{$phaseFilter} AND j.ativo=1 ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id");
     $stmt->execute($isComplete ? [$championshipId] : [$championshipId,$phase]);
     $matches = $stmt->fetchAll();
     if (!$matches) throw new RuntimeException('Nenhuma partida cadastrada nesta fase.');
