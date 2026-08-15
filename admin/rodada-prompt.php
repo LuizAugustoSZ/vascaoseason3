@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require __DIR__ . '/../includes/bootstrap.php';
+require __DIR__ . '/mata-prompt.php';
 admin_required();
 
 header('Content-Type: application/json; charset=utf-8');
@@ -16,12 +17,17 @@ try {
     $pdo = db();
     $campeonatoId = (int)($_GET['campeonato_id'] ?? 0);
     $rodada = (int)($_GET['rodada'] ?? 0);
+    $fase = trim((string)($_GET['fase'] ?? ''));
     if ($campeonatoId < 1) throw new RuntimeException('Selecione um campeonato.');
 
-    $championshipStmt = $pdo->prepare("SELECT nome FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1");
+    $championshipStmt = $pdo->prepare("SELECT nome,tipo,status FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1");
     $championshipStmt->execute([$campeonatoId]);
-    $campeonato = (string)($championshipStmt->fetchColumn() ?: '');
+    $championship = $championshipStmt->fetch();
+    $campeonato = (string)($championship['nome'] ?? '');
     if ($campeonato === '') throw new RuntimeException('Campeonato não encontrado.');
+    if (($championship['tipo'] ?? '') === 'mata_mata') {
+        knockout_prompt_response($pdo, $campeonatoId, $campeonato, $fase);
+    }
 
     $roundStmt = $pdo->prepare("SELECT rodada,MAX(CASE WHEN gols_mandante IS NOT NULL AND gols_visitante IS NOT NULL THEN 1 ELSE 0 END) tem_resultado FROM partidas WHERE campeonato_id=? AND ativo=1 GROUP BY rodada ORDER BY rodada");
     $roundStmt->execute([$campeonatoId]);
@@ -33,7 +39,7 @@ try {
     $inicioCicloAtual = (($cicloAtual - 1) * 8) + 1;
     $fimCicloAtual = $inicioCicloAtual + 7;
     $contextoAtual = "Rodada atual: {$rodadaAtual}ª · Ciclo {$cicloAtual}: {$inicioCicloAtual}ª à {$fimCicloAtual}ª rodada";
-    if ($rodada < 1) prompt_json(['ok' => true, 'rodadas' => $rodadas, 'rodada_atual' => $rodadaAtual, 'contexto' => $contextoAtual]);
+    if ($rodada < 1) prompt_json(['ok' => true, 'tipo' => 'pontos_corridos', 'rodadas' => $rodadas, 'rodada_atual' => $rodadaAtual, 'contexto' => $contextoAtual]);
     if (!in_array($rodada, array_column($rodadas, 'rodada'), true)) throw new RuntimeException('Rodada não encontrada neste campeonato.');
 
     $ciclo = intdiv($rodada - 1, 8) + 1;

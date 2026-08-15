@@ -181,3 +181,43 @@ if (requestedClubModal) {
   const modal = document.getElementById(requestedClubModal);
   if (modal) bootstrap.Modal.getOrCreateInstance(modal).show();
 }
+
+document.querySelectorAll('[data-player-ranking]').forEach(module => {
+  const scorers = JSON.parse(module.dataset.scorers || '[]');
+  const assists = JSON.parse(module.dataset.assists || '[]');
+  const filter = module.querySelector('.ranking-championship');
+  const list = module.querySelector('.ranking-items');
+  const pages = module.querySelector('.card-pages');
+  const tabs = [...module.querySelectorAll('[data-ranking]')];
+  let ranking = 'goals';
+  let page = 1;
+
+  const aggregate = rows => {
+    const valueKey = ranking === 'goals' ? 'gols' : 'assistencias';
+    const selected = filter.value;
+    const map = new Map();
+    rows.filter(row => selected === 'all' || String(row.campeonato_id) === selected).forEach(row => {
+      const key = String(row.jogador).trim().toLocaleLowerCase('pt-BR');
+      const current = map.get(key) || { jogador: row.jogador, value: 0 };
+      current.value += Number(row[valueKey]) || 0;
+      map.set(key, current);
+    });
+    return [...map.values()].sort((a, b) => b.value - a.value || a.jogador.localeCompare(b.jogador, 'pt-BR'));
+  };
+
+  function render() {
+    const rows = aggregate(ranking === 'goals' ? scorers : assists);
+    const totalPages = Math.max(1, Math.ceil(rows.length / 3));
+    page = Math.min(page, totalPages);
+    list.innerHTML = rows.length ? rows.slice((page - 1) * 3, page * 3).map((row, index) => `<button class="ranking-player player-open" type="button" data-player-name="${escapeHtml(row.jogador)}" data-player-team="${Number(module.dataset.teamId)}"><b>${String((page - 1) * 3 + index + 1).padStart(2, '0')}</b><span>${escapeHtml(row.jogador)}</span><strong>${row.value}</strong></button>`).join('') : `<p class="empty-copy">Nenhum dado registrado.</p>`;
+    pages.innerHTML = rows.length > 3 ? `<button type="button" data-go="-1" ${page === 1 ? 'disabled' : ''}>‹</button><span>${page} / ${totalPages}</span><button type="button" data-go="1" ${page === totalPages ? 'disabled' : ''}>›</button>` : '';
+  }
+  tabs.forEach(tab => tab.addEventListener('click', () => { ranking = tab.dataset.ranking; page = 1; tabs.forEach(item => item.classList.toggle('active', item === tab)); render(); }));
+  filter.addEventListener('change', () => { page = 1; render(); });
+  pages.addEventListener('click', event => { const button = event.target.closest('[data-go]'); if (!button || button.disabled) return; page += Number(button.dataset.go); render(); });
+  render();
+});
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+}
