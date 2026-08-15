@@ -30,14 +30,24 @@ function public_site_config(): array
 function public_navbar(string $active = "", bool $onLandingPage = false): void
 {
     $home = $onLandingPage ? "" : "index.php";
-    $links = [
+    $sectionLinks = [
+        "noticias" => ["noticias.php", "Notícias"],
         "competicao" => [$home . "#competicao", "Competição"],
         "participantes" => [$home . "#participantes", "Participantes"],
-        "artilharia" => [$home . "#artilharia", "Artilharia"],
+        "artilharia" => [$home . "#artilharia", "Jogadores"],
         "titulos" => [$home . "#titulos", "Títulos"],
+    ];
+    $configuredOrder = array_filter(array_map(
+        'trim',
+        explode(',', (string)(public_site_config()['ordem_secoes'] ?? '')),
+    ));
+    $links = [];
+    foreach (array_merge($configuredOrder, array_keys($sectionLinks)) as $key) {
+        if (isset($sectionLinks[$key]) && !isset($links[$key])) $links[$key] = $sectionLinks[$key];
+    }
+    $links += [
         "comandos" => ["comandos.php", "Comandos"],
         "regulamento" => ["regulamento.php", "Regulamento"],
-        "noticias" => ["noticias.php", "Notícias"],
     ];
     $participantId = account_logged_in() ? (int)(account_participant_id() ?? 0) : 0;
     $teamNavLabel = 'Time';
