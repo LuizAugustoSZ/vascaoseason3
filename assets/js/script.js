@@ -144,5 +144,6 @@ $(function(){
   $('#championship-select').on('change',function(){loadChampionship(this.value)});$('.competition-download').on('click',function(){downloadCompetition(this.dataset.export)});
   $('[data-bs-target="#pontos-corridos"]').on('shown.bs.tab',()=>openCompetitionType('pontos_corridos'));
   $('[data-bs-target="#mata-mata"]').on('shown.bs.tab',()=>openCompetitionType('mata_mata'));
-  $.getJSON('api/data.php').done(res=>{if(res.ok)renderSite(res)}).fail(()=>{$('#standings-body').html(`<tr><td colspan="9">${publicEmpty('Não foi possível carregar a classificação agora.')}</td></tr>`);$('#league-games,#participants-grid,#scorers-list,#titles-grid,#videos-grid,#bracket').html(publicEmpty('O conteúdo está temporariamente indisponível. Tente novamente em instantes.'))});
+  const requestedChampionship=new URLSearchParams(location.search).get('campeonato_id')||'';
+  $.getJSON('api/data.php',requestedChampionship?{campeonato_id:requestedChampionship}:{}).done(res=>{if(res.ok)renderSite(res)}).fail(()=>{$('#standings-body').html(`<tr><td colspan="9">${publicEmpty('Não foi possível carregar a classificação agora.')}</td></tr>`);$('#league-games,#participants-grid,#scorers-list,#titles-grid,#videos-grid,#bracket').html(publicEmpty('O conteúdo está temporariamente indisponível. Tente novamente em instantes.'))});
 });
