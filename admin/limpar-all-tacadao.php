@@ -68,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->exec("DELETE FROM clubes_campeonato WHERE participante_id=$participantId");
         $pdo->exec("DELETE FROM partidas WHERE mandante_id=$participantId OR visitante_id=$participantId");
         $pdo->exec("DELETE FROM jogos_mata_mata WHERE time_a_id=$participantId OR time_b_id=$participantId OR vencedor_id=$participantId");
-        $pdo->prepare("UPDATE participantes SET sigla='',escudo_url='',descricao='' WHERE id=?")->execute([$participantId]);
         $pdo->commit();
         $done = true;
     } catch (Throwable $error) {
