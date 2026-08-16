@@ -222,14 +222,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $appearances = $pdo->query(
             "SELECT participante_id,COUNT(*) jogos FROM (
                  SELECT mandante_id participante_id FROM partidas
-                 WHERE campeonato_id=2 AND ativo=1 AND status='agendada'
+                 WHERE campeonato_id=2 AND ativo=1
                  UNION ALL
                  SELECT visitante_id participante_id FROM partidas
-                 WHERE campeonato_id=2 AND ativo=1 AND status='agendada'
-             ) futuros GROUP BY participante_id"
+                 WHERE campeonato_id=2 AND ativo=1
+             ) campeonato GROUP BY participante_id"
         )->fetchAll();
-        if (count($appearances) !== 10 || array_filter($appearances, static fn(array $row): bool => (int)$row['jogos'] !== 13)) {
-            throw new RuntimeException('Os dez times não ficaram com treze jogos futuros cada.');
+        if (count($appearances) !== 10 || array_filter($appearances, static fn(array $row): bool => (int)$row['jogos'] !== 18)) {
+            throw new RuntimeException('Os dez times não ficaram com dezoito jogos totais cada.');
         }
         $pdo->commit();
     } catch (Throwable $error) {
