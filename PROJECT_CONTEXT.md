@@ -180,6 +180,14 @@ Fora das abas, manter somente:
 - Final e terceiro lugar podem ser configurados individualmente como jogo único ou ida e volta, mesmo que as fases anteriores usem ida e volta.
 - Em decisão por pênaltis, exibir `placar (pênaltis)` junto de cada time, por exemplo `0 (3)` e `0 (4)`, e não repetir `Pênaltis: 3 × 4` no rodapé.
 
+### Supercopa
+
+- É uma decisão em jogo único ou ida e volta entre os campeões de duas competições, mesmo que ainda estejam em andamento.
+- O Admin Master escolhe o nome e as duas origens; cada vaga é preenchida automaticamente quando seu campeão for definido.
+- Em caso de campeão duplo, entra o vice da origem escolhida na configuração, seguindo a prática real de Supercopas.
+- Não existe limite de Supercopas ou de edições cadastradas.
+- Recopa, Derby e outros nomes personalizados continuam pertencendo à modalidade técnica `supercopa`.
+
 ## 10. Registro de gols e artilharia
 
 Cada gol de pontos corridos e mata-mata pode registrar:

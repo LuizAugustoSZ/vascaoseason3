@@ -92,7 +92,7 @@ try {
     // Busca as conquistas dos técnicos.
     $titulos = $pdo
         ->query(
-            "SELECT t.id,t.participante_id,t.titulo,t.temporada,t.descricao,t.conquistado_em,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) time_nome FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id ORDER BY FIELD(t.temporada,'Season 3','Season 2','Season 1'),t.conquistado_em DESC,t.titulo",
+            "SELECT t.id,t.participante_id,t.titulo,t.temporada,t.descricao,t.conquistado_em,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) time_nome,COALESCE(p.ativo,0) participante_ativo FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id ORDER BY participante_ativo DESC,FIELD(t.temporada,'Season 3','Season 2','Season 1'),t.conquistado_em DESC,t.titulo",
         )
         ->fetchAll();
     // Busca os vídeos publicados.

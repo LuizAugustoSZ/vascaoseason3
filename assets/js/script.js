@@ -19,6 +19,21 @@ let assists = [];
 let playerRanking = 'goals';
 let scorersPage = 1;
 const scorersPerPage = 5;
+let titleGroups = [];
+const titlePages = {};
+const titlesPerPage = 4;
+
+// Mantém uma paginação independente em cada técnico e prioriza os participantes da temporada.
+function renderTitles() {
+  $('#titles-grid').html(titleGroups.length ? titleGroups.map((group,index)=>{
+    const totalPages=Math.ceil(group.titles.length/titlesPerPage);
+    const page=Math.min(Math.max(1,titlePages[index] || 1),totalPages);
+    titlePages[index]=page;
+    const visible=group.titles.slice((page-1)*titlesPerPage,page*titlesPerPage);
+    const pagination=totalPages>1?`<footer class="title-pagination" aria-label="Paginação dos títulos de ${esc(group.coach)}"><button type="button" class="page-title" data-group="${index}" data-page="${page-1}" ${page===1?'disabled':''} aria-label="Página anterior">‹</button><span>${page} / ${totalPages}</span><button type="button" class="page-title" data-group="${index}" data-page="${page+1}" ${page===totalPages?'disabled':''} aria-label="Próxima página">›</button></footer>`:'';
+    return `<div class="col-md-6 col-xl-4"><article class="title-card"><div class="title-card-head"><span class="title-trophy">🏆</span><div><small>Técnico</small><h3>${esc(group.coach)}</h3>${group.team ? `<p>${group.participantId?teamLink(group.participantId,group.team):esc(group.team)}</p>` : ''}</div><strong>${group.titles.length}</strong></div><div class="title-list">${visible.map(t=>`<div><span>${esc(t.titulo)}</span><b>${esc(t.temporada)}</b></div>`).join('')}</div>${pagination}</article></div>`;
+  }).join('') : publicEmpty('A história dos campeões será apresentada em breve.'));
+}
 
 // Exibe os dez maiores artilheiros em duas páginas com cinco jogadores cada.
 function renderScorers() {
@@ -67,7 +82,7 @@ function renderSite(data) {
   currentChampionship=data.campeonato || null;
   allChampionships=data.campeonatos || [];
   const selector=$('#championship-select');
-  if(selector.length){const sameType=allChampionships.filter(c=>c.tipo===data.campeonato?.tipo),statusLabel=c=>c.status==='finalizado'?'Finalizado':Number(c.iniciado)===1?'Em andamento':'Ainda não iniciado';selector.html(sameType.map(c=>`<option value="${c.id}" ${Number(c.id)===Number(data.campeonato?.id)?'selected':''}>${esc(c.nome)} — ${statusLabel(c)}</option>`).join(''));$('#championship-title').text(data.campeonato?.nome || 'As próximas competições serão anunciadas em breve.');$('.competition-download').addClass('d-none').prop('disabled',true);if(data.campeonato?.tipo==='pontos_corridos')$('.competition-download[data-export="pontos"]').removeClass('d-none').prop('disabled',false);if(data.campeonato?.tipo==='mata_mata')$('.competition-download[data-export="mata"]').removeClass('d-none').prop('disabled',false);}
+  if(selector.length){const sameType=allChampionships.filter(c=>c.tipo===data.campeonato?.tipo),statusLabel=c=>c.status==='finalizado'?'Finalizado':Number(c.iniciado)===1?'Em andamento':'Ainda não iniciado';selector.html(sameType.map(c=>`<option value="${c.id}" ${Number(c.id)===Number(data.campeonato?.id)?'selected':''}>${esc(c.nome)} — ${statusLabel(c)}</option>`).join(''));$('#championship-title').text(data.campeonato?.nome || 'As próximas competições serão anunciadas em breve.');$('.competition-download').addClass('d-none').prop('disabled',true);if(data.campeonato?.tipo==='pontos_corridos')$('.competition-download[data-export="pontos"]').removeClass('d-none').prop('disabled',false);if(['mata_mata','supercopa'].includes(data.campeonato?.tipo))$('.competition-download[data-export="mata"]').removeClass('d-none').prop('disabled',false);}
   selector.prop('disabled',selector.children().length===0);
   $('#season-status').text(data.resumo?.status || 'Temporada zerada');
   $('#season-summary').text(`${data.resumo?.participantes || 0} técnicos • ${data.resumo?.partidas_finalizadas || 0} partidas finalizadas`);
@@ -84,19 +99,23 @@ function renderSite(data) {
   // Mantém todas as informações e reúne Final e 3º Lugar na coluna decisiva.
   const phaseColumns=phases.map(phase=>{const games=data.mata_mata.filter(g=>g.fase===phase);if(!games.length)return '';const ties=games.reduce((groups,game)=>{(groups[game.ordem]??=[]).push(game);return groups;},{});return `<div class="bracket-stage" data-stage="${phase}"><h4>${phase}</h4>${Object.values(ties).map(bracketTieCard).join('')}</div>`}).join('');
   const decisionBlock=['Final','Terceiro lugar'].map(phase=>{const games=data.mata_mata.filter(g=>g.fase===phase);if(!games.length)return '';const ties=games.reduce((groups,game)=>{(groups[game.ordem]??=[]).push(game);return groups;},{});return `<section class="bracket-decision ${phase==='Final'?'bracket-final':'bracket-third'}"><h4>${phase==='Terceiro lugar'?'3º LUGAR':'FINAL'}</h4>${Object.values(ties).map(bracketTieCard).join('')}</section>`}).join('');
-  $('#bracket').html((phaseColumns+(decisionBlock?`<div class="bracket-stage bracket-stage--decisions">${decisionBlock}</div>`:'')) || publicEmpty('O chaveamento será revelado em breve.'));
+  const bracketTarget=data.campeonato?.tipo==='supercopa'?'#supercup-bracket':'#bracket';
+  $(bracketTarget).html((phaseColumns+(decisionBlock?`<div class="bracket-stage bracket-stage--decisions">${decisionBlock}</div>`:'')) || publicEmpty(data.campeonato?.tipo==='supercopa'?'Aguardando a definição dos campeões.':'O chaveamento será revelado em breve.'));
   // Monta o ranking e o seletor independente de campeonatos da artilharia.
   scorers=data.artilharia || []; assists=data.assistencias || []; scorersPage=1; renderScorers();
   const scorerSelector=$('#scorers-championship-select');
   if(scorerSelector.length){scorerSelector.html(allChampionships.map(c=>`<option value="${c.id}" ${Number(c.id)===Number(data.campeonato?.id)?'selected':''}>${esc(c.nome)} — ${c.status==='finalizado'?'Finalizado':Number(c.iniciado)===1?'Em andamento':'Ainda não iniciado'}</option>`).join(''));scorerSelector.prop('disabled',!allChampionships.length);$('#scorers-championship-title').text(data.campeonato?.nome || 'Os rankings serão apresentados quando houver um campeonato.');}
   // Agrupa os títulos pelo técnico e pelo time, mesmo quando o time histórico não foi informado.
-  const titlesByCoach = (data.titulos || []).reduce((groups, title) => { const coach=title.tecnico || 'Técnico não informado'; const team=title.time_nome || ''; const key=JSON.stringify([coach,team,title.participante_id||null]); (groups[key] ||= []).push(title); return groups; }, {});
-  $('#titles-grid').html(Object.keys(titlesByCoach).length ? Object.entries(titlesByCoach).map(([key,titles])=>{const [coach,team,participantId]=JSON.parse(key);return `<div class="col-md-6 col-xl-4"><article class="title-card"><div class="title-card-head"><span class="title-trophy">🏆</span><div><small>Técnico</small><h3>${esc(coach)}</h3>${team ? `<p>${participantId?teamLink(participantId,team):esc(team)}</p>` : ''}</div><strong>${titles.length}</strong></div><div class="title-list">${titles.map(t=>`<div><span>${esc(t.titulo)}</span><b>${esc(t.temporada)}</b></div>`).join('')}</div></article></div>`}).join('') : publicEmpty('A história dos campeões será apresentada em breve.'));
+  const titlesByCoach = (data.titulos || []).reduce((groups, title) => { const coach=title.tecnico || 'Técnico não informado'; const team=title.time_nome || ''; const participantId=title.participante_id||null; const key=JSON.stringify([coach,team,participantId]); if(!groups[key])groups[key]={coach,team,participantId,active:Number(title.participante_ativo)===1,titles:[]}; groups[key].titles.push(title); return groups; }, {});
+  titleGroups=Object.values(titlesByCoach).sort((a,b)=>Number(b.active)-Number(a.active));
+  Object.keys(titlePages).forEach(key=>delete titlePages[key]);
+  renderTitles();
   // Monta os vídeos do YouTube.
   $('#videos-grid').html(data.videos.length ? data.videos.map(v=>{const id=(v.youtube_url.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/)||[])[1];return id?`<div class="col-lg-6"><article class="video-card"><iframe src="https://www.youtube-nocookie.com/embed/${id}" title="${esc(v.titulo)}" loading="lazy" allowfullscreen></iframe><h3>${esc(v.titulo)}</h3></article></div>`:''}).join('') : publicEmpty('Novos vídeos da comunidade aparecerão aqui.'));
   // Se um escudo estiver inválido, volta automaticamente para a sigla do time.
   document.querySelectorAll('.team-badge-image img').forEach(image=>image.addEventListener('error',()=>{image.classList.add('d-none');image.nextElementSibling.classList.add('d-grid');}));
-  if(data.campeonato?.tipo==='mata_mata')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#mata-mata"]')).show();
+  if(data.campeonato?.tipo==='supercopa')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#supercopa"]')).show();
+  else if(data.campeonato?.tipo==='mata_mata')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#mata-mata"]')).show();
   else if(data.campeonato?.tipo==='pontos_corridos')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#pontos-corridos"]')).show();
 }
 
@@ -105,7 +124,7 @@ function openCompetitionType(type){const candidates=allChampionships.filter(item
 async function downloadCompetition(type){
   if(!currentChampionship)return;
   if(!window.html2canvas){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';script.onload=resolve;script.onerror=reject;document.head.appendChild(script);});}
-  const target=type==='mata'?document.querySelector('#mata-mata .panel'):document.querySelector('#pontos-corridos .panel');const exportArea=document.createElement('div');exportArea.style.cssText='position:fixed;left:-10000px;top:0;width:1400px;padding:40px;background:#101318;color:#fff;z-index:-1';exportArea.innerHTML=`<h1 style="margin:0 0 24px;font-weight:800">${esc(currentChampionship?.nome||'Campeonato')}</h1><p style="color:#9ca8bd">${currentChampionship?.status==='finalizado'?'CAMPEONATO FINALIZADO':'CAMPEONATO EM ANDAMENTO'}</p>`;const clone=target.cloneNode(true);clone.querySelectorAll('.competition-download').forEach(item=>item.remove());exportArea.appendChild(clone);document.body.appendChild(exportArea);
+  const target=type==='mata'?document.querySelector(currentChampionship?.tipo==='supercopa'?'#supercopa .panel':'#mata-mata .panel'):document.querySelector('#pontos-corridos .panel');const exportArea=document.createElement('div');exportArea.style.cssText='position:fixed;left:-10000px;top:0;width:1400px;padding:40px;background:#101318;color:#fff;z-index:-1';exportArea.innerHTML=`<h1 style="margin:0 0 24px;font-weight:800">${esc(currentChampionship?.nome||'Campeonato')}</h1><p style="color:#9ca8bd">${currentChampionship?.status==='finalizado'?'CAMPEONATO FINALIZADO':'CAMPEONATO EM ANDAMENTO'}</p>`;const clone=target.cloneNode(true);clone.querySelectorAll('.competition-download').forEach(item=>item.remove());exportArea.appendChild(clone);document.body.appendChild(exportArea);
   const canvas=await html2canvas(exportArea,{backgroundColor:'#101318',scale:2,useCORS:true});exportArea.remove();const link=document.createElement('a');link.download=`${(currentChampionship?.nome||'campeonato').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.png`;link.href=canvas.toDataURL('image/png');link.click();
 }
 
@@ -132,10 +151,12 @@ $(function(){
   const downloadIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   $('#pontos-corridos .panel-head').first().append(`<button class="competition-download d-none" data-export="pontos" type="button" title="Baixar classificação como PNG" aria-label="Baixar classificação como PNG">${downloadIcon}</button>`);
   $('#mata-mata .panel-head').first().append(`<button class="competition-download d-none" data-export="mata" type="button" title="Baixar chaveamento como PNG" aria-label="Baixar chaveamento como PNG">${downloadIcon}</button>`);
+  $('#supercopa .panel-head').first().append(`<button class="competition-download d-none" data-export="mata" type="button" title="Baixar decisão como PNG" aria-label="Baixar decisão como PNG">${downloadIcon}</button>`);
   $('#round-select').on('change', function(){leaguePage=1;renderLeagueGames()});
   $('#game-search').on('input', function(){leaguePage=1;renderLeagueGames()});
   $('#league-pagination').on('click','.page-game',function(){if(this.disabled)return;leaguePage=Number(this.dataset.page);renderLeagueGames()});
   $('#scorers-pagination').on('click','.page-scorer',function(){if(this.disabled)return;scorersPage=Number(this.dataset.page);renderScorers()});
+  $('#titles-grid').on('click','.page-title',function(){if(this.disabled)return;titlePages[Number(this.dataset.group)]=Number(this.dataset.page);renderTitles()});
   $('.player-ranking-tabs').on('click','[data-ranking]',function(){playerRanking=this.dataset.ranking;scorersPage=1;$('.player-ranking-tabs [data-ranking]').removeClass('active').attr('aria-selected','false');$(this).addClass('active').attr('aria-selected','true');renderScorers()});
   $('#scorers-download').on('click',downloadScorers);
   $('#standings-body').on('click','.standings-team-row',function(){location.href=this.dataset.teamHref}).on('keydown','.standings-team-row',function(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();location.href=this.dataset.teamHref}});
@@ -144,5 +165,7 @@ $(function(){
   $('#championship-select').on('change',function(){loadChampionship(this.value)});$('.competition-download').on('click',function(){downloadCompetition(this.dataset.export)});
   $('[data-bs-target="#pontos-corridos"]').on('shown.bs.tab',()=>openCompetitionType('pontos_corridos'));
   $('[data-bs-target="#mata-mata"]').on('shown.bs.tab',()=>openCompetitionType('mata_mata'));
-  $.getJSON('api/data.php').done(res=>{if(res.ok)renderSite(res)}).fail(()=>{$('#standings-body').html(`<tr><td colspan="9">${publicEmpty('Não foi possível carregar a classificação agora.')}</td></tr>`);$('#league-games,#participants-grid,#scorers-list,#titles-grid,#videos-grid,#bracket').html(publicEmpty('O conteúdo está temporariamente indisponível. Tente novamente em instantes.'))});
+  $('[data-bs-target="#supercopa"]').on('shown.bs.tab',()=>openCompetitionType('supercopa'));
+  const requestedChampionship=new URLSearchParams(location.search).get('campeonato_id')||'';
+  $.getJSON('api/data.php',requestedChampionship?{campeonato_id:requestedChampionship}:{}).done(res=>{if(res.ok)renderSite(res)}).fail(()=>{$('#standings-body').html(`<tr><td colspan="9">${publicEmpty('Não foi possível carregar a classificação agora.')}</td></tr>`);$('#league-games,#participants-grid,#scorers-list,#titles-grid,#videos-grid,#bracket').html(publicEmpty('O conteúdo está temporariamente indisponível. Tente novamente em instantes.'))});
 });
