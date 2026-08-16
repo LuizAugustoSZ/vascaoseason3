@@ -431,6 +431,33 @@ function competition_champion_id(PDO $pdo, int $championshipId): ?int
     return $id === false ? null : (int)$id;
 }
 
+// Completa de forma idempotente a migration da Supercopa em ambientes onde ela
+// tenha sido executada apenas parcialmente.
+function ensure_supercup_schema(PDO $pdo): void
+{
+    $stmt = $pdo->query("SHOW COLUMNS FROM campeonatos LIKE 'tipo'");
+    $column = $stmt->fetch();
+    if (!$column || !str_contains((string) $column["Type"], "'supercopa'")) {
+        $pdo->exec("ALTER TABLE campeonatos MODIFY tipo ENUM('pontos_corridos','mata_mata','supercopa') NOT NULL");
+    }
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS supercopas (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            campeonato_id INT UNSIGNED NOT NULL,
+            origem_a_campeonato_id INT UNSIGNED NOT NULL,
+            origem_b_campeonato_id INT UNSIGNED NOT NULL,
+            regra_mesmo_campeao ENUM('vice_origem_a','vice_origem_b') NOT NULL DEFAULT 'vice_origem_a',
+            criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uk_supercopa_campeonato (campeonato_id),
+            KEY idx_supercopa_origem_a (origem_a_campeonato_id),
+            KEY idx_supercopa_origem_b (origem_b_campeonato_id),
+            CONSTRAINT fk_supercopa_campeonato FOREIGN KEY (campeonato_id) REFERENCES campeonatos(id),
+            CONSTRAINT fk_supercopa_origem_a FOREIGN KEY (origem_a_campeonato_id) REFERENCES campeonatos(id),
+            CONSTRAINT fk_supercopa_origem_b FOREIGN KEY (origem_b_campeonato_id) REFERENCES campeonatos(id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+    );
+}
+
 function competition_runner_up_id(PDO $pdo, int $championshipId): ?int
 {
     $stmt = $pdo->prepare("SELECT tipo,status FROM campeonatos WHERE id=? AND ativo=1");
