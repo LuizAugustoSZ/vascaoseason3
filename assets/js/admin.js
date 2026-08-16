@@ -98,7 +98,7 @@ if(mataForm){
 
 // Permite escolher a qual campeonato pertence um cadastro manual.
 fetch('campeonatos-dados.php').then(response=>response.json()).then(data=>{
-  [['form-partida','pontos_corridos'],['form-mata','mata_mata']].forEach(([id,type])=>{const form=document.getElementById(id);if(!form)return;const options=(data.campeonatos||[]).filter(item=>item.tipo===type).map(item=>`<option value="${item.id}">${item.nome} — ${item.status==='finalizado'?'Finalizado':'Em andamento'}</option>`).join('');form.insertAdjacentHTML('afterbegin',`<div class="mb-3"><label class="form-label">Campeonato</label><select class="form-select" name="campeonato_id" required><option value="">Selecione</option>${options}</select></div>`);});
+  [['form-partida',['pontos_corridos']],['form-mata',['mata_mata','supercopa']]].forEach(([id,types])=>{const form=document.getElementById(id);if(!form)return;const options=(data.campeonatos||[]).filter(item=>types.includes(item.tipo)).map(item=>`<option value="${item.id}">${item.nome} — ${item.status==='finalizado'?'Finalizado':'Em andamento'}</option>`).join('');form.insertAdjacentHTML('afterbegin',`<div class="mb-3"><label class="form-label">Campeonato</label><select class="form-select" name="campeonato_id" required><option value="">Selecione</option>${options}</select></div>`);});
 });
 
 // Seleciona no formulário o time exibido na linha escolhida.
@@ -355,7 +355,7 @@ if(scorerFilter && scorerForm){
 
 // A publicação de vídeos agora vive em uma aba própria.
 document.querySelector('#tab-extra form.panel.admin-form.mt-4')?.classList.add('d-none');
-['videos','configuracoes','noticias'].forEach(tab=>{if(new URLSearchParams(location.search).get('tab')===tab)document.querySelector(`[data-bs-target="#tab-${tab}"]`)?.click();});
+{const requestedTab=new URLSearchParams(location.search).get('tab');if(requestedTab)document.querySelector(`[data-bs-target="#tab-${CSS.escape(requestedTab)}"]`)?.click();}
 
 // Troca o antigo checkbox administrativo pelo seletor dos três níveis de acesso.
 const adminAccessCheckbox=document.getElementById('usuario-eh-admin');
@@ -433,8 +433,8 @@ document.querySelectorAll('main form[method="post"]').forEach(form=>form.addEven
   const button=event.submitter||form.querySelector('button[type="submit"],button:not([type])');const oldText=button?.textContent;if(button){button.disabled=true;button.textContent='Salvando...';}
   try{
     const payload=new FormData(form);payload.set('_ajax','1');const response=await fetch('index.php',{method:'POST',body:payload,headers:{'Accept':'application/json'},credentials:'same-origin'});const data=await response.json().catch(()=>({ok:false,message:'Resposta inválida do servidor.'}));if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível salvar.');
-    const active=document.querySelector('.nav-pills .nav-link.active')?.dataset.bsTarget?.replace('#tab-','')||data.tab||'';const top=window.scrollY;const url=new URL(location.href);if(active)url.searchParams.set('tab',active);
-    try{url.searchParams.set('_refresh',Date.now());const html=await fetch(url,{cache:'no-store',credentials:'same-origin'}).then(result=>{if(!result.ok)throw new Error();return result.text()});url.searchParams.delete('_refresh');const parsed=new DOMParser().parseFromString(html,'text/html');const fresh=parsed.querySelector('main');if(!fresh)throw new Error();document.querySelector('main').replaceWith(fresh);history.replaceState(null,'',url);const script=document.createElement('script');script.src=`../assets/js/admin.js?v=${Date.now()}`;document.body.append(script);window.scrollTo({top,behavior:'instant'});}catch(refreshError){form.dataset.ajaxBusy='0';if(button){button.disabled=false;button.textContent=oldText;}}
+    const active=data.tab||document.querySelector('.nav-pills .nav-link.active')?.dataset.bsTarget?.replace('#tab-','')||'';const top=window.scrollY;const url=new URL(location.href);if(active)url.searchParams.set('tab',active);
+    try{url.searchParams.set('_refresh',Date.now());const html=await fetch(url,{cache:'no-store',credentials:'same-origin'}).then(result=>{if(!result.ok)throw new Error('Não foi possível atualizar a lista.');return result.text()});url.searchParams.delete('_refresh');const parsed=new DOMParser().parseFromString(html,'text/html');const fresh=parsed.querySelector('.tab-content');if(!fresh)throw new Error('A lista atualizada não foi encontrada.');document.querySelector('.tab-content').replaceWith(fresh);history.replaceState(null,'',url);for(const file of ['news-editor.js','news-round-prompt.js','sumula-importer.js','admin.js']){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=`../assets/js/${file}?v=${Date.now()}`;script.onload=resolve;script.onerror=reject;document.body.append(script)})}window.scrollTo({top,behavior:'instant'});}catch(refreshError){showAdminToast(`${data.message} Porém, ${refreshError.message.toLocaleLowerCase('pt-BR')}`,'warning');return;}
     showAdminToast(data.message,'success');
   }catch(error){form.dataset.ajaxBusy='0';if(button){button.disabled=false;button.textContent=oldText;}showAdminToast(error.message,'danger');}
 }));

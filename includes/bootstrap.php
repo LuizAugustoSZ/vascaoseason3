@@ -149,6 +149,11 @@ function verify_csrf(): void
     $token = $_POST["csrf"] ?? ($_SERVER["HTTP_X_CSRF_TOKEN"] ?? "");
     if (!hash_equals($_SESSION["csrf"] ?? "", (string) $token)) {
         http_response_code(419);
+        if (isset($_POST["_ajax"]) || str_contains(strtolower((string)($_SERVER["HTTP_ACCEPT"] ?? "")), "application/json")) {
+            header("Content-Type: application/json; charset=utf-8");
+            echo json_encode(["ok" => false, "message" => "Sessão expirada. Atualize a página e tente novamente."], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
         exit("Sessão expirada. Atualize a página e tente novamente.");
     }
 }
@@ -407,4 +412,64 @@ function standings(PDO $pdo, ?int $championshipId = null): array
         $row["posicao"] = $i + 1;
     }
     return $rows;
+}
+
+// Retorna o campeão confirmado de qualquer competição que possa alimentar uma Supercopa.
+function competition_champion_id(PDO $pdo, int $championshipId): ?int
+{
+    $stmt = $pdo->prepare("SELECT tipo,status FROM campeonatos WHERE id=? AND ativo=1");
+    $stmt->execute([$championshipId]);
+    $competition = $stmt->fetch();
+    if (!$competition || $competition["status"] !== "finalizado") return null;
+    if ($competition["tipo"] === "pontos_corridos") {
+        $ranking = standings($pdo, $championshipId);
+        return isset($ranking[0]["id"]) ? (int)$ranking[0]["id"] : null;
+    }
+    $winner = $pdo->prepare("SELECT vencedor_id FROM jogos_mata_mata WHERE campeonato_id=? AND fase='Final' AND ativo=1 AND status='finalizado' AND vencedor_id IS NOT NULL ORDER BY jogo DESC,id DESC LIMIT 1");
+    $winner->execute([$championshipId]);
+    $id = $winner->fetchColumn();
+    return $id === false ? null : (int)$id;
+}
+
+function competition_runner_up_id(PDO $pdo, int $championshipId): ?int
+{
+    $stmt = $pdo->prepare("SELECT tipo,status FROM campeonatos WHERE id=? AND ativo=1");
+    $stmt->execute([$championshipId]);
+    $competition = $stmt->fetch();
+    if (!$competition || $competition["status"] !== "finalizado") return null;
+    if ($competition["tipo"] === "pontos_corridos") {
+        $ranking = standings($pdo, $championshipId);
+        return isset($ranking[1]["id"]) ? (int)$ranking[1]["id"] : null;
+    }
+    $final = $pdo->prepare("SELECT time_a_id,time_b_id,vencedor_id FROM jogos_mata_mata WHERE campeonato_id=? AND fase='Final' AND ativo=1 AND status='finalizado' AND vencedor_id IS NOT NULL ORDER BY jogo DESC,id DESC LIMIT 1");
+    $final->execute([$championshipId]);
+    $row = $final->fetch();
+    if (!$row) return null;
+    return (int)$row["time_a_id"] === (int)$row["vencedor_id"] ? (int)$row["time_b_id"] : (int)$row["time_a_id"];
+}
+
+// Preenche vagas pendentes sem recriar o confronto nem limitar a quantidade de Supercopas.
+function sync_supercup_slots(PDO $pdo): void
+{
+    try {
+        $rows = $pdo->query("SELECT s.*,c.formato FROM supercopas s JOIN campeonatos c ON c.id=s.campeonato_id WHERE c.ativo=1")->fetchAll();
+    } catch (Throwable $ignored) {
+        return; // Permite publicar o código antes de executar a migration.
+    }
+    foreach ($rows as $row) {
+        $teamA = competition_champion_id($pdo, (int)$row["origem_a_campeonato_id"]);
+        $teamB = competition_champion_id($pdo, (int)$row["origem_b_campeonato_id"]);
+        if ($teamA && $teamB && $teamA === $teamB) {
+            if ($row["regra_mesmo_campeao"] === "vice_origem_b") $teamB = competition_runner_up_id($pdo, (int)$row["origem_b_campeonato_id"]);
+            else $teamA = competition_runner_up_id($pdo, (int)$row["origem_a_campeonato_id"]);
+        }
+        $games = $pdo->prepare("SELECT id,jogo,status FROM jogos_mata_mata WHERE campeonato_id=? AND fase='Final' AND ativo=1 ORDER BY jogo,id");
+        $games->execute([(int)$row["campeonato_id"]]);
+        foreach ($games->fetchAll() as $game) {
+            if ($game["status"] === "finalizado") continue;
+            $a = (int)$game["jogo"] === 2 ? $teamB : $teamA;
+            $b = (int)$game["jogo"] === 2 ? $teamA : $teamB;
+            $pdo->prepare("UPDATE jogos_mata_mata SET time_a_id=?,time_b_id=? WHERE id=?")->execute([$a ?: null, $b ?: null, (int)$game["id"]]);
+        }
+    }
 }

@@ -31,7 +31,7 @@ $items = $pdo
     "tipo"
 ] === "mata_mata"
     ? "Mata-mata"
-    : "Pontos corridos" ?></td><td><?= e(
+    : ($item["tipo"] === "supercopa" ? "Supercopa" : "Pontos corridos") ?></td><td><?= e(
     str_replace("_", " e ", $item["formato"]),
 ) ?></td><td><?= $item["jogos"] ?></td><td><?= e(
     $item["status"],

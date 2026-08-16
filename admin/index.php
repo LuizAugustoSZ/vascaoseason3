@@ -630,6 +630,33 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "campeonatos",
             );
         }
+        // Cria uma decisão entre os campeões confirmados de duas competições.
+        if ($action === "criar_supercopa") {
+            $name = trim((string) ($_POST["nome"] ?? ""));
+            $sourceA = (int) ($_POST["origem_a_campeonato_id"] ?? 0);
+            $sourceB = (int) ($_POST["origem_b_campeonato_id"] ?? 0);
+            $format = (string) ($_POST["formato"] ?? "unico");
+            if ($name === "") throw new RuntimeException("Informe o nome da Supercopa.");
+            if ($sourceA <= 0 || $sourceB <= 0 || $sourceA === $sourceB) throw new RuntimeException("Selecione duas competições de origem diferentes.");
+            if (!in_array($format, ["unico", "ida_volta"], true)) throw new RuntimeException("Formato inválido.");
+            $sameChampionRule = (string)($_POST["regra_mesmo_campeao"] ?? "vice_origem_a");
+            if (!in_array($sameChampionRule, ["vice_origem_a", "vice_origem_b"], true)) throw new RuntimeException("Regra de substituição inválida.");
+            $teamA = competition_champion_id($pdo, $sourceA);
+            $teamB = competition_champion_id($pdo, $sourceB);
+            if ($teamA && $teamB && $teamA === $teamB) {
+                if ($sameChampionRule === "vice_origem_b") $teamB = competition_runner_up_id($pdo, $sourceB);
+                else $teamA = competition_runner_up_id($pdo, $sourceA);
+            }
+            $pdo->beginTransaction();
+            $pdo->prepare("INSERT INTO campeonatos(nome,tipo,formato) VALUES(?,'supercopa',?)")->execute([$name, $format]);
+            $championshipId = (int) $pdo->lastInsertId();
+            $pdo->prepare("INSERT INTO supercopas(campeonato_id,origem_a_campeonato_id,origem_b_campeonato_id,regra_mesmo_campeao) VALUES(?,?,?,?)")->execute([$championshipId, $sourceA, $sourceB, $sameChampionRule]);
+            $game = $pdo->prepare("INSERT INTO jogos_mata_mata(campeonato_id,fase,ordem,jogo,time_a_id,time_b_id,gols_a,gols_b,vencedor_id,status) VALUES(?,'Final',1,?,?,?,NULL,NULL,NULL,'agendado')");
+            $game->execute([$championshipId, 1, $teamA, $teamB]);
+            if ($format === "ida_volta") $game->execute([$championshipId, 2, $teamB, $teamA]);
+            $pdo->commit();
+            redirect_notice("Supercopa criada com os campeões classificados.", "supercopa");
+        }
         // Atualiza uma partida sorteada ou cria uma partida manual.
         if ($action === "partida") {
             $partidaId = (int) ($_POST["partida_id"] ?? 0);
@@ -1101,6 +1128,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 // Reconcilia resultados antigos ao abrir o painel e preenche as próximas chaves.
 reconcile_knockout_summaries($pdo);
+sync_supercup_slots($pdo);
 foreach (
     $pdo
         ->query(
@@ -1160,6 +1188,12 @@ $championshipsAdmin = $pdo
         "SELECT c.*,(SELECT COUNT(*) FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1)+(SELECT COUNT(*) FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1) jogos FROM campeonatos c WHERE c.ativo=1 ORDER BY c.criado_em DESC,c.id DESC",
     )
     ->fetchAll();
+$supercupSources = $championshipsAdmin;
+$supercupsAdmin = [];
+try {
+    $supercupsAdmin = $pdo->query("SELECT s.id,c.nome,c.status,oa.nome origem_a,ob.nome origem_b,a.time_nome time_a,b.time_nome time_b FROM supercopas s JOIN campeonatos c ON c.id=s.campeonato_id JOIN campeonatos oa ON oa.id=s.origem_a_campeonato_id JOIN campeonatos ob ON ob.id=s.origem_b_campeonato_id LEFT JOIN jogos_mata_mata j ON j.campeonato_id=c.id AND j.fase='Final' AND j.jogo=1 AND j.ativo=1 LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id ORDER BY s.id DESC")->fetchAll();
+} catch (Throwable $ignored) {
+}
 $marketChampionshipsAdmin = array_values(array_filter(
     $championshipsAdmin,
     fn(array $championship): bool => $championship["tipo"] === "pontos_corridos",
@@ -1287,7 +1321,7 @@ function mata_options(array $games): string
 ) ?>"><div><strong>Homologação desatualizada</strong><div class="database-sync-status small">A produção possui dados mais recentes.</div></div><button type="button" class="btn btn-warning fw-bold">Sincronizar agora</button></div><?php endif; ?>
 <ul class="nav nav-pills gap-2 mb-4"><li><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-jogos">Pontos corridos</button></li><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-mata">Mata-mata</button></li><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-sumula">Importar súmula</button></li><?php if (
     account_is_master()
-): ?><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-campeonatos">Campeonatos</button></li><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-times">Técnicos e times</button></li><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-titulos">Títulos</button></li><?php endif; ?><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-extra">Artilharia</button></li><?php if (
+): ?><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-campeonatos">Campeonatos</button></li><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-supercopa">Supercopa</button></li><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-times">Técnicos e times</button></li><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-titulos">Títulos</button></li><?php endif; ?><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-extra">Artilharia</button></li><?php if (
     account_is_master()
 ): ?><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-mercado">Mercado</button></li><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-videos">Vídeos</button></li><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-configuracoes">Configurações</button></li><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-usuarios">Usuários</button></li><?php endif; ?><li><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-noticias">Notícias</button></li></ul>
 <div class="tab-content">
@@ -1360,9 +1394,11 @@ function mata_options(array $games): string
 ) ?> cadastrados</span></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Nome</th><th>Modalidade</th><th>Formato</th><th>Jogos</th><th>Status</th><th>Ação</th></tr></thead><tbody><?php
  foreach ($championshipsAdmin as $championship): ?><tr><td><strong><?= e(
     $championship["nome"],
-) ?></strong></td><td><?= $championship["tipo"] === "mata_mata"
-    ? "Mata-mata"
-    : "Pontos corridos" ?></td><td><?= e(
+) ?></strong></td><td><?= match ($championship["tipo"]) {
+    "mata_mata" => "Mata-mata",
+    "supercopa" => "Supercopa",
+    default => "Pontos corridos",
+} ?></td><td><?= e(
     ucfirst(str_replace("_", " e ", $championship["formato"])),
 ) ?></td><td><?= $championship["jogos"] ?></td><td><?= e(
     $championship["status"],
@@ -1383,6 +1419,7 @@ function mata_options(array $games): string
      !$championshipsAdmin
  ): ?><tr><td colspan="6" class="text-center text-secondary py-4">Nenhuma competição criada até o momento.</td></tr><?php endif;
  ?></tbody></table></div></div></section>
+<section id="tab-supercopa" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form class="panel admin-form" method="post"><span class="eyebrow">Confronto entre campeões</span><h2 class="mt-2">Criar Supercopa</h2><p class="text-secondary">As vagas são preenchidas automaticamente, inclusive quando um dos campeões ainda não foi definido.</p><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="criar_supercopa"><label class="form-label">Nome da competição</label><input class="form-control mb-3" name="nome" maxlength="150" placeholder="Ex.: Recopa dos Gigantes" required><label class="form-label">Campeão da primeira competição</label><select class="form-select mb-3" name="origem_a_campeonato_id" required><option value="">Selecione</option><?php foreach ($supercupSources as $source): ?><option value="<?= (int) $source['id'] ?>"><?= e($source['nome']) ?> — <?= $source['status'] === 'finalizado' ? 'campeão definido' : 'aguardando campeão' ?></option><?php endforeach; ?></select><label class="form-label">Campeão da segunda competição</label><select class="form-select mb-3" name="origem_b_campeonato_id" required><option value="">Selecione</option><?php foreach ($supercupSources as $source): ?><option value="<?= (int) $source['id'] ?>"><?= e($source['nome']) ?> — <?= $source['status'] === 'finalizado' ? 'campeão definido' : 'aguardando campeão' ?></option><?php endforeach; ?></select><label class="form-label">Se o mesmo clube vencer as duas</label><select class="form-select mb-3" name="regra_mesmo_campeao"><option value="vice_origem_a">Entra o vice da primeira competição</option><option value="vice_origem_b">Entra o vice da segunda competição</option></select><label class="form-label">Formato da decisão</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select><button class="btn btn-danger mt-3">Criar confronto</button></form></div><div class="col-lg-7"><div class="panel"><div class="panel-head"><h3>Supercopas cadastradas</h3><span><?= count($supercupsAdmin) ?> registros</span></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Competição</th><th>Vaga 1</th><th>Vaga 2</th><th>Status</th></tr></thead><tbody><?php foreach ($supercupsAdmin as $supercup): ?><tr><td><strong><?= e($supercup['nome']) ?></strong></td><td><?= $supercup['time_a'] ? e($supercup['time_a']) : '<span class="text-secondary">Aguardando campeão de '.e($supercup['origem_a']).'</span>' ?></td><td><?= $supercup['time_b'] ? e($supercup['time_b']) : '<span class="text-secondary">Aguardando campeão de '.e($supercup['origem_b']).'</span>' ?></td><td><?= e($supercup['status']) ?></td></tr><?php endforeach; ?><?php if (!$supercupsAdmin): ?><tr><td colspan="4" class="text-center text-secondary py-4">Nenhuma Supercopa criada.</td></tr><?php endif; ?></tbody></table></div></div><div class="panel p-3 mt-4"><strong>Sugestões:</strong><span class="text-secondary"> Recopa, Derby das Américas, Desafio dos Campeões, Taça dos Gigantes ou Copa Intercontinental.</span></div></div></div></section>
 <section id="tab-times" class="tab-pane fade"><div class="row g-4"><div class="col-lg-6"><form id="form-participante" class="panel admin-form" method="post"><h2 id="participante-form-title">Novo técnico e time</h2><input type="hidden" name="participante_id" value=""><div id="participante-edicao" class="alert alert-info d-none justify-content-between align-items-center"><span></span><button type="button" class="btn btn-sm btn-outline-info cancelar-participante">Cancelar edição</button></div><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="participante"><div class="row g-2"><div class="col-md-6"><label class="form-label">Nome do técnico</label><input class="form-control" name="nome" required></div><div class="col-md-6"><label class="form-label">Nome do time</label><input class="form-control" name="time_nome" required></div><div class="col-md-4"><label class="form-label">Sigla do time</label><input class="form-control" name="sigla" maxlength="5" required></div><div class="col-md-8"><label class="form-label">Escudo do time (opcional)</label><input class="form-control" type="url" name="escudo_url"></div><div class="col-12"><label class="form-label">Descrição</label><textarea class="form-control" name="descricao" rows="2"></textarea></div></div><button id="participante-submit" class="btn btn-danger mt-3">Cadastrar técnico</button></form></div><div class="col-lg-6"><div class="panel"><div class="panel-head"><h3>Técnicos cadastrados</h3><span><?= count(
