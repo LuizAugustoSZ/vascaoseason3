@@ -8,7 +8,7 @@ header("Cache-Control: no-store");
 $provided = (string) ($_SERVER["HTTP_X_SYNC_TOKEN"] ?? "");
 $secret = sync_secret();
 if (
-    sync_environment() !== "production" ||
+    !sync_source_allowed() ||
     $secret === "" ||
     !hash_equals($secret, $provided)
 ) {

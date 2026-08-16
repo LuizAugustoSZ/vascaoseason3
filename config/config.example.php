@@ -30,4 +30,10 @@ return [
         "environment" => getenv("APP_ENV") ?: "local",
         "timezone" => "America/Sao_Paulo",
     ],
+    // Na homologação, source_url aponta para o site oficial. Em produção,
+    // deixe source_url vazio para impedir sincronização no sentido inverso.
+    "sync" => [
+        "source_url" => rtrim(getenv("SYNC_SOURCE_URL") ?: "", "/"),
+        "secret" => getenv("SYNC_SECRET") ?: "",
+    ],
 ];
