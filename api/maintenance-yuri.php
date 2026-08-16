@@ -189,9 +189,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $roundNumber = (int)$roundNumber;
             foreach ($matching as $matchId) {
                 $updateRound->execute([$roundNumber, $matchId, $championshipId]);
-                if ($updateRound->rowCount() !== 1) {
-                    throw new RuntimeException("Não foi possível mover a partida {$matchId}.");
-                }
             }
         }
 
