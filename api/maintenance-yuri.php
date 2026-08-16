@@ -124,7 +124,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (count($participants) !== 10 || count($futureMatches) !== 65) {
         throw new RuntimeException('A grade futura não possui os 10 times e 65 jogos esperados.');
     }
-    $rounds = build_matchings($futureMatches, $participants);
+    $payload = json_decode((string)file_get_contents('php://input'), true);
+    $submittedSchedule = $payload['schedule'] ?? null;
+    if (!is_array($submittedSchedule) || count($submittedSchedule) !== 14) {
+        throw new RuntimeException('A grade enviada não possui as 14 rodadas esperadas.');
+    }
+    $futureById = [];
+    foreach ($futureMatches as $match) $futureById[(int)$match['id']] = $match;
+    $validMatchIds = array_fill_keys(array_keys($futureById), true);
+    $scheduledIds = [];
+    foreach ($submittedSchedule as $roundNumber => $matching) {
+        $roundNumber = (int)$roundNumber;
+        if ($roundNumber < 7 || $roundNumber > 20 || !is_array($matching) || !in_array(count($matching), [4, 5], true)) {
+            throw new RuntimeException('Uma rodada enviada é inválida.');
+        }
+        $roundParticipants = [];
+        foreach ($matching as $matchId) {
+            $matchId = (int)$matchId;
+            if (!isset($validMatchIds[$matchId]) || isset($scheduledIds[$matchId])) {
+                throw new RuntimeException('A grade contém uma partida inválida ou repetida.');
+            }
+            $scheduledIds[$matchId] = true;
+            $match = $futureById[$matchId];
+            foreach ([(int)$match['mandante_id'], (int)$match['visitante_id']] as $teamId) {
+                if (isset($roundParticipants[$teamId])) {
+                    throw new RuntimeException('Um time aparece duas vezes na mesma rodada.');
+                }
+                $roundParticipants[$teamId] = true;
+            }
+        }
+    }
+    if (count($scheduledIds) !== 65) {
+        throw new RuntimeException('A grade não contém todas as 65 partidas futuras.');
+    }
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS maintenance_backups (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -153,8 +185,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->execute([$championshipId, $participantId, $participantId]);
 
         $updateRound = $pdo->prepare("UPDATE partidas SET rodada=? WHERE id=? AND campeonato_id=? AND ativo=1 AND status='agendada'");
-        foreach ($rounds as $offset => $matching) {
-            $roundNumber = 7 + $offset;
+        foreach ($submittedSchedule as $roundNumber => $matching) {
+            $roundNumber = (int)$roundNumber;
             foreach ($matching as $matchId) {
                 $updateRound->execute([$roundNumber, $matchId, $championshipId]);
                 if ($updateRound->rowCount() !== 1) {
@@ -182,13 +214,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              HAVING COUNT(*)=COUNT(DISTINCT participantes_rodada.participante_id)
              ORDER BY r.rodada"
         )->fetchAll();
-        if (count($verification) !== 13) {
-            throw new RuntimeException('A verificação não encontrou as 13 rodadas futuras.');
+        if (count($verification) !== 14) {
+            throw new RuntimeException('A verificação não encontrou as 14 rodadas futuras.');
         }
         foreach ($verification as $round) {
-            if ((int)$round['jogos'] !== 5 || (int)$round['times'] !== 10) {
-                throw new RuntimeException('Uma rodada futura não possui cinco jogos e dez times.');
+            if (!in_array((int)$round['jogos'], [4, 5], true) || (int)$round['times'] !== (int)$round['jogos'] * 2) {
+                throw new RuntimeException('Uma rodada futura possui jogo ou time repetido.');
             }
+        }
+        $appearances = $pdo->query(
+            "SELECT participante_id,COUNT(*) jogos FROM (
+                 SELECT mandante_id participante_id FROM partidas
+                 WHERE campeonato_id=2 AND ativo=1 AND status='agendada'
+                 UNION ALL
+                 SELECT visitante_id participante_id FROM partidas
+                 WHERE campeonato_id=2 AND ativo=1 AND status='agendada'
+             ) futuros GROUP BY participante_id"
+        )->fetchAll();
+        if (count($appearances) !== 10 || array_filter($appearances, static fn(array $row): bool => (int)$row['jogos'] !== 13)) {
+            throw new RuntimeException('Os dez times não ficaram com treze jogos futuros cada.');
         }
         $pdo->commit();
     } catch (Throwable $error) {
