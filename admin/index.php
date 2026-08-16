@@ -1311,7 +1311,7 @@ function mata_options(array $games): string
     ? "ADMINISTRAÇÃO"
     : "EDITOR DA COMPETIÇÃO" ?></h1></div><div class="d-flex gap-2"><?php if (
     account_is_master()
-): ?><a class="btn btn-danger" href="sorteador.php">Sorteador</a><?php endif; ?><a class="btn btn-outline-light" href="../index.php" target="_blank">Abrir site</a></div></div>
+): ?><a class="btn btn-danger" href="sorteador.php">Sorteador</a><a class="btn btn-outline-danger" href="limpar-all-tacadao.php">Limpeza All Tacadão</a><?php endif; ?><a class="btn btn-outline-light" href="../index.php" target="_blank">Abrir site</a></div></div>
 <?php if ($notice): ?><div class="alert alert-info"><?= e(
     $notice,
 ) ?></div><?php endif; ?>
