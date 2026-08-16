@@ -148,11 +148,26 @@ try {
             return (int) $b["id"] <=> (int) $a["id"];
         });
         usort($proximas, function ($a, $b) {
-            $da = strtotime((string) ($a["data_jogo"] ?? "")) ?: PHP_INT_MAX;
-            $db = strtotime((string) ($b["data_jogo"] ?? "")) ?: PHP_INT_MAX;
-            return $da === $db
-                ? (int) $a["id"] <=> (int) $b["id"]
-                : $da <=> $db;
+            $da = strtotime((string) ($a["data_jogo"] ?? "")) ?: null;
+            $db = strtotime((string) ($b["data_jogo"] ?? "")) ?: null;
+
+            if ($da !== null || $db !== null) {
+                if ($da === null) return 1;
+                if ($db === null) return -1;
+                if ($da !== $db) return $da <=> $db;
+            }
+
+            // Sem data definida, a sequência correta é a ordem das rodadas —
+            // o ID da partida não representa a cronologia do calendário.
+            $rodadaA = $a["origem"] === "pontos" && is_numeric($a["etapa"])
+                ? (int) $a["etapa"]
+                : PHP_INT_MAX;
+            $rodadaB = $b["origem"] === "pontos" && is_numeric($b["etapa"])
+                ? (int) $b["etapa"]
+                : PHP_INT_MAX;
+            if ($rodadaA !== $rodadaB) return $rodadaA <=> $rodadaB;
+
+            return (int) $a["id"] <=> (int) $b["id"];
         });
         $stmt = $pdo->prepare(
             "SELECT titulo,temporada FROM titulos WHERE participante_id=? ORDER BY conquistado_em DESC,id DESC",
