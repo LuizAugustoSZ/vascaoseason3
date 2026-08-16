@@ -110,7 +110,7 @@ function replace_imported_goals(PDO $pdo, array $parsed, array $context, string 
         foreach ($goals as $goal) $insert->execute([$matchId,$goal['team_id'],$goal['player'],$goal['minute'],$goal['type']]);
         $goalsA = $reversed ? $parsed['away_goals'] : $parsed['home_goals'];
         $goalsB = $reversed ? $parsed['home_goals'] : $parsed['away_goals'];
-        $pdo->prepare("UPDATE partidas SET gols_mandante=?,gols_visitante=?,status='finalizada' WHERE id=?")->execute([$goalsA,$goalsB,$matchId]);
+        $pdo->prepare("UPDATE partidas SET gols_mandante=?,gols_visitante=?,data_partida=NOW(),status='finalizada' WHERE id=?")->execute([$goalsA,$goalsB,$matchId]);
         $championshipId = (int) $row['campeonato_id'];
     } else {
         $match = $pdo->prepare("SELECT campeonato_id,time_a_id,time_b_id FROM jogos_mata_mata WHERE id=? AND ativo=1 FOR UPDATE");
