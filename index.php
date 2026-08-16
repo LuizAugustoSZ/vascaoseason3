@@ -188,6 +188,7 @@ if (
                 <ul class="nav competition-tabs" role="tablist">
                     <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pontos-corridos">Pontos corridos</button></li>
                     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mata-mata">Mata-mata</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#supercopa">Supercopa</button></li>
                 </ul>
                 <div class="tab-content pt-4">
                     <div class="tab-pane fade show active" id="pontos-corridos">
@@ -239,6 +240,12 @@ if (
                                 <h3>Chaveamento</h3><span>Da primeira fase até a final</span>
                             </div>
                             <div id="bracket" class="bracket"></div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="supercopa">
+                        <div class="panel">
+                            <div class="panel-head"><h3>Decisão dos campeões</h3><span>Vagas automáticas</span></div>
+                            <div id="supercup-bracket" class="bracket"></div>
                         </div>
                     </div>
                 </div>
