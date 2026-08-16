@@ -258,4 +258,13 @@ echo json_encode([
     'accounts' => $accounts,
     'championships' => $championships,
     'active_championship_summary' => array_values($summary),
+    'future_non_yuri' => array_values(array_filter(
+        $matches,
+        static fn(array $match): bool =>
+            (int)$match['campeonato_id'] === 2 &&
+            $match['status'] === 'agendada' &&
+            (int)$match['ativo'] === 1 &&
+            (int)$match['mandante_id'] !== 4 &&
+            (int)$match['visitante_id'] !== 4,
+    )),
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
