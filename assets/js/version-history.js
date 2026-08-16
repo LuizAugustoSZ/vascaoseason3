@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['14.9','Histórico do Mercado ganhou edição e desfazer para contratações e vendas, com correção automática do elenco e do cofre em modais de confirmação.'],
 ['14.8','A navbar agora segue a ordem das seções definida nas configurações do Admin e a antiga Artilharia passou a se chamar Jogadores.'],
 ['14.7','A tela de atualização agora reaparece sempre que a versão ou o conteúdo do patch muda e só é marcada como vista depois de ser fechada.'],
 ['14.6','A página inicial agora prioriza o campeonato que realmente já começou, mantendo competições apenas cadastradas fora da seleção automática.'],
