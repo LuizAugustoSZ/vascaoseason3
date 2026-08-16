@@ -19,6 +19,21 @@ let assists = [];
 let playerRanking = 'goals';
 let scorersPage = 1;
 const scorersPerPage = 5;
+let titleGroups = [];
+const titlePages = {};
+const titlesPerPage = 4;
+
+// Mantém uma paginação independente em cada técnico e prioriza os participantes da temporada.
+function renderTitles() {
+  $('#titles-grid').html(titleGroups.length ? titleGroups.map((group,index)=>{
+    const totalPages=Math.ceil(group.titles.length/titlesPerPage);
+    const page=Math.min(Math.max(1,titlePages[index] || 1),totalPages);
+    titlePages[index]=page;
+    const visible=group.titles.slice((page-1)*titlesPerPage,page*titlesPerPage);
+    const pagination=totalPages>1?`<footer class="title-pagination" aria-label="Paginação dos títulos de ${esc(group.coach)}"><button type="button" class="page-title" data-group="${index}" data-page="${page-1}" ${page===1?'disabled':''} aria-label="Página anterior">‹</button><span>${page} / ${totalPages}</span><button type="button" class="page-title" data-group="${index}" data-page="${page+1}" ${page===totalPages?'disabled':''} aria-label="Próxima página">›</button></footer>`:'';
+    return `<div class="col-md-6 col-xl-4"><article class="title-card"><div class="title-card-head"><span class="title-trophy">🏆</span><div><small>Técnico</small><h3>${esc(group.coach)}</h3>${group.team ? `<p>${group.participantId?teamLink(group.participantId,group.team):esc(group.team)}</p>` : ''}</div><strong>${group.titles.length}</strong></div><div class="title-list">${visible.map(t=>`<div><span>${esc(t.titulo)}</span><b>${esc(t.temporada)}</b></div>`).join('')}</div>${pagination}</article></div>`;
+  }).join('') : publicEmpty('A história dos campeões será apresentada em breve.'));
+}
 
 // Exibe os dez maiores artilheiros em duas páginas com cinco jogadores cada.
 function renderScorers() {
@@ -90,8 +105,10 @@ function renderSite(data) {
   const scorerSelector=$('#scorers-championship-select');
   if(scorerSelector.length){scorerSelector.html(allChampionships.map(c=>`<option value="${c.id}" ${Number(c.id)===Number(data.campeonato?.id)?'selected':''}>${esc(c.nome)} — ${c.status==='finalizado'?'Finalizado':Number(c.iniciado)===1?'Em andamento':'Ainda não iniciado'}</option>`).join(''));scorerSelector.prop('disabled',!allChampionships.length);$('#scorers-championship-title').text(data.campeonato?.nome || 'Os rankings serão apresentados quando houver um campeonato.');}
   // Agrupa os títulos pelo técnico e pelo time, mesmo quando o time histórico não foi informado.
-  const titlesByCoach = (data.titulos || []).reduce((groups, title) => { const coach=title.tecnico || 'Técnico não informado'; const team=title.time_nome || ''; const key=JSON.stringify([coach,team,title.participante_id||null]); (groups[key] ||= []).push(title); return groups; }, {});
-  $('#titles-grid').html(Object.keys(titlesByCoach).length ? Object.entries(titlesByCoach).map(([key,titles])=>{const [coach,team,participantId]=JSON.parse(key);return `<div class="col-md-6 col-xl-4"><article class="title-card"><div class="title-card-head"><span class="title-trophy">🏆</span><div><small>Técnico</small><h3>${esc(coach)}</h3>${team ? `<p>${participantId?teamLink(participantId,team):esc(team)}</p>` : ''}</div><strong>${titles.length}</strong></div><div class="title-list">${titles.map(t=>`<div><span>${esc(t.titulo)}</span><b>${esc(t.temporada)}</b></div>`).join('')}</div></article></div>`}).join('') : publicEmpty('A história dos campeões será apresentada em breve.'));
+  const titlesByCoach = (data.titulos || []).reduce((groups, title) => { const coach=title.tecnico || 'Técnico não informado'; const team=title.time_nome || ''; const participantId=title.participante_id||null; const key=JSON.stringify([coach,team,participantId]); if(!groups[key])groups[key]={coach,team,participantId,active:Number(title.participante_ativo)===1,titles:[]}; groups[key].titles.push(title); return groups; }, {});
+  titleGroups=Object.values(titlesByCoach).sort((a,b)=>Number(b.active)-Number(a.active));
+  Object.keys(titlePages).forEach(key=>delete titlePages[key]);
+  renderTitles();
   // Monta os vídeos do YouTube.
   $('#videos-grid').html(data.videos.length ? data.videos.map(v=>{const id=(v.youtube_url.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/)||[])[1];return id?`<div class="col-lg-6"><article class="video-card"><iframe src="https://www.youtube-nocookie.com/embed/${id}" title="${esc(v.titulo)}" loading="lazy" allowfullscreen></iframe><h3>${esc(v.titulo)}</h3></article></div>`:''}).join('') : publicEmpty('Novos vídeos da comunidade aparecerão aqui.'));
   // Se um escudo estiver inválido, volta automaticamente para a sigla do time.
@@ -136,6 +153,7 @@ $(function(){
   $('#game-search').on('input', function(){leaguePage=1;renderLeagueGames()});
   $('#league-pagination').on('click','.page-game',function(){if(this.disabled)return;leaguePage=Number(this.dataset.page);renderLeagueGames()});
   $('#scorers-pagination').on('click','.page-scorer',function(){if(this.disabled)return;scorersPage=Number(this.dataset.page);renderScorers()});
+  $('#titles-grid').on('click','.page-title',function(){if(this.disabled)return;titlePages[Number(this.dataset.group)]=Number(this.dataset.page);renderTitles()});
   $('.player-ranking-tabs').on('click','[data-ranking]',function(){playerRanking=this.dataset.ranking;scorersPage=1;$('.player-ranking-tabs [data-ranking]').removeClass('active').attr('aria-selected','false');$(this).addClass('active').attr('aria-selected','true');renderScorers()});
   $('#scorers-download').on('click',downloadScorers);
   $('#standings-body').on('click','.standings-team-row',function(){location.href=this.dataset.teamHref}).on('keydown','.standings-team-row',function(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();location.href=this.dataset.teamHref}});

@@ -68,6 +68,8 @@
   background: var(--panel);
   border: 1px solid var(--line);
   padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .title-card-head {
@@ -122,4 +124,47 @@
 .title-list b {
   color: #ff7075;
   white-space: nowrap;
+}
+
+.title-list {
+  flex: 1;
+}
+
+.title-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  min-height: 42px;
+  margin-top: auto;
+  padding-top: .75rem;
+  border-top: 1px solid var(--line);
+}
+
+.title-pagination button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.title-pagination button:hover:not(:disabled) {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+.title-pagination button:disabled {
+  opacity: .35;
+}
+
+.title-pagination span {
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 700;
 }
