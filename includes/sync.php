@@ -17,14 +17,24 @@ const SYNC_TABLES = [
     "videos",
 ];
 
-function sync_environment(): string
+function sync_source_url(): string
 {
-    return strtolower(trim((string) (getenv("APP_ENV") ?: "local")));
+    global $config;
+    return rtrim(trim((string) (
+        getenv("SYNC_SOURCE_URL") ?:
+        ($config["sync"]["source_url"] ?? "")
+    )), "/");
 }
 
 function sync_user_allowed(): bool
 {
-    return sync_environment() === "staging" &&
+    global $config;
+    $sourceUrl = sync_source_url();
+    $currentUrl = rtrim(trim((string) ($config["app"]["base_url"] ?? "")), "/");
+    $isSyncTarget = $sourceUrl !== "" &&
+        ($currentUrl === "" || strcasecmp($currentUrl, $sourceUrl) !== 0);
+
+    return $isSyncTarget &&
         account_is_master() &&
         mb_strtolower(
             trim((string) ($_SESSION["conta_nome"] ?? "")),
@@ -32,9 +42,19 @@ function sync_user_allowed(): bool
         ) === "slower";
 }
 
+function sync_source_allowed(): bool
+{
+    // A origem oficial fornece snapshots, mas nunca aponta para outra URL.
+    return sync_source_url() === "" && sync_secret() !== "";
+}
+
 function sync_secret(): string
 {
-    return trim((string) (getenv("SYNC_SECRET") ?: ""));
+    global $config;
+    return trim((string) (
+        getenv("SYNC_SECRET") ?:
+        ($config["sync"]["secret"] ?? "")
+    ));
 }
 
 function sync_ensure_history(PDO $pdo): void
@@ -108,7 +128,7 @@ function sync_summary(array $snapshot): array
 
 function sync_remote_snapshot(bool $withData): array
 {
-    $baseUrl = rtrim((string) (getenv("SYNC_SOURCE_URL") ?: ""), "/");
+    $baseUrl = sync_source_url();
     $secret = sync_secret();
     if ($baseUrl === "" || $secret === "") {
         throw new RuntimeException(

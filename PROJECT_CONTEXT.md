@@ -72,7 +72,7 @@ Antes de criar um arquivo novo, verificar se a responsabilidade já pertence a u
 - Homologação: banco separado, sem dados sensíveis de produção.
 - Produção: banco atual da hospedagem.
 - Código pode ser versionado; dados de produção não.
-- A homologação pode consultar a assinatura do banco de produção e exibir **Sincronizar agora** exclusivamente para o Admin Master `Slower` quando houver diferenças.
+- A homologação é identificada por uma `sync.source_url` configurada com a URL do site oficial; não depende de nomes de ambiente. Ela pode consultar a assinatura do banco de produção e exibir **Sincronizar agora** exclusivamente para o Admin Master `Slower` quando houver diferenças.
 - A sincronização é sempre unidirecional, de produção para homologação, preservando contas, senhas e sessões específicas de cada ambiente.
 
 ### Deploy desejado
