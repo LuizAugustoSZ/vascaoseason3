@@ -30,8 +30,8 @@ return [
         "environment" => getenv("APP_ENV") ?: "local",
         "timezone" => "America/Sao_Paulo",
     ],
-    // Na homologação, source_url aponta para o site oficial. Em produção,
-    // deixe source_url vazio para impedir sincronização no sentido inverso.
+    // Fallback para desenvolvimento/outros domínios. As URLs Railway oficiais
+    // são reconhecidas automaticamente pelo módulo de sincronização.
     "sync" => [
         "source_url" => rtrim(getenv("SYNC_SOURCE_URL") ?: "", "/"),
         "secret" => getenv("SYNC_SECRET") ?: "",
