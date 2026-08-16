@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['15.1','Súmulas agora registram automaticamente a data e a hora da importação como momento da partida, e as transferências também exibem quando aconteceram.','Datas automáticas de partidas e transferências'],
 ['15.0','A página inicial agora abre primeiro a competição em andamento que recebeu a partida mais recente, independentemente de ser pontos corridos ou mata-mata.','Competição em andamento primeiro'],
 ['14.9','Histórico do Mercado ganhou edição e desfazer para contratações e vendas, com correção automática do elenco e do cofre em modais de confirmação.','Editar e desfazer transferências'],
 ['14.8','A navbar agora segue a ordem das seções definida nas configurações do Admin e a antiga Artilharia passou a se chamar Jogadores.'],
