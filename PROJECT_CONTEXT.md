@@ -73,7 +73,7 @@ Antes de criar um arquivo novo, verificar se a responsabilidade já pertence a u
 - Produção: banco atual da hospedagem.
 - Código pode ser versionado; dados de produção não.
 - A homologação `vascaoseason3-moonvault.up.railway.app` consulta exclusivamente a produção `vascaoseason3-ironhaven.up.railway.app`; a identificação usa as URLs e não nomes de ambiente. Em outros domínios, `sync.source_url` funciona como fallback. O painel exibe **Sincronizar agora** exclusivamente para o Admin Master `Slower` quando houver diferenças.
-- A sincronização é sempre unidirecional, de produção para homologação, preservando contas, senhas e sessões específicas de cada ambiente.
+- A sincronização é sempre unidirecional, de produção para homologação. Ela espelha todos os dados funcionais, inclusive clubes por campeonato, cofres, escalações, jogadores e movimentações do mercado. Apenas contas, senhas, sessões e o histórico técnico de sincronização permanecem específicos de cada ambiente.
 
 ### Deploy desejado
 
