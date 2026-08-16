@@ -17,9 +17,21 @@ const SYNC_TABLES = [
     "videos",
 ];
 
+const SYNC_HOMOLOG_HOST = "vascaoseason3-moonvault.up.railway.app";
+const SYNC_PRODUCTION_HOST = "vascaoseason3-ironhaven.up.railway.app";
+
 function sync_source_url(): string
 {
     global $config;
+    $currentHost = strtolower((string) ($_SERVER["HTTP_HOST"] ?? ""));
+    $currentHost = preg_replace('/:\d+$/', '', $currentHost) ?? $currentHost;
+    if ($currentHost === SYNC_HOMOLOG_HOST) {
+        return "https://" . SYNC_PRODUCTION_HOST;
+    }
+    if ($currentHost === SYNC_PRODUCTION_HOST) {
+        return "";
+    }
+
     return rtrim(trim((string) (
         getenv("SYNC_SOURCE_URL") ?:
         ($config["sync"]["source_url"] ?? "")
