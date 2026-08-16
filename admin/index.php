@@ -5,6 +5,7 @@ require __DIR__ . "/../includes/sync.php";
 require __DIR__ . "/../includes/knockout.php";
 admin_required();
 $pdo = db();
+ensure_supercup_schema($pdo);
 $notice = $_SESSION["notice"] ?? "";
 unset($_SESSION["notice"]);
 function is_ajax_request(): bool
