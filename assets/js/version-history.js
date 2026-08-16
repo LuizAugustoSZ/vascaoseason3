@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['15.4','O patch de atualização agora reúne automaticamente todas as versões publicadas desde a última que cada visitante visualizou, sem repetir novidades já vistas.','Patch acumulativo inteligente'],
 ['15.3','O Mercado público ganhou escudos e nomes de clubes clicáveis, além de links que abrem cada campeonato diretamente na seção correta da página inicial.','Clubes e competições conectados'],
 ['15.2','A homologação ganhou uma página pública do Mercado com todas as transferências e filtros por jogador, campeonato, clube e tipo de movimentação.','Mercado de Transferências público'],
 ['15.1','Súmulas agora registram automaticamente a data e a hora da importação como momento da partida, e as transferências também exibem quando aconteceram.','Datas automáticas de partidas e transferências'],
@@ -168,13 +169,17 @@ document.addEventListener('DOMContentLoaded',()=>{
 
  const releaseVersion=siteVersions[0][0];
  const releaseKey='vascao-last-seen-release';
- const releaseDescription=siteVersions[0][1];
- const releaseTitle=siteVersions[0][2]||'Novidades desta versão';
- const releaseSignature=`${releaseVersion}|${releaseDescription}|patch-only-v1`;
- document.body.insertAdjacentHTML('beforeend',`<div class="modal fade release-notes-modal" id="release-notes-modal" tabindex="-1" aria-labelledby="release-notes-title" aria-hidden="true"><div class="modal-dialog modal-fullscreen-md-down modal-xl modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="release-notes-hero"><div><span class="release-notes-kicker">NOVA ATUALIZAÇÃO</span><h2 id="release-notes-title">NOVIDADES DA <em>VERSÃO ${releaseVersion}.</em></h2><p>Este patch mostra somente o que acabou de entrar em produção.</p></div><div class="release-version-stamp"><small>PATCH</small><strong>${releaseVersion}</strong></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar novidades"></button></div><div class="modal-body"><div class="release-feature-grid"><article><span>01</span><div><h3>${releaseTitle}</h3><p>${releaseDescription}</p></div></article></div></div><div class="modal-footer"><p>As versões anteriores continuam disponíveis no histórico do site.</p><button type="button" class="btn btn-danger release-notes-continue" data-bs-dismiss="modal">ENTENDI</button></div></div></div></div>`);
+ let previousReleaseSignature='';try{previousReleaseSignature=localStorage.getItem(releaseKey)||''}catch(error){}
+ const lastSeenVersion=previousReleaseSignature.split('|')[0];
+ const lastSeenIndex=siteVersions.findIndex(([version])=>version===lastSeenVersion);
+ const releaseItems=lastSeenIndex>0?siteVersions.slice(0,lastSeenIndex):siteVersions.slice(0,1);
+ const releaseSignature=`${releaseVersion}|${releaseItems.map(([version,description])=>`${version}:${description}`).join('||')}|smart-bundle-v1`;
+ const releaseCards=releaseItems.map(([version,description,title],index)=>`<article><span>${String(index+1).padStart(2,'0')}</span><div><h3>v${version} · ${title||'Novidades desta versão'}</h3><p>${description}</p></div></article>`).join('');
+ const releaseRange=releaseItems.length>1?`da v${releaseItems[releaseItems.length-1][0]} até a v${releaseVersion}`:`da v${releaseVersion}`;
+ document.body.insertAdjacentHTML('beforeend',`<div class="modal fade release-notes-modal" id="release-notes-modal" tabindex="-1" aria-labelledby="release-notes-title" aria-hidden="true"><div class="modal-dialog modal-fullscreen-md-down modal-xl modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="release-notes-hero"><div><span class="release-notes-kicker">NOVA ATUALIZAÇÃO</span><h2 id="release-notes-title">NOVIDADES DA <em>VERSÃO ${releaseVersion}.</em></h2><p>Veja tudo o que chegou ${releaseRange}, desde a sua última visita.</p></div><div class="release-version-stamp"><small>PATCH</small><strong>${releaseVersion}</strong></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar novidades"></button></div><div class="modal-body"><div class="release-feature-grid">${releaseCards}</div></div><div class="modal-footer"><p>As versões anteriores continuam disponíveis no histórico do site.</p><button type="button" class="btn btn-danger release-notes-continue" data-bs-dismiss="modal">ENTENDI</button></div></div></div></div>`);
  const releaseModal=document.getElementById('release-notes-modal');
  releaseModal.addEventListener('hidden.bs.modal',()=>{try{localStorage.setItem(releaseKey,releaseSignature)}catch(error){}});
- let releaseSeen=false;try{releaseSeen=localStorage.getItem(releaseKey)===releaseSignature}catch(error){}
+ const releaseSeen=previousReleaseSignature===releaseSignature;
  if(!releaseSeen){
   let attempts=0;
   const showRelease=()=>{if(window.bootstrap?.Modal){setTimeout(()=>bootstrap.Modal.getOrCreateInstance(releaseModal).show(),450);return}if(attempts++<20)setTimeout(showRelease,250)};
