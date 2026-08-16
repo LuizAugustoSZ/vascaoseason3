@@ -16,13 +16,14 @@ if (count($teams) !== 1) {
 }
 $team = $teams[0];
 $participantId = (int) $team['id'];
-$accountStmt = $pdo->prepare("SELECT id,nome,participante_id FROM contas WHERE LOWER(nome)=LOWER('haori404') AND ativo=1");
-$accountStmt->execute();
-$account = $accountStmt->fetch();
-if (!$account || (int) $account['participante_id'] !== $participantId) {
+$accountStmt = $pdo->prepare('SELECT id,nome,participante_id FROM contas WHERE participante_id=? AND ativo=1');
+$accountStmt->execute([$participantId]);
+$linked = $accountStmt->fetchAll();
+if (count($linked) !== 1) {
     http_response_code(409);
-    exit('A conta haori404 não está vinculada ao All Tacadão. Nenhum dado foi alterado.');
+    exit('Era esperada uma única conta ativa vinculada ao All Tacadão. Encontradas: ' . count($linked) . '. Nenhum dado foi alterado.');
 }
+$account = $linked[0];
 
 $queries = [
     'Partidas de pontos corridos' => "SELECT COUNT(*) FROM partidas WHERE mandante_id=? OR visitante_id=?",
@@ -75,4 +76,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         throw $error;
     }
 }
-?><!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Limpeza All Tacadão</title><link rel="stylesheet" href="../assets/css/style.css"></head><body><main class="container py-5"><div class="panel p-4"><h1>Limpeza do All Tacadão</h1><?php if ($done): ?><div class="alert alert-success">Limpeza concluída. Títulos e vínculo com haori404 foram preservados.</div><?php else: ?><p><strong>Clube:</strong> <?= e($team['time_nome']) ?> (ID <?= $participantId ?>)<br><strong>Conta preservada:</strong> <?= e($account['nome']) ?> (ID <?= (int)$account['id'] ?>)</p><table class="table"><tbody><?php foreach ($counts as $label=>$count): ?><tr><td><?= e($label) ?></td><td><strong><?= $count ?></strong></td></tr><?php endforeach; ?></tbody></table><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><label>Digite <strong>APAGAR ALL TACADAO</strong></label><input class="form-control my-3" name="confirmacao" required><button class="btn btn-danger">Executar limpeza definitiva</button></form><?php endif; ?></div></main></body></html>
+?><!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Limpeza All Tacadão</title><link rel="stylesheet" href="../assets/css/style.css"></head><body><main class="container py-5"><div class="panel p-4"><h1>Limpeza do All Tacadão</h1><?php if ($done): ?><div class="alert alert-success">Limpeza concluída. Títulos, perfil do clube e vínculo com <?= e($account['nome']) ?> foram preservados.</div><?php else: ?><p><strong>Clube:</strong> <?= e($team['time_nome']) ?> (ID <?= $participantId ?>)<br><strong>Conta preservada:</strong> <?= e($account['nome']) ?> (ID <?= (int)$account['id'] ?>)</p><table class="table"><tbody><?php foreach ($counts as $label=>$count): ?><tr><td><?= e($label) ?></td><td><strong><?= $count ?></strong></td></tr><?php endforeach; ?></tbody></table><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><label>Digite <strong>APAGAR ALL TACADAO</strong></label><input class="form-control my-3" name="confirmacao" required><button class="btn btn-danger">Executar limpeza definitiva</button></form><?php endif; ?></div></main></body></html>
