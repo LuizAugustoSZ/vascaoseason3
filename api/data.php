@@ -51,6 +51,36 @@ try {
     );
     $mataStmt->execute([$campeonatoId]);
     $mataMata = $mataStmt->fetchAll();
+    // Explica de qual competição cada finalista da Supercopa se classificou.
+    if (($campeonato["tipo"] ?? "") === "supercopa") {
+        $supercupStmt = $pdo->prepare(
+            "SELECT s.*,a.nome origem_a_nome,b.nome origem_b_nome
+             FROM supercopas s
+             JOIN campeonatos a ON a.id=s.origem_a_campeonato_id
+             JOIN campeonatos b ON b.id=s.origem_b_campeonato_id
+             WHERE s.campeonato_id=? LIMIT 1",
+        );
+        $supercupStmt->execute([$campeonatoId]);
+        $supercup = $supercupStmt->fetch();
+        if ($supercup) {
+            $championA = competition_champion_id($pdo, (int) $supercup["origem_a_campeonato_id"]);
+            $championB = competition_champion_id($pdo, (int) $supercup["origem_b_campeonato_id"]);
+            $labelA = "Campeão — " . $supercup["origem_a_nome"];
+            $labelB = "Campeão — " . $supercup["origem_b_nome"];
+            if ($championA && $championB && $championA === $championB) {
+                if ($supercup["regra_mesmo_campeao"] === "vice_origem_b") {
+                    $labelB = "Vice — " . $supercup["origem_b_nome"];
+                } else {
+                    $labelA = "Vice — " . $supercup["origem_a_nome"];
+                }
+            }
+            foreach ($mataMata as &$game) {
+                $game["classificacao_a"] = (int) $game["jogo"] === 2 ? $labelB : $labelA;
+                $game["classificacao_b"] = (int) $game["jogo"] === 2 ? $labelA : $labelB;
+            }
+            unset($game);
+        }
+    }
     // Busca o ranking de artilheiros.
     $artilhariaStmt = $pdo->prepare(
         "SELECT a.id,a.campeonato_id,a.participante_id,a.jogador,a.gols,p.time_nome participante,p.nome tecnico FROM artilharia a JOIN participantes p ON p.id=a.participante_id WHERE a.campeonato_id=? ORDER BY a.gols DESC,a.jogador LIMIT 10",
