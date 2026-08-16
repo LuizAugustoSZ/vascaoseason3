@@ -40,6 +40,12 @@ if (!is_array($remote) || empty($remote['ok']) || empty($remote['snapshot']) || 
 }
 
 $pdo = db();
+$pdo->exec(
+    "ALTER TABLE jogos_mata_mata
+     MODIFY fase VARCHAR(40) NOT NULL,
+     MODIFY origem_a_fase VARCHAR(40) NULL,
+     MODIFY origem_b_fase VARCHAR(40) NULL"
+);
 sync_ensure_history($pdo);
 $before = sync_snapshot($pdo);
 $beforeHash = sync_hash($before);
