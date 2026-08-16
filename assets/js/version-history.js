@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['15.5','Títulos agora mostram quatro conquistas por página, com navegação independente em cada card e técnicos participantes da temporada exibidos antes dos históricos.','Títulos mais organizados'],
 ['15.4','O patch de atualização agora reúne automaticamente todas as versões publicadas desde a última que cada visitante visualizou, sem repetir novidades já vistas.','Patch acumulativo inteligente'],
 ['15.3','O Mercado público ganhou escudos e nomes de clubes clicáveis, além de links que abrem cada campeonato diretamente na seção correta da página inicial.','Clubes e competições conectados'],
 ['15.2','A homologação ganhou uma página pública do Mercado com todas as transferências e filtros por jogador, campeonato, clube e tipo de movimentação.','Mercado de Transferências público'],
