@@ -244,6 +244,66 @@ document.querySelectorAll('[data-market-history]').forEach(history => {
   renderHistory();
 });
 
+const movementEditElement = document.getElementById('market-movement-modal');
+if (movementEditElement) {
+  const form = movementEditElement.querySelector('form');
+  const originField = form.querySelector('.movement-origin-field');
+  const origin = form.querySelector('[name="origem"]');
+  const packField = form.querySelector('.movement-pack-field');
+  const pack = form.querySelector('[name="pack"]');
+  const valueField = form.querySelector('.movement-value-field');
+  const valueInput = form.querySelector('[name="valor"]');
+  const note = form.querySelector('.movement-edit-note');
+  let movementType = 'compra';
+
+  function updateMovementEditFields() {
+    const isSale = movementType === 'venda';
+    const isPack = !isSale && origin.value === 'pack';
+    const hasRealValue = isSale || origin.value === 'compra_direta';
+    originField.hidden = isSale;
+    packField.hidden = !isPack;
+    valueField.hidden = !hasRealValue;
+    pack.required = isPack;
+    valueInput.required = hasRealValue;
+    note.textContent = isSale
+      ? 'Ao salvar, o sistema corrige a diferença no cofre e mantém o jogador fora do elenco.'
+      : hasRealValue
+        ? 'A diferença do valor será corrigida automaticamente no cofre.'
+        : 'Esta origem não altera o cofre em reais.';
+  }
+  origin.addEventListener('change', updateMovementEditFields);
+
+  document.querySelectorAll('[data-edit-movement]').forEach(button => button.addEventListener('click', () => {
+    movementType = button.dataset.movementType;
+    form.querySelector('[name="movimentacao_id"]').value = button.dataset.movementId;
+    form.querySelector('[name="nome"]').value = button.dataset.playerName;
+    form.querySelector('[name="overall"]').value = button.dataset.playerOverall;
+    form.querySelector('[name="posicao"]').value = button.dataset.playerPosition;
+    origin.value = movementType === 'venda' ? 'compra_direta' : button.dataset.movementOrigin;
+    pack.value = button.dataset.movementPack || '';
+    valueInput.value = button.dataset.movementValue ? `R$ ${Math.round(Number(button.dataset.movementValue)).toLocaleString('pt-BR')}` : 'R$ 0';
+    movementEditElement.querySelector('.modal-title').textContent = movementType === 'venda' ? 'EDITAR VENDA' : 'EDITAR CONTRATAÇÃO';
+    updateMovementEditFields();
+    bootstrap.Modal.getOrCreateInstance(movementEditElement).show();
+  }));
+}
+
+const movementUndoElement = document.getElementById('market-undo-modal');
+if (movementUndoElement) {
+  const form = movementUndoElement.querySelector('form');
+  document.querySelectorAll('[data-undo-movement]').forEach(button => button.addEventListener('click', () => {
+    const isSale = button.dataset.movementType === 'venda';
+    const player = button.dataset.playerName;
+    form.querySelector('[name="movimentacao_id"]').value = button.dataset.movementId;
+    movementUndoElement.querySelector('.modal-title').textContent = isSale ? 'DESFAZER VENDA' : 'DESFAZER CONTRATAÇÃO';
+    movementUndoElement.querySelector('.movement-undo-copy').textContent = `Tem certeza que deseja desfazer ${isSale ? 'a venda' : 'a contratação'} de ${player}?`;
+    movementUndoElement.querySelector('.movement-undo-detail').textContent = isSale
+      ? 'O jogador voltará para o banco, o valor recebido será retirado do cofre e o registro sairá do histórico.'
+      : 'O jogador sairá do elenco, o valor pago voltará ao cofre quando aplicável e o registro sairá do histórico.';
+    bootstrap.Modal.getOrCreateInstance(movementUndoElement).show();
+  }));
+}
+
 let marketTransferPane = null;
 const marketPage = document.querySelector('.market-page');
 const lineupSection = document.getElementById('elenco');

@@ -117,6 +117,80 @@ try {
             }
             $pdo->commit();
             $message = $confirmarAposSalvar ? 'Escalação salva e elenco confirmado.' : 'Escalação atualizada.';
+        } elseif (in_array($action, ['editar_movimentacao', 'desfazer_movimentacao'], true)) {
+            $movimentacaoId = (int)($_POST['movimentacao_id'] ?? 0);
+            if ($movimentacaoId < 1) throw new RuntimeException('Movimentação inválida.');
+
+            $pdo->beginTransaction();
+            $movimentoStmt = $pdo->prepare("SELECT * FROM movimentacoes_elenco WHERE id=? AND campeonato_id=? AND participante_id=? FOR UPDATE");
+            $movimentoStmt->execute([$movimentacaoId, $campeonatoId, $participantId]);
+            $movimento = $movimentoStmt->fetch();
+            if (!$movimento) throw new RuntimeException('Essa movimentação não existe mais. Atualize a página.');
+
+            $jogadorStmt = $pdo->prepare("SELECT * FROM jogadores_elenco WHERE id=? AND campeonato_id=? AND participante_id=? FOR UPDATE");
+            $jogadorStmt->execute([(int)$movimento['jogador_id'], $campeonatoId, $participantId]);
+            $jogadorMovimentado = $jogadorStmt->fetch();
+            if (!$jogadorMovimentado) throw new RuntimeException('O jogador vinculado a essa movimentação não foi encontrado.');
+
+            $cofres = $pdo->prepare("SELECT * FROM clubes_campeonato WHERE participante_id=? ORDER BY id FOR UPDATE");
+            $cofres->execute([$participantId]);
+            $cofresDoClube = $cofres->fetchAll();
+            $saldoAtual = null;
+            foreach ($cofresDoClube as $cofreDoCampeonato) {
+                if ((int)$cofreDoCampeonato['campeonato_id'] === $campeonatoId) $saldoAtual = (float)$cofreDoCampeonato['saldo'];
+            }
+            if ($saldoAtual === null) throw new RuntimeException('O cofre deste campeonato não foi encontrado.');
+
+            $impactoAnterior = (float)$movimento['saldo_posterior'] - (float)$movimento['saldo_anterior'];
+            if ($action === 'desfazer_movimentacao') {
+                if ($movimento['tipo'] === 'compra') {
+                    if (!(bool)$jogadorMovimentado['ativo']) throw new RuntimeException('Não é possível desfazer: esse jogador já não está no elenco.');
+                    $pdo->prepare("UPDATE jogadores_elenco SET ativo=0,saiu_em=NOW() WHERE id=?")->execute([$jogadorMovimentado['id']]);
+                } else {
+                    if ((bool)$jogadorMovimentado['ativo']) throw new RuntimeException('Não é possível desfazer: esse jogador já voltou ao elenco.');
+                    $pdo->prepare("UPDATE jogadores_elenco SET ativo=1,grupo='banco',saiu_em=NULL WHERE id=?")->execute([$jogadorMovimentado['id']]);
+                }
+                $novoSaldo = $saldoAtual - $impactoAnterior;
+                if ($novoSaldo < 0) throw new RuntimeException('Não é possível desfazer esta venda porque o cofre ficaria negativo.');
+                $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,cofre_configurado=1 WHERE participante_id=?")->execute([$novoSaldo, $participantId]);
+                $pdo->prepare("DELETE FROM movimentacoes_elenco WHERE id=?")->execute([$movimentacaoId]);
+                mercado_ordenar_elenco($pdo, $campeonatoId, $participantId);
+                $pdo->commit();
+                $message = $movimento['tipo'] === 'compra' ? 'Contratação desfeita. O jogador saiu do elenco e o cofre foi corrigido.' : 'Venda desfeita. O jogador voltou para o banco e o cofre foi corrigido.';
+            } else {
+                $nome = trim((string)($_POST['nome'] ?? ''));
+                $overall = (int)($_POST['overall'] ?? 0);
+                $posicao = (string)($_POST['posicao'] ?? '');
+                if ($nome === '' || $overall < 1 || $overall > 99 || !in_array($posicao, MERCADO_POSICOES, true)) throw new RuntimeException('Preencha nome, overall e posição corretamente.');
+
+                $origem = $movimento['tipo'] === 'venda' ? 'venda' : (string)($_POST['origem'] ?? 'compra_direta');
+                $origemDetalhe = $valorOrigem = $moedaOrigem = null;
+                $valor = 0.0;
+                if ($movimento['tipo'] === 'venda' || $origem === 'compra_direta') {
+                    $valor = mercado_parse_valor((string)($_POST['valor'] ?? ''));
+                } elseif ($origem === 'pack') {
+                    $pack = MERCADO_PACKS[(string)($_POST['pack'] ?? '')] ?? null;
+                    if (!$pack) throw new RuntimeException('Selecione o pack recebido.');
+                    if ($overall < $pack['min'] || $overall > $pack['max']) throw new RuntimeException(sprintf('%s aceita jogadores com OVR entre %d e %d.', $pack['nome'], $pack['min'], $pack['max']));
+                    $origemDetalhe = $pack['nome'];
+                    $valorOrigem = (float)$pack['dream_points'];
+                    $moedaOrigem = 'DreamPoints';
+                } elseif (!in_array($origem, ['passe', 'sorteio', 'prancheta'], true)) {
+                    throw new RuntimeException('Selecione uma origem válida para o jogador.');
+                }
+
+                $novoImpacto = $movimento['tipo'] === 'venda' ? $valor : ($origem === 'compra_direta' ? -$valor : 0.0);
+                $novoSaldo = $saldoAtual - $impactoAnterior + $novoImpacto;
+                if ($novoSaldo < 0) throw new RuntimeException('Essa correção deixaria o cofre com saldo negativo.');
+                $novoSaldoPosterior = (float)$movimento['saldo_anterior'] + $novoImpacto;
+                $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,cofre_configurado=1 WHERE participante_id=?")->execute([$novoSaldo, $participantId]);
+                $pdo->prepare("UPDATE jogadores_elenco SET nome=?,overall=?,posicao=? WHERE id=?")->execute([$nome, $overall, $posicao, $jogadorMovimentado['id']]);
+                $pdo->prepare("UPDATE movimentacoes_elenco SET origem=?,origem_detalhe=?,valor_origem=?,moeda_origem=?,jogador_nome=?,jogador_overall=?,jogador_posicao=?,valor=?,saldo_posterior=?,conta_id=? WHERE id=?")
+                    ->execute([$origem, $origemDetalhe, $valorOrigem, $moedaOrigem, $nome, $overall, $posicao, $valor, $novoSaldoPosterior, (int)$_SESSION['conta_id'], $movimentacaoId]);
+                mercado_ordenar_elenco($pdo, $campeonatoId, $participantId);
+                $pdo->commit();
+                $message = $movimento['tipo'] === 'compra' ? 'Contratação corrigida com sucesso.' : 'Venda corrigida com sucesso.';
+            }
         } elseif (in_array($action, ['comprar', 'vender'], true)) {
             if (!mercado_pode_editar($clube, $rodada) || $montagemInicial) throw new RuntimeException('O mercado está indisponível nesta rodada.');
             $pdo->beginTransaction();
@@ -319,8 +393,10 @@ if ($clube) {
             </section>
             <section class="panel p-4 market-history" data-market-history data-items-per-page="4">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2"><h2>HISTÓRICO</h2><div class="history-filters" role="group" aria-label="Filtrar histórico"><button class="active" type="button" data-history-filter="todas">Todas</button><button type="button" data-history-filter="compra">Compras</button><button type="button" data-history-filter="venda">Vendas</button></div></div>
-                <div class="history-items"><?php foreach ($historico as $m): ?><article data-history-type="<?= e($m['tipo']) ?>"><span class="history-kind <?= $m['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= e(mercado_rotulo_origem($m)) ?></span><div><strong><?= e($m['jogador_nome']) ?></strong><small><?= (int)$m['jogador_overall'] ?> · <?= e($m['jogador_posicao']) ?> · rodada <?= $m['rodada'] ?><?= !empty($m['origem_detalhe']) ? ' · ' . e($m['origem_detalhe']) : '' ?></small></div><b><?= e(mercado_valor_movimento($m)) ?></b></article><?php endforeach; ?><?php if (!$historico): ?><p class="text-secondary">Nenhuma movimentação.</p><?php endif; ?></div><nav class="history-pages card-pages"></nav>
+                <div class="history-items"><?php foreach ($historico as $m): ?><?php $packMovimento = ''; foreach (MERCADO_PACKS as $packId => $packDados) { if (($m['origem_detalhe'] ?? '') === $packDados['nome']) { $packMovimento = $packId; break; } } ?><article data-history-type="<?= e($m['tipo']) ?>"><span class="history-kind <?= $m['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= e(mercado_rotulo_origem($m)) ?></span><div><strong><?= e($m['jogador_nome']) ?></strong><small><?= (int)$m['jogador_overall'] ?> · <?= e($m['jogador_posicao']) ?> · rodada <?= $m['rodada'] ?><?= !empty($m['origem_detalhe']) ? ' · ' . e($m['origem_detalhe']) : '' ?></small></div><b><?= e(mercado_valor_movimento($m)) ?></b><div class="history-actions"><button type="button" class="btn btn-sm btn-outline-light" data-edit-movement data-movement-id="<?= (int)$m['id'] ?>" data-movement-type="<?= e($m['tipo']) ?>" data-player-name="<?= e($m['jogador_nome']) ?>" data-player-overall="<?= (int)$m['jogador_overall'] ?>" data-player-position="<?= e($m['jogador_posicao']) ?>" data-movement-origin="<?= e($m['origem']) ?>" data-movement-pack="<?= e($packMovimento) ?>" data-movement-value="<?= (float)$m['valor'] ?>">Editar</button><button type="button" class="btn btn-sm btn-outline-danger" data-undo-movement data-movement-id="<?= (int)$m['id'] ?>" data-movement-type="<?= e($m['tipo']) ?>" data-player-name="<?= e($m['jogador_nome']) ?>">Desfazer</button></div></article><?php endforeach; ?><?php if (!$historico): ?><p class="text-secondary">Nenhuma movimentação.</p><?php endif; ?></div><nav class="history-pages card-pages"></nav>
             </section>
+            <div class="modal fade market-movement-modal" id="market-movement-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><div><small class="eyebrow">Corrigir histórico</small><h2 class="modal-title">EDITAR MOVIMENTAÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><form method="post"><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><input type="hidden" name="action" value="editar_movimentacao"><input type="hidden" name="movimentacao_id"><div class="row g-3"><div class="col-12"><label class="form-label">Jogador</label><input class="form-control" name="nome" required></div><div class="col-6"><label class="form-label">Overall</label><input class="form-control" type="number" min="1" max="99" name="overall" required></div><div class="col-6"><label class="form-label">Posição</label><select class="form-select" name="posicao"><?php foreach (MERCADO_POSICOES as $p): ?><option value="<?= e($p) ?>"><?= e($p) ?></option><?php endforeach; ?></select></div><div class="col-12 movement-origin-field"><label class="form-label">Origem da contratação</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option><option value="prancheta">Recebido pela prancheta</option></select></div><div class="col-12 movement-pack-field" hidden><label class="form-label">Pack recebido</label><select class="form-select" name="pack"><option value="">Selecione o pack</option><?php foreach (MERCADO_PACKS as $packId => $pack): ?><option value="<?= e($packId) ?>"><?= e($pack['nome']) ?> · <?= number_format((float)$pack['dream_points'], 0, ',', '.') ?> DP</option><?php endforeach; ?></select></div><div class="col-12 movement-value-field"><label class="form-label">Valor em reais</label><input class="form-control" type="number" min="0" step="1" name="valor"></div><div class="col-12"><div class="alert alert-info mb-0 movement-edit-note"></div></div></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar correção</button></div></form></div></div></div>
+            <div class="modal fade market-movement-modal" id="market-undo-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><small class="eyebrow">Ação definitiva</small><h2 class="modal-title">DESFAZER MOVIMENTAÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><form method="post"><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><input type="hidden" name="action" value="desfazer_movimentacao"><input type="hidden" name="movimentacao_id"><p class="movement-undo-copy"></p><div class="alert alert-warning mb-0 movement-undo-detail"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Voltar</button><button class="btn btn-danger">Sim, desfazer</button></div></form></div></div></div>
             <?php endif; ?>
     </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
