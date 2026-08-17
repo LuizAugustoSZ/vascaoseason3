@@ -5,34 +5,6 @@ require __DIR__ . "/../includes/bootstrap.php";
 
 try {
     $pdo = db();
-    // Migration temporária: recompõe os jogos históricos dos DreamTeam II e III.
-    if (strtolower((string) ($_SERVER['HTTP_HOST'] ?? '')) === 'vascaoseason3-ironhaven.up.railway.app') {
-        $historicTeamStmt = $pdo->prepare("SELECT id FROM participantes WHERE nome='YuriGamer_303 · histórico Copa do Brasil II' LIMIT 1");
-        $historicTeamStmt->execute();
-        $historicTeamId = (int) ($historicTeamStmt->fetchColumn() ?: 0);
-        if ($historicTeamId) {
-            $restoreGames = [
-                [3,1,'Quartas',2,1,1,$historicTeamId,null,null,'vencedor',null,null,'vencedor',0,0,3,4,$historicTeamId,'finalizado','2026-08-07 18:13:14',1],
-                [4,1,'Quartas',2,2,$historicTeamId,1,null,null,'vencedor',null,null,'vencedor',0,0,null,null,$historicTeamId,'finalizado','2026-08-07 18:13:14',1],
-                [9,1,'Semifinal',1,1,6,$historicTeamId,'Quartas',1,'vencedor','Quartas',2,'vencedor',1,2,null,null,$historicTeamId,'finalizado','2026-08-07 18:13:14',1],
-                [10,1,'Semifinal',1,2,$historicTeamId,6,'Quartas',2,'vencedor','Quartas',1,'vencedor',1,2,4,2,$historicTeamId,'finalizado','2026-08-07 18:13:14',1],
-                [13,1,'Final',1,1,$historicTeamId,3,'Semifinal',1,'vencedor','Semifinal',2,'vencedor',3,0,null,null,$historicTeamId,'finalizado','2026-08-07 18:13:14',1],
-                [14,1,'Final',1,2,3,$historicTeamId,'Semifinal',2,'vencedor','Semifinal',1,'vencedor',0,4,null,null,$historicTeamId,'finalizado','2026-08-07 18:13:14',1],
-                [21,3,'Quartas',3,1,$historicTeamId,3,null,null,'vencedor',null,null,'vencedor',1,3,null,null,3,'finalizado','2026-08-14 20:01:47',1],
-                [22,3,'Quartas',3,2,3,$historicTeamId,null,null,'vencedor',null,null,'vencedor',3,0,null,null,3,'finalizado','2026-08-14 20:01:47',1],
-            ];
-            $restore = $pdo->prepare("INSERT IGNORE INTO jogos_mata_mata(id,campeonato_id,fase,ordem,jogo,time_a_id,time_b_id,origem_a_fase,origem_a_ordem,origem_a_tipo,origem_b_fase,origem_b_ordem,origem_b_tipo,gols_a,gols_b,penaltis_a,penaltis_b,vencedor_id,status,criado_em,ativo) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-            $pdo->beginTransaction();
-            try {
-                $pdo->exec("UPDATE campeonatos SET ativo=1 WHERE id=1 AND nome='Amistosos DreamTeam II'");
-                foreach ($restoreGames as $game) $restore->execute($game);
-                $pdo->commit();
-            } catch (Throwable $migrationError) {
-                if ($pdo->inTransaction()) $pdo->rollBack();
-                throw $migrationError;
-            }
-        }
-    }
     $campeonatos = $pdo
         ->query(
             "SELECT c.id,c.nome,c.tipo,c.formato,c.status,c.criado_em,
