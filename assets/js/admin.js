@@ -1,4 +1,8 @@
 (function(){
+const adminGroupButtons=[...document.querySelectorAll('[data-admin-group]')],adminSubmenus=[...document.querySelectorAll('[data-admin-submenu]')];
+function showAdminGroup(group){adminGroupButtons.forEach(button=>{const active=button.dataset.adminGroup===group;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active))});adminSubmenus.forEach(menu=>menu.classList.toggle('active',menu.dataset.adminSubmenu===group));}
+adminGroupButtons.forEach(button=>button.addEventListener('click',()=>showAdminGroup(button.dataset.adminGroup)));
+document.querySelectorAll('.admin-submenu [data-bs-target]').forEach(button=>button.addEventListener('shown.bs.tab',()=>showAdminGroup(button.closest('[data-admin-submenu]').dataset.adminSubmenu)));
 // Lê os gols já digitados antes de redesenhar as linhas do placar.
 function currentGoalRows(){return [...document.querySelectorAll('#match-goals-editor .match-goal-row')].map(row=>({participante_id:row.querySelector('[name="gol_time[]"]').value,jogador:row.querySelector('[name="gol_jogador[]"]').value,minuto:row.querySelector('[name="gol_minuto[]"]').value,tipo:row.querySelector('[name="gol_tipo[]"]').value}));}
 
