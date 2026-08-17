@@ -3,6 +3,7 @@
 require __DIR__ . "/../includes/bootstrap.php";
 master_required();
 $pdo = db();
+$embedded = isset($_GET["embed"]);
 $notice = $_SESSION["notice"] ?? "";
 unset($_SESSION["notice"]);
 function draw_ajax(): bool
@@ -273,9 +274,9 @@ function checks(array $teams): string
     return $out;
 }
 ?>
-<!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sorteador | Season 3</title><link rel="icon" href="../favicon.ico" sizes="any"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/branding.css?v=5"><style>.admin-shell{padding:105px 0 60px}.sorteio-form{padding:1.4rem}.sorteio-form h2{font:800 1.8rem 'Barlow Condensed',sans-serif;text-transform:uppercase}.form-select{background:#0b0c0e;border-color:#343941}.sorteio-team{display:flex;gap:.7rem;height:100%;padding:1rem 1rem 1rem 2.3rem;border:1px solid #343941;cursor:pointer}.sorteio-team small{display:block;color:#8d98ad}.sorteio-team:has(input:checked){border-color:#ed1b2f;background:rgba(237,27,47,.08)}</style></head><body>
-<nav class="navbar fixed-top navbar-dark"><div class="container"><a class="navbar-brand" href="index.php"><img class="brand-mark d-inline-block me-2" src="../assets/img/logo-season3.webp?v=5" alt="Vascao Season 3"> SORTEADOR S3</a><div><a href="index.php" class="btn btn-outline-light btn-sm me-2">Administração</a><a href="../index.php" class="btn btn-danger btn-sm" target="_blank">Abrir site</a></div></div></nav>
-<main class="admin-shell"><div class="container"><span class="eyebrow">Sorteio automático</span><h1 class="display-4 fw-bold mb-4">CRIAR COMPETIÇÕES</h1><?php if (
+<!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sorteador | Season 3</title><link rel="icon" href="../favicon.ico" sizes="any"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/branding.css?v=5"><style>.admin-shell{padding:<?= $embedded ? '0 0 40px' : '105px 0 60px' ?>}.sorteio-form{padding:1.4rem}.sorteio-form h2{font:800 1.8rem 'Barlow Condensed',sans-serif;text-transform:uppercase}.form-select{background:#0b0c0e;border-color:#343941}.sorteio-team{display:flex;gap:.7rem;height:100%;padding:1rem 1rem 1rem 2.3rem;border:1px solid #343941;cursor:pointer}.sorteio-team small{display:block;color:#8d98ad}.sorteio-team:has(input:checked){border-color:#ed1b2f;background:rgba(237,27,47,.08)}</style></head><body>
+<?php if (!$embedded): ?><nav class="navbar fixed-top navbar-dark"><div class="container"><a class="navbar-brand" href="index.php"><img class="brand-mark d-inline-block me-2" src="../assets/img/logo-season3.webp?v=5" alt="Vascao Season 3"> SORTEADOR S3</a><div><a href="index.php" class="btn btn-outline-light btn-sm me-2">Administração</a><a href="../index.php" class="btn btn-danger btn-sm" target="_blank">Abrir site</a></div></div></nav><?php endif; ?>
+<main class="admin-shell"><div class="<?= $embedded ? 'container-fluid px-0' : 'container' ?>"><span class="eyebrow">Sorteio automático</span><h1 class="display-4 fw-bold mb-4">CRIAR COMPETIÇÕES</h1><?php if (
     $notice
 ): ?><div class="alert alert-info"><?= e(
     $notice,
