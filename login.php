@@ -41,6 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             db()
                 ->prepare("UPDATE contas SET ultimo_acesso_em=NOW() WHERE id=?")
                 ->execute([(int) $conta["id"]]);
+            audit_event("login", "autenticacao", "Login realizado com sucesso.");
             header(
                 "Location: " .
                     ((int) $conta["trocar_senha"] === 1
@@ -50,6 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit();
         }
         $error = "E-mail ou senha inválidos.";
+        audit_event("login_falhou", "autenticacao", "Tentativa de login inválida.", ["email_hash" => hash("sha256", $email)]);
     } catch (Throwable $e) {
         $error = "Não foi possível conectar ao banco.";
     }

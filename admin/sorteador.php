@@ -13,6 +13,7 @@ function draw_ajax(): bool
 }
 function go(string $message): never
 {
+    audit_post_success("sorteador", $message);
     if (draw_ajax()) {
         header("Content-Type: application/json; charset=utf-8");
         echo json_encode(

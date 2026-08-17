@@ -269,6 +269,7 @@ try {
                 }
                 : 'Venda registrada.';
         }
+        if ($message !== '') audit_post_success('mercado', $message);
     }
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();

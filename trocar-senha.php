@@ -44,6 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ->execute([$novoHash, (int) $_SESSION["conta_id"]]);
         $_SESSION["conta_trocar_senha"] = 0;
         session_regenerate_id(true);
+        audit_event("edicao", "usuarios", "Senha da conta atualizada.", ["conta_id" => (int)$_SESSION["conta_id"]]);
         header("Location: index.php");
         exit();
     } catch (Throwable $e) {

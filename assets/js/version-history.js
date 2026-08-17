@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['15.7','Otimização do sistema com novos recursos internos de acompanhamento e estabilidade.','Otimização do sistema'],
 ['15.6','Finais agora identificam claramente de qual fase ou competição cada clube se classificou, incluindo campeão ou vice nas Supercopas.','Origem dos finalistas'],
 ['15.5','Títulos agora mostram quatro conquistas por página, com navegação independente em cada card e técnicos participantes da temporada exibidos antes dos históricos.','Títulos mais organizados'],
 ['15.4','O patch de atualização agora reúne automaticamente todas as versões publicadas desde a última que cada visitante visualizou, sem repetir novidades já vistas.','Patch acumulativo inteligente'],
