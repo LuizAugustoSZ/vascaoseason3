@@ -175,6 +175,7 @@ try {
     $insert = $pdo->prepare("INSERT INTO sumulas_dreamteam(dreamteam_id,origem,partida_id,jogo_mata_mata_id,estadio,clima,duracao,craque,craque_nota,dados_json,texto_original,criado_por) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)");
     $insert->execute([$parsed['dreamteam_id'],$type,$type==='pontos'?$matchId:null,$type==='mata'?$matchId:null,$parsed['stadium'],$parsed['weather'],$parsed['duration'],$parsed['man_of_match'],$parsed['man_of_match_rating'],json_encode($parsed,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$raw,(int)($_SESSION['conta_id']??0)]);
     $pdo->commit();
+    audit_post_success('sumulas', 'Súmula importada e partida atualizada.');
     json_response(['ok'=>true,'message'=>'Súmula importada, resultado atualizado e eventos armazenados com sucesso.']);
 } catch (Throwable $error) {
     if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();

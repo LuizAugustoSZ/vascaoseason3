@@ -56,6 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $_SESSION["conta_eh_admin"] = 0;
         $_SESSION["conta_trocar_senha"] = 0;
         $_SESSION["participante_id"] = null;
+        audit_event("cadastro", "usuarios", "Nova conta criada.", ["conta_id" => (int)$pdo->lastInsertId()]);
         header("Location: index.php?conta=criada");
         exit();
     } catch (Throwable $e) {

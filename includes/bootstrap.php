@@ -47,6 +47,59 @@ function e(?string $value): string
     return htmlspecialchars($value ?? "", ENT_QUOTES, "UTF-8");
 }
 
+// Mantém uma trilha técnica enxuta das ações relevantes do sistema.
+function audit_ensure_schema(): void
+{
+    static $ready = false;
+    if ($ready) return;
+    db()->exec("CREATE TABLE IF NOT EXISTS audit_logs (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        conta_id INT UNSIGNED NULL, conta_nome VARCHAR(120) NULL,
+        evento VARCHAR(40) NOT NULL, modulo VARCHAR(60) NOT NULL,
+        recurso_tipo VARCHAR(80) NULL, recurso_id VARCHAR(80) NULL,
+        descricao VARCHAR(255) NOT NULL, detalhes_json JSON NULL,
+        ip_hash CHAR(64) NULL, user_agent VARCHAR(255) NULL,
+        criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_audit_data (criado_em), KEY idx_audit_evento (evento, criado_em),
+        KEY idx_audit_modulo (modulo, criado_em), KEY idx_audit_conta (conta_id, criado_em)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $ready = true;
+}
+
+function audit_event(string $evento, string $modulo, string $descricao, array $detalhes = []): void
+{
+    try {
+        audit_ensure_schema();
+        foreach (['csrf','senha','confirmar_senha','senha_atual','nova_senha','conteudo','capa_base64','sumula'] as $key) unset($detalhes[$key]);
+        $resourceId = null;
+        foreach (['id','conta_id','participante_id','campeonato_id','partida_id','jogo_mata_id','noticia_id','artilheiro_id','movimentacao_id'] as $key) {
+            if (isset($detalhes[$key]) && (string)$detalhes[$key] !== '') { $resourceId = (string)$detalhes[$key]; break; }
+        }
+        $ip = trim((string)($_SERVER['REMOTE_ADDR'] ?? ''));
+        $stmt = db()->prepare("INSERT INTO audit_logs(conta_id,conta_nome,evento,modulo,recurso_tipo,recurso_id,descricao,detalhes_json,ip_hash,user_agent) VALUES(?,?,?,?,?,?,?,?,?,?)");
+        $stmt->execute([
+            isset($_SESSION['conta_id']) ? (int)$_SESSION['conta_id'] : null, $_SESSION['conta_nome'] ?? null,
+            mb_substr($evento, 0, 40), mb_substr($modulo, 0, 60),
+            isset($detalhes['action']) ? mb_substr((string)$detalhes['action'], 0, 80) : null, $resourceId,
+            mb_substr($descricao, 0, 255), $detalhes ? json_encode($detalhes, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+            $ip !== '' ? hash('sha256', $ip) : null, mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
+        ]);
+    } catch (Throwable $ignored) {}
+}
+
+function audit_post_success(string $modulo, string $descricao): void
+{
+    $details = [];
+    foreach ($_POST as $key => $value) {
+        if (in_array($key, ['csrf','senha','confirmar_senha','senha_atual','nova_senha','conteudo','capa_base64','sumula'], true)) continue;
+        if (is_scalar($value) && mb_strlen((string)$value) <= 160) $details[$key] = (string)$value;
+        elseif (is_array($value)) $details[$key . '_total'] = count($value);
+    }
+    $action = (string)($_POST['action'] ?? 'salvar');
+    $event = str_contains($action, 'desativar') || str_contains($action, 'desfazer') ? 'remocao' : (preg_match('/editar|atualizar|status|configur/', $action) ? 'edicao' : 'cadastro');
+    audit_event($event, $modulo, $descricao, $details);
+}
+
 // Remove tags, atributos e URLs perigosas do conteúdo das notícias.
 function sanitize_news_html(string $html): string
 {
@@ -235,6 +288,7 @@ function auth_restore_login(): void
         if ($conta) {
             session_regenerate_id(true);
             auth_fill_session($conta);
+            audit_event("login", "autenticacao", "Login persistente restaurado.");
             return;
         }
     } catch (Throwable $ignored) {
