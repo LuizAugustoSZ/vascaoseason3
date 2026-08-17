@@ -5,6 +5,36 @@ require __DIR__ . "/../includes/bootstrap.php";
 
 try {
     $pdo = db();
+    // Migration temporária: recompõe somente os seis jogos removidos da Copa do Brasil II.
+    if (strtolower((string) ($_SERVER['HTTP_HOST'] ?? '')) === 'vascaoseason3-ironhaven.up.railway.app') {
+        $competition = $pdo->query("SELECT id FROM campeonatos WHERE id=4 AND nome='Copa do Brasil II' AND tipo='mata_mata'")->fetchColumn();
+        if ($competition) {
+            $historicTeamStmt = $pdo->prepare("SELECT id FROM participantes WHERE nome='YuriGamer_303 · histórico Copa do Brasil II' LIMIT 1");
+            $historicTeamStmt->execute();
+            $historicTeamId = (int) ($historicTeamStmt->fetchColumn() ?: 0);
+            if (!$historicTeamId) {
+                $pdo->exec("INSERT INTO participantes(nome,time_nome,sigla,escudo_url,descricao,ativo) SELECT 'YuriGamer_303 · histórico Copa do Brasil II',time_nome,sigla,escudo_url,descricao,0 FROM participantes WHERE id=4");
+                $historicTeamId = (int) $pdo->lastInsertId();
+            }
+            $restoreGames = [
+                [39,4,'Quartas',4,1,$historicTeamId,7,null,null,'vencedor','Preliminar',2,'vencedor',3,2,null,null,$historicTeamId,'finalizado','2026-08-15 10:27:31',1],
+                [40,4,'Quartas',4,2,7,$historicTeamId,'Preliminar',2,'vencedor',null,null,'vencedor',1,2,null,null,$historicTeamId,'finalizado','2026-08-15 10:27:31',1],
+                [43,4,'Semifinal',2,1,14,$historicTeamId,'Quartas',3,'vencedor','Quartas',4,'vencedor',0,5,null,null,$historicTeamId,'finalizado','2026-08-15 10:27:31',1],
+                [44,4,'Semifinal',2,2,$historicTeamId,14,'Quartas',4,'vencedor','Quartas',3,'vencedor',4,1,null,null,$historicTeamId,'finalizado','2026-08-15 10:27:31',1],
+                [45,4,'Final',1,1,1,$historicTeamId,'Semifinal',1,'vencedor','Semifinal',2,'vencedor',2,1,null,null,1,'finalizado','2026-08-15 10:27:31',1],
+                [46,4,'Final',1,2,$historicTeamId,1,'Semifinal',2,'vencedor','Semifinal',1,'vencedor',1,2,null,null,1,'finalizado','2026-08-15 10:27:31',1],
+            ];
+            $restore = $pdo->prepare("INSERT IGNORE INTO jogos_mata_mata(id,campeonato_id,fase,ordem,jogo,time_a_id,time_b_id,origem_a_fase,origem_a_ordem,origem_a_tipo,origem_b_fase,origem_b_ordem,origem_b_tipo,gols_a,gols_b,penaltis_a,penaltis_b,vencedor_id,status,criado_em,ativo) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            $pdo->beginTransaction();
+            try {
+                foreach ($restoreGames as $game) $restore->execute($game);
+                $pdo->commit();
+            } catch (Throwable $migrationError) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                throw $migrationError;
+            }
+        }
+    }
     $campeonatos = $pdo
         ->query(
             "SELECT c.id,c.nome,c.tipo,c.formato,c.status,c.criado_em,
@@ -47,7 +77,7 @@ try {
     $partidas = $partidaStmt->fetchAll();
     // Busca os confrontos do chaveamento.
     $mataStmt = $pdo->prepare(
-        "SELECT j.*,a.time_nome time_a,a.nome tecnico_a,a.sigla sigla_a,a.escudo_url escudo_a,b.time_nome time_b,b.nome tecnico_b,b.sigla sigla_b,b.escudo_url escudo_b,w.time_nome vencedor FROM jogos_mata_mata j LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id LEFT JOIN participantes w ON w.id=j.vencedor_id WHERE j.campeonato_id=? AND j.ativo=1 ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id",
+        "SELECT j.*,a.time_nome time_a,a.nome tecnico_a,a.sigla sigla_a,a.escudo_url escudo_a,a.ativo time_a_ativo,b.time_nome time_b,b.nome tecnico_b,b.sigla sigla_b,b.escudo_url escudo_b,b.ativo time_b_ativo,w.time_nome vencedor FROM jogos_mata_mata j LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id LEFT JOIN participantes w ON w.id=j.vencedor_id WHERE j.campeonato_id=? AND j.ativo=1 ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id",
     );
     $mataStmt->execute([$campeonatoId]);
     $mataMata = $mataStmt->fetchAll();
