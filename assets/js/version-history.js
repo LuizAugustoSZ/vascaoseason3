@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['16.0','Títulos ganharam uma página própria em formato de vitrine, com taças ampliadas, logos e campeões por edição; o sorteador agora reutiliza modelos históricos.','Vitrine de taças'],
 ['15.9','Títulos históricos ganharam imagens próprias com recorte, posição e zoom; conquistas iniciadas por Mundial agora recebem automaticamente a identidade Mundial de Clubes.','Imagens dos títulos históricos'],
 ['15.8','Competições ganharam identidade visual própria com logos nos painéis e taças nas vitrines; o Admin Master agora pode editar nome, status, logo e troféu de cada identidade.','Identidade oficial das competições'],
 ['15.7','Otimização do sistema com novos recursos internos de acompanhamento e estabilidade.','Otimização do sistema'],
@@ -171,7 +172,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(adminVersions.length&&adminVersions[0][0]!=='a2.4')adminVersions.unshift(['a2.4','Navegação administrativa reorganizada em categorias e submenus para separar competição, pessoas e clubes, conteúdo e visão geral.']);
  if(adminVersions.length&&adminVersions[0][0]!=='a2.5')adminVersions.unshift(['a2.5','Submenus agora trocam corretamente o conteúdo em todas as categorias, com Dashboard e Sorteador integrados à mesma tela administrativa.']);
  if(adminVersions.length&&adminVersions[0][0]!=='a2.6')adminVersions.unshift(['a2.6','A aba Campeonatos ganhou edição de nome, status, logo e taça com identidades compartilhadas entre edições da mesma competição.']);
- if(adminVersions.length&&adminVersions[0][0]!=='a2.8')adminVersions.unshift(['a2.8','Editor de logos e taças ganhou uma moldura destacada que mostra com precisão toda a área salva.']);
+ if(adminVersions.length&&adminVersions[0][0]!=='a2.9')adminVersions.unshift(['a2.9','Sorteador ganhou modelos reutilizáveis, numeração automática de edições e entrega automática da taça ao campeão.']);
+ if(adminVersions.length&&!adminVersions.some(([version])=>version==='a2.8'))adminVersions.splice(1,0,['a2.8','Editor de logos e taças ganhou uma moldura destacada que mostra com precisão toda a área salva.']);
  if(adminVersions.length&&!adminVersions.some(([version])=>version==='a2.7'))adminVersions.splice(1,0,['a2.7','Logos, taças e imagens de títulos históricos ganharam editor visual com arraste, posição e zoom antes do salvamento.']);
  const button=document.createElement('button');button.type='button';button.className='site-version-button';button.dataset.bsToggle='modal';button.dataset.bsTarget='#version-history-modal';button.textContent=adminVersions.length?`v${siteVersions[0][0]} • ADM ${adminVersions[0][0]}`:`v${siteVersions[0][0]}`;footer.appendChild(button);
  const adminHistory=adminVersions.length?`<div class="admin-version-history"><small>HISTÓRICO RESTRITO</small><div class="version-current"><span>VERSÃO ADMINISTRATIVA</span><strong>${adminVersions[0][0]}</strong></div><div class="version-list">${adminVersions.map(([version,description],index)=>`<article class="version-item ${index===0?'active':''}"><b>${version}</b><p>${description}</p></article>`).join('')}</div></div>`:'';

@@ -630,6 +630,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "UPDATE campeonatos SET status=? WHERE id=? AND ativo=1",
             );
             $stmt->execute([$status, $campeonatoId]);
+            if ($status === 'finalizado') competition_sync_champion_title($pdo, $campeonatoId);
             redirect_notice(
                 $status === "finalizado"
                     ? "Campeonato finalizado."
@@ -665,6 +666,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if ($logo !== null) $pdo->prepare('UPDATE competicao_identidades SET logo_base64=? WHERE id=?')->execute([$logo, $identityId]);
             if ($trophy !== null) $pdo->prepare('UPDATE competicao_identidades SET trofeu_base64=? WHERE id=?')->execute([$trophy, $identityId]);
             $pdo->commit();
+            if ($status === 'finalizado') competition_sync_champion_title($pdo, $campeonatoId);
             redirect_notice('Competição e identidade visual atualizadas.', 'campeonatos');
         }
         // Cria uma decisão entre os campeões confirmados de duas competições.
@@ -1251,6 +1253,8 @@ $scorersAdmin = $pdo
     )
     ->fetchAll();
 $titlesAdmin = $pdo->query("SELECT t.id,t.participante_id,t.titulo,t.temporada,t.descricao,t.conquistado_em,t.tecnico_nome,t.time_nome,CASE WHEN t.imagem_base64 IS NOT NULL AND t.imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) clube FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id ORDER BY t.conquistado_em DESC,t.id DESC")->fetchAll();
+foreach ($titlesAdmin as &$titleAdminRow) if (competition_identity_match((string)$titleAdminRow['titulo'])) $titleAdminRow['tem_imagem'] = 1;
+unset($titleAdminRow);
 $videosAdmin = $pdo
     ->query(
         "SELECT id,titulo,youtube_url,ativo,criado_em FROM videos ORDER BY criado_em DESC,id DESC",

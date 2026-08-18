@@ -298,7 +298,7 @@ if (
                         <h2>TÍTULOS</h2>
                     </div>
                 </div>
-                <div id="titles-grid" class="row g-3"></div>
+                <div class="panel p-4 p-lg-5 text-center"><p class="text-secondary mb-4">Conheça as taças em destaque, suas identidades e todos os campeões de cada edição.</p><a class="btn btn-danger btn-lg" href="titulos.php">ABRIR VITRINE DE TAÇAS</a></div>
             </div>
         </section>
 
