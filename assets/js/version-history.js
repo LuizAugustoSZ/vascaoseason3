@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['16.5','Galeria de campeões passou a mostrar a conquista mais recente primeiro e removeu o texto redundante sobre a página do time.','Mais recente primeiro'],
 ['16.4','Somente a rodada atual aparece Em andamento; rodadas futuras ficam como Ainda não iniciadas e competições já iniciadas têm prioridade na abertura automática.','Linha do tempo correta'],
 ['16.3','Campeões agora aparecem em ordem de edição romana e os clubes atuais têm acesso direto à página do time pelo nome e escudo.','Histórico organizado'],
 ['16.2','Cards da vitrine foram nivelados e Ver campeões agora abre uma galeria em modal com escudo, time, técnico, edição e Season.','Vitrine alinhada'],
