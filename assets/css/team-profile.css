@@ -456,6 +456,13 @@
     grid-row: span 2
 }
 
+.titles-strip>div>img {
+    grid-row: span 2;
+    width: 54px;
+    height: 62px;
+    object-fit: contain
+}
+
 .titles-strip small {
     color: var(--muted)
 }
