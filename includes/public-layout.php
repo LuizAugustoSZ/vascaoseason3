@@ -77,9 +77,10 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
                     <?php endforeach; ?>
                     <?php if ($participantId > 0): ?>
                         <li class="nav-item dropdown team-nav-dropdown">
-                            <a class="nav-link dropdown-toggle<?= in_array($active, ['time', 'mercado'], true) ? ' active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><?= e($teamNavLabel) ?></a>
+                            <a class="nav-link dropdown-toggle<?= in_array($active, ['time', 'mercado', 'elenco-geral'], true) ? ' active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><?= e($teamNavLabel) ?></a>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
                                 <li><a class="dropdown-item" href="time.php?id=<?= $participantId ?>">Página do time</a></li>
+                                <li><a class="dropdown-item" href="elenco-geral.php">Elenco Geral</a></li>
                                 <li><a class="dropdown-item" href="mercado.php">Transferências e escalação</a></li>
                             </ul>
                         </li>
