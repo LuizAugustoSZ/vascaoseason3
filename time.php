@@ -180,7 +180,7 @@ try {
             foreach ($titulos as &$titleItem) {
                 $titleItem['trofeu_url'] = !empty($titleItem['tem_imagem']) ? 'api/titulo-imagem.php?titulo_id=' . (int)$titleItem['id'] : null;
                 $titleKey = competition_identity_match((string)$titleItem['titulo']);
-                if (!$titleItem['trofeu_url'] && $titleKey === 'mundial') $titleItem['trofeu_url'] = 'api/competicao-imagem.php?chave=mundial&tipo=trofeu';
+                if (!$titleItem['trofeu_url'] && $titleKey) $titleItem['trofeu_url'] = 'api/competicao-imagem.php?chave=' . rawurlencode($titleKey) . '&tipo=trofeu';
                 foreach ($identityCompetitions as $identityCompetition) {
                     if (!$titleItem['trofeu_url'] && $titleKey && competition_identity_match((string)$identityCompetition['nome']) === $titleKey) {
                         $titleItem['trofeu_url'] = competition_image_url((int)$identityCompetition['id'], 'trofeu');

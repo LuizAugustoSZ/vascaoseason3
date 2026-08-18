@@ -5,9 +5,15 @@ require __DIR__ . '/../includes/bootstrap.php';
 
 try {
     $titleId = (int)($_GET['titulo_id'] ?? 0);
-    $stmt = db()->prepare('SELECT imagem_base64 FROM titulos WHERE id=? LIMIT 1');
+    $stmt = db()->prepare('SELECT imagem_base64,titulo FROM titulos WHERE id=? LIMIT 1');
     $stmt->execute([$titleId]);
-    $dataUrl = (string)($stmt->fetchColumn() ?: '');
+    $title = $stmt->fetch();
+    $dataUrl = (string)($title['imagem_base64'] ?? '');
+    if ($dataUrl === '' && ($key = competition_identity_match((string)($title['titulo'] ?? '')))) {
+        $identity = db()->prepare('SELECT trofeu_base64 FROM competicao_identidades WHERE chave=? LIMIT 1');
+        $identity->execute([$key]);
+        $dataUrl = (string)($identity->fetchColumn() ?: '');
+    }
     if (!preg_match('#^data:(image/(?:png|webp|jpeg));base64,(.+)$#s', $dataUrl, $match)) throw new RuntimeException('Imagem não encontrada.');
     $binary = base64_decode($match[2], true);
     if ($binary === false) throw new RuntimeException('Imagem inválida.');

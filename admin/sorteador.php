@@ -3,6 +3,7 @@
 require __DIR__ . "/../includes/bootstrap.php";
 master_required();
 $pdo = db();
+competition_identities_seed($pdo);
 $embedded = isset($_GET["embed"]);
 $notice = $_SESSION["notice"] ?? "";
 unset($_SESSION["notice"]);
@@ -92,6 +93,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $action = $_POST["action"] ?? "";
         $ids = selected($pdo);
         $championshipName = trim($_POST["nome_campeonato"] ?? "");
+        $identityId = (int)($_POST['identidade_id'] ?? 0);
+        if ($identityId > 0) {
+            $identityCheck = $pdo->prepare('SELECT COUNT(*) FROM competicao_identidades WHERE id=?');
+            $identityCheck->execute([$identityId]);
+            if (!(int)$identityCheck->fetchColumn()) throw new RuntimeException('Modelo de competição inválido.');
+        }
         if ($championshipName === "") {
             throw new RuntimeException("Informe o nome do campeonato.");
         }
@@ -104,8 +111,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $all = rounds($ids);
             $pdo->beginTransaction();
             $pdo->prepare(
-                "INSERT INTO campeonatos(nome,tipo,formato) VALUES(?,'pontos_corridos',?)",
-            )->execute([$championshipName, $format]);
+                "INSERT INTO campeonatos(nome,identidade_id,tipo,formato) VALUES(?,?,'pontos_corridos',?)",
+            )->execute([$championshipName, $identityId ?: null, $format]);
             $championshipId = (int) $pdo->lastInsertId();
             $stmt = $pdo->prepare(
                 "INSERT INTO partidas(campeonato_id,rodada,turno,mandante_id,visitante_id,gols_mandante,gols_visitante,data_partida,status,comprovacao_url) VALUES(?,?,?,?,?,NULL,NULL,NULL,'agendada','')",
@@ -150,8 +157,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
             $pdo->beginTransaction();
             $pdo->prepare(
-                "INSERT INTO campeonatos(nome,tipo,formato) VALUES(?,'mata_mata',?)",
-            )->execute([$championshipName, $format]);
+                "INSERT INTO campeonatos(nome,identidade_id,tipo,formato) VALUES(?,?,'mata_mata',?)",
+            )->execute([$championshipName, $identityId ?: null, $format]);
             $championshipId = (int) $pdo->lastInsertId();
             $phases = knockout_phases($count);
             $stmt = $pdo->prepare(
@@ -258,6 +265,14 @@ $teams = $pdo
         "SELECT id,nome,time_nome FROM participantes WHERE ativo=1 ORDER BY time_nome",
     )
     ->fetchAll();
+$competitionModels = $pdo->query("SELECT i.id,i.nome,i.chave,COUNT(DISTINCT c.id) edicoes FROM competicao_identidades i LEFT JOIN campeonatos c ON c.identidade_id=i.id GROUP BY i.id ORDER BY i.nome")->fetchAll();
+$historicalNames = $pdo->query("SELECT titulo FROM titulos")->fetchAll(PDO::FETCH_COLUMN);
+foreach ($competitionModels as &$model) {
+    $known = (int)$model['edicoes'];
+    foreach ($historicalNames as $historicalName) if (competition_identity_match((string)$historicalName) === $model['chave']) $known++;
+    $model['proxima_edicao'] = max(1, $known + 1);
+}
+unset($model);
 function checks(array $teams): string
 {
     $out = "";
@@ -291,4 +306,4 @@ function checks(array $teams): string
 ) ?>"><input type="hidden" name="action" value="mata"><h2>Mata-mata</h2><p class="text-secondary">Selecione exatamente 4, 8, 10 ou 16 participantes.</p><div class="alert alert-info small"><strong class="selected-count"></strong><br>Com 10 participantes, quatro disputam duas vagas na Preliminar e os outros seis avançam diretamente às Quartas. A Final e o 3º Lugar podem ter formatos diferentes das fases anteriores.</div><div class="row g-2 mb-3"><?= checks(
     $teams,
 ) ?></div><div class="row g-2"><div class="col-12"><label class="form-label">Formato das fases anteriores</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div><div class="col-md-6"><label class="form-label">Formato da Final</label><select class="form-select" name="formato_final"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div><div class="col-md-6"><label class="form-label">Formato do 3º Lugar</label><select class="form-select" name="formato_terceiro"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div></div><button class="btn btn-danger mt-3">Iniciar sorteio</button></form></div>
-</div></div></main><script>document.querySelectorAll('.sorteio-form').forEach(form=>{const title=form.querySelector('h2');title.insertAdjacentHTML('afterend','<label class="form-label mt-2">Nome do campeonato</label><input class="form-control mb-3" name="nome_campeonato" maxlength="150" placeholder="Ex.: Copa Vascão S3" required>');const update=()=>{const total=form.querySelectorAll('input[name="participantes[]"]:checked').length;form.querySelector('.selected-count').textContent=`${total} participante${total===1?'':'s'} selecionado${total===1?'':'s'}.`;};form.addEventListener('change',update);update();form.addEventListener('submit',async event=>{if(event.defaultPrevented)return;event.preventDefault();const button=event.submitter||form.querySelector('button');const old=button.textContent;button.disabled=true;button.textContent='Sorteando...';try{const payload=new FormData(form);payload.set('_ajax','1');const response=await fetch('sorteador.php',{method:'POST',body:payload,headers:{'Accept':'application/json'},credentials:'same-origin'});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível sortear.');form.nome_campeonato.value='';alert(data.message);}catch(error){alert(error.message);}finally{button.disabled=false;button.textContent=old;}});});</script></body></html>
+</div></div></main><script>const competitionModels=<?= json_encode($competitionModels,JSON_UNESCAPED_UNICODE|JSON_HEX_TAG) ?>;const roman=n=>{const map=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let out='';for(const [value,symbol] of map)while(n>=value){out+=symbol;n-=value}return out};document.querySelectorAll('.sorteio-form').forEach(form=>{const title=form.querySelector('h2');title.insertAdjacentHTML('afterend',`<label class="form-label mt-2">Modelo da competição</label><select class="form-select mb-2 competition-model" name="identidade_id"><option value="">Criar uma nova competição</option>${competitionModels.map(item=>`<option value="${item.id}">${item.nome} — próxima edição ${item.proxima_edicao}</option>`).join('')}</select><label class="form-label">Nome desta edição</label><input class="form-control mb-3" name="nome_campeonato" maxlength="150" placeholder="Ex.: Copa Vascão S3" required>`);const model=form.querySelector('.competition-model');model.addEventListener('change',()=>{const item=competitionModels.find(entry=>String(entry.id)===model.value);if(!item)return;form.nome_campeonato.value=item.nome+(item.proxima_edicao>1?' '+roman(item.proxima_edicao):'')});const update=()=>{const total=form.querySelectorAll('input[name="participantes[]"]:checked').length;form.querySelector('.selected-count').textContent=`${total} participante${total===1?'':'s'} selecionado${total===1?'':'s'}.`;};form.addEventListener('change',update);update();form.addEventListener('submit',async event=>{if(event.defaultPrevented)return;event.preventDefault();const button=event.submitter||form.querySelector('button');const old=button.textContent;button.disabled=true;button.textContent='Sorteando...';try{const payload=new FormData(form);payload.set('_ajax','1');const response=await fetch('sorteador.php',{method:'POST',body:payload,headers:{'Accept':'application/json'},credentials:'same-origin'});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível sortear.');form.nome_campeonato.value='';alert(data.message);}catch(error){alert(error.message);}finally{button.disabled=false;button.textContent=old;}});});</script></body></html>
