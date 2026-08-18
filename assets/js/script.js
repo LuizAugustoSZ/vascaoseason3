@@ -49,6 +49,12 @@ function renderScorers() {
 
 // Informa se todos os confrontos de uma rodada já receberam resultado.
 const roundFinished = games => games.length > 0 && games.every(game => ['finalizada','wo'].includes(game.status));
+const roundTimeline = games => {
+  const rounds=[...new Set(games.map(game=>Number(game.rodada)))].sort((a,b)=>a-b);
+  const current=rounds.find(round=>!roundFinished(games.filter(game=>Number(game.rodada)===round)));
+  const status=round=>roundFinished(games.filter(game=>Number(game.rodada)===round))?'Concluída':round===current?'Em andamento':'Ainda não iniciada';
+  return {rounds,current,status};
+};
 
 // Mostra somente a rodada e os times pesquisados pelo usuário.
 function renderLeagueGames() {
@@ -63,7 +69,8 @@ function renderLeagueGames() {
   if(selected==='all') $('#round-status').text(`${games.length} jogo${games.length===1?'':'s'}`);
   else {
     const roundGames=leagueGames.filter(game=>String(game.rodada)===selected);
-    $('#round-status').text(roundFinished(roundGames) ? 'Rodada concluída' : 'Rodada em andamento');
+    const timeline=roundTimeline(leagueGames),round=Number(selected);
+    $('#round-status').text(timeline.status(round)==='Concluída'?'Rodada concluída':timeline.status(round)==='Em andamento'?'Rodada em andamento':'Rodada ainda não iniciada');
   }
   $('#league-games').html(visibleGames.length ? `<div class="game-sides-head"><span>MANDANTE</span><i aria-hidden="true"></i><span>VISITANTE</span></div>${visibleGames.map(g=>`<div class="game-item match-open" tabindex="0" role="button" data-match-type="pontos" data-match-id="${Number(g.id)}"><div class="game-meta"><span>Rodada ${g.rodada}</span><span>${g.status}</span></div><div class="game-score">${gameTeam(g,'home')}<b class="score">${g.gols_mandante ?? '-'} × ${g.gols_visitante ?? '-'}</b>${gameTeam(g,'away')}</div></div>`).join('')}` : publicEmpty(leagueGames.length?'Nenhuma partida corresponde à sua busca.':'O calendário de jogos será divulgado em breve.'));
   $('#league-pagination').html(games.length>gamesPerPage ? `<button type="button" class="page-game" data-page="${leaguePage-1}" ${leaguePage===1?'disabled':''}>Anterior</button><span>Página ${leaguePage} de ${totalPages}</span><button type="button" class="page-game" data-page="${leaguePage+1}" ${leaguePage===totalPages?'disabled':''}>Próxima</button>` : '');
@@ -71,10 +78,9 @@ function renderLeagueGames() {
 
 // Preenche o seletor e abre automaticamente a primeira rodada ainda pendente.
 function prepareRoundSelect(games) {
-  const rounds=[...new Set(games.map(game=>Number(game.rodada)))].sort((a,b)=>a-b);
-  const options=rounds.map(round=>{const items=games.filter(game=>Number(game.rodada)===round);return `<option value="${round}">Rodada ${round} — ${roundFinished(items)?'Concluída':'Em andamento'}</option>`}).join('');
+  const {rounds,current,status}=roundTimeline(games);
+  const options=rounds.map(round=>`<option value="${round}">Rodada ${round} — ${status(round)}</option>`).join('');
   $('#round-select').html('<option value="all">Todas as rodadas</option>'+options);
-  const current=rounds.find(round=>!roundFinished(games.filter(game=>Number(game.rodada)===round)));
   $('#round-select').val(current ? String(current) : (rounds[0] ? String(rounds[0]) : 'all'));
 }
 
