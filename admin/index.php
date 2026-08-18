@@ -637,6 +637,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "campeonatos",
             );
         }
+        // Edita a fonte única de logo e taça usada por todas as edições e títulos relacionados.
+        if ($action === 'editar_identidade_competicao') {
+            master_required();
+            $identityId = (int)($_POST['identidade_id'] ?? 0);
+            $name = mb_substr(trim((string)($_POST['nome'] ?? '')), 0, 150);
+            if ($identityId <= 0 || $name === '') throw new RuntimeException('Selecione um campeonato padrão válido.');
+            $logo = competition_posted_data_url('logo_base64') ?? competition_uploaded_data_url('logo');
+            $trophy = competition_posted_data_url('trofeu_base64') ?? competition_uploaded_data_url('trofeu');
+            $pdo->beginTransaction();
+            $pdo->prepare('UPDATE competicao_identidades SET nome=? WHERE id=?')->execute([$name, $identityId]);
+            if ($logo !== null) $pdo->prepare('UPDATE competicao_identidades SET logo_base64=? WHERE id=?')->execute([$logo, $identityId]);
+            if ($trophy !== null) $pdo->prepare('UPDATE competicao_identidades SET trofeu_base64=? WHERE id=?')->execute([$trophy, $identityId]);
+            $pdo->commit();
+            redirect_notice('Campeonato padrão atualizado em todas as edições, títulos e vitrines.', 'campeonatos');
+        }
         // Edita a apresentação da competição e a identidade compartilhada por suas edições.
         if ($action === 'editar_campeonato') {
             master_required();
@@ -671,10 +686,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Cria uma decisão entre os campeões confirmados de duas competições.
         if ($action === "criar_supercopa") {
             $name = trim((string) ($_POST["nome"] ?? ""));
+            $identityId = (int)($_POST['identidade_id'] ?? 0);
             $sourceA = (int) ($_POST["origem_a_campeonato_id"] ?? 0);
             $sourceB = (int) ($_POST["origem_b_campeonato_id"] ?? 0);
             $format = (string) ($_POST["formato"] ?? "unico");
             if ($name === "") throw new RuntimeException("Informe o nome da Supercopa.");
+            if ($identityId <= 0) {
+                $identityStmt = $pdo->prepare("SELECT id FROM competicao_identidades WHERE chave='supercopa r' LIMIT 1");
+                $identityStmt->execute();
+                $identityId = (int)($identityStmt->fetchColumn() ?: 0);
+            }
+            if ($identityId <= 0) throw new RuntimeException('Selecione um campeonato padrão para esta edição.');
             if ($sourceA <= 0 || $sourceB <= 0 || $sourceA === $sourceB) throw new RuntimeException("Selecione duas competições de origem diferentes.");
             if (!in_array($format, ["unico", "ida_volta"], true)) throw new RuntimeException("Formato inválido.");
             $sameChampionRule = (string)($_POST["regra_mesmo_campeao"] ?? "vice_origem_a");
@@ -686,7 +708,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 else $teamA = competition_runner_up_id($pdo, $sourceA);
             }
             $pdo->beginTransaction();
-            $pdo->prepare("INSERT INTO campeonatos(nome,tipo,formato) VALUES(?,'supercopa',?)")->execute([$name, $format]);
+            $pdo->prepare("INSERT INTO campeonatos(nome,identidade_id,tipo,formato) VALUES(?,?,'supercopa',?)")->execute([$name, $identityId, $format]);
             $championshipId = (int) $pdo->lastInsertId();
             $pdo->prepare("INSERT INTO supercopas(campeonato_id,origem_a_campeonato_id,origem_b_campeonato_id,regra_mesmo_campeao) VALUES(?,?,?,?)")->execute([$championshipId, $sourceA, $sourceB, $sameChampionRule]);
             $game = $pdo->prepare("INSERT INTO jogos_mata_mata(campeonato_id,fase,ordem,jogo,time_a_id,time_b_id,gols_a,gols_b,vencedor_id,status) VALUES(?,'Final',1,?,?,?,NULL,NULL,NULL,'agendado')");

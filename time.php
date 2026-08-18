@@ -178,9 +178,8 @@ try {
         try {
             $identityCompetitions = $pdo->query('SELECT c.id,c.nome FROM campeonatos c WHERE c.ativo=1 AND c.identidade_id IS NOT NULL ORDER BY c.id DESC')->fetchAll();
             foreach ($titulos as &$titleItem) {
-                $titleItem['trofeu_url'] = !empty($titleItem['tem_imagem']) ? 'api/titulo-imagem.php?titulo_id=' . (int)$titleItem['id'] : null;
                 $titleKey = competition_identity_match((string)$titleItem['titulo']);
-                if (!$titleItem['trofeu_url'] && $titleKey) $titleItem['trofeu_url'] = 'api/competicao-imagem.php?chave=' . rawurlencode($titleKey) . '&tipo=trofeu';
+                $titleItem['trofeu_url'] = $titleKey ? 'api/competicao-imagem.php?chave=' . rawurlencode($titleKey) . '&tipo=trofeu' : (!empty($titleItem['tem_imagem']) ? 'api/titulo-imagem.php?titulo_id=' . (int)$titleItem['id'] : null);
                 foreach ($identityCompetitions as $identityCompetition) {
                     if (!$titleItem['trofeu_url'] && $titleKey && competition_identity_match((string)$identityCompetition['nome']) === $titleKey) {
                         $titleItem['trofeu_url'] = competition_image_url((int)$identityCompetition['id'], 'trofeu');
