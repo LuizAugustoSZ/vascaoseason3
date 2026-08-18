@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['16.2','Cards da vitrine foram nivelados: taças ocupam a mesma área e o botão Ver campeões permanece alinhado ao rodapé independentemente do nome.','Vitrine alinhada'],
 ['16.1','Identidades de competição viraram fonte única: mudar logo ou taça no padrão atualiza todas as edições, títulos, perfis e vitrines relacionados.','Campeonatos padrões'],
 ['16.0','Títulos ganharam uma página própria em formato de vitrine, com taças ampliadas, logos e campeões por edição; o sorteador agora reutiliza modelos históricos.','Vitrine de taças'],
 ['15.9','Títulos históricos ganharam imagens próprias com recorte, posição e zoom; conquistas iniciadas por Mundial agora recebem automaticamente a identidade Mundial de Clubes.','Imagens dos títulos históricos'],
