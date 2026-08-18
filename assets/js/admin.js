@@ -438,11 +438,35 @@ document.querySelectorAll('.editar-campeonato').forEach(button=>button.addEventL
   form.campeonato_id.value=button.dataset.id;form.nome.value=button.dataset.name;form.status.value=button.dataset.status;
   form.querySelector('[data-preview="logo"]').src=`../api/competicao-imagem.php?campeonato_id=${button.dataset.id}&tipo=logo&v=${Date.now()}`;
   form.querySelector('[data-preview="trofeu"]').src=`../api/competicao-imagem.php?campeonato_id=${button.dataset.id}&tipo=trofeu&v=${Date.now()}`;
-  form.logo.value='';form.trofeu.value='';
+  form.logo.value='';form.trofeu.value='';form.logo_base64.value='';form.trofeu_base64.value='';
 }));
-document.querySelectorAll('#competition-edit-form input[type="file"]').forEach(input=>input.addEventListener('change',()=>{
-  const file=input.files?.[0],preview=input.closest('.col-6')?.querySelector('img');if(file&&preview)preview.src=URL.createObjectURL(file);
-}));
+
+// Editor reutilizável de enquadramento: arraste a arte e ajuste o zoom antes de salvar.
+const artEditor=document.getElementById('competition-art-editor');
+if(artEditor){
+  const canvas=artEditor.querySelector('canvas'),context=canvas.getContext('2d'),zoomInput=artEditor.querySelector('#competition-art-zoom');
+  let activeInput=null,sourceImage=null,zoom=1,offsetX=0,offsetY=0,dragging=false,lastX=0,lastY=0;
+  const dimensions=type=>type==='logo'?[720,480]:[600,720];
+  const draw=()=>{if(!sourceImage)return;context.clearRect(0,0,canvas.width,canvas.height);const base=Math.min(canvas.width/sourceImage.naturalWidth,canvas.height/sourceImage.naturalHeight),scale=base*zoom,w=sourceImage.naturalWidth*scale,h=sourceImage.naturalHeight*scale;context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';context.drawImage(sourceImage,(canvas.width-w)/2+offsetX,(canvas.height-h)/2+offsetY,w,h)};
+  const close=()=>{artEditor.hidden=true;if(activeInput)activeInput.value='';activeInput=null;sourceImage=null};
+  document.querySelectorAll('.competition-art-file,.title-art-file').forEach(input=>input.addEventListener('change',()=>{
+    const file=input.files?.[0];if(!file)return;activeInput=input;const [width,height]=dimensions(input.dataset.artType);canvas.width=width;canvas.height=height;zoom=1;offsetX=0;offsetY=0;zoomInput.value='1';sourceImage=new Image();sourceImage.onload=()=>{artEditor.hidden=false;draw()};sourceImage.onerror=()=>{showAdminToast('Não foi possível abrir essa imagem.','danger');close()};sourceImage.src=URL.createObjectURL(file);
+  }));
+  zoomInput.addEventListener('input',()=>{zoom=Number(zoomInput.value);draw()});
+  canvas.addEventListener('pointerdown',event=>{dragging=true;lastX=event.clientX;lastY=event.clientY;canvas.setPointerCapture(event.pointerId)});
+  canvas.addEventListener('pointermove',event=>{if(!dragging)return;const rect=canvas.getBoundingClientRect();offsetX+=(event.clientX-lastX)*(canvas.width/rect.width);offsetY+=(event.clientY-lastY)*(canvas.height/rect.height);lastX=event.clientX;lastY=event.clientY;draw()});
+  canvas.addEventListener('pointerup',()=>dragging=false);canvas.addEventListener('pointercancel',()=>dragging=false);
+  artEditor.querySelectorAll('[data-art-cancel]').forEach(button=>button.addEventListener('click',close));
+  artEditor.querySelector('[data-art-apply]').addEventListener('click',()=>{if(!activeInput)return;draw();const data=canvas.toDataURL('image/webp',.92),type=activeInput.dataset.artType,form=activeInput.closest('form');if(type==='titulo'){form.titulo_imagem_base64.value=data;const preview=form.querySelector('[data-title-preview]');preview.src=data;preview.classList.remove('d-none')}else{form[`${type}_base64`].value=data;form.querySelector(`[data-preview="${type}"]`).src=data}artEditor.hidden=true;activeInput.value='';activeInput=null;sourceImage=null});
+}
+
+const titleForm=document.getElementById('form-titulo');
+if(titleForm){
+  const toggleTitleOrigin=()=>{const historical=titleForm.origem_titulo.value==='historico';titleForm.querySelectorAll('.titulo-historico').forEach(item=>item.classList.toggle('d-none',!historical));titleForm.querySelectorAll('.titulo-atual').forEach(item=>item.classList.toggle('d-none',historical))};
+  const resetTitle=()=>{titleForm.reset();titleForm.titulo_id.value='';titleForm.titulo_imagem_base64.value='';const preview=titleForm.querySelector('[data-title-preview]');preview.removeAttribute('src');preview.classList.add('d-none');toggleTitleOrigin()};
+  titleForm.origem_titulo.addEventListener('change',toggleTitleOrigin);toggleTitleOrigin();titleForm.querySelector('[data-title-cancel]').addEventListener('click',resetTitle);
+  document.querySelectorAll('.editar-titulo').forEach(button=>button.addEventListener('click',()=>{const historical=Number(button.dataset.participant)===0;titleForm.titulo_id.value=button.dataset.id;titleForm.origem_titulo.value=historical?'historico':'atual';titleForm.participante_id.value=historical?'':button.dataset.participant;titleForm.tecnico_historico.value=button.dataset.coach;titleForm.time_historico.value=button.dataset.team;titleForm.titulo.value=button.dataset.title;titleForm.temporada.value=button.dataset.season;titleForm.conquistado_em.value=(button.dataset.date||'').slice(0,10);titleForm.descricao.value=button.dataset.description;titleForm.titulo_imagem_base64.value='';const preview=titleForm.querySelector('[data-title-preview]');if(button.dataset.hasImage==='1'){preview.src=`../api/titulo-imagem.php?titulo_id=${button.dataset.id}&v=${Date.now()}`;preview.classList.remove('d-none')}else{preview.removeAttribute('src');preview.classList.add('d-none')}toggleTitleOrigin();titleForm.scrollIntoView({behavior:'smooth',block:'start'})}));
+}
 
 // Salva qualquer ação administrativa sem recarregar a página inteira.
 document.querySelectorAll('main form[method="post"]').forEach(form=>form.addEventListener('submit',async event=>{

@@ -15,6 +15,7 @@ function competition_identity_defaults(): array
         'amistosos dreamteam' => ['Amistosos Dream Team', 'amistosos-dreamteam-logo.webp', 'amistosos-dreamteam-trofeu.webp'],
         'copa do brasil' => ['Copa do Brasil', 'copa-do-brasil-logo.webp', 'copa-do-brasil-trofeu.webp'],
         'supercopa r' => ['Supercopa R', 'supercopa-r-logo.webp', 'supercopa-r-trofeu.webp'],
+        'mundial' => ['Mundial de Clubes', 'mundial-logo.webp', 'mundial-trofeu.webp'],
     ];
 }
 
@@ -37,6 +38,8 @@ function competition_identities_ensure_schema(PDO $pdo): void
             ADD KEY idx_campeonatos_identidade (identidade_id),
             ADD CONSTRAINT fk_campeonatos_identidade FOREIGN KEY (identidade_id) REFERENCES competicao_identidades(id)");
     }
+    $titleImageColumn = $pdo->query("SHOW COLUMNS FROM titulos LIKE 'imagem_base64'")->fetch();
+    if (!$titleImageColumn) $pdo->exec("ALTER TABLE titulos ADD COLUMN imagem_base64 MEDIUMTEXT NULL AFTER descricao");
 }
 
 function competition_identity_data_url(string $filename): string
@@ -53,6 +56,7 @@ function competition_identity_match(string $name): ?string
     if (str_contains($compact, 'amistoso') && str_contains($compact, 'dream')) return 'amistosos dreamteam';
     if (str_contains($compact, 'copadobrasil')) return 'copa do brasil';
     if (str_contains($compact, 'supercopa')) return 'supercopa r';
+    if (str_starts_with($compact, 'mundial')) return 'mundial';
     return null;
 }
 
@@ -102,4 +106,18 @@ function competition_uploaded_data_url(string $field): ?string
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file((string)$_FILES[$field]['tmp_name']);
     if (!in_array($mime, ['image/png', 'image/webp', 'image/jpeg'], true)) throw new RuntimeException('Envie logo e taça em PNG, WebP ou JPEG.');
     return 'data:' . $mime . ';base64,' . base64_encode((string)file_get_contents((string)$_FILES[$field]['tmp_name']));
+}
+
+function competition_posted_data_url(string $field): ?string
+{
+    $dataUrl = trim((string)($_POST[$field] ?? ''));
+    if ($dataUrl === '') return null;
+    if (!preg_match('#^data:image/(?:png|webp|jpeg);base64,([A-Za-z0-9+/=]+)$#', $dataUrl, $match)) {
+        throw new RuntimeException('A imagem editada da competição é inválida.');
+    }
+    $binary = base64_decode($match[1], true);
+    if ($binary === false || strlen($binary) > 4 * 1024 * 1024 || @getimagesizefromstring($binary) === false) {
+        throw new RuntimeException('A imagem editada ficou inválida ou maior que 4 MB.');
+    }
+    return $dataUrl;
 }
