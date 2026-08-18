@@ -9,6 +9,20 @@ function elenco_geral_garantir_estrutura(PDO $pdo): void
     foreach (preg_split('/;\s*(?:\r?\n|$)/', $migration, -1, PREG_SPLIT_NO_EMPTY) as $statement) {
         $pdo->exec(trim($statement));
     }
+    $columns = $pdo->query("SHOW COLUMNS FROM jogadores_elenco")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('jogador_geral_id', $columns, true)) {
+        $pdo->exec("ALTER TABLE jogadores_elenco ADD jogador_geral_id INT UNSIGNED NULL AFTER participante_id, ADD KEY idx_elenco_jogador_geral (jogador_geral_id), ADD CONSTRAINT fk_elenco_jogador_geral FOREIGN KEY (jogador_geral_id) REFERENCES jogadores_gerais(id)");
+    }
+    $pdo->exec("UPDATE jogadores_elenco e JOIN jogadores_gerais g ON g.participante_id=e.participante_id AND g.nome=e.nome AND g.overall=e.overall AND g.posicao=e.posicao SET e.jogador_geral_id=g.id WHERE e.jogador_geral_id IS NULL");
+}
+
+function elenco_geral_clube(PDO $pdo, int $participanteId, bool $lock = false): array
+{
+    $pdo->prepare("INSERT IGNORE INTO clubes_gerais(participante_id,saldo,cofre_configurado) SELECT ?,saldo,cofre_configurado FROM clubes_campeonato WHERE participante_id=? ORDER BY cofre_configurado DESC,atualizado_em DESC,id DESC LIMIT 1")->execute([$participanteId, $participanteId]);
+    $pdo->prepare("INSERT IGNORE INTO clubes_gerais(participante_id) VALUES(?)")->execute([$participanteId]);
+    $stmt = $pdo->prepare("SELECT * FROM clubes_gerais WHERE participante_id=?" . ($lock ? ' FOR UPDATE' : ''));
+    $stmt->execute([$participanteId]);
+    return $stmt->fetch();
 }
 
 function elenco_geral_do_clube(PDO $pdo, int $participanteId): array
