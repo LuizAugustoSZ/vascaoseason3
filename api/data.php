@@ -5,9 +5,10 @@ require __DIR__ . "/../includes/bootstrap.php";
 
 try {
     $pdo = db();
+    competition_identities_seed($pdo);
     $campeonatos = $pdo
         ->query(
-            "SELECT c.id,c.nome,c.tipo,c.formato,c.status,c.criado_em,
+            "SELECT c.id,c.nome,c.identidade_id,c.tipo,c.formato,c.status,c.criado_em,
                 CASE WHEN EXISTS(SELECT 1 FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND(p.status IN('finalizada','wo') OR(p.gols_mandante IS NOT NULL AND p.gols_visitante IS NOT NULL)))
                     OR EXISTS(SELECT 1 FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1 AND(j.status='finalizado' OR(j.gols_a IS NOT NULL AND j.gols_b IS NOT NULL))) THEN 1 ELSE 0 END iniciado,
                 GREATEST(
@@ -21,6 +22,10 @@ try {
             ORDER BY (c.status='ativo') DESC,ultima_partida DESC,iniciado DESC,c.criado_em DESC,c.id DESC",
         )
         ->fetchAll();
+    foreach ($campeonatos as &$competitionItem) {
+        $competitionItem['logo_url'] = !empty($competitionItem['identidade_id']) ? competition_image_url((int)$competitionItem['id'], 'logo') : null;
+    }
+    unset($competitionItem);
     $requested = (int) ($_GET["campeonato_id"] ?? 0);
     $campeonato = null;
     foreach ($campeonatos as $item) {
@@ -125,6 +130,19 @@ try {
             "SELECT t.id,t.participante_id,t.titulo,t.temporada,t.descricao,t.conquistado_em,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) time_nome,COALESCE(p.ativo,0) participante_ativo FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id ORDER BY participante_ativo DESC,FIELD(t.temporada,'Season 3','Season 2','Season 1'),t.conquistado_em DESC,t.titulo",
         )
         ->fetchAll();
+    foreach ($titulos as &$titleItem) {
+        $titleKey = competition_identity_match((string)$titleItem['titulo']);
+        $titleItem['trofeu_url'] = null;
+        if ($titleKey) {
+            foreach ($campeonatos as $competitionItem) {
+                if (!empty($competitionItem['identidade_id']) && competition_identity_match((string)$competitionItem['nome']) === $titleKey) {
+                    $titleItem['trofeu_url'] = competition_image_url((int)$competitionItem['id'], 'trofeu');
+                    break;
+                }
+            }
+        }
+    }
+    unset($titleItem);
     // Busca os vídeos publicados.
     $videos = $pdo
         ->query(

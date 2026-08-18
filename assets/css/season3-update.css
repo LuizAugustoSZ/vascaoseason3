@@ -90,6 +90,29 @@
   font-size: 1.4rem;
 }
 
+.competition-identity-panel {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+}
+
+.competition-identity-panel>img {
+  width: 150px;
+  height: 90px;
+  object-fit: contain;
+}
+
+.competition-identity-panel>div {
+  min-width: 0;
+}
+
+.title-trophy-image {
+  width: 58px;
+  height: 72px;
+  object-fit: contain;
+}
+
 .title-card-head small,
 .title-card-head p {
   color: var(--muted);
@@ -115,6 +138,28 @@
   padding: .8rem 0;
   border-bottom: 1px solid var(--line);
   font-size: .82rem;
+}
+
+.title-list>div>img {
+  width: 34px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.title-list>div>span {
+  flex: 1;
+}
+
+@media (max-width: 575.98px) {
+  .competition-identity-panel {
+    grid-template-columns: 90px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .competition-identity-panel>img {
+    width: 90px;
+    height: 66px;
+  }
 }
 
 .title-list>div:last-child {
