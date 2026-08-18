@@ -1,5 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['16.9','Transferências passaram a acontecer sempre no Elenco Geral; competições recebem apenas inscrições de 11 titulares e até 15 reservas, respeitando o congelamento dos pontos corridos.','Geral e competições separados'],
+['16.8','Elenco Geral ganhou contratação e venda sem limite, origem /obter, busca por nome, filtro por posição, paginação e nomes completos sem cortes.','Gestão completa do Elenco Geral'],
 ['16.7','Clubes ganharam um Elenco Geral único, criado com segurança a partir dos jogadores ativos já existentes e preparado para alimentar inscrições independentes por competição.','Elenco Geral'],
 ['16.6','Patch notes agora se adaptam a qualquer quantidade de atualizações; quando a última fica sozinha, ocupa a largura completa da linha.','Patch notes responsivos'],
 ['16.5','Galeria de campeões passou a mostrar a conquista mais recente primeiro e removeu o texto redundante sobre a página do time.','Mais recente primeiro'],
