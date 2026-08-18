@@ -6,6 +6,11 @@ require __DIR__ . "/../includes/knockout.php";
 admin_required();
 $pdo = db();
 ensure_supercup_schema($pdo);
+try {
+    competition_identities_seed($pdo);
+} catch (Throwable $ignored) {
+    // O painel continua disponível até a migration de identidades ser aplicada.
+}
 $notice = $_SESSION["notice"] ?? "";
 unset($_SESSION["notice"]);
 function is_ajax_request(): bool
@@ -631,6 +636,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     : "Campeonato reaberto.",
                 "campeonatos",
             );
+        }
+        // Edita a apresentação da competição e a identidade compartilhada por suas edições.
+        if ($action === 'editar_campeonato') {
+            master_required();
+            $campeonatoId = (int)($_POST['campeonato_id'] ?? 0);
+            $nome = mb_substr(trim((string)($_POST['nome'] ?? '')), 0, 150);
+            $status = (string)($_POST['status'] ?? 'ativo');
+            if ($campeonatoId <= 0 || $nome === '') throw new RuntimeException('Informe uma competição e um nome válido.');
+            if (!in_array($status, ['ativo', 'finalizado'], true)) throw new RuntimeException('Status de campeonato inválido.');
+            $stmt = $pdo->prepare('SELECT identidade_id FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1');
+            $stmt->execute([$campeonatoId]);
+            $identityId = (int)($stmt->fetchColumn() ?: 0);
+            $logo = competition_uploaded_data_url('logo');
+            $trophy = competition_uploaded_data_url('trofeu');
+            $pdo->beginTransaction();
+            if ($identityId <= 0) {
+                $key = competition_identity_match($nome) ?? competition_identity_key($nome);
+                $identity = $pdo->prepare('SELECT id FROM competicao_identidades WHERE chave=? LIMIT 1');
+                $identity->execute([$key]);
+                $identityId = (int)($identity->fetchColumn() ?: 0);
+                if ($identityId <= 0) {
+                    $pdo->prepare('INSERT INTO competicao_identidades(chave,nome) VALUES(?,?)')->execute([$key, $nome]);
+                    $identityId = (int)$pdo->lastInsertId();
+                }
+            }
+            $pdo->prepare('UPDATE campeonatos SET nome=?,status=?,identidade_id=? WHERE id=? AND ativo=1')->execute([$nome, $status, $identityId, $campeonatoId]);
+            if ($logo !== null) $pdo->prepare('UPDATE competicao_identidades SET logo_base64=? WHERE id=?')->execute([$logo, $identityId]);
+            if ($trophy !== null) $pdo->prepare('UPDATE competicao_identidades SET trofeu_base64=? WHERE id=?')->execute([$trophy, $identityId]);
+            $pdo->commit();
+            redirect_notice('Competição e identidade visual atualizadas.', 'campeonatos');
         }
         // Cria uma decisão entre os campeões confirmados de duas competições.
         if ($action === "criar_supercopa") {
@@ -1309,6 +1344,7 @@ function mata_options(array $games): string
 <nav class="navbar fixed-top navbar-dark"><div class="container"><a class="navbar-brand" href="../index.php"><img class="brand-mark d-inline-block me-2" src="../assets/img/logo-season3.webp?v=5" alt="Vascao Season 3"> PAINEL S3</a><div><span class="text-secondary me-3 d-none d-md-inline">Olá, <?= e(
     $_SESSION["conta_nome"] ?? "",
 ) ?></span><a href="../logout.php" class="btn btn-outline-light btn-sm">Sair</a></div></div></nav>
+<style>.admin-competition-logo{width:68px;height:44px;object-fit:contain}.competition-image-preview{display:grid;place-items:center;height:150px;margin-bottom:.5rem;border:1px solid #343941;background:#090a0c}.competition-image-preview img{max-width:100%;height:140px;object-fit:contain}#tab-campeonatos td:last-child form{display:inline-block}</style>
 <main class="admin-shell"><div class="container"><div class="admin-heading d-flex justify-content-between align-items-end mb-4"><div><span class="eyebrow">Central de atualização</span><h1 class="display-4 fw-bold"><?= account_is_master()
     ? "ADMINISTRAÇÃO"
     : "EDITOR DA COMPETIÇÃO" ?></h1></div></div>
@@ -1394,9 +1430,9 @@ function mata_options(array $games): string
 <section id="tab-campeonatos" class="tab-pane fade"><div class="panel"><div class="panel-head"><h3>Campeonatos</h3><span><?= count(
     $championshipsAdmin,
 ) ?> cadastrados</span></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Nome</th><th>Modalidade</th><th>Formato</th><th>Jogos</th><th>Status</th><th>Ação</th></tr></thead><tbody><?php
- foreach ($championshipsAdmin as $championship): ?><tr><td><strong><?= e(
+ foreach ($championshipsAdmin as $championship): ?><tr><td><div class="d-flex align-items-center gap-2"><?php if (!empty($championship['identidade_id'])): ?><img class="admin-competition-logo" src="../api/competicao-imagem.php?campeonato_id=<?= (int)$championship['id'] ?>&tipo=logo" alt=""><?php endif; ?><strong><?= e(
     $championship["nome"],
-) ?></strong></td><td><?= match ($championship["tipo"]) {
+) ?></strong></div></td><td><?= match ($championship["tipo"]) {
     "mata_mata" => "Mata-mata",
     "supercopa" => "Supercopa",
     default => "Pontos corridos",
@@ -1416,11 +1452,12 @@ function mata_options(array $games): string
     ? "btn-outline-danger"
     : "btn-outline-light" ?>"><?= $championship["status"] === "ativo"
     ? "Finalizar"
-    : "Reabrir" ?></button></form></td></tr><?php endforeach;
+    : "Reabrir" ?></button></form><button type="button" class="btn btn-sm btn-outline-warning editar-campeonato ms-1" data-bs-toggle="modal" data-bs-target="#competition-edit-modal" data-id="<?= (int)$championship['id'] ?>" data-name="<?= e($championship['nome']) ?>" data-status="<?= e($championship['status']) ?>">Editar</button></td></tr><?php endforeach;
  if (
      !$championshipsAdmin
  ): ?><tr><td colspan="6" class="text-center text-secondary py-4">Nenhuma competição criada até o momento.</td></tr><?php endif;
- ?></tbody></table></div></div></section>
+ ?></tbody></table></div></div>
+<div class="modal fade" id="competition-edit-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="competition-edit-form" method="post" enctype="multipart/form-data"><div class="modal-header"><div><small class="eyebrow">Identidade da competição</small><h2 class="modal-title">EDITAR COMPETIÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="editar_campeonato"><input type="hidden" name="campeonato_id"><label class="form-label">Nome</label><input class="form-control mb-3" name="nome" maxlength="150" required><label class="form-label">Status</label><select class="form-select mb-3" name="status"><option value="ativo">Em andamento</option><option value="finalizado">Finalizado</option></select><div class="row g-3"><div class="col-6"><label class="form-label">Logo</label><div class="competition-image-preview"><img data-preview="logo" alt="Logo atual"></div><input class="form-control form-control-sm" type="file" name="logo" accept="image/png,image/webp,image/jpeg"></div><div class="col-6"><label class="form-label">Taça da vitrine</label><div class="competition-image-preview"><img data-preview="trofeu" alt="Taça atual"></div><input class="form-control form-control-sm" type="file" name="trofeu" accept="image/png,image/webp,image/jpeg"></div></div><small class="text-secondary d-block mt-3">PNG, WebP ou JPEG, até 4 MB. Alterar uma arte atualiza todas as edições ligadas à mesma identidade.</small></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar alterações</button></div></form></div></div></div></section>
 <section id="tab-supercopa" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form class="panel admin-form" method="post"><span class="eyebrow">Confronto entre campeões</span><h2 class="mt-2">Criar Supercopa</h2><p class="text-secondary">As vagas são preenchidas automaticamente, inclusive quando um dos campeões ainda não foi definido.</p><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="criar_supercopa"><label class="form-label">Nome da competição</label><input class="form-control mb-3" name="nome" maxlength="150" placeholder="Ex.: Recopa dos Gigantes" required><label class="form-label">Campeão da primeira competição</label><select class="form-select mb-3" name="origem_a_campeonato_id" required><option value="">Selecione</option><?php foreach ($supercupSources as $source): ?><option value="<?= (int) $source['id'] ?>"><?= e($source['nome']) ?> — <?= $source['status'] === 'finalizado' ? 'campeão definido' : 'aguardando campeão' ?></option><?php endforeach; ?></select><label class="form-label">Campeão da segunda competição</label><select class="form-select mb-3" name="origem_b_campeonato_id" required><option value="">Selecione</option><?php foreach ($supercupSources as $source): ?><option value="<?= (int) $source['id'] ?>"><?= e($source['nome']) ?> — <?= $source['status'] === 'finalizado' ? 'campeão definido' : 'aguardando campeão' ?></option><?php endforeach; ?></select><label class="form-label">Se o mesmo clube vencer as duas</label><select class="form-select mb-3" name="regra_mesmo_campeao"><option value="vice_origem_a">Entra o vice da primeira competição</option><option value="vice_origem_b">Entra o vice da segunda competição</option></select><label class="form-label">Formato da decisão</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select><button class="btn btn-danger mt-3">Criar confronto</button></form></div><div class="col-lg-7"><div class="panel"><div class="panel-head"><h3>Supercopas cadastradas</h3><span><?= count($supercupsAdmin) ?> registros</span></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Competição</th><th>Vaga 1</th><th>Vaga 2</th><th>Status</th></tr></thead><tbody><?php foreach ($supercupsAdmin as $supercup): ?><tr><td><strong><?= e($supercup['nome']) ?></strong></td><td><?= $supercup['time_a'] ? e($supercup['time_a']) : '<span class="text-secondary">Aguardando campeão de '.e($supercup['origem_a']).'</span>' ?></td><td><?= $supercup['time_b'] ? e($supercup['time_b']) : '<span class="text-secondary">Aguardando campeão de '.e($supercup['origem_b']).'</span>' ?></td><td><?= e($supercup['status']) ?></td></tr><?php endforeach; ?><?php if (!$supercupsAdmin): ?><tr><td colspan="4" class="text-center text-secondary py-4">Nenhuma Supercopa criada.</td></tr><?php endif; ?></tbody></table></div></div><div class="panel p-3 mt-4"><strong>Sugestões:</strong><span class="text-secondary"> Recopa, Derby das Américas, Desafio dos Campeões, Taça dos Gigantes ou Copa Intercontinental.</span></div></div></div></section>
 <section id="tab-times" class="tab-pane fade"><div class="row g-4"><div class="col-lg-6"><form id="form-participante" class="panel admin-form" method="post"><h2 id="participante-form-title">Novo técnico e time</h2><input type="hidden" name="participante_id" value=""><div id="participante-edicao" class="alert alert-info d-none justify-content-between align-items-center"><span></span><button type="button" class="btn btn-sm btn-outline-info cancelar-participante">Cancelar edição</button></div><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),

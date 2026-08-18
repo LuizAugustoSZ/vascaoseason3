@@ -432,6 +432,18 @@ function setupUniversalAdminLists(){
 }
 setupUniversalAdminLists();
 
+// Preenche o modal sem transportar as imagens base64 dentro do HTML da listagem.
+document.querySelectorAll('.editar-campeonato').forEach(button=>button.addEventListener('click',()=>{
+  const form=document.getElementById('competition-edit-form');if(!form)return;
+  form.campeonato_id.value=button.dataset.id;form.nome.value=button.dataset.name;form.status.value=button.dataset.status;
+  form.querySelector('[data-preview="logo"]').src=`../api/competicao-imagem.php?campeonato_id=${button.dataset.id}&tipo=logo&v=${Date.now()}`;
+  form.querySelector('[data-preview="trofeu"]').src=`../api/competicao-imagem.php?campeonato_id=${button.dataset.id}&tipo=trofeu&v=${Date.now()}`;
+  form.logo.value='';form.trofeu.value='';
+}));
+document.querySelectorAll('#competition-edit-form input[type="file"]').forEach(input=>input.addEventListener('change',()=>{
+  const file=input.files?.[0],preview=input.closest('.col-6')?.querySelector('img');if(file&&preview)preview.src=URL.createObjectURL(file);
+}));
+
 // Salva qualquer ação administrativa sem recarregar a página inteira.
 document.querySelectorAll('main form[method="post"]').forEach(form=>form.addEventListener('submit',async event=>{
   if(event.defaultPrevented)return;event.preventDefault();if(form.dataset.ajaxBusy==='1')return;form.dataset.ajaxBusy='1';
