@@ -1,65 +1,35 @@
 <?php
-
 declare(strict_types=1);
-require __DIR__ . '/includes/bootstrap.php';
-require __DIR__ . '/includes/public-layout.php';
-require __DIR__ . '/includes/elenco-geral.php';
-
-if (!account_logged_in()) {
-    header('Location: login.php');
-    exit;
-}
-if (account_must_change_password()) {
-    header('Location: trocar-senha.php');
-    exit;
-}
-
-$participantId = (int)(account_participant_id() ?? 0);
-$requestedParticipantId = (int)($_GET['participante_id'] ?? 0);
-if (account_is_master() && $requestedParticipantId > 0) $participantId = $requestedParticipantId;
-if ($participantId < 1) {
-    http_response_code(403);
-    exit('Sua conta precisa estar vinculada a um time.');
-}
-
-$pdo = db();
-try {
-    elenco_geral_garantir_estrutura($pdo);
-    $teamStmt = $pdo->prepare('SELECT time_nome,nome FROM participantes WHERE id=? AND ativo=1 LIMIT 1');
-    $teamStmt->execute([$participantId]);
-    $time = $teamStmt->fetch();
-    if (!$time) throw new RuntimeException('Clube não encontrado.');
-    $jogadores = elenco_geral_do_clube($pdo, $participantId);
-} catch (Throwable $error) {
-    http_response_code(503);
-    exit('O Elenco Geral está sendo preparado na homologação. Tente novamente em instantes.');
-}
-
-$porPosicao = [];
-foreach ($jogadores as $jogador) $porPosicao[$jogador['posicao']][] = $jogador;
-?>
-<!doctype html>
-<html lang="pt-BR">
-<head>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Elenco Geral | <?= e((string)$time['time_nome']) ?></title>
-    <link rel="icon" href="favicon.ico" sizes="any">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
-    <link rel="stylesheet" href="assets/css/branding.css?v=5">
-    <link rel="stylesheet" href="assets/css/elenco-geral.css?v=<?= filemtime(__DIR__ . '/assets/css/elenco-geral.css') ?>">
-</head>
-<body>
-<?php public_navbar('elenco-geral'); ?>
-<main class="general-roster-page"><div class="container">
-    <header class="general-roster-hero"><div><span class="eyebrow">Patrimônio do clube</span><h1>ELENCO GERAL</h1><p><?= e((string)$time['time_nome']) ?> · <?= count($jogadores) ?> jogador<?= count($jogadores) === 1 ? '' : 'es' ?></p></div><a class="btn btn-danger" href="mercado.php">Abrir mercado e inscrições</a></header>
-    <div class="alert alert-info general-roster-info"><strong>Fonte oficial do clube.</strong> Contratações futuras entram aqui. Cada competição terá sua própria inscrição com 11 titulares e até 15 reservas, sem alterar elencos que já estejam congelados.</div>
-    <?php if ($jogadores): ?><section class="general-roster-groups">
-        <?php foreach ($porPosicao as $posicao => $lista): ?><article class="panel general-position-group"><header><h2><?= e((string)$posicao) ?></h2><span><?= count($lista) ?> jogador<?= count($lista) === 1 ? '' : 'es' ?></span></header><div class="general-player-grid">
-            <?php foreach ($lista as $jogador): ?><div class="general-player-card"><span><?= e((string)$jogador['posicao']) ?></span><strong><?= e((string)$jogador['nome']) ?></strong><b><?= (int)$jogador['overall'] ?> OVR</b></div><?php endforeach; ?>
-        </div></article><?php endforeach; ?>
-    </section><?php else: ?><section class="panel p-5 text-center"><h2>ELENCO AINDA VAZIO</h2><p class="text-secondary mb-0">Os jogadores aparecerão aqui quando forem importados ou contratados.</p></section><?php endif; ?>
-</div></main>
-<?php public_footer(); ?>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-</body></html>
+require __DIR__.'/includes/bootstrap.php';
+require __DIR__.'/includes/public-layout.php';
+require __DIR__.'/includes/mercado.php';
+require __DIR__.'/includes/elenco-geral.php';
+if(!account_logged_in()){header('Location: login.php');exit;} if(account_must_change_password()){header('Location: trocar-senha.php');exit;}
+$sessionParticipantId=(int)(account_participant_id()??0);$requested=(int)($_REQUEST['participante_id']??0);$participantId=account_is_master()&&$requested>0?$requested:$sessionParticipantId;
+if($participantId<1){http_response_code(403);exit('Sua conta precisa estar vinculada a um time.');}
+$pdo=db();$message=$error='';
+try{
+ elenco_geral_garantir_estrutura($pdo);$s=$pdo->prepare('SELECT time_nome,nome FROM participantes WHERE id=? AND ativo=1');$s->execute([$participantId]);$time=$s->fetch();if(!$time)throw new RuntimeException('Clube não encontrado.');
+ if($_SERVER['REQUEST_METHOD']==='POST'){
+  verify_csrf();$action=(string)($_POST['action']??'');if(!in_array($action,['comprar_geral','vender_geral'],true))throw new RuntimeException('Ação inválida.');
+  $pdo->beginTransaction();$clube=elenco_geral_clube($pdo,$participantId,true);if(!(bool)$clube['cofre_configurado'])throw new RuntimeException('Configure primeiro o cofre do clube na área de transferências.');$antes=(float)$clube['saldo'];
+  if($action==='comprar_geral'){
+   $nome=trim((string)($_POST['nome']??''));$overall=(int)($_POST['overall']??0);$posicao=(string)($_POST['posicao']??'');$origem=(string)($_POST['origem']??'compra_direta');
+   if($nome===''||$overall<1||$overall>99||!in_array($posicao,MERCADO_POSICOES,true))throw new RuntimeException('Preencha corretamente os dados do jogador.');if(!in_array($origem,['compra_direta','pack','passe','sorteio','prancheta','obter'],true))throw new RuntimeException('Origem inválida.');
+   $valor=$origem==='compra_direta'?mercado_parse_valor((string)($_POST['valor']??'')):0.0;if($valor>$antes)throw new RuntimeException('Saldo insuficiente.');$detalhe=null;$valorOrigem=null;$moeda=null;
+   if($origem==='pack'){$packId=(string)($_POST['pack']??'');if(!isset(MERCADO_PACKS[$packId]))throw new RuntimeException('Selecione o pack.');$pack=MERCADO_PACKS[$packId];if($overall<$pack['min']||$overall>$pack['max'])throw new RuntimeException('OVR fora da faixa do pack.');$detalhe=$pack['nome'];$valorOrigem=$pack['dream_points'];$moeda='DP';}
+   $s=$pdo->prepare('INSERT INTO jogadores_gerais(participante_id,nome,overall,posicao) VALUES(?,?,?,?)');$s->execute([$participantId,$nome,$overall,$posicao]);$jogadorId=(int)$pdo->lastInsertId();$depois=$antes-$valor;
+   $pdo->prepare('UPDATE clubes_gerais SET saldo=? WHERE id=?')->execute([$depois,$clube['id']]);$pdo->prepare("INSERT INTO movimentacoes_elenco_geral(participante_id,jogador_geral_id,tipo,origem,origem_detalhe,valor_origem,moeda_origem,jogador_nome,jogador_overall,jogador_posicao,valor,saldo_anterior,saldo_posterior,conta_id) VALUES(?,?,'compra',?,?,?,?,?,?,?,?,?,?,?)")->execute([$participantId,$jogadorId,$origem,$detalhe,$valorOrigem,$moeda,$nome,$overall,$posicao,$valor,$antes,$depois,(int)$_SESSION['conta_id']]);$message="$nome entrou somente no Elenco Geral.";
+  }else{
+   $jogadorId=(int)($_POST['jogador_id']??0);$valor=mercado_parse_valor((string)($_POST['valor']??''));$s=$pdo->prepare('SELECT * FROM jogadores_gerais WHERE id=? AND participante_id=? AND ativo=1 FOR UPDATE');$s->execute([$jogadorId,$participantId]);$j=$s->fetch();if(!$j)throw new RuntimeException('Jogador não encontrado.');
+   $s=$pdo->prepare("SELECT DISTINCT e.campeonato_id,c.nome,c.tipo FROM jogadores_elenco e JOIN campeonatos c ON c.id=e.campeonato_id WHERE e.jogador_geral_id=? AND e.ativo=1");$s->execute([$jogadorId]);foreach($s->fetchAll() as $i){if($i['tipo']==='pontos_corridos'&&!mercado_estado_clube($pdo,(int)$i['campeonato_id'],$participantId)['aberto'])throw new RuntimeException($j['nome'].' está inscrito em '.$i['nome'].', cujo ciclo está fechado.');}
+   $depois=$antes+$valor;$pdo->prepare('UPDATE jogadores_gerais SET ativo=0,saiu_em=NOW() WHERE id=?')->execute([$jogadorId]);$pdo->prepare('UPDATE jogadores_elenco SET ativo=0,saiu_em=NOW() WHERE jogador_geral_id=? AND ativo=1')->execute([$jogadorId]);$pdo->prepare('UPDATE clubes_gerais SET saldo=? WHERE id=?')->execute([$depois,$clube['id']]);$pdo->prepare("INSERT INTO movimentacoes_elenco_geral(participante_id,jogador_geral_id,tipo,origem,jogador_nome,jogador_overall,jogador_posicao,valor,saldo_anterior,saldo_posterior,conta_id) VALUES(?,?,'venda','venda',?,?,?,?,?,?,?)")->execute([$participantId,$jogadorId,$j['nome'],$j['overall'],$j['posicao'],$valor,$antes,$depois,(int)$_SESSION['conta_id']]);$message=$j['nome'].' foi vendido.';
+  }$pdo->commit();
+ }
+}catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();$error=$e instanceof PDOException&&$e->getCode()==='23000'?'Este jogador já está no Elenco Geral.':$e->getMessage();}
+try{$jogadores=elenco_geral_do_clube($pdo,$participantId);$clube=elenco_geral_clube($pdo,$participantId);}catch(Throwable $e){$jogadores=[];$clube=['saldo'=>0];if(!$error)$error='Não foi possível carregar o Elenco Geral.';}
+?><!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Elenco Geral | <?=e((string)($time['time_nome']??'Clube'))?></title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css?v=<?=filemtime(__DIR__.'/assets/css/style.css')?>"><link rel="stylesheet" href="assets/css/branding.css?v=5"><link rel="stylesheet" href="assets/css/elenco-geral.css?v=<?=filemtime(__DIR__.'/assets/css/elenco-geral.css')?>"></head><body><?php public_navbar('elenco-geral');?><main class="general-roster-page"><div class="container">
+<header class="general-roster-hero"><div><span class="eyebrow">Patrimônio do clube</span><h1>ELENCO GERAL</h1><p><?=e((string)($time['time_nome']??''))?> · <?=count($jogadores)?> jogadores · sem limite máximo</p></div><strong class="general-balance">R$ <?=number_format((float)$clube['saldo'],0,',','.')?></strong></header><?php if($message):?><div class="alert alert-success"><?=e($message)?></div><?php endif;?><?php if($error):?><div class="alert alert-danger"><?=e($error)?></div><?php endif;?>
+<section class="panel p-4 mb-4"><span class="eyebrow">Sempre disponível</span><h2>CONTRATAR PARA O ELENCO GERAL</h2><p class="text-secondary">Entra somente no Geral. Nenhuma competição travada recebe o jogador.</p><form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?=e(csrf_token())?>"><input type="hidden" name="action" value="comprar_geral"><?php if(account_is_master()&&$participantId!==$sessionParticipantId):?><input type="hidden" name="participante_id" value="<?=$participantId?>"><?php endif;?><div class="col-lg-4"><label class="form-label">Nome completo</label><input class="form-control" name="nome" required></div><div class="col-6 col-lg-2"><label class="form-label">OVR</label><input class="form-control" type="number" min="1" max="99" name="overall" required></div><div class="col-6 col-lg-2"><label class="form-label">Posição</label><select class="form-select" name="posicao"><?php foreach(MERCADO_POSICOES as $p):?><option><?=e($p)?></option><?php endforeach;?></select></div><div class="col-lg-4"><label class="form-label">Origem</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option><option value="prancheta">Recebido pela prancheta</option><option value="obter">Recebido pelo /obter</option></select></div><div class="col-lg-6 general-pack-field" hidden><label class="form-label">Pack</label><select class="form-select" name="pack"><option value="">Selecione</option><?php foreach(MERCADO_PACKS as $id=>$pack):?><option value="<?=e($id)?>"><?=e($pack['nome'])?> · <?=$pack['min']?>–<?=$pack['max']?> OVR</option><?php endforeach;?></select></div><div class="col-lg-4 general-value-field"><label class="form-label">Valor</label><input class="form-control" type="number" min="0" name="valor" required></div><div class="col-lg-2 d-flex align-items-end"><button class="btn btn-danger w-100">Contratar</button></div></form></section>
+<section class="panel p-4"><div class="general-list-heading"><div><span class="eyebrow">Todos os jogadores</span><h2>JOGADORES DO CLUBE</h2></div><div class="general-roster-filters"><input class="form-control" type="search" placeholder="Buscar pelo nome" data-roster-search><select class="form-select" data-roster-position><option value="">Todas as posições</option><?php foreach(MERCADO_POSICOES as $p):?><option><?=e($p)?></option><?php endforeach;?></select></div></div><div class="general-player-list" data-roster-list><?php foreach($jogadores as $j):?><article class="general-player-row" data-name="<?=e(mb_strtolower($j['nome'],'UTF-8'))?>" data-position="<?=e($j['posicao'])?>"><span><?=e($j['posicao'])?></span><strong><?=e($j['nome'])?></strong><b><?=(int)$j['overall']?> OVR</b><button class="btn btn-sm btn-outline-danger" type="button" data-sell-player data-player-id="<?=(int)$j['id']?>" data-player-name="<?=e($j['nome'])?>">Vender</button></article><?php endforeach;?></div><p data-roster-empty hidden>Nenhum jogador encontrado.</p><nav class="general-pagination" data-roster-pagination></nav></section></div></main>
+<div class="modal fade" id="general-sale-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h2>VENDER JOGADOR</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?=e(csrf_token())?>"><input type="hidden" name="action" value="vender_geral"><input type="hidden" name="jogador_id"><?php if(account_is_master()&&$participantId!==$sessionParticipantId):?><input type="hidden" name="participante_id" value="<?=$participantId?>"><?php endif;?><p>Vender <strong data-sale-name></strong>?</p><input class="form-control" type="number" min="0" name="valor" placeholder="Valor da venda" required><small class="text-secondary">Bloqueado somente se estiver inscrito em pontos corridos com ciclo fechado.</small></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Vender</button></div></form></div></div></div><?php public_footer();?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/elenco-geral.js?v=<?=filemtime(__DIR__.'/assets/js/elenco-geral.js')?>"></script></body></html>
