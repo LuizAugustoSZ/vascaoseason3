@@ -16,7 +16,7 @@ function title_edition_number(string $title): int {
     for($index=strlen($roman)-1;$index>=0;$index--){$current=$values[$roman[$index]]??0;$number+=$current<$previous?-$current:$current;$previous=max($previous,$current);}
     return max(1,$number);
 }
-foreach($grouped as &$champions) usort($champions,static fn(array $a,array $b):int=>title_edition_number((string)$a['titulo'])<=>title_edition_number((string)$b['titulo'])?:((int)$a['id']<=>(int)$b['id']));
+foreach($grouped as &$champions) usort($champions,static fn(array $a,array $b):int=>title_edition_number((string)$b['titulo'])<=>title_edition_number((string)$a['titulo'])?:((int)$b['id']<=>(int)$a['id']));
 unset($champions);
 ?><!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vitrine de Títulos | Vascão S3</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/branding.css?v=5"><link rel="stylesheet" href="assets/css/titles-showcase.css?v=<?= filemtime(__DIR__.'/assets/css/titles-showcase.css') ?>"></head><body>
 <?php public_navbar('titulos'); ?>
