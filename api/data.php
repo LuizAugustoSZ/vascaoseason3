@@ -127,13 +127,14 @@ try {
     // Busca as conquistas dos técnicos.
     $titulos = $pdo
         ->query(
-            "SELECT t.id,t.participante_id,t.titulo,t.temporada,t.descricao,t.conquistado_em,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) time_nome,COALESCE(p.ativo,0) participante_ativo FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id ORDER BY participante_ativo DESC,FIELD(t.temporada,'Season 3','Season 2','Season 1'),t.conquistado_em DESC,t.titulo",
+            "SELECT t.id,t.participante_id,t.titulo,t.temporada,t.descricao,t.conquistado_em,CASE WHEN t.imagem_base64 IS NOT NULL AND t.imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) time_nome,COALESCE(p.ativo,0) participante_ativo FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id ORDER BY participante_ativo DESC,FIELD(t.temporada,'Season 3','Season 2','Season 1'),t.conquistado_em DESC,t.titulo",
         )
         ->fetchAll();
     foreach ($titulos as &$titleItem) {
         $titleKey = competition_identity_match((string)$titleItem['titulo']);
-        $titleItem['trofeu_url'] = null;
-        if ($titleKey) {
+        $titleItem['trofeu_url'] = !empty($titleItem['tem_imagem']) ? 'api/titulo-imagem.php?titulo_id=' . (int)$titleItem['id'] : null;
+        if (!$titleItem['trofeu_url'] && $titleKey === 'mundial') $titleItem['trofeu_url'] = 'api/competicao-imagem.php?chave=mundial&tipo=trofeu';
+        if ($titleKey && !$titleItem['trofeu_url']) {
             foreach ($campeonatos as $competitionItem) {
                 if (!empty($competitionItem['identidade_id']) && competition_identity_match((string)$competitionItem['nome']) === $titleKey) {
                     $titleItem['trofeu_url'] = competition_image_url((int)$competitionItem['id'], 'trofeu');

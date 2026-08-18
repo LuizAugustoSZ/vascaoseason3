@@ -171,17 +171,18 @@ try {
             return (int) $a["id"] <=> (int) $b["id"];
         });
         $stmt = $pdo->prepare(
-            "SELECT titulo,temporada FROM titulos WHERE participante_id=? ORDER BY conquistado_em DESC,id DESC",
+            "SELECT id,titulo,temporada,CASE WHEN imagem_base64 IS NOT NULL AND imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem FROM titulos WHERE participante_id=? ORDER BY conquistado_em DESC,id DESC",
         );
         $stmt->execute([$id]);
         $titulos = $stmt->fetchAll();
         try {
             $identityCompetitions = $pdo->query('SELECT c.id,c.nome FROM campeonatos c WHERE c.ativo=1 AND c.identidade_id IS NOT NULL ORDER BY c.id DESC')->fetchAll();
             foreach ($titulos as &$titleItem) {
-                $titleItem['trofeu_url'] = null;
+                $titleItem['trofeu_url'] = !empty($titleItem['tem_imagem']) ? 'api/titulo-imagem.php?titulo_id=' . (int)$titleItem['id'] : null;
                 $titleKey = competition_identity_match((string)$titleItem['titulo']);
+                if (!$titleItem['trofeu_url'] && $titleKey === 'mundial') $titleItem['trofeu_url'] = 'api/competicao-imagem.php?chave=mundial&tipo=trofeu';
                 foreach ($identityCompetitions as $identityCompetition) {
-                    if ($titleKey && competition_identity_match((string)$identityCompetition['nome']) === $titleKey) {
+                    if (!$titleItem['trofeu_url'] && $titleKey && competition_identity_match((string)$identityCompetition['nome']) === $titleKey) {
                         $titleItem['trofeu_url'] = competition_image_url((int)$identityCompetition['id'], 'trofeu');
                         break;
                     }
