@@ -19,7 +19,7 @@ try {
                         WHERE COALESCE(sp.campeonato_id,sj.campeonato_id)=c.id), '1970-01-01 00:00:00')
                 ) ultima_partida
             FROM campeonatos c WHERE c.ativo=1
-            ORDER BY (c.status='ativo') DESC,ultima_partida DESC,iniciado DESC,c.criado_em DESC,c.id DESC",
+            ORDER BY (c.status='ativo' AND iniciado=1) DESC,(c.status='ativo') DESC,ultima_partida DESC,c.criado_em DESC,c.id DESC",
         )
         ->fetchAll();
     foreach ($campeonatos as &$competitionItem) {
