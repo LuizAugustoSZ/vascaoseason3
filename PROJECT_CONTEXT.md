@@ -14,8 +14,8 @@ O **Vascão Season 3** é um sistema web para organizar campeonatos da comunidad
 - Frontend: HTML, CSS e JavaScript sem framework pesado
 - Idioma da interface: português do Brasil
 - Linha visual: fundo escuro, vermelho como cor principal e tipografia esportiva
-- Baseline deste documento: versão pública **v14.1** e painel **a2.5**
-- Atualizado em: 14/08/2026
+- Baseline deste documento: versão pública **v15.8** e painel **a2.6**
+- Atualizado em: 17/08/2026
 
 ## 2. Princípios do projeto
 
@@ -236,6 +236,8 @@ Consequências:
 - O quadrado com sigla é apenas fallback quando não há imagem válida.
 - O escudo nunca pode escapar da linha, sobrepor nome/placar ou alterar a altura do card.
 - Aplicar a mesma regra em participantes, tabelas administrativas, partidas, chaveamento, final e terceiro lugar.
+- Cada identidade de competição possui logo e taça armazenadas em base64 no banco. Edições com a mesma identidade compartilham as artes; o Admin Master pode substituí-las na aba Campeonatos.
+- A logo identifica a competição nas áreas públicas e a taça correspondente aparece nas galerias e vitrines dos clubes que possuem o título cadastrado.
 
 ## 12. Landing page e conteúdo público
 

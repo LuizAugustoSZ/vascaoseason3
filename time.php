@@ -36,6 +36,7 @@ $canEditClubProfile = account_logged_in() && (
 $profileNotice = isset($_GET['perfil']) ? 'Perfil do clube atualizado.' : '';
 try {
     $pdo = db();
+    competition_identities_seed($pdo);
     mercado_garantir_estrutura($pdo);
     $profileAction = (string)($_POST['action'] ?? '');
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_sobre_clube', 'atualizar_cofre_clube', 'atualizar_heroi_clube'], true)) {
@@ -174,6 +175,21 @@ try {
         );
         $stmt->execute([$id]);
         $titulos = $stmt->fetchAll();
+        try {
+            $identityCompetitions = $pdo->query('SELECT c.id,c.nome FROM campeonatos c WHERE c.ativo=1 AND c.identidade_id IS NOT NULL ORDER BY c.id DESC')->fetchAll();
+            foreach ($titulos as &$titleItem) {
+                $titleItem['trofeu_url'] = null;
+                $titleKey = competition_identity_match((string)$titleItem['titulo']);
+                foreach ($identityCompetitions as $identityCompetition) {
+                    if ($titleKey && competition_identity_match((string)$identityCompetition['nome']) === $titleKey) {
+                        $titleItem['trofeu_url'] = competition_image_url((int)$identityCompetition['id'], 'trofeu');
+                        break;
+                    }
+                }
+            }
+            unset($titleItem);
+        } catch (Throwable $ignored) {
+        }
         try {
             $stmt = $pdo->prepare("SELECT cc.saldo,cc.cofre_configurado,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,c.nome campeonato FROM clubes_campeonato cc JOIN campeonatos c ON c.id=cc.campeonato_id WHERE cc.participante_id=? ORDER BY c.status='ativo' DESC,c.id DESC LIMIT 1");
             $stmt->execute([$id]);
@@ -446,7 +462,7 @@ function match_score(array $j): string
                     <h3>Títulos e campanhas</h3>
                     <?php foreach ($titulos as $titulo): ?>
                         <div>
-                            <span>🏆</span>
+                            <?php if (!empty($titulo['trofeu_url'])): ?><img src="<?= e($titulo['trofeu_url']) ?>" alt="Taça <?= e($titulo['titulo']) ?>"><?php else: ?><span>🏆</span><?php endif; ?>
                             <b><?= e($titulo["titulo"]) ?></b>
                             <small><?= e($titulo["temporada"]) ?></small>
                         </div>
