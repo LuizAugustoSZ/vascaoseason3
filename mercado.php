@@ -4,6 +4,7 @@ declare(strict_types=1);
 require __DIR__ . '/includes/bootstrap.php';
 require __DIR__ . '/includes/public-layout.php';
 require __DIR__ . '/includes/mercado.php';
+require __DIR__ . '/includes/elenco-geral.php';
 if (!account_logged_in()) {
     header('Location: login.php');
     exit;
@@ -15,6 +16,7 @@ if (account_must_change_password()) {
 $pdo = db();
 try {
     mercado_garantir_estrutura($pdo);
+    elenco_geral_garantir_estrutura($pdo);
 } catch (Throwable $migrationError) {
     http_response_code(503);
     exit('O módulo de mercado está sendo preparado na homologação. Tente novamente em instantes.');
@@ -51,7 +53,27 @@ try {
         }
         $montagemInicial = !(bool)$clube['elenco_confirmado'] && $rodada === 1;
         $action = (string)($_POST['action'] ?? '');
-        if ($action === 'importar_elenco_campeonato') {
+        if ($action === 'atualizar_inscricao_geral') {
+            if (!mercado_pode_editar($clube, $rodada)) throw new RuntimeException('A inscrição desta competição está congelada neste ciclo.');
+            $inscritos = array_values(array_unique(array_map('intval', (array)($_POST['inscrito_id'] ?? []))));
+            $titulares = array_values(array_unique(array_map('intval', (array)($_POST['titular_geral_id'] ?? []))));
+            if (count($titulares) !== 11) throw new RuntimeException('Selecione exatamente 11 titulares.');
+            if (count($inscritos) < 11 || count($inscritos) > 26) throw new RuntimeException('A inscrição aceita 11 titulares e no máximo 15 reservas.');
+            if (array_diff($titulares, $inscritos)) throw new RuntimeException('Todo titular precisa estar inscrito.');
+            $placeholders = implode(',', array_fill(0, count($inscritos), '?'));
+            $check = $pdo->prepare("SELECT COUNT(*) FROM jogadores_gerais WHERE participante_id=? AND ativo=1 AND id IN ($placeholders)");
+            $check->execute(array_merge([$participantId], $inscritos));
+            if ((int)$check->fetchColumn() !== count($inscritos)) throw new RuntimeException('A inscrição contém jogador que não pertence ao Elenco Geral.');
+            $pdo->beginTransaction();
+            $pdo->prepare("UPDATE jogadores_elenco SET ativo=0,saiu_em=NOW() WHERE campeonato_id=? AND participante_id=? AND ativo=1")->execute([$campeonatoId,$participantId]);
+            $select = $pdo->prepare("SELECT id,nome,overall,posicao FROM jogadores_gerais WHERE participante_id=? AND ativo=1 AND id IN ($placeholders) ORDER BY nome");
+            $select->execute(array_merge([$participantId],$inscritos));
+            $insert = $pdo->prepare("INSERT INTO jogadores_elenco(campeonato_id,participante_id,jogador_geral_id,nome,overall,posicao,grupo,ordem) VALUES(?,?,?,?,?,?,?,?)");
+            $titularMap=array_flip($titulares);$ordemTitular=$ordemBanco=0;
+            foreach($select->fetchAll() as $player){$grupo=isset($titularMap[(int)$player['id']])?'titular':'banco';$ordem=$grupo==='titular'?++$ordemTitular:++$ordemBanco;$insert->execute([$campeonatoId,$participantId,$player['id'],$player['nome'],$player['overall'],$player['posicao'],$grupo,$ordem]);}
+            $pdo->prepare("UPDATE clubes_campeonato SET elenco_confirmado=1 WHERE id=?")->execute([$clube['id']]);
+            $pdo->commit();$message='Inscrição salva: 11 titulares e '.(count($inscritos)-11).' reservas.';
+        } elseif ($action === 'importar_elenco_campeonato') {
             if (!$montagemInicial) throw new RuntimeException('A importação de outro campeonato está disponível somente na montagem inicial.');
             $campeonatoOrigemId = (int)($_POST['campeonato_origem_id'] ?? 0);
             if ($campeonatoOrigemId < 1 || $campeonatoOrigemId === $campeonatoId) throw new RuntimeException('Selecione um campeonato de origem válido.');
@@ -192,6 +214,7 @@ try {
                 $message = $movimento['tipo'] === 'compra' ? 'Contratação corrigida com sucesso.' : 'Venda corrigida com sucesso.';
             }
         } elseif (in_array($action, ['comprar', 'vender'], true)) {
+            if ($action === 'comprar') throw new RuntimeException('Contratações agora são feitas exclusivamente no Elenco Geral.');
             if (!mercado_pode_editar($clube, $rodada) || $montagemInicial) throw new RuntimeException('O mercado está indisponível nesta rodada.');
             $pdo->beginTransaction();
             $cofres = $pdo->prepare("SELECT * FROM clubes_campeonato WHERE participante_id=? ORDER BY id FOR UPDATE");
@@ -305,12 +328,21 @@ $elenco = [];
 $historico = [];
 $totalTitularesAtual = 0;
 $campeonatosComElenco = [];
+$elencoGeral = [];
+$inscritosGerais = $titularesGerais = [];
 $podeEditarMercado = $clube ? mercado_pode_editar($clube, $rodada) : false;
 $montagemInicial = $clube ? (!(bool)$clube['elenco_confirmado'] && $rodada === 1) : false;
 if ($clube) {
     $s = $pdo->prepare("SELECT * FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
     $s->execute([$campeonatoId, $participantId]);
     $elenco = $s->fetchAll();
+    $elencoGeral = elenco_geral_do_clube($pdo, $participantId);
+    foreach ($elenco as $jogadorInscrito) {
+        $geralId = (int)($jogadorInscrito['jogador_geral_id'] ?? 0);
+        if ($geralId < 1) continue;
+        $inscritosGerais[$geralId] = true;
+        if ($jogadorInscrito['grupo'] === 'titular') $titularesGerais[$geralId] = true;
+    }
     $totalTitularesAtual = count(array_filter($elenco, static fn(array $jogador): bool => $jogador['grupo'] === 'titular'));
     $s = $pdo->prepare("SELECT * FROM movimentacoes_elenco WHERE campeonato_id=? AND participante_id=? ORDER BY id DESC");
     $s->execute([$campeonatoId, $participantId]);
@@ -343,6 +375,11 @@ if ($clube) {
                 <div><small>Próxima partida do clube</small><strong><?= $rodada ?>ª</strong></div>
                 <div><small>Ciclo <?= $ciclo['ciclo'] ?></small><strong><?= $ciclo['aberto'] ? 'ALTERAÇÕES LIBERADAS' : 'ELENCO TRAVADO' ?></strong></div>
             </section>
+            <?php if ($rodada >= 9 && $rodada <= 13): ?><div class="alert alert-warning mb-4" role="status">
+                <strong>Ciclo travado após a 8ª rodada.</strong> Contratações, vendas e mudanças na escalação permanecem bloqueadas da 9ª até a 13ª rodada. Assim que a 13ª for concluída, o mercado será liberado para a 14ª rodada. Folgas contam normalmente como rodada cumprida.
+            </div><?php elseif ($rodada === 14): ?><div class="alert alert-success mb-4" role="status">
+                <strong>Mercado liberado para a 14ª rodada.</strong> A 13ª rodada foi cumprida e o clube já pode fazer contratações, vendas e mudanças na escalação.
+            </div><?php endif; ?>
             <section class="market-help-grid" aria-label="Ajuda para gestão do elenco">
                 <article><span>01</span><div><strong>Ciclo individual</strong><p>Este clube cumpriu <?= $ciclo['etapas_concluidas'] ?> rodada(s): <?= $ciclo['partidas_concluidas'] ?> jogo(s) e <?= $ciclo['folgas'] ?> folga(s). O mercado abre após a 5ª e fica liberado na 6ª, 7ª e 8ª rodadas do próprio ciclo.</p></div></article>
                 <article><span>02</span><div><strong>Titulares automáticos</strong><p>Marque somente os 11 titulares. Ao salvar, todos os jogadores não selecionados serão definidos automaticamente como banco.</p></div></article>
@@ -362,7 +399,9 @@ if ($clube) {
                     <?php if ($campeonatosComElenco): ?><p class="text-secondary">Copie os jogadores ativos de outro campeonato. Todos entrarão no banco para você escolher novamente os 11 titulares.</p><form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="importar_elenco_campeonato"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><div class="col-md-8"><label class="form-label">Campeonato de origem</label><select class="form-select" name="campeonato_origem_id" required><option value="">Selecione o campeonato</option><?php foreach ($campeonatosComElenco as $origem): ?><option value="<?= (int)$origem['id'] ?>"><?= e($origem['nome']) ?> · <?= (int)$origem['total'] ?> jogadores</option><?php endforeach; ?></select></div><div class="col-md-4 d-flex align-items-end"><button class="btn btn-outline-danger w-100">Importar elenco</button></div></form><?php else: ?><p class="text-secondary mb-0">Este clube ainda não possui elenco ativo em outro campeonato.</p><?php endif; ?>
                 </section><?php endif; ?>
             <div id="mercado-transferencias" class="market-anchor" aria-hidden="true"></div>
-            <?php if ($podeEditarMercado && !$montagemInicial): ?><section class="panel p-4 mb-4 market-contract-panel">
+            <section class="panel p-4 mb-4"><span class="eyebrow">Sempre disponível</span><h2>TRANSFERÊNCIAS DO CLUBE</h2><p class="text-secondary">Contratações e vendas acontecem no Elenco Geral, nunca diretamente nesta competição.</p><a class="btn btn-danger" href="elenco-geral.php<?= $isMasterManagement ? '?participante_id='.$participantId : '' ?>">Abrir Elenco Geral</a></section>
+            <?php if ($podeEditarMercado): ?><section class="panel p-4 mb-4"><span class="eyebrow">Inscrição da competição</span><h2>SELECIONAR JOGADORES DO ELENCO GERAL</h2><p class="text-secondary">Marque exatamente 11 titulares e até 15 reservas. Jogadores não marcados continuam no Elenco Geral.</p><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_inscricao_geral"><?php if($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><div class="roster-grid"><?php foreach($elencoGeral as $j): $gid=(int)$j['id']; ?><article class="roster-select-card"><label><input type="checkbox" name="inscrito_id[]" value="<?= $gid ?>" <?= isset($inscritosGerais[$gid])?'checked':'' ?>> Inscrito</label><label><input type="checkbox" name="titular_geral_id[]" value="<?= $gid ?>" <?= isset($titularesGerais[$gid])?'checked':'' ?>> Titular</label><b><?= e($j['nome']) ?></b><strong><?= (int)$j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar inscrição</button></form></section><?php else: ?><div class="alert alert-warning mb-4"><strong>Inscrição congelada.</strong> O Elenco Geral continua disponível para contratar e vender jogadores livres.</div><?php endif; ?>
+            <?php if (false && $podeEditarMercado && !$montagemInicial): ?><section class="panel p-4 mb-4 market-contract-panel">
                     <h2>ADICIONAR / CONTRATAR JOGADOR</h2>
                     <div class="market-inline-help"><strong>Como registrar:</strong> use <code>/contratar</code> no Discord e copie nome, OVR, posição e valor. Compra direta desconta Reais do cofre; Pack registra DP; Passe, Sorteio e Prancheta entram sem custo em Reais.</div>
                     <form method="post" class="row g-3" data-current-starters="<?= $totalTitularesAtual ?>"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="comprar">
@@ -382,7 +421,7 @@ if ($clube) {
                 </div><?php if (mercado_pode_editar($clube, $rodada)): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_escalacao"><div class="formation-control mb-3"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">Três números que somem 10; “Custom” será adicionado automaticamente.</small></div>
                         <div class="lineup-selection-status"><strong><span data-selected-starters>0</span>/11 titulares selecionados</strong><small>Use <code>..time @seu_usuario</code> no Discord para visualizar apenas a imagem do seu time e conferir os titulares. Quem não estiver marcado será banco.</small></div><div class="lineup-limit-warning" role="alert" aria-live="assertive" hidden>Você já selecionou os 11 titulares. Desmarque um jogador antes de escolher outro.</div>
                         <div class="roster-grid"><?php foreach ($elenco as $j): ?><article class="roster-select-card<?= $j['grupo'] === 'titular' ? ' is-starter' : '' ?>"><input type="hidden" name="jogador_id[]" value="<?= $j['id'] ?>"><label class="starter-toggle"><input type="checkbox" name="titular_id[]" value="<?= $j['id'] ?>" <?= $j['grupo'] === 'titular' ? 'checked' : '' ?>><span>Titular</span></label><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3" <?= !(bool)$clube['elenco_confirmado'] ? 'name="confirmar_elenco" value="1"' : '' ?>><?= !(bool)$clube['elenco_confirmado'] ? 'Salvar e confirmar 11 titulares' : 'Salvar escalação' ?></button>
-                    </form><?php else: ?><div class="roster-grid"><?php foreach ($elenco as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?> · <?= e($j['grupo']) ?></span></article><?php endforeach; ?></div><?php endif; ?><?php if (!$montagemInicial && $ciclo['aberto']): ?>
+                    </form><?php else: ?><div class="roster-grid"><?php foreach ($elenco as $j): ?><article><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?> · <?= e($j['grupo']) ?></span></article><?php endforeach; ?></div><?php endif; ?><?php if (false && !$montagemInicial && $ciclo['aberto']): ?>
                     <hr>
                     <h2>VENDER JOGADOR</h2>
                     <div class="market-inline-help market-sale-help"><span><strong>Regra da venda:</strong> somente jogadores do banco de reservas podem ser vendidos. Para vender um titular, primeiro mova-o para o banco e salve a escalação.</span><button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#lineup-management-modal">Mover titular para o banco</button></div>
