@@ -16,6 +16,9 @@ function competition_identity_defaults(): array
         'copa do brasil' => ['Copa do Brasil', 'copa-do-brasil-logo.webp', 'copa-do-brasil-trofeu.webp'],
         'supercopa r' => ['Supercopa R', 'supercopa-r-logo.webp', 'supercopa-r-trofeu.webp'],
         'mundial' => ['Mundial de Clubes', 'mundial-logo.webp', 'mundial-trofeu.webp'],
+        'evento carnavalesco' => ['Evento Carnavalesco', 'evento-carnavalesco-logo.webp', 'evento-carnavalesco-trofeu.webp'],
+        'evento pascualino' => ['Evento Pascualino', 'evento-pascualino-logo.webp', 'evento-pascualino-trofeu.webp'],
+        'champions league' => ['Champions League', 'champions-league-logo.webp', 'champions-league-trofeu.webp'],
     ];
 }
 
@@ -40,6 +43,8 @@ function competition_identities_ensure_schema(PDO $pdo): void
     }
     $titleImageColumn = $pdo->query("SHOW COLUMNS FROM titulos LIKE 'imagem_base64'")->fetch();
     if (!$titleImageColumn) $pdo->exec("ALTER TABLE titulos ADD COLUMN imagem_base64 MEDIUMTEXT NULL AFTER descricao");
+    $titleCompetitionColumn = $pdo->query("SHOW COLUMNS FROM titulos LIKE 'campeonato_id'")->fetch();
+    if (!$titleCompetitionColumn) $pdo->exec("ALTER TABLE titulos ADD COLUMN campeonato_id INT UNSIGNED NULL AFTER participante_id, ADD UNIQUE KEY uk_titulo_campeonato (campeonato_id)");
 }
 
 function competition_identity_data_url(string $filename): string
@@ -57,7 +62,31 @@ function competition_identity_match(string $name): ?string
     if (str_contains($compact, 'copadobrasil')) return 'copa do brasil';
     if (str_contains($compact, 'supercopa')) return 'supercopa r';
     if (str_starts_with($compact, 'mundial')) return 'mundial';
+    if (str_starts_with($compact, 'eventocarnavalesco')) return 'evento carnavalesco';
+    if (str_starts_with($compact, 'eventopascualino')) return 'evento pascualino';
+    if (str_starts_with($compact, 'championsleague') || str_starts_with($compact, 'champiosleague')) return 'champions league';
     return null;
+}
+
+function competition_roman(int $number): string
+{
+    $map = [1000=>'M',900=>'CM',500=>'D',400=>'CD',100=>'C',90=>'XC',50=>'L',40=>'XL',10=>'X',9=>'IX',5=>'V',4=>'IV',1=>'I'];
+    $result = '';
+    foreach ($map as $value => $roman) while ($number >= $value) { $result .= $roman; $number -= $value; }
+    return $result;
+}
+
+function competition_sync_champion_title(PDO $pdo, int $championshipId): ?int
+{
+    competition_identities_ensure_schema($pdo);
+    $stmt = $pdo->prepare('SELECT id,nome,status FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1');
+    $stmt->execute([$championshipId]); $competition = $stmt->fetch();
+    if (!$competition || $competition['status'] !== 'finalizado') return null;
+    $winnerId = competition_champion_id($pdo, $championshipId);
+    if (!$winnerId) return null;
+    $insert = $pdo->prepare("INSERT INTO titulos(campeonato_id,participante_id,titulo,temporada,descricao,conquistado_em) VALUES(?,?,?,'Season 3','Título entregue automaticamente ao encerrar a competição',CURDATE()) ON DUPLICATE KEY UPDATE participante_id=VALUES(participante_id),titulo=VALUES(titulo),conquistado_em=VALUES(conquistado_em)");
+    $insert->execute([$championshipId,$winnerId,$competition['nome']]);
+    return $winnerId;
 }
 
 /** Preenche as quatro identidades e associa edições antigas sem sobrescrever artes editadas. */

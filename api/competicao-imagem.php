@@ -5,9 +5,13 @@ require __DIR__ . '/../includes/bootstrap.php';
 
 try {
     $championshipId = (int)($_GET['campeonato_id'] ?? 0);
+    $identityId = (int)($_GET['identidade_id'] ?? 0);
     $type = ($_GET['tipo'] ?? 'logo') === 'trofeu' ? 'trofeu_base64' : 'logo_base64';
     $key = trim((string)($_GET['chave'] ?? ''));
-    if ($key !== '') {
+    if ($identityId > 0) {
+        $stmt = db()->prepare("SELECT $type imagem FROM competicao_identidades WHERE id=? LIMIT 1");
+        $stmt->execute([$identityId]);
+    } elseif ($key !== '') {
         $stmt = db()->prepare("SELECT $type imagem FROM competicao_identidades WHERE chave=? LIMIT 1");
         $stmt->execute([$key]);
     } else {

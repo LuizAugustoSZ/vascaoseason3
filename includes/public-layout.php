@@ -35,7 +35,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         "competicao" => [$home . "#competicao", "Competição"],
         "participantes" => [$home . "#participantes", "Participantes"],
         "artilharia" => [$home . "#artilharia", "Jogadores"],
-        "titulos" => [$home . "#titulos", "Títulos"],
+        "titulos" => ["titulos.php", "Títulos"],
     ];
     $configuredOrder = array_filter(array_map(
         'trim',
