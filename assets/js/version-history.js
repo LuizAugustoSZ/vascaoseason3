@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['16.3','Campeões agora aparecem em ordem de edição romana e os clubes atuais têm acesso direto à página do time pelo nome e escudo.','Histórico organizado'],
 ['16.2','Cards da vitrine foram nivelados e Ver campeões agora abre uma galeria em modal com escudo, time, técnico, edição e Season.','Vitrine alinhada'],
 ['16.1','Identidades de competição viraram fonte única: mudar logo ou taça no padrão atualiza todas as edições, títulos, perfis e vitrines relacionados.','Campeonatos padrões'],
 ['16.0','Títulos ganharam uma página própria em formato de vitrine, com taças ampliadas, logos e campeões por edição; o sorteador agora reutiliza modelos históricos.','Vitrine de taças'],
