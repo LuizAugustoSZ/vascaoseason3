@@ -81,7 +81,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
                                 <li><a class="dropdown-item" href="time.php?id=<?= $participantId ?>">Página do time</a></li>
                                 <li><a class="dropdown-item" href="elenco-geral.php">Elenco Geral</a></li>
-                                <li><a class="dropdown-item" href="mercado.php">Transferências e escalação</a></li>
+                                <li><a class="dropdown-item" href="mercado.php">Gestão da Competição</a></li>
                             </ul>
                         </li>
                     <?php endif; ?>

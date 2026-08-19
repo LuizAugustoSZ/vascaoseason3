@@ -41,6 +41,8 @@ function mercado_rotulo_origem(array $movimento): string
         'passe' => 'Passe',
         'sorteio' => 'Sorteio',
         'prancheta' => 'Prancheta',
+        'obter' => '/obter',
+        'importacao' => 'Importação',
         default => 'Compra',
     };
 }
@@ -50,7 +52,7 @@ function mercado_valor_movimento(array $movimento): string
     if (($movimento['origem'] ?? '') === 'pack') {
         return number_format((float)($movimento['valor_origem'] ?? 0), 0, ',', '.') . ' DP';
     }
-    if (in_array(($movimento['origem'] ?? ''), ['passe', 'sorteio', 'prancheta'], true)) return 'Sem custo';
+    if (in_array(($movimento['origem'] ?? ''), ['passe', 'sorteio', 'prancheta', 'obter', 'importacao'], true)) return 'Sem custo';
     return 'R$ ' . number_format((float)($movimento['valor'] ?? 0), 0, ',', '.');
 }
 
