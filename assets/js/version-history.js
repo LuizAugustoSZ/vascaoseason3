@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['17.0','O modal de venda do Elenco Geral agora acompanha o tema escuro do site, com campos, textos e ações visualmente consistentes.','Venda no padrão visual do site'],
 ['16.9','Transferências passaram a acontecer sempre no Elenco Geral; competições recebem apenas inscrições de 11 titulares e até 15 reservas, respeitando o congelamento dos pontos corridos.','Geral e competições separados'],
 ['16.8','Elenco Geral ganhou contratação e venda sem limite, origem /obter, busca por nome, filtro por posição, paginação e nomes completos sem cortes.','Gestão completa do Elenco Geral'],
 ['16.7','Clubes ganharam um Elenco Geral único, criado com segurança a partir dos jogadores ativos já existentes e preparado para alimentar inscrições independentes por competição.','Elenco Geral'],
