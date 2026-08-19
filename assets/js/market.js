@@ -363,7 +363,7 @@ if (marketPage && lineupSection && marketSummary) {
 
   const lineupLauncher = document.createElement('section');
   lineupLauncher.className = 'panel p-4 lineup-launcher';
-  lineupLauncher.innerHTML = '<div><h2>FORMAÇÃO, TITULARES E BANCO</h2><p>Abra o editor para escolher a formação e os onze titulares. Os demais jogadores serão enviados automaticamente ao banco.</p></div><button class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#lineup-management-modal">Editar escalação</button>';
+  lineupLauncher.innerHTML = '<div><h2>FORMAÇÃO, TITULARES E BANCO</h2><p>Escolha a formação e os onze titulares entre os jogadores inscritos nesta competição. A escalação pode ser alterada em qualquer rodada; os demais inscritos ficam no banco.</p></div><button class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#lineup-management-modal">Editar escalação</button>';
   lineupPane.append(lineupLauncher);
 
   const lineupModal = document.createElement('div');

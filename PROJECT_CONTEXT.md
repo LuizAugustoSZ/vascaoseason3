@@ -14,8 +14,8 @@ O **Vascão Season 3** é um sistema web para organizar campeonatos da comunidad
 - Frontend: HTML, CSS e JavaScript sem framework pesado
 - Idioma da interface: português do Brasil
 - Linha visual: fundo escuro, vermelho como cor principal e tipografia esportiva
-- Baseline deste documento: versão pública **v16.9** e painel **a3.0**
-- Atualizado em: 17/08/2026
+- Baseline deste documento: versão pública **v17.1** e painel **a3.0**
+- Atualizado em: 19/08/2026
 
 ## 2. Princípios do projeto
 
@@ -321,6 +321,9 @@ Regras implementadas:
 - o técnico cadastra livremente nome, overall e posição, sem catálogo interno de cartas;
 - compras debitam o cofre, vendas creditam o valor e todas as movimentações ficam no histórico;
 - escalação exige exatamente 11 titulares; os demais jogadores ficam no banco;
+- cada competição possui sua própria inscrição de até 11 titulares e 15 reservas, vinculada ao Elenco Geral;
+- formação, titulares e banco podem ser reorganizados em qualquer rodada entre os jogadores inscritos, sem depender da janela do ciclo;
+- um mesmo jogador do Elenco Geral pode participar de várias competições e não pode ser vendido enquanto estiver associado a uma competição de pontos corridos com ciclo fechado;
 - somente a conta associada ao participante pode acessar o Mercado pela navegação pública;
 - o Admin Master pode gerenciar qualquer clube e campeonato pela aba Mercado do painel;
 - mural, descrição e jogador favorito são editados em modal na página pública pelo responsável associado;
