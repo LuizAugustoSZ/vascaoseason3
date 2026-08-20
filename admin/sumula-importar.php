@@ -113,12 +113,22 @@ function summary_roster_issues(PDO $pdo, array $parsed, array $context, int $cha
     }
     $addPlayer($mentioned, $parsed['man_of_match_team_code'] ?? null, $parsed['man_of_match'] ?? null);
 
-    $roster = $pdo->prepare("SELECT nome FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND grupo IN ('titular','banco')");
+    $exactRoster = $pdo->prepare("SELECT nome FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND grupo IN ('titular','banco')");
+    $sameTeamRoster = $pdo->prepare("SELECT e.nome,p.time_nome FROM jogadores_elenco e JOIN participantes p ON p.id=e.participante_id WHERE e.campeonato_id=? AND e.ativo=1 AND e.grupo IN ('titular','banco') AND p.ativo=1");
     $issues = [];
     foreach ($teamByCode as $code => $team) {
-        $roster->execute([$championshipId, (int)$team['id']]);
+        $exactRoster->execute([$championshipId, (int)$team['id']]);
+        $rosterNames = $exactRoster->fetchAll(PDO::FETCH_COLUMN);
+        if (!$rosterNames) {
+            $sameTeamRoster->execute([$championshipId]);
+            $targetTeam = normalized_team_name((string)$team['time_nome']);
+            $rosterNames = [];
+            foreach ($sameTeamRoster->fetchAll() as $rosterPlayer) {
+                if (normalized_team_name((string)$rosterPlayer['time_nome']) === $targetTeam) $rosterNames[] = $rosterPlayer['nome'];
+            }
+        }
         $allowed = [];
-        foreach ($roster->fetchAll(PDO::FETCH_COLUMN) as $name) $allowed[normalized_team_name((string)$name)] = true;
+        foreach ($rosterNames as $name) $allowed[normalized_team_name((string)$name)] = true;
         foreach (array_keys($mentioned[$code]) as $player) {
             if (!isset($allowed[normalized_team_name($player)])) {
                 $issues[] = 'Jogador ' . $player . ' não reconhecido entre os titulares ou reservas de ' . $team['time_nome'] . ' nesta competição.';
