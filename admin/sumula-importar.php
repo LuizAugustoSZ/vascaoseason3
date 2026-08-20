@@ -48,10 +48,16 @@ function identify_summary_context(PDO $pdo, array $parsed): array
     $participants = $pdo->query("SELECT id,time_nome,sigla FROM participantes WHERE ativo=1")->fetchAll();
     $byName = [];
     foreach ($participants as $participant) {
-        $byName[normalized_team_name($participant['time_nome'])] = $participant;
+        $byName[normalized_team_name($participant['time_nome'])][] = $participant;
     }
-    $home = $byName[normalized_team_name($parsed['home_name'])] ?? null;
-    $away = $byName[normalized_team_name($parsed['away_name'])] ?? null;
+    $findTeam = static function (array $matches, ?string $code): ?array {
+        if (!$matches) return null;
+        $code = strtoupper(trim((string)$code));
+        foreach ($matches as $match) if (strtoupper(trim((string)$match['sigla'])) === $code) return $match;
+        return count($matches) === 1 ? $matches[0] : null;
+    };
+    $home = $findTeam($byName[normalized_team_name($parsed['home_name'])] ?? [], $parsed['teams'][0]['code'] ?? null);
+    $away = $findTeam($byName[normalized_team_name($parsed['away_name'])] ?? [], $parsed['teams'][1]['code'] ?? null);
     if (!$home || !$away) {
         $missing = [];
         if (!$home) $missing[] = $parsed['home_name'];
@@ -92,6 +98,7 @@ function identify_summary_context(PDO $pdo, array $parsed): array
 
 function summary_roster_issues(PDO $pdo, array $parsed, array $context, int $championshipId, string $championshipName): array
 {
+    if (!str_contains(normalized_team_name($championshipName), 'brasileir')) return [];
     $codes = array_column($parsed['teams'], 'code');
     if (count($codes) !== 2) return ['Não foi possível conferir os jogadores porque as siglas dos times não foram identificadas.'];
 
@@ -116,19 +123,13 @@ function summary_roster_issues(PDO $pdo, array $parsed, array $context, int $cha
     $addPlayer($mentioned, $parsed['man_of_match_team_code'] ?? null, $parsed['man_of_match'] ?? null);
 
     $exactRoster = $pdo->prepare("SELECT nome FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND grupo IN ('titular','banco')");
-    $semanticRoster = $pdo->prepare("SELECT e.nome,p.time_nome,c.nome campeonato FROM jogadores_elenco e JOIN participantes p ON p.id=e.participante_id JOIN campeonatos c ON c.id=e.campeonato_id WHERE e.ativo=1 AND e.grupo IN ('titular','banco') AND p.ativo=1 AND c.ativo=1");
     $issues = [];
     foreach ($teamByCode as $code => $team) {
         $exactRoster->execute([$championshipId, (int)$team['id']]);
         $rosterNames = $exactRoster->fetchAll(PDO::FETCH_COLUMN);
         if (!$rosterNames) {
-            $semanticRoster->execute();
-            $targetTeam = normalized_team_name((string)$team['time_nome']);
-            $targetCompetition = normalized_team_name($championshipName);
-            $rosterNames = [];
-            foreach ($semanticRoster->fetchAll() as $rosterPlayer) {
-                if (normalized_team_name((string)$rosterPlayer['time_nome']) === $targetTeam && normalized_team_name((string)$rosterPlayer['campeonato']) === $targetCompetition) $rosterNames[] = $rosterPlayer['nome'];
-            }
+            $issues[] = $team['time_nome'] . ' não possui titulares ou reservas inscritos nesta edição do Brasileirão. Verifique a inscrição da competição.';
+            continue;
         }
         $allowed = [];
         foreach ($rosterNames as $name) $allowed[normalized_team_name((string)$name)] = true;
