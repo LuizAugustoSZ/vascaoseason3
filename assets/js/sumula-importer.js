@@ -9,7 +9,8 @@ const request=async action=>{
   const payload=new FormData();payload.set('csrf',csrf.value);payload.set('action',action);payload.set('sumula',text.value);
   if(action==='import')payload.set('match_key',preview.querySelector('[name="dreamteam_match"]')?.value||'');
   const response=await fetch('sumula-importar.php',{method:'POST',body:payload,headers:{Accept:'application/json'},credentials:'same-origin'});
-  const data=await response.json().catch(()=>({ok:false,message:'Resposta inválida do servidor.'}));
+  const body=await response.text();
+  let data;try{data=JSON.parse(body);}catch{const plain=body.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();data={ok:false,message:response.redirected?'Sua sessão expirou. Atualize a página e entre novamente.':(plain||`Erro ${response.status} ao processar a súmula.`)};}
   if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível processar a súmula.');return data;
 };
 const render=data=>{

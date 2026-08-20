@@ -5,6 +5,13 @@ require __DIR__ . '/../includes/bootstrap.php';
 require __DIR__ . '/../includes/dreamteam-parser.php';
 require __DIR__ . '/../includes/knockout.php';
 admin_required();
+ob_start();
+
+function summary_json_response(array $data, int $status = 200): never
+{
+    if (ob_get_level() > 0) ob_clean();
+    json_response($data, $status);
+}
 
 function ensure_summary_table(PDO $pdo): void
 {
@@ -189,7 +196,7 @@ function replace_imported_goals(PDO $pdo, array $parsed, array $context, string 
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') json_response(['ok' => false, 'message' => 'Método inválido.'], 405);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') summary_json_response(['ok' => false, 'message' => 'Método inválido.'], 405);
 verify_csrf();
 try {
     $pdo = db();
@@ -209,7 +216,7 @@ try {
         foreach ($context['candidates'] as $item) {
             $rosterIssues[$item['key']] = summary_roster_issues($pdo, $parsed, $context, (int)$item['campeonato_id']);
         }
-        json_response(['ok'=>true,'parsed'=>$parsed,'candidates'=>$context['candidates'],'teams'=>['home'=>$context['home'],'away'=>$context['away']],'is_rewrite'=>(bool)$existingSummary,'existing_match_key'=>$existingSummary ? $existingSummary['origem'] . ':' . $existingMatchId : null,'roster_issues'=>$rosterIssues]);
+        summary_json_response(['ok'=>true,'parsed'=>$parsed,'candidates'=>$context['candidates'],'teams'=>['home'=>$context['home'],'away'=>$context['away']],'is_rewrite'=>(bool)$existingSummary,'existing_match_key'=>$existingSummary ? $existingSummary['origem'] . ':' . $existingMatchId : null,'roster_issues'=>$rosterIssues]);
     }
     if ($parsed['warnings']) throw new RuntimeException('A súmula possui alertas que precisam ser corrigidos antes da importação: ' . implode(' ', $parsed['warnings']));
     [$type,$idText] = array_pad(explode(':', (string) ($_POST['match_key'] ?? ''), 2), 2, '');
@@ -240,8 +247,8 @@ try {
     $pdo->commit();
     $actionLabel = $existingSummary ? 'reescrita' : 'importada';
     audit_post_success('sumulas', 'Súmula ' . $actionLabel . ' e partida atualizada.');
-    json_response(['ok'=>true,'message'=>'Súmula ' . $actionLabel . ', resultado atualizado e eventos armazenados com sucesso.']);
+    summary_json_response(['ok'=>true,'message'=>'Súmula ' . $actionLabel . ', resultado atualizado e eventos armazenados com sucesso.']);
 } catch (Throwable $error) {
     if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
-    json_response(['ok'=>false,'message'=>$error->getMessage()],422);
+    summary_json_response(['ok'=>false,'message'=>$error->getMessage()],422);
 }
