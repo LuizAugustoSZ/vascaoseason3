@@ -39,15 +39,20 @@ if ($participantId > 0) {
 $isMasterManagement = account_is_master() && $participantId !== $sessionParticipantId;
 $message = $error = '';
 $campeonatoId = (int)($_GET['campeonato_id'] ?? $_POST['campeonato_id'] ?? 0);
-$campeonatos = $pdo->query("SELECT id,nome,tipo FROM campeonatos WHERE ativo=1 ORDER BY status='ativo' DESC,id DESC")->fetchAll();
-if (!$campeonatoId && $campeonatos) $campeonatoId = (int)$campeonatos[0]['id'];
-$campeonatoTipo = 'pontos_corridos';
-foreach ($campeonatos as $campeonatoDisponivel) if ((int)$campeonatoDisponivel['id'] === $campeonatoId) $campeonatoTipo = (string)$campeonatoDisponivel['tipo'];
-$campeonatoUsaCiclo = $campeonatoTipo === 'pontos_corridos';
+$campeonatos = $pdo->query("SELECT id,nome,tipo FROM campeonatos WHERE ativo=1 AND status='ativo' AND tipo='pontos_corridos' ORDER BY id DESC")->fetchAll();
+$campeonatoValido = false;
+foreach ($campeonatos as $campeonatoDisponivel) {
+    if ((int)$campeonatoDisponivel['id'] === $campeonatoId) $campeonatoValido = true;
+}
+if (!$campeonatoValido) {
+    $campeonatoId = $_SERVER['REQUEST_METHOD'] === 'POST' ? 0 : (int)($campeonatos[0]['id'] ?? 0);
+}
+$campeonatoUsaCiclo = true;
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         verify_csrf();
+        if (!$campeonatoId) throw new RuntimeException('Esta competição não está disponível para gestão.');
         if (!$participantId) throw new RuntimeException('Sua conta precisa estar vinculada a um time.');
         $rodada = $campeonatoUsaCiclo ? mercado_rodada_atual($pdo, $campeonatoId, $participantId) : 1;
         $clube = mercado_clube($pdo, $campeonatoId, $participantId);
@@ -373,7 +378,7 @@ if ($clube) {
 </head>
 
 <body><?php public_navbar('mercado'); ?><main class="container market-page" data-market-editable="<?= $podeEditarMercado ? '1' : '0' ?>"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
-        <h1>GESTÃO DA COMPETIÇÃO</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando inscrição e escalação de <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><label class="form-label">Competição que deseja gerenciar</label><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === $c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form>
+        <h1>GESTÃO DA COMPETIÇÃO</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando inscrição e escalação de <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><?php if ($campeonatos): ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><label class="form-label">Competição que deseja gerenciar</label><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === (int)$c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form><?php else: ?><div class="alert alert-info mb-4">Nenhuma competição de pontos corridos está ativa para gestão.</div><?php endif; ?>
         <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif ($clube && !(bool)($clube['cofre_configurado'] ?? false)): ?><section class="panel p-4 market-treasury-required"><span class="eyebrow">Primeira etapa obrigatória</span><h2>INFORME O SALDO DO COFRE</h2><p>Antes de montar o elenco ou registrar qualquer movimentação, informe o valor atual do cofre. O saldo pode ser zero, mas precisa ser confirmado pelo responsável.</p><a class="btn btn-danger" href="time.php?id=<?= $participantId ?>&editar_perfil=1">Abrir perfil e informar cofre</a></section><?php elseif ($clube): ?><section class="market-summary">
                 <div><small><?= $campeonatoUsaCiclo ? 'Próxima rodada do clube' : 'Formato da competição' ?></small><strong><?= $campeonatoUsaCiclo ? $rodada.'ª' : 'MATA-MATA' ?></strong></div>
                 <div><small><?= $campeonatoUsaCiclo ? 'Ciclo '.$ciclo['ciclo'] : 'Regra de inscrição' ?></small><strong><?= !$campeonatoUsaCiclo || $ciclo['aberto'] ? 'INSCRIÇÃO LIBERADA' : 'INSCRIÇÃO TRAVADA' ?></strong></div>
