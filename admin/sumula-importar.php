@@ -231,10 +231,16 @@ try {
             ? ($existingSummary['origem'] === 'pontos' ? (int)$existingSummary['partida_id'] : (int)$existingSummary['jogo_mata_mata_id'])
             : null;
         $rosterIssues = [];
+        $rewriteMatchKeys = [];
         foreach ($context['candidates'] as $item) {
             $rosterIssues[$item['key']] = summary_roster_issues($pdo, $parsed, $context, (int)$item['campeonato_id'], (string)$item['championship_name']);
+            $column = $item['type'] === 'pontos' ? 'partida_id' : 'jogo_mata_mata_id';
+            $targetCheck = $pdo->prepare("SELECT 1 FROM sumulas_dreamteam WHERE origem=? AND `$column`=? LIMIT 1");
+            $targetCheck->execute([$item['type'],$item['id']]);
+            if ($targetCheck->fetchColumn()) $rewriteMatchKeys[] = $item['key'];
         }
-        summary_json_response(['ok'=>true,'parsed'=>$parsed,'candidates'=>$context['candidates'],'teams'=>['home'=>$context['home'],'away'=>$context['away']],'is_rewrite'=>(bool)$existingSummary,'existing_match_key'=>$existingSummary ? $existingSummary['origem'] . ':' . $existingMatchId : null,'roster_issues'=>$rosterIssues]);
+        $existingMatchKey = $existingSummary ? $existingSummary['origem'] . ':' . $existingMatchId : ($rewriteMatchKeys[0] ?? null);
+        summary_json_response(['ok'=>true,'parsed'=>$parsed,'candidates'=>$context['candidates'],'teams'=>['home'=>$context['home'],'away'=>$context['away']],'is_rewrite'=>(bool)$existingSummary || (bool)$rewriteMatchKeys,'existing_match_key'=>$existingMatchKey,'rewrite_match_keys'=>$rewriteMatchKeys,'roster_issues'=>$rosterIssues]);
     }
     if ($parsed['warnings']) throw new RuntimeException('A súmula possui alertas que precisam ser corrigidos antes da importação: ' . implode(' ', $parsed['warnings']));
     [$type,$idText] = array_pad(explode(':', (string) ($_POST['match_key'] ?? ''), 2), 2, '');
@@ -244,6 +250,14 @@ try {
     if (!$candidate) throw new RuntimeException('Selecione uma partida compatível.');
     $rosterIssues = summary_roster_issues($pdo, $parsed, $context, (int)$candidate['campeonato_id'], (string)$candidate['championship_name']);
     if ($rosterIssues) throw new RuntimeException('Verifique a escalação: ' . implode(' ', $rosterIssues));
+    $targetColumn = $type === 'pontos' ? 'partida_id' : 'jogo_mata_mata_id';
+    $targetLookup = $pdo->prepare("SELECT id,dreamteam_id,origem,partida_id,jogo_mata_mata_id FROM sumulas_dreamteam WHERE origem=? AND `$targetColumn`=? LIMIT 1");
+    $targetLookup->execute([$type,$matchId]);
+    $targetSummary = $targetLookup->fetch() ?: null;
+    if ($existingSummary && $targetSummary && (int)$existingSummary['id'] !== (int)$targetSummary['id']) {
+        throw new RuntimeException('O ID informado e a partida selecionada pertencem a súmulas diferentes. Revise a partida antes de substituir.');
+    }
+    $summaryToRewrite = $existingSummary ?: $targetSummary;
     if ($existingSummary) {
         $existingMatchId = $existingSummary['origem'] === 'pontos'
             ? (int) $existingSummary['partida_id']
@@ -255,15 +269,15 @@ try {
     $pdo->beginTransaction();
     replace_imported_goals($pdo,$parsed,$context,$type,$matchId,(bool)$candidate['reversed']);
     $summaryValues = [$parsed['stadium'],$parsed['weather'],$parsed['duration'],$parsed['man_of_match'],$parsed['man_of_match_rating'],json_encode($parsed,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$raw,(int)($_SESSION['conta_id']??0)];
-    if ($existingSummary) {
-        $update = $pdo->prepare("UPDATE sumulas_dreamteam SET estadio=?,clima=?,duracao=?,craque=?,craque_nota=?,dados_json=?,texto_original=?,criado_por=?,criado_em=CURRENT_TIMESTAMP WHERE id=?");
-        $update->execute([...$summaryValues,(int)$existingSummary['id']]);
+    if ($summaryToRewrite) {
+        $update = $pdo->prepare("UPDATE sumulas_dreamteam SET dreamteam_id=?,estadio=?,clima=?,duracao=?,craque=?,craque_nota=?,dados_json=?,texto_original=?,criado_por=?,criado_em=CURRENT_TIMESTAMP WHERE id=?");
+        $update->execute([$parsed['dreamteam_id'],...$summaryValues,(int)$summaryToRewrite['id']]);
     } else {
         $insert = $pdo->prepare("INSERT INTO sumulas_dreamteam(dreamteam_id,origem,partida_id,jogo_mata_mata_id,estadio,clima,duracao,craque,craque_nota,dados_json,texto_original,criado_por) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)");
         $insert->execute([$parsed['dreamteam_id'],$type,$type==='pontos'?$matchId:null,$type==='mata'?$matchId:null,...$summaryValues]);
     }
     $pdo->commit();
-    $actionLabel = $existingSummary ? 'reescrita' : 'importada';
+    $actionLabel = $summaryToRewrite ? 'reescrita' : 'importada';
     audit_post_success('sumulas', 'Súmula ' . $actionLabel . ' e partida atualizada.');
     summary_json_response(['ok'=>true,'message'=>'Súmula ' . $actionLabel . ', resultado atualizado e eventos armazenados com sucesso.']);
 } catch (Throwable $error) {
