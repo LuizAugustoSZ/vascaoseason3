@@ -201,8 +201,13 @@ try {
                 $stmt = $pdo->prepare("SELECT id,nome,overall,posicao,grupo,ordem,campo_x,campo_y FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
                 $stmt->execute([(int)$clubePublico['campeonato_id'], $id]);
                 $elencoPublico = $stmt->fetchAll();
-                $stmt = $pdo->prepare("SELECT tipo,origem,origem_detalhe,valor_origem,moeda_origem,jogador_nome,jogador_overall,jogador_posicao,valor,criado_em FROM movimentacoes_elenco WHERE campeonato_id=? AND participante_id=? AND tipo IN ('compra','venda') ORDER BY id DESC");
-                $stmt->execute([(int)$clubePublico['campeonato_id'], $id]);
+                $stmt = $pdo->prepare("SELECT tipo,origem,origem_detalhe,valor_origem,moeda_origem,jogador_nome,jogador_overall,jogador_posicao,valor,criado_em
+                    FROM movimentacoes_elenco_geral WHERE participante_id=? AND tipo IN ('compra','venda')
+                    UNION ALL
+                    SELECT tipo,origem,origem_detalhe,valor_origem,moeda_origem,jogador_nome,jogador_overall,jogador_posicao,valor,criado_em
+                    FROM movimentacoes_elenco WHERE participante_id=? AND tipo IN ('compra','venda')
+                    ORDER BY criado_em DESC");
+                $stmt->execute([$id, $id]);
                 $transferenciasPublicas = $stmt->fetchAll();
                 foreach ($elencoPublico as $jogadorElenco) {
                     if ((int)$jogadorElenco['id'] === (int)$clubePublico['jogador_favorito_id']) {

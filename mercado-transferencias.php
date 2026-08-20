@@ -6,12 +6,27 @@ require __DIR__ . '/includes/public-layout.php';
 require __DIR__ . '/includes/mercado.php';
 
 $pdo = db();
-$transferencias = $pdo->query("SELECT m.*,c.nome campeonato,p.time_nome clube,p.sigla clube_sigla,p.escudo_url clube_escudo
-    FROM movimentacoes_elenco m
-    JOIN campeonatos c ON c.id=m.campeonato_id
-    JOIN participantes p ON p.id=m.participante_id
-    WHERE c.ativo=1 AND p.ativo=1
-    ORDER BY m.criado_em DESC,m.id DESC")->fetchAll();
+mercado_garantir_estrutura($pdo);
+elenco_geral_garantir_estrutura($pdo);
+$transferencias = $pdo->query("SELECT movimentos.*,
+        p.time_nome clube,p.sigla clube_sigla,p.escudo_url clube_escudo
+    FROM (
+        SELECT CONCAT('geral-',m.id) movimento_id,0 campeonato_id,'Elenco Geral' campeonato,
+            m.participante_id,m.tipo,m.origem,m.origem_detalhe,m.valor_origem,m.moeda_origem,
+            m.jogador_nome,m.jogador_overall,m.jogador_posicao,m.valor,m.criado_em
+        FROM movimentacoes_elenco_geral m
+        WHERE m.tipo IN ('compra','venda')
+        UNION ALL
+        SELECT CONCAT('competicao-',m.id),m.campeonato_id,c.nome,m.participante_id,m.tipo,m.origem,
+            m.origem_detalhe,m.valor_origem,m.moeda_origem,m.jogador_nome,m.jogador_overall,
+            m.jogador_posicao,m.valor,m.criado_em
+        FROM movimentacoes_elenco m
+        JOIN campeonatos c ON c.id=m.campeonato_id
+        WHERE c.ativo=1 AND m.tipo IN ('compra','venda')
+    ) movimentos
+    JOIN participantes p ON p.id=movimentos.participante_id
+    WHERE p.ativo=1
+    ORDER BY movimentos.criado_em DESC,movimentos.movimento_id DESC")->fetchAll();
 $campeonatos = [];
 $clubes = [];
 foreach ($transferencias as $movimento) {
@@ -59,7 +74,7 @@ asort($clubes, SORT_NATURAL | SORT_FLAG_CASE);
                     <div class="transfer-card-top"><span class="transfer-card-kind <?= $movimento['tipo'] === 'venda' ? 'is-sale' : 'is-purchase' ?>"><?= e(mercado_rotulo_origem($movimento)) ?></span><time datetime="<?= e(date('c', strtotime((string)$movimento['criado_em']))) ?>"><?= e(format_datetime_br((string)$movimento['criado_em'])) ?></time></div>
                     <strong class="transfer-player-name"><?= e($movimento['jogador_nome']) ?></strong>
                     <p><?= (int)$movimento['jogador_overall'] ?> OVR · <?= e($movimento['jogador_posicao']) ?><?= !empty($movimento['origem_detalhe']) ? ' · ' . e($movimento['origem_detalhe']) : '' ?></p>
-                    <div class="transfer-card-club"><a class="transfer-club-shield" href="time.php?id=<?= (int)$movimento['participante_id'] ?>" aria-label="Abrir página do <?= e($movimento['clube']) ?>"><?php if (!empty($movimento['clube_escudo'])): ?><img src="<?= e($movimento['clube_escudo']) ?>" alt="Escudo do <?= e($movimento['clube']) ?>" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden><?= e($movimento['clube_sigla'] ?: mb_substr((string)$movimento['clube'], 0, 3)) ?></span><?php else: ?><span><?= e($movimento['clube_sigla'] ?: mb_substr((string)$movimento['clube'], 0, 3)) ?></span><?php endif; ?></a><div><a class="transfer-club-name" href="time.php?id=<?= (int)$movimento['participante_id'] ?>"><?= e($movimento['clube']) ?></a><a class="transfer-championship-link" href="index.php?campeonato_id=<?= (int)$movimento['campeonato_id'] ?>#competicao"><?= e($movimento['campeonato']) ?></a></div></div>
+                    <div class="transfer-card-club"><a class="transfer-club-shield" href="time.php?id=<?= (int)$movimento['participante_id'] ?>" aria-label="Abrir página do <?= e($movimento['clube']) ?>"><?php if (!empty($movimento['clube_escudo'])): ?><img src="<?= e($movimento['clube_escudo']) ?>" alt="Escudo do <?= e($movimento['clube']) ?>" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden><?= e($movimento['clube_sigla'] ?: mb_substr((string)$movimento['clube'], 0, 3)) ?></span><?php else: ?><span><?= e($movimento['clube_sigla'] ?: mb_substr((string)$movimento['clube'], 0, 3)) ?></span><?php endif; ?></a><div><a class="transfer-club-name" href="time.php?id=<?= (int)$movimento['participante_id'] ?>"><?= e($movimento['clube']) ?></a><?php if ((int)$movimento['campeonato_id'] > 0): ?><a class="transfer-championship-link" href="index.php?campeonato_id=<?= (int)$movimento['campeonato_id'] ?>#competicao"><?= e($movimento['campeonato']) ?></a><?php else: ?><span class="transfer-championship-link"><?= e($movimento['campeonato']) ?></span><?php endif; ?></div></div>
                     <footer><span><?= $movimento['tipo'] === 'venda' ? 'Valor recebido' : 'Custo registrado' ?></span><strong><?= e(mercado_valor_movimento($movimento)) ?></strong></footer>
                 </article>
             <?php endforeach; ?>
