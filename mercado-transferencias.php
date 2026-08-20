@@ -4,6 +4,7 @@ declare(strict_types=1);
 require __DIR__ . '/includes/bootstrap.php';
 require __DIR__ . '/includes/public-layout.php';
 require __DIR__ . '/includes/mercado.php';
+require __DIR__ . '/includes/elenco-geral.php';
 
 $pdo = db();
 mercado_garantir_estrutura($pdo);
