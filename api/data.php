@@ -24,6 +24,7 @@ try {
         ->fetchAll();
     foreach ($campeonatos as &$competitionItem) {
         $competitionItem['logo_url'] = !empty($competitionItem['identidade_id']) ? competition_image_url((int)$competitionItem['id'], 'logo') : null;
+        $competitionItem['trofeu_url'] = !empty($competitionItem['identidade_id']) ? competition_image_url((int)$competitionItem['id'], 'trofeu') : null;
     }
     unset($competitionItem);
     $requested = (int) ($_GET["campeonato_id"] ?? 0);

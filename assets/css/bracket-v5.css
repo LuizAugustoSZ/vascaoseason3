@@ -112,11 +112,12 @@
     box-shadow: 0 0 30px rgba(213, 166, 46, .1)
 }
 
-.bracket-final>h4:before {
-    content: '🏆';
+.bracket-final-trophy {
     display: block;
-    font-size: 2rem;
-    margin-bottom: .35rem
+    width: 48px;
+    height: 48px;
+    margin-bottom: .35rem;
+    object-fit: contain
 }
 
 .bracket-third {
