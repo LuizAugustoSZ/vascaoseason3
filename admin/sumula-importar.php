@@ -68,6 +68,7 @@ function identify_summary_context(PDO $pdo, array $parsed): array
             'key' => 'pontos:' . $match['id'],
             'type' => 'pontos',
             'id' => (int) $match['id'],
+            'championship_name' => $match['campeonato'],
             'label' => $match['campeonato'] . ' • Rodada ' . $match['rodada'] . ' • ' . $match['mandante'] . ' × ' . $match['visitante'],
             'status' => $match['status'],
             'reversed' => (int) $match['mandante_id'] !== $homeId,
@@ -80,6 +81,7 @@ function identify_summary_context(PDO $pdo, array $parsed): array
             'key' => 'mata:' . $match['id'],
             'type' => 'mata',
             'id' => (int) $match['id'],
+            'championship_name' => $match['campeonato'],
             'label' => $match['campeonato'] . ' • ' . $match['fase'] . ' ' . $match['ordem'] . ' • Jogo ' . $match['jogo'] . ' • ' . $match['time_a'] . ' × ' . $match['time_b'],
             'status' => $match['status'],
             'reversed' => (int) $match['time_a_id'] !== $homeId,
@@ -88,7 +90,7 @@ function identify_summary_context(PDO $pdo, array $parsed): array
     return ['home' => $home, 'away' => $away, 'candidates' => $candidates];
 }
 
-function summary_roster_issues(PDO $pdo, array $parsed, array $context, int $championshipId): array
+function summary_roster_issues(PDO $pdo, array $parsed, array $context, int $championshipId, string $championshipName): array
 {
     $codes = array_column($parsed['teams'], 'code');
     if (count($codes) !== 2) return ['Não foi possível conferir os jogadores porque as siglas dos times não foram identificadas.'];
@@ -114,17 +116,18 @@ function summary_roster_issues(PDO $pdo, array $parsed, array $context, int $cha
     $addPlayer($mentioned, $parsed['man_of_match_team_code'] ?? null, $parsed['man_of_match'] ?? null);
 
     $exactRoster = $pdo->prepare("SELECT nome FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND grupo IN ('titular','banco')");
-    $sameTeamRoster = $pdo->prepare("SELECT e.nome,p.time_nome FROM jogadores_elenco e JOIN participantes p ON p.id=e.participante_id WHERE e.campeonato_id=? AND e.ativo=1 AND e.grupo IN ('titular','banco') AND p.ativo=1");
+    $semanticRoster = $pdo->prepare("SELECT e.nome,p.time_nome,c.nome campeonato FROM jogadores_elenco e JOIN participantes p ON p.id=e.participante_id JOIN campeonatos c ON c.id=e.campeonato_id WHERE e.ativo=1 AND e.grupo IN ('titular','banco') AND p.ativo=1 AND c.ativo=1");
     $issues = [];
     foreach ($teamByCode as $code => $team) {
         $exactRoster->execute([$championshipId, (int)$team['id']]);
         $rosterNames = $exactRoster->fetchAll(PDO::FETCH_COLUMN);
         if (!$rosterNames) {
-            $sameTeamRoster->execute([$championshipId]);
+            $semanticRoster->execute();
             $targetTeam = normalized_team_name((string)$team['time_nome']);
+            $targetCompetition = normalized_team_name($championshipName);
             $rosterNames = [];
-            foreach ($sameTeamRoster->fetchAll() as $rosterPlayer) {
-                if (normalized_team_name((string)$rosterPlayer['time_nome']) === $targetTeam) $rosterNames[] = $rosterPlayer['nome'];
+            foreach ($semanticRoster->fetchAll() as $rosterPlayer) {
+                if (normalized_team_name((string)$rosterPlayer['time_nome']) === $targetTeam && normalized_team_name((string)$rosterPlayer['campeonato']) === $targetCompetition) $rosterNames[] = $rosterPlayer['nome'];
             }
         }
         $allowed = [];
@@ -224,7 +227,7 @@ try {
             : null;
         $rosterIssues = [];
         foreach ($context['candidates'] as $item) {
-            $rosterIssues[$item['key']] = summary_roster_issues($pdo, $parsed, $context, (int)$item['campeonato_id']);
+            $rosterIssues[$item['key']] = summary_roster_issues($pdo, $parsed, $context, (int)$item['campeonato_id'], (string)$item['championship_name']);
         }
         summary_json_response(['ok'=>true,'parsed'=>$parsed,'candidates'=>$context['candidates'],'teams'=>['home'=>$context['home'],'away'=>$context['away']],'is_rewrite'=>(bool)$existingSummary,'existing_match_key'=>$existingSummary ? $existingSummary['origem'] . ':' . $existingMatchId : null,'roster_issues'=>$rosterIssues]);
     }
@@ -234,7 +237,7 @@ try {
     $candidate = null;
     foreach ($context['candidates'] as $item) if ($item['type'] === $type && $item['id'] === $matchId) $candidate = $item;
     if (!$candidate) throw new RuntimeException('Selecione uma partida compatível.');
-    $rosterIssues = summary_roster_issues($pdo, $parsed, $context, (int)$candidate['campeonato_id']);
+    $rosterIssues = summary_roster_issues($pdo, $parsed, $context, (int)$candidate['campeonato_id'], (string)$candidate['championship_name']);
     if ($rosterIssues) throw new RuntimeException('Verifique a escalação: ' . implode(' ', $rosterIssues));
     if ($existingSummary) {
         $existingMatchId = $existingSummary['origem'] === 'pontos'
