@@ -4,6 +4,7 @@ declare(strict_types=1);
 require __DIR__ . '/../includes/bootstrap.php';
 require __DIR__ . '/../includes/dreamteam-parser.php';
 require __DIR__ . '/../includes/knockout.php';
+require __DIR__ . '/../includes/elenco-geral.php';
 admin_required();
 ob_start();
 
@@ -215,6 +216,7 @@ verify_csrf();
 try {
     $pdo = db();
     ensure_summary_table($pdo);
+    elenco_geral_garantir_estrutura($pdo);
     $raw = (string) ($_POST['sumula'] ?? '');
     $parsed = dreamteam_parse_summary($raw);
     if (!$parsed['dreamteam_id']) throw new RuntimeException('O ID único DT-... não foi encontrado.');
