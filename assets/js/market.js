@@ -11,12 +11,15 @@ function formatBRLInput(input) {
 // Centraliza confirmações de ações que alteram o clube.
 const clubConfirmationCopy = {
   comprar: ['CONFIRMAR CONTRATAÇÃO', 'Você realmente quer contratar este jogador?', 'Confirmar contratação'],
+  comprar_geral: ['CONTRATAR PARA O ELENCO GERAL', 'Confirma a entrada deste jogador no patrimônio do clube?', 'Confirmar contratação'],
   vender: ['CONFIRMAR VENDA', 'Você realmente quer vender este jogador? Esta ação altera o elenco e o saldo do cofre.', 'Confirmar venda'],
+  vender_geral: ['CONFIRMAR VENDA', 'Confirma a venda deste jogador e sua saída do Elenco Geral?', 'Confirmar venda'],
   atualizar_escalacao: ['SALVAR ESCALAÇÃO', 'Confirma a formação e os 11 titulares selecionados?', 'Salvar escalação'],
   confirmar_elenco: ['CONFIRMAR ELENCO', 'Confirma os 11 titulares e deseja iniciar o ciclo deste elenco?', 'Confirmar elenco'],
   configurar_inicial: ['SALVAR CONFIGURAÇÃO', 'Confirma a formação escolhida para o clube?', 'Salvar configuração'],
   importar_elenco_campeonato: ['IMPORTAR ELENCO', 'Deseja importar este elenco? Os jogadores entrarão inicialmente no banco.', 'Confirmar importação'],
-  confirmar: ['SUBSTITUIR ELENCO', 'Você realmente quer substituir o elenco atual pelos jogadores desta importação?', 'Confirmar substituição'],
+  atualizar_inscricao_geral: ['SALVAR INSCRIÇÃO', 'Confirma os jogadores escolhidos para esta competição?', 'Salvar inscrição'],
+  confirmar: ['IMPORTAR PARA O ELENCO GERAL', 'Confirma a inclusão dos jogadores novos? Ninguém que já está no clube será removido.', 'Confirmar importação'],
   atualizar_perfil_clube: ['SALVAR PERFIL', 'Confirma as alterações no perfil e no cofre do clube?', 'Salvar perfil'],
   atualizar_sobre_clube: ['SALVAR SOBRE O CLUBE', 'Confirma a publicação deste texto no perfil do clube?', 'Salvar sobre'],
   atualizar_cofre_clube: ['SALVAR COFRE', 'Confirma o novo saldo do cofre do clube?', 'Salvar cofre'],
@@ -68,9 +71,11 @@ function askClubConfirmation(title, message, acceptLabel, detail = '') {
 function confirmationDetail(form, action) {
   const selectedText = name => form.querySelector(`[name="${name}"]`)?.selectedOptions?.[0]?.textContent.trim() || '';
   const value = name => form.querySelector(`[name="${name}"]`)?.value.trim() || '';
-  if (action === 'comprar') return [value('nome'), value('overall') && `OVR ${value('overall')}`, selectedText('posicao'), value('valor')].filter(Boolean).join(' · ');
+  if (['comprar','comprar_geral'].includes(action)) return [value('nome'), value('overall') && `OVR ${value('overall')}`, selectedText('posicao'), selectedText('origem'), value('valor')].filter(Boolean).join(' · ');
   if (action === 'vender') return [selectedText('jogador_id'), value('valor')].filter(Boolean).join(' · ');
+  if (action === 'vender_geral') return [form.querySelector('[data-sale-name]')?.textContent.trim(), value('valor')].filter(Boolean).join(' · ');
   if (action === 'atualizar_escalacao') return `${form.querySelectorAll('input[name="titular_id[]"]:checked').length} titulares selecionados · Formação ${selectedText('formacao')}`;
+  if (action === 'atualizar_inscricao_geral') return `${form.querySelectorAll('input[name="titular_geral_id[]"]:checked').length} titulares · ${form.querySelectorAll('input[name="inscrito_id[]"]:checked').length} inscritos no total`;
   if (action === 'importar_elenco_campeonato') return selectedText('campeonato_origem_id');
   return '';
 }
@@ -308,7 +313,7 @@ let marketTransferPane = null;
 const marketPage = document.querySelector('.market-page');
 const lineupSection = document.getElementById('elenco');
 const marketSummary = marketPage?.querySelector('.market-summary');
-if (marketPage && lineupSection && marketSummary) {
+if (false && marketPage && lineupSection && marketSummary) {
   const oldHelp = marketPage.querySelector('.market-help-grid');
   const configPanel = marketPage.querySelector('.market-config-panel');
   const contractPanel = marketPage.querySelector('.market-contract-panel');
@@ -363,7 +368,7 @@ if (marketPage && lineupSection && marketSummary) {
 
   const lineupLauncher = document.createElement('section');
   lineupLauncher.className = 'panel p-4 lineup-launcher';
-  lineupLauncher.innerHTML = '<div><h2>FORMAÇÃO, TITULARES E BANCO</h2><p>Abra o editor para escolher a formação e os onze titulares. Os demais jogadores serão enviados automaticamente ao banco.</p></div><button class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#lineup-management-modal">Editar escalação</button>';
+  lineupLauncher.innerHTML = '<div><h2>FORMAÇÃO, TITULARES E BANCO</h2><p>Escolha a formação e os onze titulares entre os jogadores inscritos nesta competição. A escalação pode ser alterada em qualquer rodada; os demais inscritos ficam no banco.</p></div><button class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#lineup-management-modal">Editar escalação</button>';
   lineupPane.append(lineupLauncher);
 
   const lineupModal = document.createElement('div');
