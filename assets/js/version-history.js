@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['17.5','A taça oficial da final agora fica perfeitamente centralizada acima do título da decisão.','Taça alinhada na final'],
 ['17.4','A final do mata-mata agora exibe a taça oficial vinculada ao campeonato no lugar do emoji genérico.','Taça oficial na final'],
 ['17.3','Elenco Geral centraliza importação, contratação, venda e histórico; Gestão da Competição ficou dedicada à inscrição e escalação, com tutoriais, motivos de bloqueio e confirmações personalizadas.','Fluxo de jogadores autoexplicativo'],
 ['17.2','Todos os campos, buscas e seletores do Elenco Geral agora seguem integralmente o tema escuro do site, inclusive foco, opções e preenchimento automático.','Campos no tema escuro'],
