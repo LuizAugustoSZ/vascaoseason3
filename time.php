@@ -4,6 +4,7 @@ declare(strict_types=1);
 require __DIR__ . "/includes/bootstrap.php";
 require __DIR__ . "/includes/public-layout.php";
 require __DIR__ . "/includes/mercado.php";
+require __DIR__ . "/includes/elenco-geral.php";
 $id = (int) ($_GET["id"] ?? 0);
 if ($id <= 0 && account_logged_in()) {
     $linkedParticipantId = (int)(account_participant_id() ?? 0);
@@ -38,6 +39,7 @@ try {
     $pdo = db();
     competition_identities_seed($pdo);
     mercado_garantir_estrutura($pdo);
+    elenco_geral_garantir_estrutura($pdo);
     $profileAction = (string)($_POST['action'] ?? '');
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_sobre_clube', 'atualizar_cofre_clube', 'atualizar_heroi_clube'], true)) {
         verify_csrf();
@@ -59,6 +61,7 @@ try {
             $saldo = mercado_parse_valor((string)($_POST['saldo'] ?? '0'));
             if ($saldo < 0) throw new RuntimeException('O saldo do cofre não pode ser negativo.');
             $pdo->prepare("UPDATE clubes_campeonato SET saldo=?,cofre_configurado=1 WHERE participante_id=?")->execute([$saldo, $id]);
+            $pdo->prepare("UPDATE clubes_gerais SET saldo=?,cofre_configurado=1 WHERE participante_id=?")->execute([$saldo, $id]);
         }
         if (in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_heroi_clube'], true)) {
             $favoritoId = (int)($_POST['jogador_favorito_id'] ?? 0);
