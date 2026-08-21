@@ -268,8 +268,18 @@ $teams = $pdo
 $competitionModels = $pdo->query("SELECT i.id,i.nome,i.chave,COUNT(DISTINCT c.id) edicoes FROM competicao_identidades i LEFT JOIN campeonatos c ON c.identidade_id=i.id GROUP BY i.id ORDER BY i.nome")->fetchAll();
 $historicalNames = $pdo->query("SELECT titulo FROM titulos")->fetchAll(PDO::FETCH_COLUMN);
 foreach ($competitionModels as &$model) {
-    $known = (int)$model['edicoes'];
-    foreach ($historicalNames as $historicalName) if (competition_identity_match((string)$historicalName) === $model['chave']) $known++;
+    // Campeonatos e títulos são duas representações da mesma edição.
+    // Somá-los conta novamente as edições que já tiveram um campeão.
+    $historicalEditions = 0;
+    foreach ($historicalNames as $historicalName) {
+        if (competition_identity_match((string)$historicalName) === $model['chave']) {
+            $historicalEditions++;
+        }
+    }
+    $registeredEditions = (int)$model['edicoes'];
+    // Havendo campeonatos cadastrados, eles são a fonte oficial da numeração.
+    // Os títulos servem apenas para identidades que ainda não possuem edições no cadastro.
+    $known = $registeredEditions > 0 ? $registeredEditions : $historicalEditions;
     $model['proxima_edicao'] = max(1, $known + 1);
 }
 unset($model);
