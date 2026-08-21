@@ -143,12 +143,15 @@ try {
         usort($jogadas, function ($a, $b) {
             $da = strtotime((string) ($a["data_jogo"] ?? "")) ?: null;
             $db = strtotime((string) ($b["data_jogo"] ?? "")) ?: null;
-            if ($da && $db && $da !== $db) {
-                return $db <=> $da;
+            if ($da !== null || $db !== null) {
+                if ($da === null) return 1;
+                if ($db === null) return -1;
+                if ($da !== $db) return $db <=> $da;
             }
-            if ((int) $a["campeonato_id"] !== (int) $b["campeonato_id"]) {
-                return (int) $b["campeonato_id"] <=> (int) $a["campeonato_id"];
-            }
+
+            // Quando não existe data, preserva a cronologia de cadastro:
+            // o maior ID representa o registro mais recente dentro da origem.
+            if ($a["origem"] !== $b["origem"]) return strcmp((string)$a["origem"], (string)$b["origem"]);
             return (int) $b["id"] <=> (int) $a["id"];
         });
         usort($proximas, function ($a, $b) {
@@ -161,16 +164,8 @@ try {
                 if ($da !== $db) return $da <=> $db;
             }
 
-            // Sem data definida, a sequência correta é a ordem das rodadas —
-            // o ID da partida não representa a cronologia do calendário.
-            $rodadaA = $a["origem"] === "pontos" && is_numeric($a["etapa"])
-                ? (int) $a["etapa"]
-                : PHP_INT_MAX;
-            $rodadaB = $b["origem"] === "pontos" && is_numeric($b["etapa"])
-                ? (int) $b["etapa"]
-                : PHP_INT_MAX;
-            if ($rodadaA !== $rodadaB) return $rodadaA <=> $rodadaB;
-
+            // Sem data definida, usa exatamente a ordem em que os jogos foram cadastrados.
+            if ($a["origem"] !== $b["origem"]) return strcmp((string)$a["origem"], (string)$b["origem"]);
             return (int) $a["id"] <=> (int) $b["id"];
         });
         $stmt = $pdo->prepare(
@@ -194,7 +189,13 @@ try {
         } catch (Throwable $ignored) {
         }
         try {
-            $stmt = $pdo->prepare("SELECT cc.saldo,cc.cofre_configurado,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,c.nome campeonato FROM clubes_campeonato cc JOIN campeonatos c ON c.id=cc.campeonato_id WHERE cc.participante_id=? ORDER BY c.status='ativo' DESC,c.id DESC LIMIT 1");
+            $stmt = $pdo->prepare("SELECT cc.saldo,cc.cofre_configurado,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,c.nome campeonato
+                FROM clubes_campeonato cc
+                JOIN campeonatos c ON c.id=cc.campeonato_id
+                LEFT JOIN competicao_identidades ci ON ci.id=c.identidade_id
+                WHERE cc.participante_id=? AND c.ativo=1 AND c.tipo='pontos_corridos'
+                  AND (ci.chave='brasileirao' OR c.nome LIKE '%Brasileir%')
+                ORDER BY c.status='ativo' DESC,c.id DESC LIMIT 1");
             $stmt->execute([$id]);
             $clubePublico = $stmt->fetch() ?: null;
             if ($clubePublico) {
