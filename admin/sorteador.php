@@ -265,20 +265,37 @@ $teams = $pdo
         "SELECT id,nome,time_nome FROM participantes WHERE ativo=1 ORDER BY time_nome",
     )
     ->fetchAll();
-$competitionModels = $pdo->query("SELECT i.id,i.nome,i.chave,COUNT(DISTINCT c.id) edicoes,MAX(CASE WHEN c.status<>'finalizado' THEN 1 ELSE 0 END) em_andamento FROM competicao_identidades i LEFT JOIN campeonatos c ON c.identidade_id=i.id AND c.ativo=1 GROUP BY i.id ORDER BY i.nome")->fetchAll();
-// Títulos vinculados a um campeonato representam a mesma edição e não podem ser contados novamente.
-$historicalNames = $pdo->query("SELECT titulo FROM titulos WHERE campeonato_id IS NULL")->fetchAll(PDO::FETCH_COLUMN);
+$competitionModels = $pdo->query("SELECT i.id,i.nome,i.chave,MAX(CASE WHEN c.status<>'finalizado' THEN 1 ELSE 0 END) em_andamento FROM competicao_identidades i LEFT JOIN campeonatos c ON c.identidade_id=i.id AND c.ativo=1 GROUP BY i.id ORDER BY i.nome")->fetchAll();
+$registeredNames = [];
+foreach ($pdo->query("SELECT identidade_id,nome FROM campeonatos WHERE ativo=1") as $competition) {
+    $registeredNames[(int)$competition['identidade_id']][] = (string)$competition['nome'];
+}
+$historicalNames = $pdo->query("SELECT titulo FROM titulos")->fetchAll(PDO::FETCH_COLUMN);
+function draw_edition_number(string $name): int
+{
+    if (!preg_match('/\b([IVXLCDM]+)$/i', trim($name), $match)) return 1;
+    $values = ['I'=>1,'V'=>5,'X'=>10,'L'=>50,'C'=>100,'D'=>500,'M'=>1000];
+    $number = 0; $previous = 0;
+    for ($index = strlen($match[1]) - 1; $index >= 0; $index--) {
+        $current = $values[strtoupper($match[1][$index])] ?? 0;
+        $number += $current < $previous ? -$current : $current;
+        $previous = max($previous, $current);
+    }
+    return max(1, $number);
+}
 $availableModels = [];
 foreach ($competitionModels as $model) {
     // Não permite criar a próxima edição enquanto a atual ainda está em andamento.
     if ((int)$model['em_andamento'] === 1) continue;
-    $historicalEditions = 0;
+    $known = 0;
     foreach ($historicalNames as $historicalName) {
         if (competition_identity_match((string)$historicalName) === $model['chave']) {
-            $historicalEditions++;
+            $known = max($known, draw_edition_number((string)$historicalName));
         }
     }
-    $known = (int)$model['edicoes'] + $historicalEditions;
+    foreach ($registeredNames[(int)$model['id']] ?? [] as $registeredName) {
+        $known = max($known, draw_edition_number($registeredName));
+    }
     $model['proxima_edicao'] = max(1, $known + 1);
     $availableModels[] = $model;
 }
