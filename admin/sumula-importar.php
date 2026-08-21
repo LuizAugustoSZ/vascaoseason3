@@ -249,7 +249,14 @@ try {
     foreach ($context['candidates'] as $item) if ($item['type'] === $type && $item['id'] === $matchId) $candidate = $item;
     if (!$candidate) throw new RuntimeException('Selecione uma partida compatível.');
     $rosterIssues = summary_roster_issues($pdo, $parsed, $context, (int)$candidate['campeonato_id'], (string)$candidate['championship_name']);
-    if ($rosterIssues) throw new RuntimeException('Verifique a escalação: ' . implode(' ', $rosterIssues));
+    $postedIgnoredIssues = $_POST['ignored_roster_issues'] ?? [];
+    if (!is_array($postedIgnoredIssues)) $postedIgnoredIssues = [];
+    $ignoredRosterIssues = array_values(array_unique(array_filter(array_map(
+        static fn($issue): string => is_string($issue) ? trim($issue) : '',
+        array_slice($postedIgnoredIssues, 0, 100)
+    ))));
+    $unreviewedRosterIssues = array_values(array_diff($rosterIssues, $ignoredRosterIssues));
+    if ($unreviewedRosterIssues) throw new RuntimeException('Verifique a escalação: ' . implode(' ', $unreviewedRosterIssues));
     $targetColumn = $type === 'pontos' ? 'partida_id' : 'jogo_mata_mata_id';
     $targetLookup = $pdo->prepare("SELECT id,dreamteam_id,origem,partida_id,jogo_mata_mata_id FROM sumulas_dreamteam WHERE origem=? AND `$targetColumn`=? LIMIT 1");
     $targetLookup->execute([$type,$matchId]);
@@ -278,7 +285,8 @@ try {
     }
     $pdo->commit();
     $actionLabel = $summaryToRewrite ? 'reescrita' : 'importada';
-    audit_post_success('sumulas', 'Súmula ' . $actionLabel . ' e partida atualizada.');
+    $ignoredLabel = $ignoredRosterIssues ? ' ' . count(array_intersect($rosterIssues, $ignoredRosterIssues)) . ' aviso(s) de escalação ignorado(s) após revisão.' : '';
+    audit_post_success('sumulas', 'Súmula ' . $actionLabel . ' e partida atualizada.' . $ignoredLabel);
     summary_json_response(['ok'=>true,'message'=>'Súmula ' . $actionLabel . ', resultado atualizado e eventos armazenados com sucesso.']);
 } catch (Throwable $error) {
     if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
