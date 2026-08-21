@@ -7,7 +7,10 @@ if(!text||!analyze||!preview||!csrf)return;
 const escape=value=>String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
 const request=async action=>{
   const payload=new FormData();payload.set('csrf',csrf.value);payload.set('action',action);payload.set('sumula',text.value);
-  if(action==='import')payload.set('match_key',preview.querySelector('[name="dreamteam_match"]')?.value||'');
+  if(action==='import'){
+    payload.set('match_key',preview.querySelector('[name="dreamteam_match"]')?.value||'');
+    preview.querySelectorAll('[name="ignored_roster_issues[]"]:checked').forEach(input=>payload.append('ignored_roster_issues[]',input.value));
+  }
   const response=await fetch('sumula-importar.php',{method:'POST',body:payload,headers:{Accept:'application/json'},credentials:'same-origin'});
   const body=await response.text();
   let data;try{data=JSON.parse(body);}catch{const plain=body.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();data={ok:false,message:response.redirected?'Sua sessão expirou. Atualize a página e entre novamente.':(plain||`Erro ${response.status} ao processar a súmula.`)};}
@@ -24,7 +27,9 @@ const render=data=>{
   const matchSelect=preview.querySelector('[name="dreamteam_match"]');
   const rosterBox=preview.querySelector('.dreamteam-roster-issues');
   const confirmButton=preview.querySelector('.dreamteam-confirm');
-  const updateRosterIssues=()=>{const issues=data.roster_issues?.[matchSelect?.value]||[];rosterBox.innerHTML=issues.length?`<div class="alert alert-danger mb-0"><strong>Verifique a escalação</strong><ul class="mb-0 mt-2">${issues.map(item=>`<li>${escape(item)}</li>`).join('')}</ul></div>`:'';if(confirmButton)confirmButton.disabled=Boolean(warnings||!options||issues.length);};
+  const updateConfirmState=()=>{const issues=data.roster_issues?.[matchSelect?.value]||[];const ignored=rosterBox.querySelectorAll('[name="ignored_roster_issues[]"]:checked').length;if(confirmButton)confirmButton.disabled=Boolean(warnings||!options||ignored<issues.length);};
+  const updateRosterIssues=()=>{const issues=data.roster_issues?.[matchSelect?.value]||[];rosterBox.innerHTML=issues.length?`<div class="alert alert-danger mb-0"><strong>Verifique a escalação</strong><p class="small mb-2 mt-1">Confira cada jogador e marque somente os avisos que deseja ignorar.</p><ul class="mb-0 ps-3">${issues.map((item,index)=>`<li class="mb-2"><div>${escape(item)}</div><div class="form-check mt-1"><input class="form-check-input" type="checkbox" name="ignored_roster_issues[]" value="${escape(item)}" id="dreamteam-roster-issue-${index}"><label class="form-check-label" for="dreamteam-roster-issue-${index}">Ignorar este aviso</label></div></li>`).join('')}</ul></div>`:'';updateConfirmState();};
+  rosterBox.addEventListener('change',event=>{if(event.target.matches('[name="ignored_roster_issues[]"]'))updateConfirmState();});
   matchSelect?.addEventListener('change',updateRosterIssues);updateRosterIssues();
 };
 analyze.addEventListener('click',async()=>{const old=analyze.textContent;analyze.disabled=true;analyze.textContent='Analisando...';try{render(await request('analyze'));}catch(error){preview.innerHTML=`<div class="alert alert-danger mb-0">${escape(error.message)}</div>`;}finally{analyze.disabled=false;analyze.textContent=old;}});
