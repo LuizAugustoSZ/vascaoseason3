@@ -24,8 +24,18 @@ function renderMatchGoalEditor(existing=currentGoalRows()){
   editor.innerHTML=html?`<div class="d-flex justify-content-between align-items-center mb-2"><strong>Gols da partida</strong><small class="text-secondary">${homeTotal+awayTotal} registro${homeTotal+awayTotal===1?'':'s'}</small></div>${html}${datalist}`:'';
 }
 
+function updateLeagueWo(form){
+  const isWo=form.status.value==='wo',box=form.querySelector('[data-wo-winner]');box?.classList.toggle('d-none',!isWo);
+  if(form.vencedor_wo_id){const current=form.vencedor_wo_id.value;form.vencedor_wo_id.innerHTML='<option value="">Selecione o vencedor</option>';[form.mandante_id,form.visitante_id].forEach(select=>form.vencedor_wo_id.add(new Option(select.options[select.selectedIndex]?.textContent||'Time',select.value)));form.vencedor_wo_id.value=current;form.vencedor_wo_id.required=isWo;}
+  form.gols_mandante.readOnly=isWo;form.gols_visitante.readOnly=isWo;
+  if(isWo){form.gols_mandante.value='';form.gols_visitante.value='';}
+}
 const leagueForm=document.getElementById('form-partida');
-if(leagueForm){leagueForm.gols_mandante.addEventListener('input',()=>renderMatchGoalEditor());leagueForm.gols_visitante.addEventListener('input',()=>renderMatchGoalEditor());leagueForm.status.addEventListener('change',()=>renderMatchGoalEditor());leagueForm.mandante_id.addEventListener('change',()=>renderMatchGoalEditor());leagueForm.visitante_id.addEventListener('change',()=>renderMatchGoalEditor());}
+if(leagueForm){
+  const woOption=[...leagueForm.status.options].find(option=>option.value==='wo');if(woOption)woOption.textContent='Finalizada — W.O.';
+  leagueForm.status.closest('[class*="col-"]').insertAdjacentHTML('beforeend','<div class="mt-2 d-none" data-wo-winner><label class="form-label">Time vencedor do W.O.</label><select name="vencedor_wo_id" class="form-select"><option value="">Selecione o vencedor</option></select></div>');
+  leagueForm.gols_mandante.addEventListener('input',()=>renderMatchGoalEditor());leagueForm.gols_visitante.addEventListener('input',()=>renderMatchGoalEditor());leagueForm.status.addEventListener('change',()=>{updateLeagueWo(leagueForm);renderMatchGoalEditor()});leagueForm.mandante_id.addEventListener('change',()=>renderMatchGoalEditor());leagueForm.visitante_id.addEventListener('change',()=>renderMatchGoalEditor());updateLeagueWo(leagueForm);
+}
 
 // Preenche o formulário dos pontos corridos e recupera os gols detalhados da partida.
 document.querySelectorAll('.editar-partida').forEach(botao => botao.addEventListener('click', async () => {
@@ -41,6 +51,8 @@ document.querySelectorAll('.editar-partida').forEach(botao => botao.addEventList
   form.gols_mandante.value=botao.dataset.golsMandante;
   form.gols_visitante.value=botao.dataset.golsVisitante;
   form.status.value=botao.dataset.status;
+  updateLeagueWo(form);
+  if(form.status.value==='wo')selecionarTime(form.vencedor_wo_id,Number(botao.dataset.golsMandante)>Number(botao.dataset.golsVisitante)?botao.dataset.mandante:botao.dataset.visitante);
   const response=await fetch(`partida-dados.php?id=${encodeURIComponent(botao.dataset.id)}`);const data=await response.json();renderMatchGoalEditor(data.gols||[]);
   const aviso=document.getElementById('partida-edicao');
   aviso.querySelector('span').textContent=`Editando: ${botao.dataset.mandante} x ${botao.dataset.visitante}`;
@@ -71,6 +83,7 @@ document.querySelectorAll('.editar-mata').forEach(botao => botao.addEventListene
   form.dataset.outrosGolsA=data.jogo?.outros_gols_a ?? 0;
   form.dataset.outrosGolsB=data.jogo?.outros_gols_b ?? 0;
   form.status.value=botao.dataset.status;
+  form.status.dispatchEvent(new Event('change'));
   updateMataSuggestion(form);
   const aviso=document.getElementById('mata-edicao');
   aviso.querySelector('span').textContent=`Editando: ${botao.dataset.timeA} x ${botao.dataset.timeB}`;
@@ -81,6 +94,7 @@ document.querySelectorAll('.editar-mata').forEach(botao => botao.addEventListene
 
 // Sugere o vencedor pelo placar e atualiza automaticamente o status do confronto.
 function updateMataSuggestion(form){
+  if(form.status.value==='wo')return;
   const goalsA=form.gols_a.value; const goalsB=form.gols_b.value;
   if(goalsA==='' || goalsB===''){form.vencedor_id.value='';form.status.value='agendado';return;}
   const a=Number(goalsA)+Number(form.dataset.outrosGolsA||0),b=Number(goalsB)+Number(form.dataset.outrosGolsB||0),pa=form.penaltis_a.value,pb=form.penaltis_b.value; form.status.value='finalizado';
@@ -89,6 +103,7 @@ function updateMataSuggestion(form){
 
 const mataForm=document.getElementById('form-mata');
 if(mataForm){
+  if(![...mataForm.status.options].some(option=>option.value==='wo'))mataForm.status.add(new Option('Finalizado — W.O.','wo'));
   if(![...mataForm.fase.options].some(option=>option.value==='Terceiro lugar'))mataForm.fase.add(new Option('Terceiro lugar','Terceiro lugar'));
   const goalsB=mataForm.gols_b.closest('[class*="col-"]');
   goalsB.insertAdjacentHTML('afterend','<div class="col-md-2"><label class="form-label">Pênaltis A</label><input class="form-control" type="number" min="0" name="penaltis_a" placeholder="Opcional"></div><div class="col-md-2"><label class="form-label">Pênaltis B</label><input class="form-control" type="number" min="0" name="penaltis_b" placeholder="Opcional"></div>');
@@ -99,6 +114,11 @@ if(mataForm){
   mataForm.gols_b.addEventListener('input',()=>updateMataSuggestion(mataForm));
   mataForm.penaltis_a.addEventListener('input',()=>updateMataSuggestion(mataForm));
   mataForm.penaltis_b.addEventListener('input',()=>updateMataSuggestion(mataForm));
+  mataForm.status.addEventListener('change',()=>{
+    const isWo=mataForm.status.value==='wo';mataForm.vencedor_id.required=isWo;
+    mataForm.vencedor_id.previousElementSibling.textContent=isWo?'Time vencedor do W.O. *':'Vencedor sugerido';
+    if(isWo){mataForm.gols_a.value='';mataForm.gols_b.value='';mataForm.penaltis_a.value='';mataForm.penaltis_b.value='';renderMataGoalEditor([]);}
+  });
 }
 
 // Permite escolher a qual campeonato pertence um cadastro manual.
@@ -331,6 +351,7 @@ if(origemTitulo) origemTitulo.addEventListener('change',()=>{
 // Replica no mata-mata o cadastro individual de cada gol usado nos pontos corridos.
 function renderMataGoalEditor(existing=[]){
   const form=document.getElementById('form-mata'),editor=document.getElementById('mata-goals-editor');if(!form||!editor)return;
+  if(form.status.value==='wo'){editor.innerHTML='<div class="alert alert-secondary mb-0">O W.O. fecha todas as partidas deste confronto em 3 a 0, sem contabilizar artilheiros.</div>';return;}
   const totalA=Number(form.gols_a.value||0),totalB=Number(form.gols_b.value||0),teamA=form.time_a_id.value,teamB=form.time_b_id.value;
   const safe=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
   const name=select=>select.options[select.selectedIndex]?.textContent.split(' — Técnico ')[0]||'Time';

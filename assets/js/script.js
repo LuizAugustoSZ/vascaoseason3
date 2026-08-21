@@ -108,6 +108,8 @@ function renderSite(data) {
   const decisionBlock=['Final','Terceiro lugar'].map(phase=>{const games=data.mata_mata.filter(g=>g.fase===phase);if(!games.length)return '';const ties=games.reduce((groups,game)=>{(groups[game.ordem]??=[]).push(game);return groups;},{});const trophy=phase==='Final'&&data.campeonato?.trofeu_url?`<img class="bracket-final-trophy" src="${esc(data.campeonato.trofeu_url)}" alt="Taça ${esc(data.campeonato.nome)}">`:'';return `<section class="bracket-decision ${phase==='Final'?'bracket-final':'bracket-third'}"><h4>${trophy}${phase==='Terceiro lugar'?'3º LUGAR':'FINAL'}</h4>${Object.values(ties).map(bracketTieCard).join('')}</section>`}).join('');
   const bracketTarget=data.campeonato?.tipo==='supercopa'?'#supercup-bracket':'#bracket';
   $(bracketTarget).html((phaseColumns+(decisionBlock?`<div class="bracket-stage bracket-stage--decisions">${decisionBlock}</div>`:'')) || publicEmpty(data.campeonato?.tipo==='supercopa'?'Aguardando a definição dos campeões.':'O chaveamento será revelado em breve.'));
+  const woMatchIds=new Set((data.mata_mata||[]).filter(game=>game.status==='wo').map(game=>Number(game.id)));
+  $(bracketTarget).find('.bracket-game').each(function(){if(woMatchIds.has(Number(this.dataset.matchId)))this.insertAdjacentHTML('beforeend','<small class="bracket-legs"><strong>W.O. — placar regulamentar</strong></small>')});
   // Monta o ranking e o seletor independente de campeonatos da artilharia.
   scorers=data.artilharia || []; assists=data.assistencias || []; scorersPage=1; renderScorers();
   const scorerSelector=$('#scorers-championship-select');

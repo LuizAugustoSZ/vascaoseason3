@@ -6,6 +6,7 @@ require __DIR__ . "/../includes/knockout.php";
 admin_required();
 $pdo = db();
 ensure_supercup_schema($pdo);
+ensure_knockout_wo_schema($pdo);
 try {
     competition_identities_seed($pdo);
 } catch (Throwable $ignored) {
@@ -721,6 +722,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Atualiza uma partida sorteada ou cria uma partida manual.
         if ($action === "partida") {
             $partidaId = (int) ($_POST["partida_id"] ?? 0);
+            $statusPartida = (string) ($_POST["status"] ?? "");
+            if (!in_array($statusPartida, ["agendada", "finalizada", "wo"], true)) {
+                throw new RuntimeException("Selecione um status válido para a partida.");
+            }
             $homeGoals =
                 $_POST["gols_mandante"] === ""
                     ? null
@@ -732,10 +737,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if (($homeGoals === null) !== ($awayGoals === null)) {
                 throw new RuntimeException("Informe os dois lados do placar.");
             }
-            if (
-                ($_POST["status"] ?? "") === "finalizada" &&
-                $homeGoals === null
-            ) {
+            if ($statusPartida === "finalizada" && $homeGoals === null) {
                 throw new RuntimeException(
                     "Informe o placar para finalizar a partida.",
                 );
@@ -764,6 +766,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 if (!$match) {
                     throw new RuntimeException("Partida não encontrada.");
                 }
+                if ($statusPartida === "wo") {
+                    $woWinner = (int) ($_POST["vencedor_wo_id"] ?? 0);
+                    if (!in_array($woWinner, [(int)$match["mandante_id"], (int)$match["visitante_id"]], true)) {
+                        throw new RuntimeException("Escolha o time vencedor do W.O.");
+                    }
+                    $homeGoals = $woWinner === (int)$match["mandante_id"] ? 3 : 0;
+                    $awayGoals = $woWinner === (int)$match["visitante_id"] ? 3 : 0;
+                }
                 $pdo->beginTransaction();
                 $stmt = $pdo->prepare(
                     "UPDATE partidas SET gols_mandante=?,gols_visitante=?,data_partida=?,status=?,comprovacao_url=? WHERE id=? AND ativo=1",
@@ -772,7 +782,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $homeGoals,
                     $awayGoals,
                     $_POST["data_partida"] ?: null,
-                    $_POST["status"],
+                    $statusPartida,
                     trim($_POST["comprovacao_url"]),
                     $partidaId,
                 ]);
@@ -782,8 +792,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     (int) $match["campeonato_id"],
                     (int) $match["mandante_id"],
                     (int) $match["visitante_id"],
-                    $_POST["status"] === "wo" ? null : $homeGoals,
-                    $_POST["status"] === "wo" ? null : $awayGoals,
+                    $statusPartida === "wo" ? null : $homeGoals,
+                    $statusPartida === "wo" ? null : $awayGoals,
                     $_POST,
                 );
                 $pdo->commit();
@@ -798,6 +808,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $championshipId = (int) ($_POST["campeonato_id"] ?? 0);
             if ($championshipId < 1) {
                 throw new RuntimeException("Selecione o campeonato.");
+            }
+            if ($statusPartida === "wo") {
+                $woWinner = (int) ($_POST["vencedor_wo_id"] ?? 0);
+                $homeId = (int)$_POST["mandante_id"];
+                $awayId = (int)$_POST["visitante_id"];
+                if (!in_array($woWinner, [$homeId, $awayId], true)) throw new RuntimeException("Escolha o time vencedor do W.O.");
+                $homeGoals = $woWinner === $homeId ? 3 : 0;
+                $awayGoals = $woWinner === $awayId ? 3 : 0;
             }
             if (in_array($_POST["status"] ?? "", ["finalizada", "wo"], true)) {
                 require_previous_rounds(
@@ -818,7 +836,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $homeGoals,
                 $awayGoals,
                 $_POST["data_partida"] ?: null,
-                $_POST["status"],
+                $statusPartida,
                 trim($_POST["comprovacao_url"]),
             ]);
             $partidaId = (int) $pdo->lastInsertId();
@@ -828,8 +846,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $championshipId,
                 (int) $_POST["mandante_id"],
                 (int) $_POST["visitante_id"],
-                $_POST["status"] === "wo" ? null : $homeGoals,
-                $_POST["status"] === "wo" ? null : $awayGoals,
+                $statusPartida === "wo" ? null : $homeGoals,
+                $statusPartida === "wo" ? null : $awayGoals,
                 $_POST,
             );
             $pdo->commit();
@@ -867,7 +885,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($action === "mata_mata") {
             $jogoId = (int) ($_POST["jogo_mata_id"] ?? 0);
             $statusMata = $_POST["status"] ?? "";
-            if (!in_array($statusMata, ["agendado", "finalizado"], true)) {
+            if (!in_array($statusMata, ["agendado", "finalizado", "wo"], true)) {
                 throw new RuntimeException(
                     "Selecione um status válido para o confronto.",
                 );
@@ -929,6 +947,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 if (!$tie) {
                     throw new RuntimeException("Confronto não encontrado.");
                 }
+                if ($statusMata === "wo") {
+                    $winner = (int)($_POST["vencedor_id"] ?? 0);
+                    if (!in_array($winner, [(int)$tie["time_a_id"], (int)$tie["time_b_id"]], true)) {
+                        throw new RuntimeException("Escolha o time vencedor do W.O.");
+                    }
+                    $pdo->beginTransaction();
+                    $legsStmt = $pdo->prepare("SELECT id,time_a_id,time_b_id FROM jogos_mata_mata WHERE campeonato_id=? AND fase=? AND ordem=? AND ativo=1 FOR UPDATE");
+                    $legsStmt->execute([(int)$tie["campeonato_id"], $tie["fase"], (int)$tie["ordem"]]);
+                    foreach ($legsStmt->fetchAll() as $leg) {
+                        if (!in_array($winner, [(int)$leg["time_a_id"], (int)$leg["time_b_id"]], true)) {
+                            throw new RuntimeException("O vencedor escolhido não participa de uma das partidas deste confronto.");
+                        }
+                        $legGoalsA = $winner === (int)$leg["time_a_id"] ? 3 : 0;
+                        $legGoalsB = $winner === (int)$leg["time_b_id"] ? 3 : 0;
+                        $pdo->prepare("UPDATE jogos_mata_mata SET gols_a=?,gols_b=?,penaltis_a=NULL,penaltis_b=NULL,vencedor_id=?,status='wo' WHERE id=?")
+                            ->execute([$legGoalsA, $legGoalsB, $winner, (int)$leg["id"]]);
+                        sync_knockout_goals($pdo, (int)$leg["id"], (int)$tie["campeonato_id"], (int)$leg["time_a_id"], (int)$leg["time_b_id"], null, null, []);
+                    }
+                    advance_knockout($pdo, (int)$tie["campeonato_id"], $tie["fase"], (int)$tie["ordem"]);
+                    $pdo->commit();
+                    redirect_notice("Confronto encerrado por W.O. com vitória por 3 a 0 em cada partida.");
+                }
                 $pdo->beginTransaction();
                 $stmt = $pdo->prepare(
                     "UPDATE jogos_mata_mata SET gols_a=?,gols_b=?,penaltis_a=?,penaltis_b=?,vencedor_id=?,status=? WHERE id=? AND ativo=1",
@@ -975,6 +1015,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if ($championshipId < 1) {
                 throw new RuntimeException("Selecione o campeonato.");
             }
+            if ($statusMata === "wo") {
+                $winner = (int)($_POST["vencedor_id"] ?? 0);
+                $teamAId = (int)$_POST["time_a_id"];
+                $teamBId = (int)$_POST["time_b_id"];
+                if (!in_array($winner, [$teamAId, $teamBId], true)) throw new RuntimeException("Escolha o time vencedor do W.O.");
+                $goalsA = $winner === $teamAId ? 3 : 0;
+                $goalsB = $winner === $teamBId ? 3 : 0;
+                $penaltiesA = $penaltiesB = null;
+            }
             $pdo->beginTransaction();
             $stmt = $pdo->prepare(
                 "INSERT INTO jogos_mata_mata(campeonato_id,fase,ordem,time_a_id,time_b_id,gols_a,gols_b,penaltis_a,penaltis_b,vencedor_id,status) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
@@ -999,10 +1048,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $championshipId,
                 (int) $_POST["time_a_id"],
                 (int) $_POST["time_b_id"],
-                $goalsA,
-                $goalsB,
-                $_POST,
+                $statusMata === "wo" ? null : $goalsA,
+                $statusMata === "wo" ? null : $goalsB,
+                $statusMata === "wo" ? [] : $_POST,
             );
+            advance_knockout($pdo, $championshipId, (string)$_POST["fase"], (int)$_POST["ordem"]);
             $pdo->commit();
             redirect_notice("Confronto manual cadastrado.");
         }

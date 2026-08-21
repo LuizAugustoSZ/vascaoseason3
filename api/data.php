@@ -10,7 +10,7 @@ try {
         ->query(
             "SELECT c.id,c.nome,c.identidade_id,c.tipo,c.formato,c.status,c.criado_em,
                 CASE WHEN EXISTS(SELECT 1 FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND(p.status IN('finalizada','wo') OR(p.gols_mandante IS NOT NULL AND p.gols_visitante IS NOT NULL)))
-                    OR EXISTS(SELECT 1 FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1 AND(j.status='finalizado' OR(j.gols_a IS NOT NULL AND j.gols_b IS NOT NULL))) THEN 1 ELSE 0 END iniciado,
+                    OR EXISTS(SELECT 1 FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1 AND(j.status IN('finalizado','wo') OR(j.gols_a IS NOT NULL AND j.gols_b IS NOT NULL))) THEN 1 ELSE 0 END iniciado,
                 GREATEST(
                     COALESCE((SELECT MAX(p.data_partida) FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND p.status IN('finalizada','wo')), '1970-01-01 00:00:00'),
                     COALESCE((SELECT MAX(s.criado_em) FROM sumulas_dreamteam s
@@ -164,7 +164,7 @@ try {
         count(
             array_filter(
                 $mataMata,
-                fn($jogo) => $jogo["status"] === "finalizado",
+                fn($jogo) => in_array($jogo["status"], ["finalizado", "wo"], true),
             ),
         );
     $classification = standings($pdo, $campeonatoId);
