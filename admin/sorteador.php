@@ -265,24 +265,24 @@ $teams = $pdo
         "SELECT id,nome,time_nome FROM participantes WHERE ativo=1 ORDER BY time_nome",
     )
     ->fetchAll();
-$competitionModels = $pdo->query("SELECT i.id,i.nome,i.chave,COUNT(DISTINCT c.id) edicoes FROM competicao_identidades i LEFT JOIN campeonatos c ON c.identidade_id=i.id GROUP BY i.id ORDER BY i.nome")->fetchAll();
-$historicalNames = $pdo->query("SELECT titulo FROM titulos")->fetchAll(PDO::FETCH_COLUMN);
-foreach ($competitionModels as &$model) {
-    // Campeonatos e títulos são duas representações da mesma edição.
-    // Somá-los conta novamente as edições que já tiveram um campeão.
+$competitionModels = $pdo->query("SELECT i.id,i.nome,i.chave,COUNT(DISTINCT c.id) edicoes,MAX(CASE WHEN c.status<>'finalizado' THEN 1 ELSE 0 END) em_andamento FROM competicao_identidades i LEFT JOIN campeonatos c ON c.identidade_id=i.id AND c.ativo=1 GROUP BY i.id ORDER BY i.nome")->fetchAll();
+// Títulos vinculados a um campeonato representam a mesma edição e não podem ser contados novamente.
+$historicalNames = $pdo->query("SELECT titulo FROM titulos WHERE campeonato_id IS NULL")->fetchAll(PDO::FETCH_COLUMN);
+$availableModels = [];
+foreach ($competitionModels as $model) {
+    // Não permite criar a próxima edição enquanto a atual ainda está em andamento.
+    if ((int)$model['em_andamento'] === 1) continue;
     $historicalEditions = 0;
     foreach ($historicalNames as $historicalName) {
         if (competition_identity_match((string)$historicalName) === $model['chave']) {
             $historicalEditions++;
         }
     }
-    $registeredEditions = (int)$model['edicoes'];
-    // Havendo campeonatos cadastrados, eles são a fonte oficial da numeração.
-    // Os títulos servem apenas para identidades que ainda não possuem edições no cadastro.
-    $known = $registeredEditions > 0 ? $registeredEditions : $historicalEditions;
+    $known = (int)$model['edicoes'] + $historicalEditions;
     $model['proxima_edicao'] = max(1, $known + 1);
+    $availableModels[] = $model;
 }
-unset($model);
+$competitionModels = $availableModels;
 function checks(array $teams): string
 {
     $out = "";
