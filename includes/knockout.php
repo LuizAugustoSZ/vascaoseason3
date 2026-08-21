@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+// Aceita W.O. como encerramento próprio sem perder compatibilidade com bancos antigos.
+function ensure_knockout_wo_schema(PDO $pdo): void
+{
+    $column = $pdo->query("SHOW COLUMNS FROM jogos_mata_mata LIKE 'status'")->fetch();
+    if ($column && !str_contains((string)$column['Type'], "'wo'")) {
+        $pdo->exec("ALTER TABLE jogos_mata_mata MODIFY status ENUM('agendado','finalizado','wo') NOT NULL DEFAULT 'agendado'");
+    }
+}
+
 // Soma os jogos da chave e envia automaticamente classificado e eliminado às fases seguintes.
 function advance_knockout(PDO $pdo, int $championshipId, string $phase, int $order): void
 {
@@ -17,7 +26,7 @@ function advance_knockout(PDO $pdo, int $championshipId, string $phase, int $ord
     $allFinished = true;
     foreach ($matches as $match) {
         if ($match["time_a_id"] === null || $match["time_b_id"] === null) return;
-        if ($match["status"] !== "finalizado" || $match["gols_a"] === null || $match["gols_b"] === null) {
+        if (!in_array($match["status"], ["finalizado", "wo"], true) || $match["gols_a"] === null || $match["gols_b"] === null) {
             $allFinished = false;
             continue;
         }
