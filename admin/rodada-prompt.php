@@ -110,12 +110,26 @@ try {
     $campaignStmt->execute([$campeonatoId, $rodada]);
     $campaignGames = $campaignStmt->fetchAll();
     $table = [];
+    $sequences = [];
     $totalGoals = 0;
     foreach ($campaignGames as $game) {
         foreach ([['id'=>(int)$game['mandante_id'],'nome'=>$game['mandante']],['id'=>(int)$game['visitante_id'],'nome'=>$game['visitante']]] as $team) {
             $table[$team['id']] ??= ['nome'=>$team['nome'],'j'=>0,'v'=>0,'e'=>0,'d'=>0,'gp'=>0,'gc'=>0,'sg'=>0,'pts'=>0];
         }
         $home=(int)$game['mandante_id']; $away=(int)$game['visitante_id']; $hg=(int)$game['gols_mandante']; $ag=(int)$game['gols_visitante'];
+        foreach ([[$home, $game['mandante'], $hg, $ag], [$away, $game['visitante'], $ag, $hg]] as [$teamId, $teamName, $goalsFor, $goalsAgainst]) {
+            $sequences[$teamId] ??= ['nome'=>$teamName,'vitorias'=>0,'invicto'=>0];
+            if ($goalsFor > $goalsAgainst) {
+                $sequences[$teamId]['vitorias']++;
+                $sequences[$teamId]['invicto']++;
+            } elseif ($goalsFor === $goalsAgainst) {
+                $sequences[$teamId]['vitorias']=0;
+                $sequences[$teamId]['invicto']++;
+            } else {
+                $sequences[$teamId]['vitorias']=0;
+                $sequences[$teamId]['invicto']=0;
+            }
+        }
         $table[$home]['j']++; $table[$away]['j']++; $table[$home]['gp']+=$hg; $table[$home]['gc']+=$ag; $table[$away]['gp']+=$ag; $table[$away]['gc']+=$hg;
         if ($hg>$ag) { $table[$home]['v']++; $table[$home]['pts']+=3; $table[$away]['d']++; }
         elseif ($hg<$ag) { $table[$away]['v']++; $table[$away]['pts']+=3; $table[$home]['d']++; }
@@ -128,13 +142,19 @@ try {
     usort($table, static function(array $a,array $b): int { foreach(['pts','v','sg','gp'] as $key) if($a[$key]!==$b[$key]) return $b[$key]<=>$a[$key]; return strcmp($a['nome'],$b['nome']); });
     $standingsLines=[];
     foreach($table as $index=>$team) $standingsLines[] = sprintf('%dº %s — %d pts | J %d | V %d | E %d | D %d | GP %d | GC %d | SG %+d', $index+1,$team['nome'],$team['pts'],$team['j'],$team['v'],$team['e'],$team['d'],$team['gp'],$team['gc'],$team['sg']);
+    $sequenceLines=[];
+    foreach ($sequences as $sequence) {
+        if ($sequence['vitorias'] >= 2) $sequenceLines[] = $sequence['nome'] . ' — ' . $sequence['vitorias'] . ' vitórias consecutivas';
+        elseif ($sequence['invicto'] >= 2) $sequenceLines[] = $sequence['nome'] . ' — ' . $sequence['invicto'] . ' jogos consecutivos sem perder';
+    }
+    $sequenceText = $sequenceLines ? implode("\n", $sequenceLines) : 'Nenhuma sequência atual de pelo menos duas vitórias ou dois jogos invictos.';
     $average = count($campaignGames) ? number_format($totalGoals / count($campaignGames), 2, ',', '.') : '0,00';
 
     $prompt = "Você é um jornalista esportivo responsável pela cobertura do campeonato {$campeonato}.\n\n"
-        . "Escreva uma notícia completa sobre a {$rodada}ª rodada usando EXCLUSIVAMENTE os dados fornecidos. Não invente fatos, falas, números ou acontecimentos. Quando algo não estiver disponível, omita. Explore o máximo de informação real: posse de bola, finalizações, chutes no alvo, passes, defesas, cartões, VAR, pênaltis, assistências, minutos dos gols, bolas paradas, craques e notas. Compare os números para explicar domínio, equilíbrio e atuações individuais.\n\n"
+        . "Escreva uma notícia completa sobre a {$rodada}ª rodada usando EXCLUSIVAMENTE os dados fornecidos. Não invente fatos, falas, números ou acontecimentos. Quando algo não estiver disponível, omita. Explore o máximo de informação real: posse de bola, finalizações, chutes no alvo, passes, defesas, cartões, VAR, pênaltis, assistências, minutos dos gols, bolas paradas, craques e notas. Compare os números para explicar domínio, equilíbrio e atuações individuais. Faça uma leitura editorial automática de todos os dados: procure e destaque vitórias consecutivas, séries invictas, liderança mantida ou tomada, recuperação, queda de rendimento, melhor ataque, melhor defesa e outros recordes ou sequências comprováveis. Não espere que o usuário peça esses destaques. Informe sempre a quantidade exata da sequência e não use termos como invicto, consecutivo, recorde, bicampeão ou tricampeão sem comprovação nos dados.\n\n"
         . "PADRÃO EDITORIAL OBRIGATÓRIO:\n1. TÍTULO: manchete forte e informativa, com até 180 caracteres, citando o principal impacto da rodada.\n2. RESUMO: um único parágrafo de até 500 caracteres resumindo líderes, destaques e fatos marcantes.\n3. DESCRIÇÃO: comece repetindo o título e faça uma abertura geral. Depois crie blocos com subtítulos em negrito e emojis pertinentes, como **🥇 Liderança**, **🔥 Destaque**, **🎩 Atuação individual**, **🧤 Goleiros**, **🎯 Pênaltis, cartões e VAR**, **📊 Classificação** e **📋 Resultados da rodada**. Escolha somente blocos sustentados pelos dados. Analise as partidas importantes com placar, gols, minutos, assistências, estatísticas, craque e nota. Feche com a classificação relevante, a lista completa de resultados e uma projeção genérica para a próxima rodada, sem inventar confrontos. Use negrito em nomes e números importantes. Emojis apenas nos subtítulos.\n\n"
         . "ENTREGUE EXATAMENTE SEPARADO ASSIM:\nTÍTULO:\n[texto]\n\nRESUMO:\n[texto]\n\nDESCRIÇÃO:\n[matéria completa]\n\n"
-        . "CONTEXTO DO CAMPEONATO:\nCAMPEONATO: {$campeonato}\nRODADA ANALISADA: {$rodada}ª\nSTATUS DA RODADA: {$roundStatus}. Nunca diga que a rodada terminou se ela estiver em andamento.\nCICLO: {$ciclo}\nINÍCIO DO CICLO: {$inicioCiclo}ª rodada\nFIM DO CICLO: {$fimCiclo}ª rodada\nFASE DO CICLO: {$faseCiclo}\nREGRA: cada ciclo possui cinco rodadas com elenco travado e três rodadas com alterações liberadas. Só mencione o ciclo se isso for editorialmente relevante.\nARTILHEIROS DA RODADA: {$scorers}\nTOTAL ACUMULADO ATÉ A RODADA: {$totalGoals} gols em " . count($campaignGames) . " jogos; média de {$average} gols por partida.\n\nCLASSIFICAÇÃO APÓS A RODADA:\n" . implode("\n", $standingsLines) . "\n\nDADOS DAS PARTIDAS:\n\n"
+        . "CONTEXTO DO CAMPEONATO:\nCAMPEONATO: {$campeonato}\nRODADA ANALISADA: {$rodada}ª\nSTATUS DA RODADA: {$roundStatus}. Nunca diga que a rodada terminou se ela estiver em andamento.\nCICLO: {$ciclo}\nINÍCIO DO CICLO: {$inicioCiclo}ª rodada\nFIM DO CICLO: {$fimCiclo}ª rodada\nFASE DO CICLO: {$faseCiclo}\nREGRA: cada ciclo possui cinco rodadas com elenco travado e três rodadas com alterações liberadas. Só mencione o ciclo se isso for editorialmente relevante.\nARTILHEIROS DA RODADA: {$scorers}\nTOTAL ACUMULADO ATÉ A RODADA: {$totalGoals} gols em " . count($campaignGames) . " jogos; média de {$average} gols por partida.\n\nSEQUÊNCIAS ATUAIS CONFIRMADAS ATÉ A RODADA:\n{$sequenceText}\n\nCLASSIFICAÇÃO APÓS A RODADA:\n" . implode("\n", $standingsLines) . "\n\nDADOS DAS PARTIDAS:\n\n"
         . implode("\n\n---\n\n", $facts);
 
     prompt_json(['ok' => true, 'prompt' => $prompt, 'partidas' => count($partidas), 'rodada' => $rodada, 'contexto' => $contexto]);
