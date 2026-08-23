@@ -80,11 +80,22 @@ document
 document.querySelectorAll('.lineup-placeholder').forEach(module => {
   const tabs = [...module.querySelectorAll('[data-lineup-tab]')];
   const panels = [...module.querySelectorAll('[data-lineup-panel]')];
+  const grid = module.closest('.future-grid');
+  const companionCards = grid ? [...grid.querySelectorAll('.reserves-module, .transfer-history-module')] : [];
+  const syncCompanionHeights = () => {
+    module.style.height = 'auto';
+    const height = Math.ceil(module.getBoundingClientRect().height);
+    if (height > 0) companionCards.forEach(card => { card.style.height = `${height}px`; });
+  };
   tabs.forEach(tab => tab.addEventListener('click', () => {
     if (tab.disabled) return;
     tabs.forEach(item => { const selected = item === tab; item.classList.toggle('active', selected); item.setAttribute('aria-selected', String(selected)); });
     panels.forEach(panel => { panel.hidden = panel.dataset.lineupPanel !== tab.dataset.lineupTab; });
+    requestAnimationFrame(syncCompanionHeights);
   }));
+  module.querySelector('.lineup-image')?.addEventListener('load', syncCompanionHeights);
+  if ('ResizeObserver' in window) new ResizeObserver(syncCompanionHeights).observe(module);
+  requestAnimationFrame(syncCompanionHeights);
 });
 
 document.querySelectorAll('[data-lineup-upload-form]').forEach(form => {
@@ -230,7 +241,7 @@ document.querySelectorAll('.match-shield img').forEach(image => {
 
 const modulesStylesheet = document.createElement('link');
 modulesStylesheet.rel = 'stylesheet';
-modulesStylesheet.href = 'assets/css/team-profile-modules.css?v=18.6.2';
+modulesStylesheet.href = 'assets/css/team-profile-modules.css?v=18.6.3';
 document.head.append(modulesStylesheet);
 
 const queryParams = new URLSearchParams(location.search);
