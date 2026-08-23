@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS imagens_escalacao (
     campeonato_id INT NOT NULL,
     participante_id INT NOT NULL,
     caminho VARCHAR(255) NOT NULL,
+    conteudo MEDIUMBLOB NULL,
+    mime VARCHAR(50) NOT NULL DEFAULT 'image/webp',
     atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uk_imagem_escalacao_clube (campeonato_id, participante_id),
     KEY idx_imagem_escalacao_participante (participante_id)

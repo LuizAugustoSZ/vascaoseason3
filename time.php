@@ -68,7 +68,9 @@ try {
         } else {
             $newPath = lineup_image_store($_FILES['imagem_escalacao'] ?? [], $championshipId, $id);
             try {
-                $pdo->prepare("INSERT INTO imagens_escalacao(campeonato_id,participante_id,caminho) VALUES(?,?,?) ON DUPLICATE KEY UPDATE caminho=VALUES(caminho),atualizado_em=CURRENT_TIMESTAMP")->execute([$championshipId, $id, $newPath]);
+                $imageContents = file_get_contents(__DIR__ . '/' . $newPath);
+                if ($imageContents === false) throw new RuntimeException('Não foi possível concluir o armazenamento da imagem.');
+                $pdo->prepare("INSERT INTO imagens_escalacao(campeonato_id,participante_id,caminho,conteudo,mime) VALUES(?,?,?,?, 'image/webp') ON DUPLICATE KEY UPDATE caminho=VALUES(caminho),conteudo=VALUES(conteudo),mime=VALUES(mime),atualizado_em=CURRENT_TIMESTAMP")->execute([$championshipId, $id, $newPath, $imageContents]);
             } catch (Throwable $error) { lineup_image_delete_file($newPath); throw $error; }
             lineup_image_delete_file($oldPath);
         }
@@ -222,9 +224,11 @@ try {
             $stmt->execute([$id]);
             $clubePublico = $stmt->fetch() ?: null;
             if ($clubePublico) {
-                $lineupImageStmt = $pdo->prepare("SELECT caminho FROM imagens_escalacao WHERE campeonato_id=? AND participante_id=? LIMIT 1");
+                $lineupImageStmt = $pdo->prepare("SELECT caminho,CASE WHEN conteudo IS NOT NULL AND OCTET_LENGTH(conteudo)>0 THEN 1 ELSE 0 END tem_conteudo FROM imagens_escalacao WHERE campeonato_id=? AND participante_id=? LIMIT 1");
                 $lineupImageStmt->execute([(int)$clubePublico['campeonato_id'], $id]);
-                $lineupImagePath = $lineupImageStmt->fetchColumn() ?: null;
+                $lineupImageData = $lineupImageStmt->fetch() ?: null;
+                if ($lineupImageData && !empty($lineupImageData['tem_conteudo'])) $lineupImagePath = 'api/imagem-escalacao.php?campeonato_id=' . (int)$clubePublico['campeonato_id'] . '&participante_id=' . $id;
+                elseif ($lineupImageData && is_file(__DIR__ . '/' . (string)$lineupImageData['caminho'])) $lineupImagePath = (string)$lineupImageData['caminho'];
                 $stmt = $pdo->prepare("SELECT id,nome,overall,posicao,grupo,ordem,campo_x,campo_y FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
                 $stmt->execute([(int)$clubePublico['campeonato_id'], $id]);
                 $elencoPublico = $stmt->fetchAll();
