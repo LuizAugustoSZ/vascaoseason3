@@ -1429,7 +1429,7 @@ if ($adminParticipantId > 0) {
     } catch (Throwable $ignored) {}
 }
 ?>
-<!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Painel | Season 3</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/branding.css?v=5"><link rel="stylesheet" href="../assets/css/news.css?v=<?= filemtime(
+<!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Painel | Season 3</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../assets/css/style.css?v=<?= filemtime(__DIR__ . '/../assets/css/style.css') ?>"><link rel="stylesheet" href="../assets/css/branding.css?v=5"><link rel="stylesheet" href="../assets/css/news.css?v=<?= filemtime(
     __DIR__ . "/../assets/css/news.css",
 ) ?>"><style>.admin-shell{padding:95px 0 60px}.form-control,.form-select{background:#0b0c0e;border-color:#343941}.admin-form{padding:1.25rem}.admin-form h2{font:800 1.5rem 'Barlow Condensed',sans-serif;text-transform:uppercase}.nav-pills .nav-link.active{background:#d71920}.editor-role #tab-campeonatos,.editor-role #tab-times,.editor-role #tab-titulos,.editor-role #tab-videos,.editor-role #tab-configuracoes,.editor-role #tab-usuarios,.editor-role #tab-extra .col-lg-5>form:nth-of-type(2){display:none!important}</style></head><body class="<?= account_is_editor()
     ? "editor-role"
