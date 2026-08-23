@@ -1,6 +1,5 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
-['18.2','O cabeçalho da rail agora mantém escudo, identidade VASCÃO S3 e controle de expansão sempre visíveis, sem alterar o eixo dos ícones ou a largura compacta do menu.','Identidade permanente na rail'],
 ['18.1','A navbar deixou de repetir a identidade visual da sidebar e o antigo botão Menu foi removido; no celular, o próprio logo abre a navegação.','Uma única marca na navegação'],
 ['18.0','O site ganhou navbar global com acesso rápido às principais seções e um popover contextual de conta e time acionado diretamente pelo escudo da sidebar.','Navbar global e menu de conta'],
 ['17.9','O cabeçalho da sidebar compacta voltou a exibir o escudo centralizado e a alça de expansão passou a aparecer inteira sobre a divisória do conteúdo.','Escudo e alça corrigidos'],
