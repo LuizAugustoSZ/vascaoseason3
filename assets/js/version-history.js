@@ -210,16 +210,18 @@ document.addEventListener('DOMContentLoaded',()=>{
  const releaseVersion=siteVersions[0][0];
  const releaseKey='vascao-last-seen-release';
  let previousReleaseSignature='';try{previousReleaseSignature=localStorage.getItem(releaseKey)||''}catch(error){}
- const lastSeenVersion=previousReleaseSignature.split('|')[0];
- const lastSeenIndex=siteVersions.findIndex(([version])=>version===lastSeenVersion);
- const releaseItems=lastSeenIndex>0?siteVersions.slice(0,lastSeenIndex):siteVersions.slice(0,1);
- const releaseSignature=`${releaseVersion}|${releaseItems.map(([version,description])=>`${version}:${description}`).join('||')}|smart-bundle-v1`;
+ const campaignStartVersion='17.6';
+ const campaignStartIndex=siteVersions.findIndex(([version])=>version===campaignStartVersion);
+ const campaignId='release-17.6-18.6';
+ const campaignSeen=previousReleaseSignature.endsWith(`|${campaignId}`);
+ const releaseItems=!campaignSeen&&campaignStartIndex>=0?siteVersions.slice(0,campaignStartIndex+1):siteVersions.slice(0,1);
+ const releaseSignature=`${releaseVersion}|${releaseItems.map(([version,description])=>`${version}:${description}`).join('||')}|${campaignId}`;
  const releaseCards=releaseItems.map(([version,description,title],index)=>`<article><span>${String(index+1).padStart(2,'0')}</span><div><h3>v${version} · ${title||'Novidades desta versão'}</h3><p>${description}</p></div></article>`).join('');
  const releaseRange=releaseItems.length>1?`da v${releaseItems[releaseItems.length-1][0]} até a v${releaseVersion}`:`da v${releaseVersion}`;
  document.body.insertAdjacentHTML('beforeend',`<div class="modal fade release-notes-modal" id="release-notes-modal" tabindex="-1" aria-labelledby="release-notes-title" aria-hidden="true"><div class="modal-dialog modal-fullscreen-md-down modal-xl modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="release-notes-hero"><div><span class="release-notes-kicker">NOVA ATUALIZAÇÃO</span><h2 id="release-notes-title">NOVIDADES DA <em>VERSÃO ${releaseVersion}.</em></h2><p>Veja tudo o que chegou ${releaseRange}, desde a sua última visita.</p></div><div class="release-version-stamp"><small>PATCH</small><strong>${releaseVersion}</strong></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar novidades"></button></div><div class="modal-body"><div class="release-feature-grid">${releaseCards}</div></div><div class="modal-footer"><p>As versões anteriores continuam disponíveis no histórico do site.</p><button type="button" class="btn btn-danger release-notes-continue" data-bs-dismiss="modal">ENTENDI</button></div></div></div></div>`);
  const releaseModal=document.getElementById('release-notes-modal');
  releaseModal.addEventListener('hidden.bs.modal',()=>{try{localStorage.setItem(releaseKey,releaseSignature)}catch(error){}});
- const releaseSeen=previousReleaseSignature===releaseSignature;
+ const releaseSeen=campaignSeen;
  if(!releaseSeen){
   let attempts=0;
   const showRelease=()=>{if(window.bootstrap?.Modal){setTimeout(()=>bootstrap.Modal.getOrCreateInstance(releaseModal).show(),450);return}if(attempts++<20)setTimeout(showRelease,250)};

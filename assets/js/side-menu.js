@@ -13,6 +13,18 @@
     sidebarToggle?.addEventListener('click', () => mobile() ? setMobileOpen(false) : setCollapsed(!document.body.classList.contains('site-nav-collapsed')));
     closeButtons.forEach(button => button.addEventListener('click', () => setMobileOpen(false)));
     menu.querySelectorAll('a').forEach(link => link.addEventListener('click', () => { if (mobile()) setMobileOpen(false); }));
+    let restoreExpandedSidebar = false;
+    document.addEventListener('show.bs.modal', event => {
+        if (event.target?.id !== 'release-notes-modal') return;
+        setMobileOpen(false);
+        restoreExpandedSidebar = !mobile() && !document.body.classList.contains('site-nav-collapsed');
+        if (!mobile()) document.body.classList.add('site-nav-collapsed');
+    });
+    document.addEventListener('hidden.bs.modal', event => {
+        if (event.target?.id !== 'release-notes-modal') return;
+        if (restoreExpandedSidebar && !mobile()) document.body.classList.remove('site-nav-collapsed');
+        restoreExpandedSidebar = false;
+    });
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape' && mobile() && document.body.classList.contains('site-menu-open')) setMobileOpen(false);
     });
