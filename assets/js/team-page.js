@@ -59,6 +59,29 @@ document
   .querySelectorAll('[data-card-pages]')
   .forEach(initializeCardPagination);
 
+document.querySelectorAll('.lineup-placeholder').forEach(module => {
+  const tabs = [...module.querySelectorAll('[data-lineup-tab]')];
+  const panels = [...module.querySelectorAll('[data-lineup-panel]')];
+  tabs.forEach(tab => tab.addEventListener('click', () => {
+    if (tab.disabled) return;
+    tabs.forEach(item => { const selected = item === tab; item.classList.toggle('active', selected); item.setAttribute('aria-selected', String(selected)); });
+    panels.forEach(panel => { panel.hidden = panel.dataset.lineupPanel !== tab.dataset.lineupTab; });
+  }));
+});
+
+document.querySelectorAll('[data-lineup-upload-form]').forEach(form => {
+  const input = form.querySelector('input[type="file"]');
+  const dropzone = form.querySelector('[data-lineup-dropzone]');
+  const preview = form.querySelector('[data-lineup-preview]');
+  const copy = form.querySelector('[data-lineup-drop-copy]');
+  if (preview.getAttribute('src')) copy.hidden = true;
+  const showPreview = file => { if (!file || !file.type.startsWith('image/')) return; preview.src = URL.createObjectURL(file); preview.hidden = false; copy.hidden = true; };
+  input.addEventListener('change', () => showPreview(input.files[0]));
+  ['dragenter', 'dragover'].forEach(type => dropzone.addEventListener(type, event => { event.preventDefault(); dropzone.classList.add('is-dragging'); }));
+  ['dragleave', 'drop'].forEach(type => dropzone.addEventListener(type, event => { event.preventDefault(); dropzone.classList.remove('is-dragging'); }));
+  dropzone.addEventListener('drop', event => { const file = event.dataTransfer.files[0]; if (!file) return; const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files; showPreview(file); });
+});
+
 document.querySelectorAll('.rivalry-card a').forEach(link => link.addEventListener('click', event => event.stopPropagation()));
 
 document.querySelectorAll('[data-transfer-module]').forEach(module => {
