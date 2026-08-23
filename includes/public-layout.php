@@ -91,7 +91,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         }
     }
 ?>
-    <script>if(innerWidth>=768){document.body.classList.add('site-nav-collapsed');try{if(sessionStorage.getItem('site-sidebar-state')==='expanded')document.body.classList.remove('site-nav-collapsed')}catch(error){}}</script>
+    <script>document.body.classList.add('site-has-sidebar');if(innerWidth>=768){document.body.classList.add('site-nav-collapsed');try{if(sessionStorage.getItem('site-sidebar-state')==='expanded')document.body.classList.remove('site-nav-collapsed')}catch(error){}}</script>
     <div class="site-loading-screen" role="status" aria-live="polite" aria-label="Carregando página">
         <img src="assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true">
         <span class="site-loading-spinner"></span>

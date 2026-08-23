@@ -139,8 +139,8 @@ body[aria-busy="true"] .table-responsive {
 
 /* Desktop: sidebar permanente integrada ao layout */
 @media(min-width:768px){
-body{padding-left:264px;transition:padding-left .22s ease}
-body.site-nav-collapsed{padding-left:68px}
+body.site-has-sidebar{padding-left:264px;transition:padding-left .22s ease}
+body.site-has-sidebar.site-nav-collapsed{padding-left:68px}
 .site-topbar{display:flex;left:264px;right:0;transition:left .22s ease}.site-nav-collapsed .site-topbar{left:68px}
 .site-menu-backdrop,.site-menu-rail{display:none!important}
 .site-side-menu{inset:0 auto 0 0;width:264px;height:100vh;padding:16px 12px;border:0;border-right:1px solid #30343c;box-shadow:none;transform:none!important;visibility:visible!important;transition:width .22s ease,padding .22s ease;overflow:visible}

@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['18.3','As telas de login, cadastro e acesso voltaram a ficar centralizadas, enquanto o recuo lateral permanece restrito às páginas que realmente possuem sidebar.','Autenticação centralizada'],
 ['18.2','A navegação mobile ganhou um botão hambúrguer exclusivo para telas pequenas, mantendo o layout desktop da versão 18.1 completamente inalterado.','Menu exclusivo no mobile'],
 ['18.1','A navbar deixou de repetir a identidade visual da sidebar e o antigo botão Menu foi removido; no celular, o próprio logo abre a navegação.','Uma única marca na navegação'],
 ['18.0','O site ganhou navbar global com acesso rápido às principais seções e um popover contextual de conta e time acionado diretamente pelo escudo da sidebar.','Navbar global e menu de conta'],
