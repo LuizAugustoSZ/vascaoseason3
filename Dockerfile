@@ -12,6 +12,7 @@ RUN apt-get update \
 WORKDIR /var/www/html
 COPY . /var/www/html
 COPY docker-entrypoint.sh /usr/local/bin/vascao-entrypoint
+COPY docker/php-uploads.ini /usr/local/etc/php/conf.d/vascao-uploads.ini
 
 RUN chmod +x /usr/local/bin/vascao-entrypoint \
     && chown -R www-data:www-data /var/www/html
