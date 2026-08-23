@@ -99,8 +99,9 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
     </div>
     <nav class="navbar fixed-top navbar-dark site-topbar">
         <div class="container">
-            <button class="navbar-brand site-mobile-brand-trigger align-items-center gap-2" type="button" aria-controls="site-side-menu" aria-expanded="false" aria-label="Abrir navegação"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt=""><span>VASCÃO <b>S3</b></span></button>
+            <a class="navbar-brand site-mobile-brand align-items-center gap-2" href="<?= $onLandingPage ? '#inicio' : 'index.php' ?>"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
             <div class="global-nav-links" aria-label="Seções principais"><a href="<?= e($home . '#competicao') ?>">Competição</a><a href="<?= e($home . '#artilharia') ?>">Jogadores</a><a href="<?= e($home . '#participantes') ?>">Participantes</a><a href="<?= e($home . '#titulos') ?>">Títulos</a><a href="<?= e($home . '#midia') ?>">Vídeos</a></div>
+            <button class="site-mobile-menu-trigger" type="button" aria-controls="site-side-menu" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span><span></span></button>
         </div>
     </nav>
     <div class="site-menu-backdrop" data-site-menu-close></div>
