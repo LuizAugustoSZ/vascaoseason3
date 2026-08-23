@@ -114,6 +114,30 @@ body[aria-busy="true"] .table-responsive {
     backdrop-filter: blur(14px)
 }
 
+/* Navegação lateral global */
+.site-topbar{height:72px;background:rgba(8,9,11,.9)!important;border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(16px)}
+.site-topbar .container{justify-content:space-between}
+.site-menu-trigger{display:flex;align-items:center;justify-content:center;gap:5px;min-width:104px;height:42px;padding:0 15px;border:1px solid #393d45;border-radius:10px;background:#14161a;color:#fff;text-transform:uppercase;font-size:.76rem;font-weight:800;letter-spacing:.09em;transition:.2s ease}
+.site-menu-trigger span{display:block;width:3px;height:3px;border-radius:50%;background:var(--red)}
+.site-menu-trigger b{margin-left:5px}
+.site-menu-trigger:hover{border-color:var(--red);background:#1b1d22}
+.site-menu-backdrop{position:fixed;z-index:1050;inset:0;background:rgba(0,0,0,.72);opacity:0;visibility:hidden;transition:.28s ease;backdrop-filter:blur(3px)}
+.site-side-menu{position:fixed;z-index:1060;inset:0 auto 0 0;display:flex;flex-direction:column;width:min(390px,92vw);padding:22px;background:linear-gradient(155deg,#17191e 0%,#0a0b0e 58%);border-right:1px solid #363a42;box-shadow:24px 0 70px rgba(0,0,0,.55);transform:translateX(-105%);visibility:hidden;transition:transform .3s cubic-bezier(.22,1,.36,1),visibility .3s;overflow-y:auto}
+.site-menu-open{overflow:hidden}
+.site-menu-open .site-menu-backdrop{opacity:1;visibility:visible}
+.site-menu-open .site-side-menu{transform:none;visibility:visible}
+.site-side-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:20px;border-bottom:1px solid #2b2e35}
+.site-side-brand{display:flex;align-items:center;gap:11px;color:#fff;text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-size:1.18rem;font-weight:800;letter-spacing:.03em}
+.site-side-brand img{width:43px;height:43px;object-fit:contain}.site-side-brand b{display:block;color:var(--red);font-size:.72rem;letter-spacing:.14em}
+.site-menu-close{width:39px;height:39px;padding:0;border:1px solid #353942;border-radius:50%;background:transparent;color:#bbc0c9;font-size:1.65rem;line-height:1}.site-menu-close:hover{color:#fff;border-color:var(--red)}
+.site-account-card{display:grid;grid-template-columns:62px 1fr;align-items:center;gap:14px;margin:20px 0 8px;padding:14px;border:1px solid #30343c;border-radius:14px;background:rgba(255,255,255,.035)}
+.site-account-shield{display:grid;place-items:center;width:62px;height:62px;border-radius:13px;background:#090a0c;border:1px solid #353941;overflow:hidden;color:#fff;font:800 1rem 'Barlow Condensed',sans-serif}.site-account-shield img{width:52px;height:52px;object-fit:contain}
+.site-account-card small,.site-account-card strong,.site-account-card span{display:block}.site-account-card small{color:var(--red);font-size:.62rem;font-weight:800;letter-spacing:.13em}.site-account-card strong{margin-top:2px;font-size:.96rem}.site-account-card span{color:#959ba6;font-size:.78rem}
+.site-side-nav{margin-top:18px}.site-side-label{display:block;padding:0 12px 8px;color:#6f7580;font-size:.64rem;font-weight:800;letter-spacing:.17em}.site-side-nav ul{list-style:none;margin:0;padding:0}.site-side-nav li>a{display:flex;align-items:center;justify-content:space-between;min-height:42px;padding:8px 12px;border-radius:9px;color:#c8ccd3;text-decoration:none;font-size:.9rem;font-weight:600;transition:.18s ease}.site-side-nav li>a b{color:#626873;font-size:1.25rem}.site-side-nav li>a:hover{padding-left:16px;background:#202329;color:#fff}.site-side-nav li>a.active{background:linear-gradient(90deg,rgba(215,25,32,.22),transparent);color:#fff;box-shadow:inset 3px 0 var(--red)}.site-side-nav li>a.active b{color:var(--red)}
+.site-team-links{margin-top:18px}.site-team-links .site-side-label{padding-top:8px;border-top:1px solid #292c32}
+.site-side-account{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;margin-top:auto;padding-top:22px}.site-side-account a{color:#aeb3bc;text-decoration:none;font-size:.78rem;font-weight:700}.site-side-account .site-side-primary{display:grid;place-items:center;min-height:43px;padding:8px 14px;border-radius:9px;background:var(--red);color:#fff;text-align:center}.site-side-account .site-side-primary:hover{background:#ed252d}
+@media(max-width:575.98px){.site-topbar{height:64px}.site-topbar .navbar-brand span{display:none}.site-menu-trigger{min-width:88px;height:38px}.site-side-menu{padding:17px}.site-account-card{margin-top:16px}}
+
 .navbar-brand {
     font-family: "Barlow Condensed", sans-serif;
     font-weight: 800;

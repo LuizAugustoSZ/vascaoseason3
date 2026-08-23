@@ -51,12 +51,17 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         "regulamento" => ["regulamento.php", "Regulamento"],
     ];
     $participantId = account_logged_in() ? (int)(account_participant_id() ?? 0) : 0;
-    $teamNavLabel = 'Time';
+    $teamNavLabel = 'Meu time';
+    $teamShield = '';
+    $teamInitials = 'TM';
     if ($participantId > 0) {
         try {
-            $teamLabelStmt = db()->prepare("SELECT time_nome FROM participantes WHERE id=? AND ativo=1 LIMIT 1");
+            $teamLabelStmt = db()->prepare("SELECT time_nome,sigla,escudo_url FROM participantes WHERE id=? AND ativo=1 LIMIT 1");
             $teamLabelStmt->execute([$participantId]);
-            $teamNavLabel = (string)($teamLabelStmt->fetchColumn() ?: 'Time');
+            $teamNavData = $teamLabelStmt->fetch() ?: [];
+            $teamNavLabel = (string)($teamNavData['time_nome'] ?? 'Meu time');
+            $teamShield = trim((string)($teamNavData['escudo_url'] ?? ''));
+            $teamInitials = trim((string)($teamNavData['sigla'] ?? '')) ?: mb_strtoupper(mb_substr($teamNavLabel, 0, 3));
         } catch (Throwable $ignored) {
         }
     }
@@ -66,30 +71,40 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         <span class="site-loading-spinner"></span>
         <strong>CARREGANDO</strong>
     </div>
-    <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
+    <nav class="navbar fixed-top navbar-dark site-topbar">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2" href="<?= $onLandingPage ? "#inicio" : "index.php" ?>"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
-            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu" aria-controls="menu" aria-expanded="false" aria-label="Abrir menu"><span class="navbar-toggler-icon"></span></button>
-            <div id="menu" class="collapse navbar-collapse">
-                <ul class="navbar-nav ms-auto align-items-lg-center">
-                    <?php foreach ($links as $key => [$href, $label]): ?>
-                        <li class="nav-item"><a class="nav-link<?= $active === $key ? " active" : "" ?>" href="<?= e($href) ?>"><?= e($label) ?></a></li>
-                    <?php endforeach; ?>
-                    <?php if ($participantId > 0): ?>
-                        <li class="nav-item dropdown team-nav-dropdown">
-                            <a class="nav-link dropdown-toggle<?= in_array($active, ['time', 'mercado', 'elenco-geral'], true) ? ' active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><?= e($teamNavLabel) ?></a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                                <li><a class="dropdown-item" href="time.php?id=<?= $participantId ?>">Página do time</a></li>
-                                <li><a class="dropdown-item" href="elenco-geral.php">Elenco Geral</a></li>
-                                <li><a class="dropdown-item" href="mercado.php">Gestão da Competição</a></li>
-                            </ul>
-                        </li>
-                    <?php endif; ?>
-                    <li class="nav-item ms-lg-2"><?php if (account_logged_in() && account_is_admin()): ?><a class="btn btn-danger btn-sm px-3" href="admin/">Painel</a><?php elseif (account_logged_in()): ?><a class="btn btn-danger btn-sm px-3" href="logout.php">Sair</a><?php else: ?><a class="btn btn-danger btn-sm px-3" href="login.php">Entrar / cadastrar</a><?php endif; ?></li>
-                </ul>
-            </div>
+            <button class="site-menu-trigger" type="button" aria-controls="site-side-menu" aria-expanded="false"><span></span><span></span><span></span><b>Menu</b></button>
         </div>
     </nav>
+    <div class="site-menu-backdrop" data-site-menu-close></div>
+    <aside id="site-side-menu" class="site-side-menu" aria-label="Menu principal" aria-hidden="true">
+        <div class="site-side-head">
+            <a class="site-side-brand" href="<?= $onLandingPage ? "#inicio" : "index.php" ?>"><img src="assets/img/logo-season3.webp?v=5" alt=""><span>VASCÃO <b>SEASON 3</b></span></a>
+            <button type="button" class="site-menu-close" data-site-menu-close aria-label="Fechar menu">&times;</button>
+        </div>
+        <?php if (account_logged_in()): ?>
+            <div class="site-account-card">
+                <div class="site-account-shield"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="Escudo do <?= e($teamNavLabel) ?>" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden><?= e($teamInitials) ?></span><?php else: ?><span><?= e($participantId > 0 ? $teamInitials : 'S3') ?></span><?php endif; ?></div>
+                <div><small>CONTA CONECTADA</small><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><span><?= e($participantId > 0 ? $teamNavLabel : (account_is_admin() ? 'Administração' : 'Sem time associado')) ?></span></div>
+            </div>
+        <?php endif; ?>
+        <nav class="site-side-nav">
+            <span class="site-side-label">NAVEGAÇÃO</span>
+            <ul>
+                    <?php foreach ($links as $key => [$href, $label]): ?>
+                        <li><a class="<?= $active === $key ? "active" : "" ?>" href="<?= e($href) ?>"><span><?= e($label) ?></span><b aria-hidden="true">›</b></a></li>
+                    <?php endforeach; ?>
+                    <?php if ($participantId > 0): ?>
+                        <li class="site-team-links"><span class="site-side-label">ÁREA DO CLUBE</span></li>
+                        <li><a class="<?= $active === 'time' ? 'active' : '' ?>" href="time.php?id=<?= $participantId ?>"><span>Página do <?= e($teamNavLabel) ?></span><b>›</b></a></li>
+                        <li><a class="<?= $active === 'elenco-geral' ? 'active' : '' ?>" href="elenco-geral.php"><span>Elenco geral</span><b>›</b></a></li>
+                        <li><a class="<?= $active === 'mercado' ? 'active' : '' ?>" href="mercado.php"><span>Gestão da competição</span><b>›</b></a></li>
+                    <?php endif; ?>
+            </ul>
+        </nav>
+        <div class="site-side-account"><?php if (account_logged_in() && account_is_admin()): ?><a class="site-side-primary" href="admin/">Abrir painel administrativo</a><a href="logout.php">Sair da conta</a><?php elseif (account_logged_in() && $participantId > 0): ?><a class="site-side-primary" href="time.php?id=<?= $participantId ?>">Acessar meu time</a><a href="logout.php">Sair da conta</a><?php elseif (account_logged_in()): ?><span></span><a href="logout.php">Sair da conta</a><?php else: ?><a class="site-side-primary" href="login.php">Entrar</a><a href="cadastro.php">Criar uma conta</a><?php endif; ?></div>
+    </aside>
 <?php
 }
 
@@ -126,5 +141,6 @@ function public_footer(): void
     <script defer src="assets/js/player-details.js?v=<?= filemtime(__DIR__ . '/../assets/js/player-details.js') ?>"></script>
     <script defer src="assets/js/market.js?v=<?= filemtime(__DIR__ . '/../assets/js/market.js') ?>"></script>
     <script defer src="assets/js/site-loader.js?v=<?= filemtime(__DIR__ . '/../assets/js/site-loader.js') ?>"></script>
+    <script defer src="assets/js/side-menu.js?v=<?= filemtime(__DIR__ . '/../assets/js/side-menu.js') ?>"></script>
 <?php
 }
