@@ -56,6 +56,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         'mercado' => ['label' => 'Mercado', 'links' => ['transferencias', 'comandos']],
         'informacoes' => ['label' => 'Informações', 'links' => ['regulamento']],
     ];
+    $navIcons = ['noticias' => 'N', 'competicao' => 'C', 'artilharia' => 'J', 'participantes' => 'P', 'titulos' => 'T', 'transferencias' => 'M', 'comandos' => '⌘', 'regulamento' => 'i'];
     $participantId = account_logged_in() ? (int)(account_participant_id() ?? 0) : 0;
     $teamNavLabel = 'Meu time';
     $teamShield = '';
@@ -72,6 +73,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         }
     }
 ?>
+    <script>if(innerWidth>=768&&localStorage.getItem('site-sidebar-state')==='collapsed')document.body.classList.add('site-nav-collapsed');</script>
     <div class="site-loading-screen" role="status" aria-live="polite" aria-label="Carregando página">
         <img src="assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true">
         <span class="site-loading-spinner"></span>
@@ -84,19 +86,10 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         </div>
     </nav>
     <div class="site-menu-backdrop" data-site-menu-close></div>
-    <aside class="site-menu-rail" aria-label="Atalhos de navegação" aria-hidden="true">
-        <button type="button" data-menu-expand data-menu-section="principal" aria-label="Principal" title="Principal"><span>●</span></button>
-        <button type="button" data-menu-expand data-menu-section="competicao" aria-label="Competição" title="Competição"><span>♜</span></button>
-        <button type="button" data-menu-expand data-menu-section="mercado" aria-label="Mercado" title="Mercado"><span>⇄</span></button>
-        <button type="button" data-menu-expand data-menu-section="informacoes" aria-label="Informações" title="Informações"><span>i</span></button>
-        <?php if ($participantId > 0): ?><button type="button" data-menu-expand data-menu-section="clube" aria-label="Meu clube" title="Meu clube"><span>◇</span></button><?php endif; ?>
-        <?php if (account_logged_in() && account_is_admin()): ?><a href="admin/" aria-label="Painel administrativo" title="Painel administrativo"><span>⚙</span></a><?php endif; ?>
-        <button type="button" class="site-rail-close" data-site-menu-close aria-label="Recolher navegação" title="Recolher"><span>×</span></button>
-    </aside>
     <aside id="site-side-menu" class="site-side-menu" aria-label="Menu principal" aria-hidden="true">
         <div class="site-side-head">
             <a class="site-side-brand" href="<?= $onLandingPage ? "#inicio" : "index.php" ?>"><img src="assets/img/logo-season3.webp?v=5" alt=""><span>VASCÃO <b>SEASON 3</b></span></a>
-            <button type="button" class="site-menu-close" data-site-menu-close aria-label="Fechar menu">&times;</button>
+            <button type="button" class="site-menu-close" data-sidebar-toggle aria-label="Recolher menu" title="Expandir ou recolher">‹</button>
         </div>
         <?php if (account_logged_in()): ?>
             <div class="site-account-card">
@@ -105,8 +98,8 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
             </div>
         <?php endif; ?>
         <nav class="site-side-nav">
-            <?php foreach ($navGroups as $groupKey => $group): ?><section class="site-nav-group" data-nav-group="<?= e($groupKey) ?>"><span class="site-side-label"><?= e(mb_strtoupper($group['label'])) ?></span><ul><?php foreach ($group['links'] as $key): [$href, $label] = $links[$key]; ?><li><a class="<?= $active === $key ? 'active' : '' ?>" href="<?= e($href) ?>"><span><?= e($label) ?></span><b aria-hidden="true">›</b></a></li><?php endforeach; ?></ul></section><?php endforeach; ?>
-            <?php if ($participantId > 0): ?><section class="site-nav-group" data-nav-group="clube"><span class="site-side-label">MEU CLUBE</span><ul><li><a class="<?= $active === 'time' ? 'active' : '' ?>" href="time.php?id=<?= $participantId ?>"><span>Página do <?= e($teamNavLabel) ?></span><b>›</b></a></li><li><a class="<?= $active === 'elenco-geral' ? 'active' : '' ?>" href="elenco-geral.php"><span>Elenco geral</span><b>›</b></a></li><li><a class="<?= $active === 'mercado' ? 'active' : '' ?>" href="mercado.php"><span>Gestão da competição</span><b>›</b></a></li></ul></section><?php endif; ?>
+            <?php foreach ($navGroups as $groupKey => $group): ?><section class="site-nav-group" data-nav-group="<?= e($groupKey) ?>"><span class="site-side-label"><?= e(mb_strtoupper($group['label'])) ?></span><ul><?php foreach ($group['links'] as $key): [$href, $label] = $links[$key]; ?><li><a class="<?= $active === $key ? 'active' : '' ?>" href="<?= e($href) ?>" title="<?= e($label) ?>"><i aria-hidden="true"><?= e($navIcons[$key] ?? '•') ?></i><span><?= e($label) ?></span><b aria-hidden="true">›</b></a></li><?php endforeach; ?></ul></section><?php endforeach; ?>
+            <?php if ($participantId > 0): ?><section class="site-nav-group" data-nav-group="clube"><span class="site-side-label">MEU CLUBE</span><ul><li><a class="<?= $active === 'time' ? 'active' : '' ?>" href="time.php?id=<?= $participantId ?>" title="Página do clube"><i aria-hidden="true">◇</i><span>Página do <?= e($teamNavLabel) ?></span><b>›</b></a></li><li><a class="<?= $active === 'elenco-geral' ? 'active' : '' ?>" href="elenco-geral.php" title="Elenco geral"><i aria-hidden="true">E</i><span>Elenco geral</span><b>›</b></a></li><li><a class="<?= $active === 'mercado' ? 'active' : '' ?>" href="mercado.php" title="Gestão da competição"><i aria-hidden="true">G</i><span>Gestão da competição</span><b>›</b></a></li></ul></section><?php endif; ?>
         </nav>
         <div class="site-side-account"><?php if (account_logged_in() && account_is_admin()): ?><a class="site-side-primary" href="admin/">Abrir painel administrativo</a><a href="logout.php">Sair da conta</a><?php elseif (account_logged_in() && $participantId > 0): ?><a class="site-side-primary" href="time.php?id=<?= $participantId ?>">Acessar meu time</a><a href="logout.php">Sair da conta</a><?php elseif (account_logged_in()): ?><span></span><a href="logout.php">Sair da conta</a><?php else: ?><a class="site-side-primary" href="login.php">Entrar</a><a href="cadastro.php">Criar uma conta</a><?php endif; ?></div>
     </aside>
