@@ -72,8 +72,8 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
     $navGroups = [
         'principal' => ['label' => 'Principal', 'links' => ['noticias']],
         'competicao' => ['label' => 'Competição', 'links' => ['competicao', 'artilharia', 'participantes', 'titulos']],
-        'mercado' => ['label' => 'Mercado', 'links' => ['transferencias', 'comandos']],
-        'informacoes' => ['label' => 'Informações', 'links' => ['regulamento']],
+        'mercado' => ['label' => 'Mercado', 'links' => ['transferencias']],
+        'informacoes' => ['label' => 'Informações', 'links' => ['comandos', 'regulamento']],
     ];
     $globalSectionLinks = [
         'competicao' => [$home . '#competicao', 'Competição'],
