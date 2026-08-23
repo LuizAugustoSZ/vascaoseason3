@@ -14,7 +14,7 @@ require __DIR__ . "/includes/public-layout.php"; ?>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/branding.css?v=5">
     <link rel="stylesheet" href="assets/css/season3-update.css?v=<?= filemtime(
                                                                         __DIR__ . "/assets/css/season3-update.css",

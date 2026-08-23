@@ -373,7 +373,7 @@ if ($clube) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Gestão da Competição | Vascão S3</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/market.css">
 </head>
 
