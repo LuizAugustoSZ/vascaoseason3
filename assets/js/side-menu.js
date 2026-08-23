@@ -16,4 +16,18 @@
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape' && mobile() && document.body.classList.contains('site-menu-open')) setMobileOpen(false);
     });
+
+    const accountToggle = document.querySelector('[data-account-popover-toggle]');
+    const accountPopover = document.getElementById('site-account-popover');
+    if (accountToggle && accountPopover) {
+        const setAccountOpen = open => {
+            document.body.classList.toggle('site-account-open', open);
+            accountToggle.setAttribute('aria-expanded', String(open));
+            accountPopover.setAttribute('aria-hidden', String(!open));
+        };
+        accountToggle.addEventListener('click', event => { event.stopPropagation(); setAccountOpen(!document.body.classList.contains('site-account-open')); });
+        accountPopover.addEventListener('click', event => event.stopPropagation());
+        document.addEventListener('click', () => setAccountOpen(false));
+        document.addEventListener('keydown', event => { if (event.key === 'Escape') setAccountOpen(false); });
+    }
 })();

@@ -100,6 +100,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
     <nav class="navbar fixed-top navbar-dark site-topbar">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2" href="<?= $onLandingPage ? "#inicio" : "index.php" ?>"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
+            <div class="global-nav-links" aria-label="Seções principais"><a href="<?= e($home . '#competicao') ?>">Competição</a><a href="<?= e($home . '#artilharia') ?>">Jogadores</a><a href="<?= e($home . '#participantes') ?>">Participantes</a><a href="<?= e($home . '#titulos') ?>">Títulos</a><a href="<?= e($home . '#midia') ?>">Vídeos</a></div>
             <button class="site-menu-trigger" type="button" aria-controls="site-side-menu" aria-expanded="false"><span></span><span></span><span></span><b>Menu</b></button>
         </div>
     </nav>
@@ -111,7 +112,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         </div>
         <?php if (account_logged_in()): ?>
             <div class="site-account-card">
-                <div class="site-account-shield"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="Escudo do <?= e($teamNavLabel) ?>" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden><?= e($teamInitials) ?></span><?php else: ?><span><?= e($participantId > 0 ? $teamInitials : 'S3') ?></span><?php endif; ?></div>
+                <button type="button" class="site-account-shield" data-account-popover-toggle aria-expanded="false" aria-controls="site-account-popover" aria-label="Abrir menu da conta e do time"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="Escudo do <?= e($teamNavLabel) ?>" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden><?= e($teamInitials) ?></span><?php else: ?><span><?= e($participantId > 0 ? $teamInitials : 'S3') ?></span><?php endif; ?></button>
                 <div><small>CONTA CONECTADA</small><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><span><?= e($participantId > 0 ? $teamNavLabel : (account_is_admin() ? 'Administração' : 'Sem time associado')) ?></span></div>
             </div>
         <?php endif; ?>
@@ -122,6 +123,10 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         </nav>
         <div class="site-side-account"><?php if (account_logged_in() && account_is_admin()): ?><a class="site-side-primary" href="admin/">Abrir painel administrativo</a><a href="logout.php">Sair da conta</a><?php elseif (account_logged_in() && $participantId > 0): ?><a class="site-side-primary" href="time.php?id=<?= $participantId ?>">Acessar meu time</a><a href="logout.php">Sair da conta</a><?php elseif (account_logged_in()): ?><span></span><a href="logout.php">Sair da conta</a><?php else: ?><a class="site-side-primary" href="login.php">Entrar</a><a href="cadastro.php">Criar uma conta</a><?php endif; ?></div>
     </aside>
+    <?php if (account_logged_in()): ?><aside id="site-account-popover" class="site-account-popover" aria-label="Conta e time" aria-hidden="true">
+        <div class="site-account-popover-profile"><div class="site-account-popover-shield"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="Escudo do <?= e($teamNavLabel) ?>"><?php else: ?><span><?= e($participantId > 0 ? $teamInitials : 'S3') ?></span><?php endif; ?></div><div><small><?= account_is_admin() ? 'ADMINISTRAÇÃO' : 'CONTA CONECTADA' ?></small><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><span><?= e($participantId > 0 ? $teamNavLabel : 'Sem time associado') ?></span></div></div>
+        <nav><?php if ($participantId > 0): ?><a href="time.php?id=<?= $participantId ?>"><i><?= public_nav_icon('time') ?></i><span>Página do clube</span></a><?php endif; ?><a href="trocar-senha.php"><i><?= public_nav_icon('gestao') ?></i><span>Segurança da conta</span></a><?php if (account_is_admin()): ?><a href="admin/"><i><?= public_nav_icon('admin') ?></i><span>Painel administrativo</span></a><?php endif; ?><a class="site-account-logout" href="logout.php"><i><?= public_nav_icon('transferencias') ?></i><span>Sair da conta</span></a></nav>
+    </aside><?php endif; ?>
 <?php
 }
 

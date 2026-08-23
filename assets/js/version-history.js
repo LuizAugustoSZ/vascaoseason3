@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['18.0','O site ganhou navbar global com acesso rápido às principais seções e um popover contextual de conta e time acionado diretamente pelo escudo da sidebar.','Navbar global e menu de conta'],
 ['17.9','O cabeçalho da sidebar compacta voltou a exibir o escudo centralizado e a alça de expansão passou a aparecer inteira sobre a divisória do conteúdo.','Escudo e alça corrigidos'],
 ['17.8','A sidebar recolhida ganhou alinhamento preciso entre ícones, áreas clicáveis e estados de hover, alça de expansão na divisória e scroll interno mais discreto.','Acabamento da sidebar compacta'],
 ['17.7','A navegação pública ganhou sidebar fixa e responsiva com ícones semânticos, modo compacto por padrão em novas abas, expansão persistente durante a navegação e área de conta integrada.','Nova sidebar pública'],
