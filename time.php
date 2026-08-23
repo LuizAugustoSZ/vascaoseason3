@@ -39,6 +39,11 @@ $canEditClubProfile = account_logged_in() && (
 );
 $profileNotice = isset($_GET['perfil']) ? 'Perfil do clube atualizado.' : '';
 $lineupImageError = mb_substr(trim((string)($_GET['erro_imagem'] ?? '')), 0, 300);
+$requestTooLarge = $_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0;
+if ($requestTooLarge) {
+    header('Location: time.php?id=' . $id . '&erro_imagem=' . rawurlencode('A imagem ultrapassa o limite de 12 MB.') . '#conteudo-clube');
+    exit;
+}
 try {
     $pdo = db();
     competition_identities_seed($pdo);
