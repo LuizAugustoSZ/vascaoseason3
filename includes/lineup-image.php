@@ -8,6 +8,7 @@ function lineup_image_ensure_schema(PDO $pdo): void
 
 function lineup_image_store(array $upload, int $championshipId, int $participantId): string
 {
+    if (!extension_loaded('gd') || !function_exists('imagewebp')) throw new RuntimeException('O servidor ainda não está preparado para processar imagens. Tente novamente após a atualização.');
     if (($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) throw new RuntimeException('Selecione uma imagem da escalação para enviar.');
     if ((int)($upload['size'] ?? 0) > 12 * 1024 * 1024) throw new RuntimeException('A imagem deve ter no máximo 12 MB.');
     $temporaryPath = (string)($upload['tmp_name'] ?? '');

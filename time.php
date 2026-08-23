@@ -38,6 +38,7 @@ $canEditClubProfile = account_logged_in() && (
     account_is_master() || (int)(account_participant_id() ?? 0) === $id
 );
 $profileNotice = isset($_GET['perfil']) ? 'Perfil do clube atualizado.' : '';
+$lineupImageError = mb_substr(trim((string)($_GET['erro_imagem'] ?? '')), 0, 300);
 try {
     $pdo = db();
     competition_identities_seed($pdo);
@@ -46,6 +47,7 @@ try {
     lineup_image_ensure_schema($pdo);
     $profileAction = (string)($_POST['action'] ?? '');
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($profileAction, ['salvar_imagem_escalacao', 'remover_imagem_escalacao'], true)) {
+        try {
         verify_csrf();
         if (!$canEditClubProfile) throw new RuntimeException('Apenas o responsável associado pode alterar a imagem da escalação.');
         $championshipId = (int)($_POST['campeonato_id'] ?? 0);
@@ -66,6 +68,9 @@ try {
             lineup_image_delete_file($oldPath);
         }
         header('Location: time.php?id=' . $id . '&imagem_escalacao=salva'); exit;
+        } catch (RuntimeException $error) {
+            header('Location: time.php?id=' . $id . '&erro_imagem=' . rawurlencode($error->getMessage()) . '#conteudo-clube'); exit;
+        }
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_sobre_clube', 'atualizar_cofre_clube', 'atualizar_heroi_clube'], true)) {
         verify_csrf();
@@ -425,6 +430,7 @@ function match_score(array $j): string
         </header>
         <main class="wide-container club-page">
             <?php if ($profileNotice): ?><div class="alert alert-success club-profile-notice"><?= e($profileNotice) ?></div><?php endif; ?>
+            <?php if ($lineupImageError): ?><div class="alert alert-danger club-profile-notice" role="alert"><?= e($lineupImageError) ?></div><?php endif; ?>
             <section class="club-stats"><?php foreach (
                                             $stats
                                             as $label => $value
