@@ -230,7 +230,7 @@ document.querySelectorAll('.match-shield img').forEach(image => {
 
 const modulesStylesheet = document.createElement('link');
 modulesStylesheet.rel = 'stylesheet';
-modulesStylesheet.href = 'assets/css/team-profile-modules.css?v=18.6.1';
+modulesStylesheet.href = 'assets/css/team-profile-modules.css?v=18.6.2';
 document.head.append(modulesStylesheet);
 
 const queryParams = new URLSearchParams(location.search);
