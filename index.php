@@ -406,7 +406,9 @@ if (
                                 JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
                             ) ?>;
             const main = document.querySelector('main'),
-                order = (config.ordem_secoes || 'noticias,competicao,participantes,artilharia,titulos,midia').split(',').map(item => item.trim());
+                order = String(config.ordem_secoes ?? 'noticias,competicao,participantes,artilharia,titulos,midia').split(',').map(item => item.trim()).filter(Boolean),
+                configurableSections = ['noticias','competicao','participantes','artilharia','titulos','midia'];
+            configurableSections.forEach(id => { if (!order.includes(id)) document.getElementById(id)?.remove() });
             order.forEach(id => {
                 const section = document.getElementById(id);
                 if (section) main.append(section)

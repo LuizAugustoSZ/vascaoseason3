@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['18.4','As seções da navbar global foram alinhadas à direita e a configuração de seções do Admin passou a controlar também a visibilidade na landing e na navegação pública.','Seções configuráveis no Admin'],
 ['18.3','As telas de login, cadastro e acesso voltaram a ficar centralizadas, enquanto o recuo lateral permanece restrito às páginas que realmente possuem sidebar.','Autenticação centralizada'],
 ['18.2','A navegação mobile ganhou um botão hambúrguer exclusivo para telas pequenas, mantendo o layout desktop da versão 18.1 completamente inalterado.','Menu exclusivo no mobile'],
 ['18.1','A navbar deixou de repetir a identidade visual da sidebar e o antigo botão Menu foi removido; no celular, o próprio logo abre a navegação.','Uma única marca na navegação'],
