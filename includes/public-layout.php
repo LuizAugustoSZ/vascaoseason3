@@ -27,6 +27,25 @@ function public_site_config(): array
     return $config;
 }
 
+function public_nav_icon(string $name): string
+{
+    $paths = [
+        'noticias' => '<path d="M4 5.5h16v13H4zM7 9h4v3H7zm7 0h3M14 12h3M7 15h10"/>',
+        'competicao' => '<path d="M8 4h8v4a4 4 0 0 1-8 0V4Zm0 2H5v1a4 4 0 0 0 4 4m7-5h3v1a4 4 0 0 1-4 4m-3 1v4m-4 3h8"/>',
+        'artilharia' => '<circle cx="12" cy="8" r="3.5"/><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"/>',
+        'participantes' => '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.5 19c.5-4 2.4-6 5.5-6s5 2 5.5 6m0-5c3.2 0 5 1.7 5.5 5"/>',
+        'titulos' => '<circle cx="12" cy="14" r="5"/><path d="m9 9-3-5h4l2 4 2-4h4l-3 5m-5 5 1.4 1.1L13 13"/>',
+        'transferencias' => '<path d="M4 8h13m-3-3 3 3-3 3m6 5H7m3-3-3 3 3 3"/>',
+        'comandos' => '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="m7 10 3 2-3 2m5 1h5"/>',
+        'regulamento' => '<path d="M6 3.5h9l3 3V20H6zM15 3.5V7h3M9 11h6M9 14h6M9 17h4"/>',
+        'time' => '<path d="M12 3 19 6v5c0 4.4-2.3 7.5-7 10-4.7-2.5-7-5.6-7-10V6l7-3Z"/>',
+        'elenco' => '<circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M2.5 19c.5-3.5 2.4-5.5 5.5-5.5m13.5 5.5c-.5-3.5-2.4-5.5-5.5-5.5M8 19c.5-3.5 1.8-5.5 4-5.5s3.5 2 4 5.5"/>',
+        'gestao' => '<circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/>',
+        'admin' => '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+    ];
+    return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' . ($paths[$name] ?? $paths['admin']) . '</svg>';
+}
+
 function public_navbar(string $active = "", bool $onLandingPage = false): void
 {
     $home = $onLandingPage ? "" : "index.php";
@@ -56,7 +75,6 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         'mercado' => ['label' => 'Mercado', 'links' => ['transferencias', 'comandos']],
         'informacoes' => ['label' => 'Informações', 'links' => ['regulamento']],
     ];
-    $navIcons = ['noticias' => 'N', 'competicao' => 'C', 'artilharia' => 'J', 'participantes' => 'P', 'titulos' => 'T', 'transferencias' => 'M', 'comandos' => '⌘', 'regulamento' => 'i'];
     $participantId = account_logged_in() ? (int)(account_participant_id() ?? 0) : 0;
     $teamNavLabel = 'Meu time';
     $teamShield = '';
@@ -73,7 +91,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         }
     }
 ?>
-    <script>if(innerWidth>=768&&localStorage.getItem('site-sidebar-state')==='collapsed')document.body.classList.add('site-nav-collapsed');</script>
+    <script>if(innerWidth>=768){document.body.classList.add('site-nav-collapsed');try{if(sessionStorage.getItem('site-sidebar-state')==='expanded')document.body.classList.remove('site-nav-collapsed')}catch(error){}}</script>
     <div class="site-loading-screen" role="status" aria-live="polite" aria-label="Carregando página">
         <img src="assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true">
         <span class="site-loading-spinner"></span>
@@ -98,8 +116,9 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
             </div>
         <?php endif; ?>
         <nav class="site-side-nav">
-            <?php foreach ($navGroups as $groupKey => $group): ?><section class="site-nav-group" data-nav-group="<?= e($groupKey) ?>"><span class="site-side-label"><?= e(mb_strtoupper($group['label'])) ?></span><ul><?php foreach ($group['links'] as $key): [$href, $label] = $links[$key]; ?><li><a class="<?= $active === $key ? 'active' : '' ?>" href="<?= e($href) ?>" title="<?= e($label) ?>"><i aria-hidden="true"><?= e($navIcons[$key] ?? '•') ?></i><span><?= e($label) ?></span><b aria-hidden="true">›</b></a></li><?php endforeach; ?></ul></section><?php endforeach; ?>
-            <?php if ($participantId > 0): ?><section class="site-nav-group" data-nav-group="clube"><span class="site-side-label">MEU CLUBE</span><ul><li><a class="<?= $active === 'time' ? 'active' : '' ?>" href="time.php?id=<?= $participantId ?>" title="Página do clube"><i aria-hidden="true">◇</i><span>Página do <?= e($teamNavLabel) ?></span><b>›</b></a></li><li><a class="<?= $active === 'elenco-geral' ? 'active' : '' ?>" href="elenco-geral.php" title="Elenco geral"><i aria-hidden="true">E</i><span>Elenco geral</span><b>›</b></a></li><li><a class="<?= $active === 'mercado' ? 'active' : '' ?>" href="mercado.php" title="Gestão da competição"><i aria-hidden="true">G</i><span>Gestão da competição</span><b>›</b></a></li></ul></section><?php endif; ?>
+            <?php foreach ($navGroups as $groupKey => $group): ?><section class="site-nav-group" data-nav-group="<?= e($groupKey) ?>"><span class="site-side-label"><?= e(mb_strtoupper($group['label'])) ?></span><ul><?php foreach ($group['links'] as $key): [$href, $label] = $links[$key]; ?><li><a class="<?= $active === $key ? 'active' : '' ?>" href="<?= e($href) ?>" title="<?= e($label) ?>"><i><?= public_nav_icon($key) ?></i><span><?= e($label) ?></span><b aria-hidden="true">›</b></a></li><?php endforeach; ?></ul></section><?php endforeach; ?>
+            <?php if ($participantId > 0): ?><section class="site-nav-group" data-nav-group="clube"><span class="site-side-label">MEU CLUBE</span><ul><li><a class="<?= $active === 'time' ? 'active' : '' ?>" href="time.php?id=<?= $participantId ?>" title="Página do clube"><i><?= public_nav_icon('time') ?></i><span>Página do <?= e($teamNavLabel) ?></span><b>›</b></a></li><li><a class="<?= $active === 'elenco-geral' ? 'active' : '' ?>" href="elenco-geral.php" title="Elenco geral"><i><?= public_nav_icon('elenco') ?></i><span>Elenco geral</span><b>›</b></a></li><li><a class="<?= $active === 'mercado' ? 'active' : '' ?>" href="mercado.php" title="Gestão da competição"><i><?= public_nav_icon('gestao') ?></i><span>Gestão da competição</span><b>›</b></a></li></ul></section><?php endif; ?>
+            <?php if (account_logged_in() && account_is_admin()): ?><section class="site-nav-group"><span class="site-side-label">SISTEMA</span><ul><li><a href="admin/" title="Administração"><i><?= public_nav_icon('admin') ?></i><span>Administração</span><b>›</b></a></li></ul></section><?php endif; ?>
         </nav>
         <div class="site-side-account"><?php if (account_logged_in() && account_is_admin()): ?><a class="site-side-primary" href="admin/">Abrir painel administrativo</a><a href="logout.php">Sair da conta</a><?php elseif (account_logged_in() && $participantId > 0): ?><a class="site-side-primary" href="time.php?id=<?= $participantId ?>">Acessar meu time</a><a href="logout.php">Sair da conta</a><?php elseif (account_logged_in()): ?><span></span><a href="logout.php">Sair da conta</a><?php else: ?><a class="site-side-primary" href="login.php">Entrar</a><a href="cadastro.php">Criar uma conta</a><?php endif; ?></div>
     </aside>
