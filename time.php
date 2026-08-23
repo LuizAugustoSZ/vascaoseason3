@@ -5,6 +5,7 @@ require __DIR__ . "/includes/bootstrap.php";
 require __DIR__ . "/includes/public-layout.php";
 require __DIR__ . "/includes/mercado.php";
 require __DIR__ . "/includes/elenco-geral.php";
+require __DIR__ . "/includes/proximo-confronto.php";
 $id = (int) ($_GET["id"] ?? 0);
 if ($id <= 0 && account_logged_in()) {
     $linkedParticipantId = (int)(account_participant_id() ?? 0);
@@ -154,20 +155,7 @@ try {
             if ($a["origem"] !== $b["origem"]) return strcmp((string)$a["origem"], (string)$b["origem"]);
             return (int) $b["id"] <=> (int) $a["id"];
         });
-        usort($proximas, function ($a, $b) {
-            $da = strtotime((string) ($a["data_jogo"] ?? "")) ?: null;
-            $db = strtotime((string) ($b["data_jogo"] ?? "")) ?: null;
-
-            if ($da !== null || $db !== null) {
-                if ($da === null) return 1;
-                if ($db === null) return -1;
-                if ($da !== $db) return $da <=> $db;
-            }
-
-            // Sem data definida, usa exatamente a ordem em que os jogos foram cadastrados.
-            if ($a["origem"] !== $b["origem"]) return strcmp((string)$a["origem"], (string)$b["origem"]);
-            return (int) $a["id"] <=> (int) $b["id"];
-        });
+        $proximas = ordenar_proximos_confrontos($proximas, $jogadas);
         $stmt = $pdo->prepare(
             "SELECT id,titulo,temporada,CASE WHEN imagem_base64 IS NOT NULL AND imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem FROM titulos WHERE participante_id=? ORDER BY conquistado_em DESC,id DESC",
         );
