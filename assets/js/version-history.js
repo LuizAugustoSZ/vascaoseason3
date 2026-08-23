@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['17.8','A sidebar recolhida ganhou alinhamento preciso entre ícones, áreas clicáveis e estados de hover, alça de expansão na divisória e scroll interno mais discreto.','Acabamento da sidebar compacta'],
 ['17.7','A navegação pública ganhou sidebar fixa e responsiva com ícones semânticos, modo compacto por padrão em novas abas, expansão persistente durante a navegação e área de conta integrada.','Nova sidebar pública'],
 ['17.6','A Gestão da Competição agora mostra somente campeonatos ativos de pontos corridos e bloqueia o acesso a competições encerradas.','Gestão apenas de pontos corridos ativos'],
 ['17.5','A taça oficial da final agora fica perfeitamente centralizada acima do título da decisão.','Taça alinhada na final'],
