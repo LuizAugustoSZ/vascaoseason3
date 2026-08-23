@@ -76,6 +76,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         'informacoes' => ['label' => 'Informações', 'links' => ['comandos', 'regulamento']],
     ];
     $globalSectionLinks = [
+        'noticias' => [$home . '#noticias', 'Notícias'],
         'competicao' => [$home . '#competicao', 'Competição'],
         'artilharia' => [$home . '#artilharia', 'Jogadores'],
         'participantes' => [$home . '#participantes', 'Participantes'],
