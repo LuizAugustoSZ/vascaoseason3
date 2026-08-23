@@ -1,22 +1,31 @@
 function initializeCardPagination(card) {
   const itemsContainer = card.querySelector('.card-page-items');
   const pagination = card.querySelector('.card-pages');
-  const itemsPerPage = Number(card.dataset.cardPages);
+  const dynamicPagination = card.dataset.cardPages === 'dynamic';
+  let itemsPerPage = dynamicPagination ? 1 : Number(card.dataset.cardPages);
 
-  if (!itemsContainer || !pagination || itemsPerPage < 1) {
+  if (!itemsContainer || !pagination || (!dynamicPagination && itemsPerPage < 1)) {
     return;
   }
 
   const items = [...itemsContainer.children];
 
-  if (items.length <= itemsPerPage) {
+  if (!dynamicPagination && items.length <= itemsPerPage) {
     return;
   }
 
   let currentPage = 1;
-  const totalPages = Math.ceil(items.length / itemsPerPage);
+
+  function calculateItemsPerPage() {
+    const sample = items.find(item => !item.hidden) || items[0];
+    if (!sample) return 1;
+    return Math.max(1, Math.floor(itemsContainer.clientHeight / Math.max(1, sample.getBoundingClientRect().height)));
+  }
 
   function renderPage() {
+    if (dynamicPagination) itemsPerPage = calculateItemsPerPage();
+    const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage));
+    currentPage = Math.min(currentPage, totalPages);
     const firstVisibleIndex = (currentPage - 1) * itemsPerPage;
     const lastVisibleIndex = firstVisibleIndex + itemsPerPage;
 
@@ -24,7 +33,7 @@ function initializeCardPagination(card) {
       item.hidden = index < firstVisibleIndex || index >= lastVisibleIndex;
     });
 
-    pagination.innerHTML = `
+    pagination.innerHTML = totalPages > 1 ? `
       <button
         type="button"
         aria-label="Página anterior"
@@ -38,7 +47,7 @@ function initializeCardPagination(card) {
         data-go="1"
         ${currentPage === totalPages ? 'disabled' : ''}
       >›</button>
-    `;
+    ` : '';
   }
 
   pagination.addEventListener('click', event => {
@@ -53,6 +62,15 @@ function initializeCardPagination(card) {
   });
 
   renderPage();
+  if (dynamicPagination && 'ResizeObserver' in window) {
+    let previousHeight = 0;
+    new ResizeObserver(() => {
+      const height = Math.round(itemsContainer.getBoundingClientRect().height);
+      if (height === previousHeight) return;
+      previousHeight = height;
+      requestAnimationFrame(renderPage);
+    }).observe(itemsContainer);
+  }
 }
 
 document
@@ -88,12 +106,18 @@ document.querySelectorAll('[data-transfer-module]').forEach(module => {
   const items = [...module.querySelectorAll('.transfer-entry')];
   const pagination = module.querySelector('.transfer-pages');
   const filters = [...module.querySelectorAll('[data-transfer-filter]')];
-  const perPage = Number(module.dataset.itemsPerPage) || 6;
+  const dynamicPagination = module.dataset.itemsPerPage === 'dynamic';
+  let perPage = dynamicPagination ? 1 : (Number(module.dataset.itemsPerPage) || 6);
   let activeFilter = 'todas';
   let currentPage = 1;
 
   function renderTransfers() {
     const visible = items.filter(item => activeFilter === 'todas' || item.dataset.transferType === activeFilter);
+    if (dynamicPagination) {
+      const sample = items.find(item => !item.hidden) || visible[0] || items[0];
+      const itemHeight = sample ? Math.max(1, sample.getBoundingClientRect().height) : 1;
+      perPage = Math.max(1, Math.floor(module.querySelector('.transfer-page-items').clientHeight / itemHeight));
+    }
     const totalPages = Math.max(1, Math.ceil(visible.length / perPage));
     currentPage = Math.min(currentPage, totalPages);
     items.forEach(item => { item.hidden = true; });
@@ -114,6 +138,16 @@ document.querySelectorAll('[data-transfer-module]').forEach(module => {
     renderTransfers();
   });
   renderTransfers();
+  if (dynamicPagination && 'ResizeObserver' in window) {
+    let previousHeight = 0;
+    const itemsContainer = module.querySelector('.transfer-page-items');
+    new ResizeObserver(() => {
+      const height = Math.round(itemsContainer.getBoundingClientRect().height);
+      if (height === previousHeight) return;
+      previousHeight = height;
+      requestAnimationFrame(renderTransfers);
+    }).observe(itemsContainer);
+  }
 });
 
 function normalizeShieldVisibleArea(image) {
