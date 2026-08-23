@@ -1,6 +1,6 @@
 (() => {
     const menu = document.getElementById('site-side-menu');
-    const trigger = document.querySelector('.site-mobile-brand-trigger');
+    const trigger = document.querySelector('.site-mobile-menu-trigger');
     if (!menu) return;
     const closeButtons = document.querySelectorAll('[data-site-menu-close]');
     const sidebarToggle = menu.querySelector('[data-sidebar-toggle]');
