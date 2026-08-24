@@ -32,7 +32,7 @@ function is_ajax_request(): bool
 }
 function redirect_notice(string $message, string $tab = ""): never
 {
-    audit_post_success($tab !== "" ? $tab : "admin", $message);
+    audit_post_success($tab !== "" ? $tab: "admin", $message);
     if (is_ajax_request()) {
         header("Content-Type: application/json; charset=utf-8");
         echo json_encode(
@@ -43,7 +43,7 @@ function redirect_notice(string $message, string $tab = ""): never
     }
     $_SESSION["notice"] = $message;
     header(
-        "Location: index.php" . ($tab !== "" ? "?tab=" . urlencode($tab) : ""),
+        "Location: index.php" . ($tab !== "" ? "?tab=" . urlencode($tab): ""),
     );
     exit();
 }
@@ -120,7 +120,7 @@ function sync_match_goals(
         ) {
             throw new RuntimeException("Tipo de gol inválido.");
         }
-        $teamId === $homeId ? $homeCount++ : $awayCount++;
+        $teamId === $homeId ? $homeCount++: $awayCount++;
         $new[] = [
             "participante_id" => $teamId,
             "jogador" => $player,
@@ -256,7 +256,7 @@ function sync_knockout_goals(
         ) {
             throw new RuntimeException("Tipo de gol inválido.");
         }
-        $teamId === $teamAId ? $countA++ : $countB++;
+        $teamId === $teamAId ? $countA++: $countB++;
         $new[] = [
             "participante_id" => $teamId,
             "jogador" => $player,
@@ -416,7 +416,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Ativa ou desativa um participante sem remover partidas, títulos ou histórico.
         if ($action === "status_participante") {
             $participantId = (int) ($_POST["participante_id"] ?? 0);
-            $novoStatus = (int) ($_POST["ativo"] ?? 0) === 1 ? 1 : 0;
+            $novoStatus = (int) ($_POST["ativo"] ?? 0) === 1 ? 1: 0;
             if ($participantId <= 0) {
                 throw new RuntimeException("Participante inválido.");
             }
@@ -427,7 +427,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             redirect_notice(
                 $novoStatus === 1
                     ? "Técnico e time reativados."
-                    : "Técnico e time desativados e ocultados do site.",
+                   : "Técnico e time desativados e ocultados do site.",
                 "times",
             );
         }
@@ -539,7 +539,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         "UPDATE contas SET participante_id=?,nome=?,email=?,eh_admin=?,senha_hash=?,trocar_senha=1 WHERE id=?",
                     );
                     $stmt->execute([
-                        $participanteId > 0 ? $participanteId : null,
+                        $participanteId > 0 ? $participanteId: null,
                         $nome,
                         $email,
                         $ehAdmin,
@@ -551,7 +551,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         "UPDATE contas SET participante_id=?,nome=?,email=?,eh_admin=? WHERE id=?",
                     );
                     $stmt->execute([
-                        $participanteId > 0 ? $participanteId : null,
+                        $participanteId > 0 ? $participanteId: null,
                         $nome,
                         $email,
                         $ehAdmin,
@@ -574,7 +574,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "INSERT INTO contas(participante_id,nome,email,senha_hash,eh_admin,trocar_senha) VALUES(?,?,?,?,?,1)",
             );
             $stmt->execute([
-                $participanteId > 0 ? $participanteId : null,
+                $participanteId > 0 ? $participanteId: null,
                 $nome,
                 $email,
                 password_hash($senha, PASSWORD_DEFAULT),
@@ -615,7 +615,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Ativa ou desativa uma conta sem remover seu histórico.
         if ($action === "status_conta") {
             $contaId = (int) ($_POST["conta_id"] ?? 0);
-            $novoStatus = (int) ($_POST["ativo"] ?? 0) === 1 ? 1 : 0;
+            $novoStatus = (int) ($_POST["ativo"] ?? 0) === 1 ? 1: 0;
             if ($contaId === (int) $_SESSION["conta_id"] && $novoStatus === 0) {
                 throw new RuntimeException(
                     "Você não pode desativar a própria conta.",
@@ -626,7 +626,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             redirect_notice(
                 $novoStatus === 1
                     ? "Usuário reativado."
-                    : "Usuário desativado.",
+                   : "Usuário desativado.",
                 "usuarios",
             );
         }
@@ -645,7 +645,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             redirect_notice(
                 $status === "finalizado"
                     ? "Campeonato finalizado."
-                    : "Campeonato reaberto.",
+                   : "Campeonato reaberto.",
                 "campeonatos",
             );
         }
@@ -739,11 +739,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $homeGoals =
                 $_POST["gols_mandante"] === ""
                     ? null
-                    : (int) $_POST["gols_mandante"];
+                   : (int) $_POST["gols_mandante"];
             $awayGoals =
                 $_POST["gols_visitante"] === ""
                     ? null
-                    : (int) $_POST["gols_visitante"];
+                   : (int) $_POST["gols_visitante"];
             if (($homeGoals === null) !== ($awayGoals === null)) {
                 throw new RuntimeException("Informe os dois lados do placar.");
             }
@@ -781,8 +781,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     if (!in_array($woWinner, [(int)$match["mandante_id"], (int)$match["visitante_id"]], true)) {
                         throw new RuntimeException("Escolha o time vencedor do W.O.");
                     }
-                    $homeGoals = $woWinner === (int)$match["mandante_id"] ? 3 : 0;
-                    $awayGoals = $woWinner === (int)$match["visitante_id"] ? 3 : 0;
+                    $homeGoals = $woWinner === (int)$match["mandante_id"] ? 3: 0;
+                    $awayGoals = $woWinner === (int)$match["visitante_id"] ? 3: 0;
                 }
                 $pdo->beginTransaction();
                 $stmt = $pdo->prepare(
@@ -802,8 +802,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     (int) $match["campeonato_id"],
                     (int) $match["mandante_id"],
                     (int) $match["visitante_id"],
-                    $statusPartida === "wo" ? null : $homeGoals,
-                    $statusPartida === "wo" ? null : $awayGoals,
+                    $statusPartida === "wo" ? null: $homeGoals,
+                    $statusPartida === "wo" ? null: $awayGoals,
                     $_POST,
                 );
                 $pdo->commit();
@@ -824,8 +824,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $homeId = (int)$_POST["mandante_id"];
                 $awayId = (int)$_POST["visitante_id"];
                 if (!in_array($woWinner, [$homeId, $awayId], true)) throw new RuntimeException("Escolha o time vencedor do W.O.");
-                $homeGoals = $woWinner === $homeId ? 3 : 0;
-                $awayGoals = $woWinner === $awayId ? 3 : 0;
+                $homeGoals = $woWinner === $homeId ? 3: 0;
+                $awayGoals = $woWinner === $awayId ? 3: 0;
             }
             if (in_array($_POST["status"] ?? "", ["finalizada", "wo"], true)) {
                 require_previous_rounds(
@@ -856,8 +856,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $championshipId,
                 (int) $_POST["mandante_id"],
                 (int) $_POST["visitante_id"],
-                $statusPartida === "wo" ? null : $homeGoals,
-                $statusPartida === "wo" ? null : $awayGoals,
+                $statusPartida === "wo" ? null: $homeGoals,
+                $statusPartida === "wo" ? null: $awayGoals,
                 $_POST,
             );
             $pdo->commit();
@@ -900,16 +900,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "Selecione um status válido para o confronto.",
                 );
             }
-            $goalsA = $_POST["gols_a"] === "" ? null : (int) $_POST["gols_a"];
-            $goalsB = $_POST["gols_b"] === "" ? null : (int) $_POST["gols_b"];
+            $goalsA = $_POST["gols_a"] === "" ? null: (int) $_POST["gols_a"];
+            $goalsB = $_POST["gols_b"] === "" ? null: (int) $_POST["gols_b"];
             $penaltiesA =
                 ($_POST["penaltis_a"] ?? "") === ""
                     ? null
-                    : (int) $_POST["penaltis_a"];
+                   : (int) $_POST["penaltis_a"];
             $penaltiesB =
                 ($_POST["penaltis_b"] ?? "") === ""
                     ? null
-                    : (int) $_POST["penaltis_b"];
+                   : (int) $_POST["penaltis_b"];
             if (($penaltiesA === null) !== ($penaltiesB === null)) {
                 throw new RuntimeException(
                     "Informe os dois placares dos pênaltis.",
@@ -946,7 +946,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $winner =
                         $goalsA > $goalsB
                             ? $matchTeams["time_a_id"]
-                            : $matchTeams["time_b_id"];
+                           : $matchTeams["time_b_id"];
                 }
                 // UPDATE grava o resultado no confronto que já existe no chaveamento.
                 $tieStmt = $pdo->prepare(
@@ -969,8 +969,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         if (!in_array($winner, [(int)$leg["time_a_id"], (int)$leg["time_b_id"]], true)) {
                             throw new RuntimeException("O vencedor escolhido não participa de uma das partidas deste confronto.");
                         }
-                        $legGoalsA = $winner === (int)$leg["time_a_id"] ? 3 : 0;
-                        $legGoalsB = $winner === (int)$leg["time_b_id"] ? 3 : 0;
+                        $legGoalsA = $winner === (int)$leg["time_a_id"] ? 3: 0;
+                        $legGoalsB = $winner === (int)$leg["time_b_id"] ? 3: 0;
                         $pdo->prepare("UPDATE jogos_mata_mata SET gols_a=?,gols_b=?,penaltis_a=NULL,penaltis_b=NULL,vencedor_id=?,status='wo' WHERE id=?")
                             ->execute([$legGoalsA, $legGoalsB, $winner, (int)$leg["id"]]);
                         sync_knockout_goals($pdo, (int)$leg["id"], (int)$tie["campeonato_id"], (int)$leg["time_a_id"], (int)$leg["time_b_id"], null, null, []);
@@ -1019,7 +1019,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $winner =
                     $goalsA > $goalsB
                         ? (int) $_POST["time_a_id"]
-                        : (int) $_POST["time_b_id"];
+                       : (int) $_POST["time_b_id"];
             }
             $championshipId = (int) ($_POST["campeonato_id"] ?? 0);
             if ($championshipId < 1) {
@@ -1030,8 +1030,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $teamAId = (int)$_POST["time_a_id"];
                 $teamBId = (int)$_POST["time_b_id"];
                 if (!in_array($winner, [$teamAId, $teamBId], true)) throw new RuntimeException("Escolha o time vencedor do W.O.");
-                $goalsA = $winner === $teamAId ? 3 : 0;
-                $goalsB = $winner === $teamBId ? 3 : 0;
+                $goalsA = $winner === $teamAId ? 3: 0;
+                $goalsB = $winner === $teamBId ? 3: 0;
                 $penaltiesA = $penaltiesB = null;
             }
             $pdo->beginTransaction();
@@ -1058,9 +1058,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $championshipId,
                 (int) $_POST["time_a_id"],
                 (int) $_POST["time_b_id"],
-                $statusMata === "wo" ? null : $goalsA,
-                $statusMata === "wo" ? null : $goalsB,
-                $statusMata === "wo" ? [] : $_POST,
+                $statusMata === "wo" ? null: $goalsA,
+                $statusMata === "wo" ? null: $goalsB,
+                $statusMata === "wo" ? []: $_POST,
             );
             advance_knockout($pdo, $championshipId, (string)$_POST["fase"], (int)$_POST["ordem"]);
             $pdo->commit();
@@ -1182,7 +1182,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         "Informe o nome do técnico histórico.",
                     );
                 }
-                $timeHistorico = $timeHistorico === "" ? null : $timeHistorico;
+                $timeHistorico = $timeHistorico === "" ? null: $timeHistorico;
             } else {
                 throw new RuntimeException(
                     "Selecione uma origem válida para o título.",
@@ -1199,7 +1199,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $timeHistorico,
             ];
             if ($titleId > 0) {
-                $stmt = $pdo->prepare('UPDATE titulos SET participante_id=?,titulo=?,temporada=?,descricao=?,conquistado_em=?,tecnico_nome=?,time_nome=?' . ($titleImage !== null ? ',imagem_base64=?' : '') . ' WHERE id=?');
+                $stmt = $pdo->prepare('UPDATE titulos SET participante_id=?,titulo=?,temporada=?,descricao=?,conquistado_em=?,tecnico_nome=?,time_nome=?' . ($titleImage !== null ? ',imagem_base64=?': '') . ' WHERE id=?');
                 if ($titleImage !== null) $values[] = $titleImage;
                 $values[] = $titleId;
                 $stmt->execute($values);
@@ -1208,7 +1208,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $values[] = $titleImage;
                 $stmt->execute($values);
             }
-            redirect_notice($titleId > 0 ? 'Título histórico atualizado.' : 'Título adicionado à história da competição.', 'titulos');
+            redirect_notice($titleId > 0 ? 'Título histórico atualizado.': 'Título adicionado à história da competição.', 'titulos');
         }
         // Publica um vídeo na área de mídia.
         if ($action === "video") {
@@ -1291,7 +1291,7 @@ $accounts = account_is_master()
             "SELECT c.id,c.participante_id,c.nome,c.email,c.eh_admin,c.ativo,c.ultimo_acesso_em,p.time_nome FROM contas c LEFT JOIN participantes p ON p.id=c.participante_id ORDER BY c.ativo DESC,c.nome",
         )
         ->fetchAll()
-    : [];
+   : [];
 if (account_is_master()) {
     foreach ($accounts as &$account) {
         $account["sugestao"] = null;
@@ -1385,7 +1385,7 @@ function team_options(array $teams): string
             (int) $t["id"] .
             '">' .
             e($t["time_nome"]) .
-            " — Técnico " .
+            ": Técnico " .
             e($t["nome"]) .
             "</option>";
     }
@@ -1401,7 +1401,7 @@ function game_options(array $games): string
             (int) $g["id"] .
             '">Rodada ' .
             (int) $g["rodada"] .
-            " — " .
+            ": " .
             e($g["mandante"]) .
             " x " .
             e($g["visitante"]) .
@@ -1421,7 +1421,7 @@ function mata_options(array $games): string
             e($g["fase"]) .
             " " .
             $g["ordem"] .
-            " — " .
+            ": " .
             e($g["time_a"]) .
             " x " .
             e($g["time_b"]) .
@@ -1443,7 +1443,7 @@ if ($adminParticipantId > 0) {
     __DIR__ . "/../assets/css/news.css",
 ) ?>"><style>.admin-shell{padding:95px 0 60px}.form-control,.form-select{background:#0b0c0e;border-color:#343941}.admin-form{padding:1.25rem}.admin-form h2{font:800 1.5rem 'Barlow Condensed',sans-serif;text-transform:uppercase}.nav-pills .nav-link.active{background:#d71920}.editor-role #tab-campeonatos,.editor-role #tab-times,.editor-role #tab-titulos,.editor-role #tab-videos,.editor-role #tab-configuracoes,.editor-role #tab-usuarios,.editor-role #tab-extra .col-lg-5>form:nth-of-type(2){display:none!important}</style></head><body class="<?= account_is_editor()
     ? "editor-role"
-    : "master-role" ?>"><script>if(innerWidth>=992&&localStorage.getItem('admin-nav-collapsed')==='1')document.body.classList.add('admin-nav-collapsed');</script>
+   : "master-role" ?>"><script>if(innerWidth>=992&&localStorage.getItem('admin-nav-collapsed')==='1')document.body.classList.add('admin-nav-collapsed');</script>
 <style>.admin-navigation{position:fixed;z-index:1045;top:72px;right:0;bottom:0;width:292px;margin:0!important;padding:22px 16px;border:0;border-left:1px solid #292d35;border-radius:0;background:linear-gradient(205deg,#15171b,#090a0c);overflow-y:auto;transition:width .25s ease,transform .25s ease}.admin-menu-groups{display:grid;gap:.35rem;padding-bottom:1rem;border-bottom:1px solid #292d35}.admin-menu-group{width:100%;border:0;background:transparent;color:#9299a5;padding:.7rem .8rem;border-radius:9px;font-weight:800;text-align:left;text-transform:uppercase;letter-spacing:.04em}.admin-menu-group:hover,.admin-menu-group.active{background:#252932;color:#fff;box-shadow:inset -3px 0 #d71920}.admin-submenu{display:none;gap:.4rem;padding:1rem 0}.admin-submenu.active{display:grid}.admin-submenu .nav-link{display:flex;width:100%;align-items:center;border:0;color:#b9bec7;background:transparent;border-radius:8px;padding:.58rem .8rem;text-align:left;text-decoration:none}.admin-submenu .nav-link:hover{background:#1e2026;color:#fff}.admin-submenu .nav-link.active{background:rgba(215,25,32,.18);color:#fff;box-shadow:inset -3px 0 #d71920}.admin-sidebar-account{display:grid;grid-template-columns:42px 1fr;margin-top:18px;padding:16px 10px 0;border-top:1px solid #292d35}.admin-sidebar-shield{grid-row:1/4;display:grid;place-items:center;width:38px;height:38px;border:1px solid #343941;border-radius:9px;background:#090a0c;overflow:hidden;font-size:.7rem;font-weight:800}.admin-sidebar-shield img{width:33px;height:33px;object-fit:contain}.admin-sidebar-account strong,.admin-sidebar-account small{display:block}.admin-sidebar-account small{color:#777e89;font-size:.65rem;letter-spacing:.1em}.admin-sidebar-account a{grid-column:2;display:block;margin-top:8px;color:#ff6b70;font-size:.82rem;text-decoration:none}.admin-menu-toggle{display:inline-flex}.admin-embedded-frame{display:block;width:100%;min-height:1100px;border:0;background:#08090b}@media(min-width:992px){.admin-shell{margin-right:292px;transition:margin-right .25s ease}.admin-shell>.container{max-width:calc(100% - 34px)}.admin-nav-collapsed .admin-navigation{width:70px;padding-inline:10px}.admin-nav-collapsed .admin-shell{margin-right:70px}.admin-nav-collapsed .admin-menu-group{display:grid;place-items:center;height:46px;padding:0;font-size:0;text-align:center}.admin-nav-collapsed .admin-menu-group:before{font-size:.72rem;letter-spacing:0}.admin-nav-collapsed .admin-menu-group[data-admin-group=overview]:before{content:'VG'}.admin-nav-collapsed .admin-menu-group[data-admin-group=competition]:before{content:'CP'}.admin-nav-collapsed .admin-menu-group[data-admin-group=people]:before{content:'PC'}.admin-nav-collapsed .admin-menu-group[data-admin-group=content]:before{content:'CS'}.admin-nav-collapsed .admin-submenu{display:none!important}.admin-nav-collapsed .admin-sidebar-account{display:block;padding-inline:5px}.admin-nav-collapsed .admin-sidebar-account>div:nth-child(2),.admin-nav-collapsed .admin-sidebar-account>a{display:none}}@media(max-width:991.98px){.admin-navigation{top:64px;width:min(320px,90vw);transform:translateX(103%);box-shadow:-20px 0 55px #000}.admin-nav-open .admin-navigation{transform:none}.admin-heading{align-items:stretch!important}.admin-heading h1{font-size:2.5rem}.admin-embedded-frame{min-height:1500px}}</style>
 <style>.admin-navigation{right:auto;left:0;border-right:1px solid #292d35;border-left:0;background:linear-gradient(160deg,#15171b,#090a0c)}.admin-sidebar-collapse{display:grid;place-items:center;width:34px;height:34px;margin:0 0 14px auto;border:1px solid #343941;border-radius:8px;background:#17191e;color:#fff;font-size:1.35rem;transition:transform .2s ease}.admin-menu-group:hover,.admin-menu-group.active,.admin-submenu .nav-link.active{box-shadow:inset 3px 0 #d71920}@media(min-width:992px){.admin-shell{margin-right:0;margin-left:292px}.admin-nav-collapsed .admin-shell{margin-right:0;margin-left:70px}.admin-nav-collapsed .admin-sidebar-collapse{margin-inline:auto;transform:rotate(180deg)}.navbar .admin-menu-toggle{display:none}}@media(max-width:991.98px){.admin-navigation{transform:translateX(-103%);box-shadow:20px 0 55px #000}.admin-nav-open .admin-navigation{transform:none}.admin-sidebar-collapse{display:none}.navbar .admin-menu-toggle{display:inline-flex}}</style>
 <div class="site-loading-screen admin-loading-screen" role="status" aria-live="polite" aria-label="Carregando painel"><img src="../assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true"><span class="site-loading-spinner"></span><strong data-loading-label>CARREGANDO DADOS</strong></div>
@@ -1452,7 +1452,7 @@ if ($adminParticipantId > 0) {
 <style>.competition-art-editor[hidden]{display:none}.competition-art-editor{position:fixed;inset:0;z-index:2100;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.82)}.competition-art-editor-card{width:min(620px,100%);padding:20px;border:1px solid #3b414b;border-radius:14px;background:#111318;box-shadow:0 20px 70px #000}.competition-art-crop{position:relative;padding:5px;border:3px solid #ed1b2f;background:#ed1b2f;box-shadow:0 0 0 2px #fff,0 0 28px rgba(237,27,47,.45)}.competition-art-crop:before{content:'ÁREA QUE SERÁ SALVA';position:absolute;z-index:2;top:10px;left:50%;transform:translateX(-50%);padding:5px 9px;border-radius:4px;background:rgba(0,0,0,.82);color:#fff;font-size:.66rem;font-weight:900;letter-spacing:.08em;white-space:nowrap;pointer-events:none}.competition-art-crop:after{content:'';position:absolute;inset:5px;border:2px dashed rgba(255,255,255,.9);pointer-events:none}.competition-art-editor canvas{display:block;width:100%;max-height:52vh;object-fit:contain;touch-action:none;cursor:grab;background-color:#e7e7e7;background-image:linear-gradient(45deg,#ccc 25%,transparent 25%),linear-gradient(-45deg,#ccc 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ccc 75%),linear-gradient(-45deg,transparent 75%,#ccc 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}.competition-art-editor canvas:active{cursor:grabbing}.competition-art-note{margin:.75rem 0 0;color:#aab0ba;font-size:.72rem}.competition-art-note strong{color:#fff}.admin-title-image{width:54px;height:58px;object-fit:contain}.title-image-preview{height:180px}.title-image-preview img{height:170px}@media(max-width:575px){.competition-art-editor-card{padding:14px}.competition-art-editor canvas{max-height:45vh}}</style>
 <main class="admin-shell"><div class="container"><div class="admin-heading d-flex justify-content-between align-items-end mb-4"><div><span class="eyebrow">Central de atualização</span><h1 class="display-4 fw-bold"><?= account_is_master()
     ? "ADMINISTRAÇÃO"
-    : "EDITOR DA COMPETIÇÃO" ?></h1></div></div>
+   : "EDITOR DA COMPETIÇÃO" ?></h1></div></div>
 <?php if ($notice): ?><div class="alert alert-info"><?= e(
     $notice,
 ) ?></div><?php endif; ?>
@@ -1552,19 +1552,19 @@ if ($adminParticipantId > 0) {
 ] ?>"><input type="hidden" name="status" value="<?= $championship["status"] ===
 "ativo"
     ? "finalizado"
-    : "ativo" ?>"><button class="btn btn-sm <?= $championship["status"] ===
+   : "ativo" ?>"><button class="btn btn-sm <?= $championship["status"] ===
 "ativo"
     ? "btn-outline-danger"
-    : "btn-outline-light" ?>"><?= $championship["status"] === "ativo"
+   : "btn-outline-light" ?>"><?= $championship["status"] === "ativo"
     ? "Finalizar"
-    : "Reabrir" ?></button></form><button type="button" class="btn btn-sm btn-outline-warning editar-campeonato ms-1" data-bs-toggle="modal" data-bs-target="#competition-edit-modal" data-id="<?= (int)$championship['id'] ?>" data-name="<?= e($championship['nome']) ?>" data-status="<?= e($championship['status']) ?>">Editar</button></td></tr><?php endforeach;
+   : "Reabrir" ?></button></form><button type="button" class="btn btn-sm btn-outline-warning editar-campeonato ms-1" data-bs-toggle="modal" data-bs-target="#competition-edit-modal" data-id="<?= (int)$championship['id'] ?>" data-name="<?= e($championship['nome']) ?>" data-status="<?= e($championship['status']) ?>">Editar</button></td></tr><?php endforeach;
  if (
      !$championshipsAdmin
  ): ?><tr><td colspan="6" class="text-center text-secondary py-4">Nenhuma competição criada até o momento.</td></tr><?php endif;
  ?></tbody></table></div></div>
 <div class="modal fade" id="competition-edit-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="competition-edit-form" method="post" enctype="multipart/form-data"><div class="modal-header"><div><small class="eyebrow">Identidade da competição</small><h2 class="modal-title">EDITAR COMPETIÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="editar_campeonato"><input type="hidden" name="campeonato_id"><label class="form-label">Nome</label><input class="form-control mb-3" name="nome" maxlength="150" required><label class="form-label">Status</label><select class="form-select mb-3" name="status"><option value="ativo">Em andamento</option><option value="finalizado">Finalizado</option></select><div class="row g-3"><div class="col-6"><label class="form-label">Logo</label><div class="competition-image-preview"><img data-preview="logo" alt="Logo atual"></div><input type="hidden" name="logo_base64"><input class="form-control form-control-sm competition-art-file" type="file" name="logo" data-art-type="logo" accept="image/png,image/webp,image/jpeg"></div><div class="col-6"><label class="form-label">Taça da vitrine</label><div class="competition-image-preview"><img data-preview="trofeu" alt="Taça atual"></div><input type="hidden" name="trofeu_base64"><input class="form-control form-control-sm competition-art-file" type="file" name="trofeu" data-art-type="trofeu" accept="image/png,image/webp,image/jpeg"></div></div><small class="text-secondary d-block mt-3">Ao selecionar, ajuste zoom e posição. Alterar uma arte atualiza todas as edições ligadas à mesma identidade.</small></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar alterações</button></div></form></div></div></div>
 </section>
-<section id="tab-supercopa" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form class="panel admin-form" method="post"><span class="eyebrow">Confronto entre campeões</span><h2 class="mt-2">Criar Supercopa</h2><p class="text-secondary">As vagas são preenchidas automaticamente, inclusive quando um dos campeões ainda não foi definido.</p><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="criar_supercopa"><label class="form-label">Nome da competição</label><input class="form-control mb-3" name="nome" maxlength="150" placeholder="Ex.: Recopa dos Gigantes" required><label class="form-label">Campeão da primeira competição</label><select class="form-select mb-3" name="origem_a_campeonato_id" required><option value="">Selecione</option><?php foreach ($supercupSources as $source): ?><option value="<?= (int) $source['id'] ?>"><?= e($source['nome']) ?> — <?= $source['status'] === 'finalizado' ? 'campeão definido' : 'aguardando campeão' ?></option><?php endforeach; ?></select><label class="form-label">Campeão da segunda competição</label><select class="form-select mb-3" name="origem_b_campeonato_id" required><option value="">Selecione</option><?php foreach ($supercupSources as $source): ?><option value="<?= (int) $source['id'] ?>"><?= e($source['nome']) ?> — <?= $source['status'] === 'finalizado' ? 'campeão definido' : 'aguardando campeão' ?></option><?php endforeach; ?></select><label class="form-label">Se o mesmo clube vencer as duas</label><select class="form-select mb-3" name="regra_mesmo_campeao"><option value="vice_origem_a">Entra o vice da primeira competição</option><option value="vice_origem_b">Entra o vice da segunda competição</option></select><label class="form-label">Formato da decisão</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select><button class="btn btn-danger mt-3">Criar confronto</button></form></div><div class="col-lg-7"><div class="panel"><div class="panel-head"><h3>Supercopas cadastradas</h3><span><?= count($supercupsAdmin) ?> registros</span></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Competição</th><th>Vaga 1</th><th>Vaga 2</th><th>Status</th></tr></thead><tbody><?php foreach ($supercupsAdmin as $supercup): ?><tr><td><strong><?= e($supercup['nome']) ?></strong></td><td><?= $supercup['time_a'] ? e($supercup['time_a']) : '<span class="text-secondary">Aguardando campeão de '.e($supercup['origem_a']).'</span>' ?></td><td><?= $supercup['time_b'] ? e($supercup['time_b']) : '<span class="text-secondary">Aguardando campeão de '.e($supercup['origem_b']).'</span>' ?></td><td><?= e($supercup['status']) ?></td></tr><?php endforeach; ?><?php if (!$supercupsAdmin): ?><tr><td colspan="4" class="text-center text-secondary py-4">Nenhuma Supercopa criada.</td></tr><?php endif; ?></tbody></table></div></div><div class="panel p-3 mt-4"><strong>Sugestões:</strong><span class="text-secondary"> Recopa, Derby das Américas, Desafio dos Campeões, Taça dos Gigantes ou Copa Intercontinental.</span></div></div></div></section>
+<section id="tab-supercopa" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form class="panel admin-form" method="post"><span class="eyebrow">Confronto entre campeões</span><h2 class="mt-2">Criar Supercopa</h2><p class="text-secondary">As vagas são preenchidas automaticamente, inclusive quando um dos campeões ainda não foi definido.</p><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="criar_supercopa"><label class="form-label">Nome da competição</label><input class="form-control mb-3" name="nome" maxlength="150" placeholder="Ex.: Recopa dos Gigantes" required><label class="form-label">Campeão da primeira competição</label><select class="form-select mb-3" name="origem_a_campeonato_id" required><option value="">Selecione</option><?php foreach ($supercupSources as $source): ?><option value="<?= (int) $source['id'] ?>"><?= e($source['nome']) ?>: <?= $source['status'] === 'finalizado' ? 'campeão definido': 'aguardando campeão' ?></option><?php endforeach; ?></select><label class="form-label">Campeão da segunda competição</label><select class="form-select mb-3" name="origem_b_campeonato_id" required><option value="">Selecione</option><?php foreach ($supercupSources as $source): ?><option value="<?= (int) $source['id'] ?>"><?= e($source['nome']) ?>: <?= $source['status'] === 'finalizado' ? 'campeão definido': 'aguardando campeão' ?></option><?php endforeach; ?></select><label class="form-label">Se o mesmo clube vencer as duas</label><select class="form-select mb-3" name="regra_mesmo_campeao"><option value="vice_origem_a">Entra o vice da primeira competição</option><option value="vice_origem_b">Entra o vice da segunda competição</option></select><label class="form-label">Formato da decisão</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select><button class="btn btn-danger mt-3">Criar confronto</button></form></div><div class="col-lg-7"><div class="panel"><div class="panel-head"><h3>Supercopas cadastradas</h3><span><?= count($supercupsAdmin) ?> registros</span></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Competição</th><th>Vaga 1</th><th>Vaga 2</th><th>Status</th></tr></thead><tbody><?php foreach ($supercupsAdmin as $supercup): ?><tr><td><strong><?= e($supercup['nome']) ?></strong></td><td><?= $supercup['time_a'] ? e($supercup['time_a']): '<span class="text-secondary">Aguardando campeão de '.e($supercup['origem_a']).'</span>' ?></td><td><?= $supercup['time_b'] ? e($supercup['time_b']): '<span class="text-secondary">Aguardando campeão de '.e($supercup['origem_b']).'</span>' ?></td><td><?= e($supercup['status']) ?></td></tr><?php endforeach; ?><?php if (!$supercupsAdmin): ?><tr><td colspan="4" class="text-center text-secondary py-4">Nenhuma Supercopa criada.</td></tr><?php endif; ?></tbody></table></div></div><div class="panel p-3 mt-4"><strong>Sugestões:</strong><span class="text-secondary"> Recopa, Derby das Américas, Desafio dos Campeões, Taça dos Gigantes ou Copa Intercontinental.</span></div></div></div></section>
 <section id="tab-times" class="tab-pane fade"><div class="row g-4"><div class="col-lg-6"><form id="form-participante" class="panel admin-form" method="post"><h2 id="participante-form-title">Novo técnico e time</h2><input type="hidden" name="participante_id" value=""><div id="participante-edicao" class="alert alert-info d-none justify-content-between align-items-center"><span></span><button type="button" class="btn btn-sm btn-outline-info cancelar-participante">Cancelar edição</button></div><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="participante"><div class="row g-2"><div class="col-md-6"><label class="form-label">Nome do técnico</label><input class="form-control" name="nome" required></div><div class="col-md-6"><label class="form-label">Nome do time</label><input class="form-control" name="time_nome" required></div><div class="col-md-4"><label class="form-label">Sigla do time</label><input class="form-control" name="sigla" maxlength="5" required></div><div class="col-md-8"><label class="form-label">Escudo do time (opcional)</label><input class="form-control" type="url" name="escudo_url"></div><div class="col-12"><label class="form-label">Descrição</label><textarea class="form-control" name="descricao" rows="2"></textarea></div></div><button id="participante-submit" class="btn btn-danger mt-3">Cadastrar técnico</button></form></div><div class="col-lg-6"><div class="panel"><div class="panel-head"><h3>Técnicos cadastrados</h3><span><?= count(
@@ -1593,7 +1593,7 @@ if ($adminParticipantId > 0) {
         JSON_UNESCAPED_UNICODE |
         JSON_UNESCAPED_SLASHES,
 ) ?></script></section>
-<section id="tab-titulos" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form id="form-titulo" class="panel admin-form" method="post"><h2>Adicionar ou editar título</h2><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="titulo"><input type="hidden" name="titulo_id"><input type="hidden" name="titulo_imagem_base64"><div class="row g-2"><div class="col-md-4"><label class="form-label">Tipo de registro</label><select class="form-select" name="origem_titulo" id="origem_titulo"><option value="atual">Participante atual</option><option value="historico">Técnico histórico</option></select></div><div class="col-md-8 titulo-atual"><label class="form-label">Participante atual</label><select class="form-select" name="participante_id"><option value="">Selecione o técnico e o time</option><?= team_options($teams) ?></select></div><div class="col-md-6 titulo-historico d-none"><label class="form-label">Nome do técnico histórico</label><input class="form-control" name="tecnico_historico" placeholder="Ex.: Técnico da Season 1"></div><div class="col-md-6 titulo-historico d-none"><label class="form-label">Nome do time histórico (opcional)</label><input class="form-control" name="time_historico" placeholder="Deixe vazio se usavam apenas o técnico"></div><div class="col-md-5"><label class="form-label">Título conquistado</label><input class="form-control" name="titulo" placeholder="Ex.: Mundial de Clubes" required></div><div class="col-md-3"><label class="form-label">Season</label><select class="form-select" name="temporada" required><option value="Season 1">Season 1</option><option value="Season 2">Season 2</option><option value="Season 3" selected>Season 3</option></select></div><div class="col-md-4"><label class="form-label">Data da conquista</label><input class="form-control" type="date" name="conquistado_em"></div><div class="col-12"><label class="form-label">Descrição (opcional)</label><input class="form-control" name="descricao"></div><div class="col-12"><label class="form-label">Imagem própria do título (opcional)</label><div class="competition-image-preview title-image-preview"><img data-title-preview class="d-none" alt="Imagem do título"></div><input class="form-control form-control-sm title-art-file" type="file" data-art-type="titulo" accept="image/png,image/webp,image/jpeg"><small class="text-secondary">Ao selecionar, abre o editor de posição e zoom. Títulos iniciados por Mundial já recebem a taça automaticamente.</small></div></div><button class="btn btn-danger mt-3">Salvar título</button><button type="button" class="btn btn-outline-light mt-3 ms-2" data-title-cancel>Limpar</button></form></div><div class="col-lg-7"><div class="panel"><div class="panel-head"><h3>Títulos cadastrados</h3><span><?= count($titlesAdmin) ?> registros</span></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Imagem</th><th>Título</th><th>Técnico / time</th><th>Season</th><th>Ação</th></tr></thead><tbody><?php foreach ($titlesAdmin as $titleAdmin): ?><tr><td><?php if ($titleAdmin['tem_imagem']): ?><img class="admin-title-image" src="../api/titulo-imagem.php?titulo_id=<?= (int)$titleAdmin['id'] ?>" alt=""><?php elseif (competition_identity_match((string)$titleAdmin['titulo']) === 'mundial'): ?><img class="admin-title-image" src="../api/competicao-imagem.php?chave=mundial&tipo=trofeu" alt=""><?php else: ?><span class="text-secondary">—</span><?php endif; ?></td><td><strong><?= e($titleAdmin['titulo']) ?></strong></td><td><?= e(trim((string)$titleAdmin['tecnico'] . ($titleAdmin['clube'] ? ' / ' . $titleAdmin['clube'] : ''))) ?></td><td><?= e($titleAdmin['temporada']) ?></td><td><button type="button" class="btn btn-sm btn-outline-warning editar-titulo" data-id="<?= (int)$titleAdmin['id'] ?>" data-participant="<?= (int)($titleAdmin['participante_id'] ?? 0) ?>" data-title="<?= e($titleAdmin['titulo']) ?>" data-season="<?= e($titleAdmin['temporada']) ?>" data-date="<?= e((string)$titleAdmin['conquistado_em']) ?>" data-description="<?= e((string)$titleAdmin['descricao']) ?>" data-coach="<?= e((string)$titleAdmin['tecnico_nome']) ?>" data-team="<?= e((string)$titleAdmin['time_nome']) ?>" data-has-image="<?= (int)$titleAdmin['tem_imagem'] ?>">Editar</button></td></tr><?php endforeach; ?></tbody></table></div></div></div></div></section>
+<section id="tab-titulos" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form id="form-titulo" class="panel admin-form" method="post"><h2>Adicionar ou editar título</h2><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="titulo"><input type="hidden" name="titulo_id"><input type="hidden" name="titulo_imagem_base64"><div class="row g-2"><div class="col-md-4"><label class="form-label">Tipo de registro</label><select class="form-select" name="origem_titulo" id="origem_titulo"><option value="atual">Participante atual</option><option value="historico">Técnico histórico</option></select></div><div class="col-md-8 titulo-atual"><label class="form-label">Participante atual</label><select class="form-select" name="participante_id"><option value="">Selecione o técnico e o time</option><?= team_options($teams) ?></select></div><div class="col-md-6 titulo-historico d-none"><label class="form-label">Nome do técnico histórico</label><input class="form-control" name="tecnico_historico" placeholder="Ex.: Técnico da Season 1"></div><div class="col-md-6 titulo-historico d-none"><label class="form-label">Nome do time histórico (opcional)</label><input class="form-control" name="time_historico" placeholder="Deixe vazio se usavam apenas o técnico"></div><div class="col-md-5"><label class="form-label">Título conquistado</label><input class="form-control" name="titulo" placeholder="Ex.: Mundial de Clubes" required></div><div class="col-md-3"><label class="form-label">Season</label><select class="form-select" name="temporada" required><option value="Season 1">Season 1</option><option value="Season 2">Season 2</option><option value="Season 3" selected>Season 3</option></select></div><div class="col-md-4"><label class="form-label">Data da conquista</label><input class="form-control" type="date" name="conquistado_em"></div><div class="col-12"><label class="form-label">Descrição (opcional)</label><input class="form-control" name="descricao"></div><div class="col-12"><label class="form-label">Imagem própria do título (opcional)</label><div class="competition-image-preview title-image-preview"><img data-title-preview class="d-none" alt="Imagem do título"></div><input class="form-control form-control-sm title-art-file" type="file" data-art-type="titulo" accept="image/png,image/webp,image/jpeg"><small class="text-secondary">Ao selecionar, abre o editor de posição e zoom. Títulos iniciados por Mundial já recebem a taça automaticamente.</small></div></div><button class="btn btn-danger mt-3">Salvar título</button><button type="button" class="btn btn-outline-light mt-3 ms-2" data-title-cancel>Limpar</button></form></div><div class="col-lg-7"><div class="panel"><div class="panel-head"><h3>Títulos cadastrados</h3><span><?= count($titlesAdmin) ?> registros</span></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Imagem</th><th>Título</th><th>Técnico / time</th><th>Season</th><th>Ação</th></tr></thead><tbody><?php foreach ($titlesAdmin as $titleAdmin): ?><tr><td><?php if ($titleAdmin['tem_imagem']): ?><img class="admin-title-image" src="../api/titulo-imagem.php?titulo_id=<?= (int)$titleAdmin['id'] ?>" alt=""><?php elseif (competition_identity_match((string)$titleAdmin['titulo']) === 'mundial'): ?><img class="admin-title-image" src="../api/competicao-imagem.php?chave=mundial&tipo=trofeu" alt=""><?php else: ?><span class="text-secondary">:</span><?php endif; ?></td><td><strong><?= e($titleAdmin['titulo']) ?></strong></td><td><?= e(trim((string)$titleAdmin['tecnico'] . ($titleAdmin['clube'] ? ' / ' . $titleAdmin['clube']: ''))) ?></td><td><?= e($titleAdmin['temporada']) ?></td><td><button type="button" class="btn btn-sm btn-outline-warning editar-titulo" data-id="<?= (int)$titleAdmin['id'] ?>" data-participant="<?= (int)($titleAdmin['participante_id'] ?? 0) ?>" data-title="<?= e($titleAdmin['titulo']) ?>" data-season="<?= e($titleAdmin['temporada']) ?>" data-date="<?= e((string)$titleAdmin['conquistado_em']) ?>" data-description="<?= e((string)$titleAdmin['descricao']) ?>" data-coach="<?= e((string)$titleAdmin['tecnico_nome']) ?>" data-team="<?= e((string)$titleAdmin['time_nome']) ?>" data-has-image="<?= (int)$titleAdmin['tem_imagem'] ?>">Editar</button></td></tr><?php endforeach; ?></tbody></table></div></div></div></div></section>
 <section id="tab-extra" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form id="form-artilharia" class="panel admin-form" method="post"><h2>Registrar ou editar artilheiro</h2><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="artilharia"><input type="hidden" name="artilheiro_id" value=""><div id="artilheiro-edicao" class="alert alert-info d-none justify-content-between align-items-center"><span></span><button type="button" class="btn btn-sm btn-outline-info cancelar-artilheiro">Cancelar edição</button></div><label class="form-label">Campeonato</label><select id="artilheiro-campeonato" class="form-select mb-2" name="campeonato_id" required><option value="">Selecione</option><?php foreach (
@@ -1601,9 +1601,9 @@ if ($adminParticipantId > 0) {
     as $championship
 ): ?><option value="<?= $championship["id"] ?>"><?= e(
     $championship["nome"],
-) ?> — <?= $championship["status"] === "ativo"
+) ?>: <?= $championship["status"] === "ativo"
      ? "Em andamento"
-     : "Finalizado" ?></option><?php endforeach; ?></select><label class="form-label">Jogador</label><input class="form-control mb-2" name="jogador" required><label class="form-label">Time / técnico</label><select class="form-select mb-2" name="participante_id" required><?= team_options(
+    : "Finalizado" ?></option><?php endforeach; ?></select><label class="form-label">Jogador</label><input class="form-control mb-2" name="jogador" required><label class="form-label">Time / técnico</label><select class="form-select mb-2" name="participante_id" required><?= team_options(
     $teams,
 ) ?></select><label class="form-label">Total de gols</label><input class="form-control" type="number" min="0" name="gols" required><button id="artilheiro-submit" class="btn btn-danger mt-3">Salvar artilheiro</button></form><form class="panel admin-form mt-4" method="post"><h2>Publicar vídeo</h2><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
@@ -1655,21 +1655,21 @@ if ($adminParticipantId > 0) {
     $account["time_nome"] ?: "Sem time",
 ) ?></td><td><?= $account["eh_admin"]
     ? "Administrador"
-    : "Usuário" ?></td><td><?= $account["ativo"]
+   : "Usuário" ?></td><td><?= $account["ativo"]
     ? "Ativo"
-    : "Inativo" ?></td><td><form method="post"><input type="hidden" name="csrf" value="<?= e(
+   : "Inativo" ?></td><td><form method="post"><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="status_conta"><input type="hidden" name="conta_id" value="<?= $account[
     "id"
 ] ?>"><input type="hidden" name="ativo" value="<?= $account["ativo"]
     ? 0
-    : 1 ?>"><button class="btn btn-sm <?= $account["ativo"]
+   : 1 ?>"><button class="btn btn-sm <?= $account["ativo"]
     ? "btn-outline-danger"
-    : "btn-outline-light" ?>" <?= $account["id"] == ($_SESSION["conta_id"] ?? 0)
+   : "btn-outline-light" ?>" <?= $account["id"] == ($_SESSION["conta_id"] ?? 0)
     ? "disabled"
-    : "" ?>><?= $account["ativo"]
+   : "" ?>><?= $account["ativo"]
     ? "Desativar"
-    : "Reativar" ?></button></form></td></tr><?php endforeach; ?></tbody></table></div></div></div></div></section>
+   : "Reativar" ?></button></form></td></tr><?php endforeach; ?></tbody></table></div></div></div></div></section>
 <?php require __DIR__ .
     "/noticias-tab.php"; ?><section id="tab-videos" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form class="panel admin-form" method="post"><h2>Publicar vídeo</h2><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
@@ -1682,7 +1682,7 @@ if ($adminParticipantId > 0) {
     $video["youtube_url"],
 ) ?>" target="_blank" rel="noopener">Abrir vídeo</a></td><td><?= $video["ativo"]
     ? "Publicado"
-    : "Oculto" ?></td></tr><?php endforeach; ?></tbody></table></div></div></div></div></section>
+   : "Oculto" ?></td></tr><?php endforeach; ?></tbody></table></div></div></div></div></section>
 <section id="tab-configuracoes" class="tab-pane fade"><form class="panel admin-form" method="post"><h2>Configurações do site</h2><p class="text-secondary">Personalize o rodapé e a ordem das seções da página inicial.</p><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="configuracoes"><div class="row g-3"><div class="col-md-6"><label class="form-label">Texto esquerdo do rodapé</label><input class="form-control" name="footer_nome" value="<?= e(

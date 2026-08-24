@@ -19,12 +19,12 @@ function renderMatchGoalEditor(existing=currentGoalRows()){
   if(form.status.value==='wo'){editor.innerHTML='<div class="alert alert-secondary mb-0">Partidas por W.O. não contabilizam artilheiros.</div>';return;}
   const homeTotal=Math.max(0,Number(form.gols_mandante.value||0)),awayTotal=Math.max(0,Number(form.gols_visitante.value||0));
   const homeId=form.mandante_id.value,awayId=form.visitante_id.value;
-  const teamName=select=>select.options[select.selectedIndex]?.textContent.split(' — Técnico ')[0]||'Time';
+  const teamName=select=>select.options[select.selectedIndex]?.textContent.split(': Técnico ')[0]||'Time';
   const safe=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
   const scorers=[...new Set([...document.querySelectorAll('.editar-artilheiro')].map(button=>button.dataset.jogador).filter(Boolean))];
   const datalist=scorers.length?`<datalist id="known-scorers">${scorers.map(name=>`<option value="${safe(name)}">`).join('')}</datalist>`:'';
   const oldByTeam={};existing.forEach(goal=>(oldByTeam[goal.participante_id]??=[]).push(goal));
-  const row=(teamId,team,index)=>{const old=(oldByTeam[teamId]||[])[index]||{};return `<div class="match-goal-row border rounded p-2 mb-2"><input type="hidden" name="gol_time[]" value="${teamId}"><div class="d-flex justify-content-between align-items-center mb-2"><strong>${safe(team)} — Gol ${index+1}</strong><span class="text-secondary small">Detalhes do gol</span></div><div class="row g-2"><div class="col-md-5"><label class="form-label small">Jogador</label><input class="form-control form-control-sm" name="gol_jogador[]" list="known-scorers" value="${safe(old.jogador)}" required></div><div class="col-md-3"><label class="form-label small">Tempo</label><input class="form-control form-control-sm" name="gol_minuto[]" value="${safe(old.minuto)}" placeholder="45+2, 90+6..." maxlength="30" required></div><div class="col-md-4"><label class="form-label small">Tipo</label><select class="form-select form-select-sm" name="gol_tipo[]"><option value="normal" ${old.tipo==='normal'||!old.tipo?'selected':''}>Gol normal</option><option value="penalti" ${old.tipo==='penalti'?'selected':''}>Pênalti</option><option value="falta" ${old.tipo==='falta'?'selected':''}>Gol de falta</option><option value="olimpico" ${old.tipo==='olimpico'?'selected':''}>Gol olímpico</option><option value="contra" ${old.tipo==='contra'?'selected':''}>Gol contra</option></select></div></div></div>`;};
+  const row=(teamId,team,index)=>{const old=(oldByTeam[teamId]||[])[index]||{};return `<div class="match-goal-row border rounded p-2 mb-2"><input type="hidden" name="gol_time[]" value="${teamId}"><div class="d-flex justify-content-between align-items-center mb-2"><strong>${safe(team)}: Gol ${index+1}</strong><span class="text-secondary small">Detalhes do gol</span></div><div class="row g-2"><div class="col-md-5"><label class="form-label small">Jogador</label><input class="form-control form-control-sm" name="gol_jogador[]" list="known-scorers" value="${safe(old.jogador)}" required></div><div class="col-md-3"><label class="form-label small">Tempo</label><input class="form-control form-control-sm" name="gol_minuto[]" value="${safe(old.minuto)}" placeholder="45+2, 90+6..." maxlength="30" required></div><div class="col-md-4"><label class="form-label small">Tipo</label><select class="form-select form-select-sm" name="gol_tipo[]"><option value="normal" ${old.tipo==='normal'||!old.tipo?'selected':''}>Gol normal</option><option value="penalti" ${old.tipo==='penalti'?'selected':''}>Pênalti</option><option value="falta" ${old.tipo==='falta'?'selected':''}>Gol de falta</option><option value="olimpico" ${old.tipo==='olimpico'?'selected':''}>Gol olímpico</option><option value="contra" ${old.tipo==='contra'?'selected':''}>Gol contra</option></select></div></div></div>`;};
   let html='';for(let i=0;i<homeTotal;i++)html+=row(homeId,teamName(form.mandante_id),i);for(let i=0;i<awayTotal;i++)html+=row(awayId,teamName(form.visitante_id),i);
   editor.innerHTML=html?`<div class="d-flex justify-content-between align-items-center mb-2"><strong>Gols da partida</strong><small class="text-secondary">${homeTotal+awayTotal} registro${homeTotal+awayTotal===1?'':'s'}</small></div>${html}${datalist}`:'';
 }
@@ -37,7 +37,7 @@ function updateLeagueWo(form){
 }
 const leagueForm=document.getElementById('form-partida');
 if(leagueForm){
-  const woOption=[...leagueForm.status.options].find(option=>option.value==='wo');if(woOption)woOption.textContent='Finalizada — W.O.';
+  const woOption=[...leagueForm.status.options].find(option=>option.value==='wo');if(woOption)woOption.textContent='Finalizada: W.O.';
   leagueForm.status.closest('[class*="col-"]').insertAdjacentHTML('beforeend','<div class="mt-2 d-none" data-wo-winner><label class="form-label">Time vencedor do W.O.</label><select name="vencedor_wo_id" class="form-select"><option value="">Selecione o vencedor</option></select></div>');
   leagueForm.gols_mandante.addEventListener('input',()=>renderMatchGoalEditor());leagueForm.gols_visitante.addEventListener('input',()=>renderMatchGoalEditor());leagueForm.status.addEventListener('change',()=>{updateLeagueWo(leagueForm);renderMatchGoalEditor()});leagueForm.mandante_id.addEventListener('change',()=>renderMatchGoalEditor());leagueForm.visitante_id.addEventListener('change',()=>renderMatchGoalEditor());updateLeagueWo(leagueForm);
 }
@@ -108,7 +108,7 @@ function updateMataSuggestion(form){
 
 const mataForm=document.getElementById('form-mata');
 if(mataForm){
-  if(![...mataForm.status.options].some(option=>option.value==='wo'))mataForm.status.add(new Option('Finalizado — W.O.','wo'));
+  if(![...mataForm.status.options].some(option=>option.value==='wo'))mataForm.status.add(new Option('Finalizado: W.O.','wo'));
   if(![...mataForm.fase.options].some(option=>option.value==='Terceiro lugar'))mataForm.fase.add(new Option('Terceiro lugar','Terceiro lugar'));
   const goalsB=mataForm.gols_b.closest('[class*="col-"]');
   goalsB.insertAdjacentHTML('afterend','<div class="col-md-2"><label class="form-label">Pênaltis A</label><input class="form-control" type="number" min="0" name="penaltis_a" placeholder="Opcional"></div><div class="col-md-2"><label class="form-label">Pênaltis B</label><input class="form-control" type="number" min="0" name="penaltis_b" placeholder="Opcional"></div>');
@@ -128,12 +128,12 @@ if(mataForm){
 
 // Permite escolher a qual campeonato pertence um cadastro manual.
 fetch('campeonatos-dados.php').then(response=>response.json()).then(data=>{
-  [['form-partida',['pontos_corridos']],['form-mata',['mata_mata','supercopa']]].forEach(([id,types])=>{const form=document.getElementById(id);if(!form)return;const options=(data.campeonatos||[]).filter(item=>types.includes(item.tipo)).map(item=>`<option value="${item.id}">${item.nome} — ${item.status==='finalizado'?'Finalizado':'Em andamento'}</option>`).join('');form.insertAdjacentHTML('afterbegin',`<div class="mb-3"><label class="form-label">Campeonato</label><select class="form-select" name="campeonato_id" required><option value="">Selecione</option>${options}</select></div>`);});
+  [['form-partida',['pontos_corridos']],['form-mata',['mata_mata','supercopa']]].forEach(([id,types])=>{const form=document.getElementById(id);if(!form)return;const options=(data.campeonatos||[]).filter(item=>types.includes(item.tipo)).map(item=>`<option value="${item.id}">${item.nome}: ${item.status==='finalizado'?'Finalizado':'Em andamento'}</option>`).join('');form.insertAdjacentHTML('afterbegin',`<div class="mb-3"><label class="form-label">Campeonato</label><select class="form-select" name="campeonato_id" required><option value="">Selecione</option>${options}</select></div>`);});
 });
 
 // Seleciona no formulário o time exibido na linha escolhida.
 function selecionarTime(select,nome){
-  const option=[...select.options].find(item=>item.textContent.startsWith(`${nome} —`));
+  const option=[...select.options].find(item=>item.textContent.startsWith(`${nome} :`));
   if(option) select.value=option.value;
 }
 
@@ -183,7 +183,7 @@ function setupLeagueAdminTable(perPage=5){
   const wrapper=table.closest('.table-responsive');
   const rows=[...table.querySelectorAll('tbody tr')];
   const teamOptions=[...document.querySelectorAll('#form-partida select[name="mandante_id"] option')].map(option=>{
-    const [team,coach='']=option.textContent.split(' — Técnico ');
+    const [team,coach='']=option.textContent.split(': Técnico ');
     return {team:team.trim(),coach:coach.trim(),label:option.textContent.trim()};
   });
   const rounds=[...new Set(rows.map(row=>row.cells[0].textContent.trim()))].sort((a,b)=>Number(a)-Number(b));
@@ -295,7 +295,7 @@ if(participantDataElement && participantForm){
     if(shieldPreview){shieldPreview.src=shieldData.value;shieldPreview.classList.toggle('d-none',!shieldData.value);}
     document.getElementById('participante-form-title').textContent='Editar técnico e time';
     document.getElementById('participante-submit').textContent='Salvar alterações';
-    const notice=document.getElementById('participante-edicao');notice.querySelector('span').textContent=`Editando: ${participant.nome} — ${participant.time_nome}`;notice.classList.remove('d-none');notice.classList.add('d-flex');
+    const notice=document.getElementById('participante-edicao');notice.querySelector('span').textContent=`Editando: ${participant.nome}: ${participant.time_nome}`;notice.classList.remove('d-none');notice.classList.add('d-flex');
     participantForm.scrollIntoView({behavior:'smooth'});
   }));
   document.querySelector('.cancelar-participante').addEventListener('click',()=>{
@@ -359,9 +359,9 @@ function renderMataGoalEditor(existing=[]){
   if(form.status.value==='wo'){editor.innerHTML='<div class="alert alert-secondary mb-0">O W.O. fecha todas as partidas deste confronto em 3 a 0, sem contabilizar artilheiros.</div>';return;}
   const totalA=Number(form.gols_a.value||0),totalB=Number(form.gols_b.value||0),teamA=form.time_a_id.value,teamB=form.time_b_id.value;
   const safe=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
-  const name=select=>select.options[select.selectedIndex]?.textContent.split(' — Técnico ')[0]||'Time';
+  const name=select=>select.options[select.selectedIndex]?.textContent.split(': Técnico ')[0]||'Time';
   const oldByTeam={};existing.forEach(goal=>(oldByTeam[goal.participante_id]??=[]).push(goal));
-  const row=(teamId,team,index)=>{const old=(oldByTeam[teamId]||[])[index]||{};return `<div class="match-goal-row border rounded p-2 mb-2"><input type="hidden" name="mata_gol_time[]" value="${teamId}"><strong>${safe(team)} — Gol ${index+1}</strong><div class="row g-2 mt-1"><div class="col-md-5"><label class="form-label small">Jogador</label><input class="form-control form-control-sm" name="mata_gol_jogador[]" value="${safe(old.jogador)}" required></div><div class="col-md-3"><label class="form-label small">Tempo</label><input class="form-control form-control-sm" name="mata_gol_minuto[]" value="${safe(old.minuto)}" placeholder="45+2, pênaltis..." maxlength="30" required></div><div class="col-md-4"><label class="form-label small">Tipo</label><select class="form-select form-select-sm" name="mata_gol_tipo[]"><option value="normal" ${!old.tipo||old.tipo==='normal'?'selected':''}>Gol normal</option><option value="penalti" ${old.tipo==='penalti'?'selected':''}>Pênalti</option><option value="falta" ${old.tipo==='falta'?'selected':''}>Gol de falta</option><option value="olimpico" ${old.tipo==='olimpico'?'selected':''}>Gol olímpico</option><option value="contra" ${old.tipo==='contra'?'selected':''}>Gol contra</option></select></div></div></div>`;};
+  const row=(teamId,team,index)=>{const old=(oldByTeam[teamId]||[])[index]||{};return `<div class="match-goal-row border rounded p-2 mb-2"><input type="hidden" name="mata_gol_time[]" value="${teamId}"><strong>${safe(team)}: Gol ${index+1}</strong><div class="row g-2 mt-1"><div class="col-md-5"><label class="form-label small">Jogador</label><input class="form-control form-control-sm" name="mata_gol_jogador[]" value="${safe(old.jogador)}" required></div><div class="col-md-3"><label class="form-label small">Tempo</label><input class="form-control form-control-sm" name="mata_gol_minuto[]" value="${safe(old.minuto)}" placeholder="45+2, pênaltis..." maxlength="30" required></div><div class="col-md-4"><label class="form-label small">Tipo</label><select class="form-select form-select-sm" name="mata_gol_tipo[]"><option value="normal" ${!old.tipo||old.tipo==='normal'?'selected':''}>Gol normal</option><option value="penalti" ${old.tipo==='penalti'?'selected':''}>Pênalti</option><option value="falta" ${old.tipo==='falta'?'selected':''}>Gol de falta</option><option value="olimpico" ${old.tipo==='olimpico'?'selected':''}>Gol olímpico</option><option value="contra" ${old.tipo==='contra'?'selected':''}>Gol contra</option></select></div></div></div>`;};
   let html='';for(let i=0;i<totalA;i++)html+=row(teamA,name(form.time_a_id),i);for(let i=0;i<totalB;i++)html+=row(teamB,name(form.time_b_id),i);
   editor.innerHTML=html?`<div class="d-flex justify-content-between mb-2"><strong>Gols deste jogo</strong><small class="text-secondary">${totalA+totalB} registros</small></div>${html}`:'';
 }
@@ -425,7 +425,7 @@ if(scorerForm){
   const choose=button=>{
     scorerForm.artilheiro_id.value=button.dataset.id;scorerForm.campeonato_id.value=button.dataset.campeonato;scorerForm.jogador.value=button.dataset.jogador;scorerForm.participante_id.value=button.dataset.participante;scorerForm.gols.value=button.dataset.gols;
     document.getElementById('artilheiro-submit').textContent='Salvar alterações';
-    const notice=document.getElementById('artilheiro-edicao');notice.querySelector('span').textContent=`Editando: ${button.dataset.jogador} — ${button.dataset.gols} gol(s)`;notice.classList.remove('d-none');notice.classList.add('d-flex');resultBox.classList.add('d-none');
+    const notice=document.getElementById('artilheiro-edicao');notice.querySelector('span').textContent=`Editando: ${button.dataset.jogador}: ${button.dataset.gols} gol(s)`;notice.classList.remove('d-none');notice.classList.add('d-flex');resultBox.classList.add('d-none');
   };
   const searchExisting=()=>{
     const query=normalize(playerInput.value);if(query.length<2){resultBox.classList.add('d-none');resultBox.innerHTML='';return;}
@@ -482,7 +482,7 @@ if(championshipTab){
     const modalElement=document.getElementById('identity-edit-modal'),modal=bootstrap.Modal.getOrCreateInstance(modalElement),form=document.getElementById('identity-edit-form');
     shell.querySelectorAll('.editar-identidade').forEach(button=>button.addEventListener('click',()=>{form.identidade_id.value=button.dataset.id;form.nome.value=button.dataset.name;form.logo_base64.value='';form.trofeu_base64.value='';form.logo.value='';form.trofeu.value='';form.querySelector('[data-preview="logo"]').src=`${button.dataset.logo}&v=${Date.now()}`;form.querySelector('[data-preview="trofeu"]').src=`${button.dataset.trophy}&v=${Date.now()}`;modal.show()}));
     const supercupForm=document.querySelector('#tab-supercopa form input[name="action"][value="criar_supercopa"]')?.closest('form');
-    if(supercupForm){const nameInput=supercupForm.querySelector('input[name="nome"]'),nameLabel=nameInput?.previousElementSibling;nameLabel?.insertAdjacentHTML('beforebegin',`<label class="form-label">Campeonato padrão</label><select class="form-select mb-3" name="identidade_id" required>${data.identidades.map(item=>`<option value="${item.id}" data-name="${esc(item.nome)}" data-next="${Math.max(item.edicoes,item.titulos)+1}" ${item.chave==='supercopa r'?'selected':''}>${esc(item.nome)} — criar próxima edição</option>`).join('')}</select>`);const model=supercupForm.identidade_id,updateName=()=>{const option=model.selectedOptions[0],next=Number(option.dataset.next||1);nameInput.value=option.dataset.name+(next>1?' '+romanEdition(next):'')};const romanEdition=n=>{const values=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let value='';for(const [amount,symbol] of values)while(n>=amount){value+=symbol;n-=amount}return value};model.addEventListener('change',updateName);updateName();}
+    if(supercupForm){const nameInput=supercupForm.querySelector('input[name="nome"]'),nameLabel=nameInput?.previousElementSibling;nameLabel?.insertAdjacentHTML('beforebegin',`<label class="form-label">Campeonato padrão</label><select class="form-select mb-3" name="identidade_id" required>${data.identidades.map(item=>`<option value="${item.id}" data-name="${esc(item.nome)}" data-next="${Math.max(item.edicoes,item.titulos)+1}" ${item.chave==='supercopa r'?'selected':''}>${esc(item.nome)}: criar próxima edição</option>`).join('')}</select>`);const model=supercupForm.identidade_id,updateName=()=>{const option=model.selectedOptions[0],next=Number(option.dataset.next||1);nameInput.value=option.dataset.name+(next>1?' '+romanEdition(next):'')};const romanEdition=n=>{const values=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let value='';for(const [amount,symbol] of values)while(n>=amount){value+=symbol;n-=amount}return value};model.addEventListener('change',updateName);updateName();}
   }).catch(()=>{});
   const style=document.createElement('style');style.textContent='.competition-model-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;padding:16px}.competition-model-card{overflow:hidden;border:1px solid #343941;border-radius:12px;background:#0c0e11}.competition-model-card>div:last-child{padding:14px}.competition-model-card h4{margin:0;font:800 1.25rem "Barlow Condensed",sans-serif}.competition-model-card small{color:#8f97a4}.competition-model-visual{display:grid;grid-template-columns:1fr 1fr;align-items:center;height:145px;padding:10px;background:radial-gradient(circle,rgba(237,27,47,.12),transparent 65%)}.competition-model-visual img{width:100%;height:125px;object-fit:contain}';document.head.append(style);
 }

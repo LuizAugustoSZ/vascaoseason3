@@ -71,13 +71,13 @@ try {
         if ($supercup) {
             $championA = competition_champion_id($pdo, (int) $supercup["origem_a_campeonato_id"]);
             $championB = competition_champion_id($pdo, (int) $supercup["origem_b_campeonato_id"]);
-            $labelA = "Campeão — " . $supercup["origem_a_nome"];
-            $labelB = "Campeão — " . $supercup["origem_b_nome"];
+            $labelA = "Campeão: " . $supercup["origem_a_nome"];
+            $labelB = "Campeão: " . $supercup["origem_b_nome"];
             if ($championA && $championB && $championA === $championB) {
                 if ($supercup["regra_mesmo_campeao"] === "vice_origem_b") {
-                    $labelB = "Vice — " . $supercup["origem_b_nome"];
+                    $labelB = "Vice: " . $supercup["origem_b_nome"];
                 } else {
-                    $labelA = "Vice — " . $supercup["origem_a_nome"];
+                    $labelA = "Vice: " . $supercup["origem_a_nome"];
                 }
             }
             foreach ($mataMata as &$game) {
