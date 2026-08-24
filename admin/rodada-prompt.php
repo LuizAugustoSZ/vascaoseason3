@@ -35,7 +35,7 @@ try {
     $rodadaAtual = 0;
     foreach ($rodadas as $item) if ($item['tem_resultado']) $rodadaAtual = max($rodadaAtual, $item['rodada']);
     if ($rodadaAtual < 1 && $rodadas) $rodadaAtual = $rodadas[0]['rodada'];
-    $cicloAtual = $rodadaAtual > 0 ? intdiv($rodadaAtual - 1, 8) + 1 : 1;
+    $cicloAtual = $rodadaAtual > 0 ? intdiv($rodadaAtual - 1, 8) + 1: 1;
     $inicioCicloAtual = (($cicloAtual - 1) * 8) + 1;
     $fimCicloAtual = $inicioCicloAtual + 7;
     $contextoAtual = "Rodada atual: {$rodadaAtual}ª · Ciclo {$cicloAtual}: {$inicioCicloAtual}ª à {$fimCicloAtual}ª rodada";
@@ -46,7 +46,7 @@ try {
     $inicioCiclo = (($ciclo - 1) * 8) + 1;
     $fimCiclo = $inicioCiclo + 7;
     $posicaoCiclo = (($rodada - 1) % 8) + 1;
-    $faseCiclo = $posicaoCiclo <= 5 ? 'elenco travado' : 'janela de transferências aberta';
+    $faseCiclo = $posicaoCiclo <= 5 ? 'elenco travado': 'janela de transferências aberta';
     $contexto = "{$rodada}ª rodada · Ciclo {$ciclo} ({$inicioCiclo}ª à {$fimCiclo}ª) · {$faseCiclo}";
 
     $matchesStmt = $pdo->prepare("SELECT p.id,p.status,p.gols_mandante,p.gols_visitante,p.data_partida,m.time_nome mandante,m.nome tecnico_mandante,m.sigla mandante_sigla,v.time_nome visitante,v.nome tecnico_visitante,v.sigla visitante_sigla,s.estadio,s.clima,s.duracao,s.craque,s.craque_nota,s.dados_json,s.texto_original FROM partidas p JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id LEFT JOIN sumulas_dreamteam s ON s.origem='pontos' AND s.partida_id=p.id WHERE p.campeonato_id=? AND p.rodada=? AND p.ativo=1 ORDER BY p.id");
@@ -54,22 +54,22 @@ try {
     $partidas = $matchesStmt->fetchAll();
     if (!$partidas) throw new RuntimeException('Nenhuma partida cadastrada nesta rodada.');
     $finishedMatches = count(array_filter($partidas, static fn(array $match): bool => in_array($match['status'], ['finalizada','wo'], true)));
-    $roundStatus = $finishedMatches === count($partidas) ? 'rodada encerrada' : "rodada em andamento ({$finishedMatches} de " . count($partidas) . ' partidas encerradas)';
+    $roundStatus = $finishedMatches === count($partidas) ? 'rodada encerrada': "rodada em andamento ({$finishedMatches} de " . count($partidas) . ' partidas encerradas)';
 
     $facts = [];
     $goalTotals = [];
     foreach ($partidas as $partida) {
         $placar = $partida['gols_mandante'] === null || $partida['gols_visitante'] === null
             ? 'placar ainda não informado'
-            : (int)$partida['gols_mandante'] . ' x ' . (int)$partida['gols_visitante'];
-        $lines = [sprintf('%s (técnico: %s) %s %s (técnico: %s) — status: %s', $partida['mandante'], $partida['tecnico_mandante'], $placar, $partida['visitante'], $partida['tecnico_visitante'], $partida['status'])];
+           : (int)$partida['gols_mandante'] . ' x ' . (int)$partida['gols_visitante'];
+        $lines = [sprintf('%s (técnico: %s) %s %s (técnico: %s): status: %s', $partida['mandante'], $partida['tecnico_mandante'], $placar, $partida['visitante'], $partida['tecnico_visitante'], $partida['status'])];
         if ($partida['data_partida']) $lines[] = 'Data: ' . date('d/m/Y H:i', strtotime((string)$partida['data_partida']));
         if ($partida['estadio']) $lines[] = 'Estádio: ' . $partida['estadio'];
         if ($partida['clima']) $lines[] = 'Clima: ' . $partida['clima'];
         if ($partida['duracao']) $lines[] = 'Duração: ' . (int)$partida['duracao'] . ' minutos';
-        if ($partida['craque']) $lines[] = 'Craque: ' . $partida['craque'] . ($partida['craque_nota'] !== null ? ' (nota ' . $partida['craque_nota'] . ')' : '');
+        if ($partida['craque']) $lines[] = 'Craque: ' . $partida['craque'] . ($partida['craque_nota'] !== null ? ' (nota ' . $partida['craque_nota'] . ')': '');
 
-        $parsed = $partida['dados_json'] ? json_decode((string)$partida['dados_json'], true) : null;
+        $parsed = $partida['dados_json'] ? json_decode((string)$partida['dados_json'], true): null;
         if (is_array($parsed)) {
             $teamNames = [];
             foreach (($parsed['teams'] ?? []) as $team) {
@@ -80,10 +80,10 @@ try {
             foreach (($parsed['events'] ?? []) as $event) {
                 $type = (string)($event['type'] ?? 'evento');
                 $team = $teamNames[(string)($event['team_code'] ?? '')] ?? (string)($event['team_code'] ?? '');
-                $minute = ($event['minute'] ?? '') !== '' ? (string)$event['minute'] . "'" : 'minuto não informado';
+                $minute = ($event['minute'] ?? '') !== '' ? (string)$event['minute'] . "'": 'minuto não informado';
                 $detail = match ($type) {
-                    'goal' => 'Gol de ' . ($event['player'] ?? 'não informado') . (!empty($event['assist']) ? ', assistência de ' . $event['assist'] : '') . ', tipo ' . ($event['goal_type'] ?? 'normal') . (!empty($event['cancelled']) ? ' (ANULADO)' : ''),
-                    'yellow_card' => 'Cartão amarelo para ' . ($event['player'] ?? 'não informado') . (!empty($event['via_var']) ? ' após VAR' : ''),
+                    'goal' => 'Gol de ' . ($event['player'] ?? 'não informado') . (!empty($event['assist']) ? ', assistência de ' . $event['assist']: '') . ', tipo ' . ($event['goal_type'] ?? 'normal') . (!empty($event['cancelled']) ? ' (ANULADO)': ''),
+                    'yellow_card' => 'Cartão amarelo para ' . ($event['player'] ?? 'não informado') . (!empty($event['via_var']) ? ' após VAR': ''),
                     'red_card' => 'Cartão vermelho para ' . ($event['player'] ?? 'não informado'),
                     'var_goal_cancelled' => 'VAR anulou gol de ' . ($event['player'] ?? 'não informado'),
                     'var_penalty_cancelled' => 'VAR cancelou pênalti envolvendo ' . ($event['player'] ?? 'não informado'),
@@ -91,7 +91,7 @@ try {
                     'substitution' => 'Substituição: saiu ' . ($event['player_out'] ?? 'não informado') . ', entrou ' . ($event['player_in'] ?? 'não informado'),
                     default => ucfirst(str_replace('_', ' ', $type)) . ': ' . ($event['description'] ?? ''),
                 };
-                $lines[] = $minute . ' — ' . $detail . ($team !== '' ? ' (' . $team . ')' : '');
+                $lines[] = $minute . ': ' . $detail . ($team !== '' ? ' (' . $team . ')': '');
                 if ($type === 'goal' && empty($event['cancelled']) && ($event['goal_type'] ?? '') !== 'contra') {
                     $player = trim((string)($event['player'] ?? ''));
                     if ($player !== '') $goalTotals[$player] = ($goalTotals[$player] ?? 0) + 1;
@@ -104,7 +104,7 @@ try {
         $facts[] = implode("\n", $lines);
     }
     arsort($goalTotals);
-    $scorers = $goalTotals ? implode(', ', array_map(static fn($name, $goals) => $name . ' (' . $goals . ')', array_keys($goalTotals), $goalTotals)) : 'nenhum artilheiro identificado nas súmulas';
+    $scorers = $goalTotals ? implode(', ', array_map(static fn($name, $goals) => $name . ' (' . $goals . ')', array_keys($goalTotals), $goalTotals)): 'nenhum artilheiro identificado nas súmulas';
 
     $campaignStmt = $pdo->prepare("SELECT p.mandante_id,p.visitante_id,p.gols_mandante,p.gols_visitante,m.time_nome mandante,v.time_nome visitante FROM partidas p JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.campeonato_id=? AND p.ativo=1 AND p.rodada<=? AND p.status IN ('finalizada','wo') ORDER BY p.rodada,p.id");
     $campaignStmt->execute([$campeonatoId, $rodada]);
@@ -141,14 +141,14 @@ try {
     $table=array_values($table);
     usort($table, static function(array $a,array $b): int { foreach(['pts','v','sg','gp'] as $key) if($a[$key]!==$b[$key]) return $b[$key]<=>$a[$key]; return strcmp($a['nome'],$b['nome']); });
     $standingsLines=[];
-    foreach($table as $index=>$team) $standingsLines[] = sprintf('%dº %s — %d pts | J %d | V %d | E %d | D %d | GP %d | GC %d | SG %+d', $index+1,$team['nome'],$team['pts'],$team['j'],$team['v'],$team['e'],$team['d'],$team['gp'],$team['gc'],$team['sg']);
+    foreach($table as $index=>$team) $standingsLines[] = sprintf('%dº %s: %d pts | J %d | V %d | E %d | D %d | GP %d | GC %d | SG %+d', $index+1,$team['nome'],$team['pts'],$team['j'],$team['v'],$team['e'],$team['d'],$team['gp'],$team['gc'],$team['sg']);
     $sequenceLines=[];
     foreach ($sequences as $sequence) {
-        if ($sequence['vitorias'] >= 2) $sequenceLines[] = $sequence['nome'] . ' — ' . $sequence['vitorias'] . ' vitórias consecutivas';
-        elseif ($sequence['invicto'] >= 2) $sequenceLines[] = $sequence['nome'] . ' — ' . $sequence['invicto'] . ' jogos consecutivos sem perder';
+        if ($sequence['vitorias'] >= 2) $sequenceLines[] = $sequence['nome'] . ': ' . $sequence['vitorias'] . ' vitórias consecutivas';
+        elseif ($sequence['invicto'] >= 2) $sequenceLines[] = $sequence['nome'] . ': ' . $sequence['invicto'] . ' jogos consecutivos sem perder';
     }
-    $sequenceText = $sequenceLines ? implode("\n", $sequenceLines) : 'Nenhuma sequência atual de pelo menos duas vitórias ou dois jogos invictos.';
-    $average = count($campaignGames) ? number_format($totalGoals / count($campaignGames), 2, ',', '.') : '0,00';
+    $sequenceText = $sequenceLines ? implode("\n", $sequenceLines): 'Nenhuma sequência atual de pelo menos duas vitórias ou dois jogos invictos.';
+    $average = count($campaignGames) ? number_format($totalGoals / count($campaignGames), 2, ',', '.'): '0,00';
 
     $prompt = "Você é um jornalista esportivo responsável pela cobertura do campeonato {$campeonato}.\n\n"
         . "Escreva uma notícia completa sobre a {$rodada}ª rodada usando EXCLUSIVAMENTE os dados fornecidos. Não invente fatos, falas, números ou acontecimentos. Quando algo não estiver disponível, omita. Explore o máximo de informação real: posse de bola, finalizações, chutes no alvo, passes, defesas, cartões, VAR, pênaltis, assistências, minutos dos gols, bolas paradas, craques e notas. Compare os números para explicar domínio, equilíbrio e atuações individuais. Faça uma leitura editorial automática de todos os dados: procure e destaque vitórias consecutivas, séries invictas, liderança mantida ou tomada, recuperação, queda de rendimento, melhor ataque, melhor defesa e outros recordes ou sequências comprováveis. Não espere que o usuário peça esses destaques. Informe sempre a quantidade exata da sequência e não use termos como invicto, consecutivo, recorde, bicampeão ou tricampeão sem comprovação nos dados.\n\n"

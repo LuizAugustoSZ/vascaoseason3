@@ -529,7 +529,7 @@ function match_score(array $j): string
                 </article>
                 <article class="treasury-module">
                     <div class="club-card-heading"><h3>Cofre do clube</h3><?php if ($canEditClubProfile && $clubePublico): ?><button class="club-card-edit" type="button" data-bs-toggle="modal" data-bs-target="#club-treasury-modal" aria-label="Editar cofre" title="Editar cofre">✎</button><?php endif; ?></div>
-                    <strong><?= $clubePublico ? 'R$ ' . number_format((float)$clubePublico['saldo'], 0, ',', '.') : 'R$ —' ?></strong>
+                    <strong><?= $clubePublico ? 'R$ ' . number_format((float)$clubePublico['saldo'], 0, ',', '.') : 'R$ não informado' ?></strong>
                     <p><?= $clubePublico ? 'Saldo atualizado do clube.' : 'Saldo ainda não informado.' ?></p>
                 </article>
                 <article class="transfer-history-module" data-transfer-module data-items-per-page="dynamic">

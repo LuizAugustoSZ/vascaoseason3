@@ -65,7 +65,7 @@ function rounds(array $ids): array
             $a = $ids[$i];
             $b = $ids[$count - 1 - $i];
             if ($a !== null && $b !== null) {
-                $games[] = $r % 2 ? [$a, $b] : [$b, $a];
+                $games[] = $r % 2 ? [$a, $b]: [$b, $a];
             }
         }
         $result[] = $games;
@@ -208,12 +208,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         1,
                         $timeA,
                         $timeB,
-                        $originA !== null ? $originPhase : null,
+                        $originA !== null ? $originPhase: null,
                         $originA,
-                        $originB !== null ? $originPhase : null,
+                        $originB !== null ? $originPhase: null,
                         $originB,
                     ]);
-                    $phaseFormat = $phase === "Final" ? $finalFormat : $format;
+                    $phaseFormat = $phase === "Final" ? $finalFormat: $format;
                     if ($phaseFormat === "ida_volta") {
                         $stmt->execute([
                             $championshipId,
@@ -222,9 +222,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             2,
                             $timeB,
                             $timeA,
-                            $originB !== null ? $originPhase : null,
+                            $originB !== null ? $originPhase: null,
                             $originB,
-                            $originA !== null ? $originPhase : null,
+                            $originA !== null ? $originPhase: null,
                             $originA,
                         ]);
                     }
@@ -278,7 +278,7 @@ function draw_edition_number(string $name): int
     $number = 0; $previous = 0;
     for ($index = strlen($match[1]) - 1; $index >= 0; $index--) {
         $current = $values[strtoupper($match[1][$index])] ?? 0;
-        $number += $current < $previous ? -$current : $current;
+        $number += $current < $previous ? -$current: $current;
         $previous = max($previous, $current);
     }
     return max(1, $number);
@@ -316,9 +316,9 @@ function checks(array $teams): string
     return $out;
 }
 ?>
-<!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sorteador | Season 3</title><link rel="icon" href="../favicon.ico" sizes="any"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/branding.css?v=5"><style>.admin-shell{padding:<?= $embedded ? '0 0 40px' : '105px 0 60px' ?>}.sorteio-form{padding:1.4rem}.sorteio-form h2{font:800 1.8rem 'Barlow Condensed',sans-serif;text-transform:uppercase}.form-select{background:#0b0c0e;border-color:#343941}.sorteio-team{display:flex;gap:.7rem;height:100%;padding:1rem 1rem 1rem 2.3rem;border:1px solid #343941;cursor:pointer}.sorteio-team small{display:block;color:#8d98ad}.sorteio-team:has(input:checked){border-color:#ed1b2f;background:rgba(237,27,47,.08)}</style></head><body>
+<!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sorteador | Season 3</title><link rel="icon" href="../favicon.ico" sizes="any"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/branding.css?v=5"><style>.admin-shell{padding:<?= $embedded ? '0 0 40px': '105px 0 60px' ?>}.sorteio-form{padding:1.4rem}.sorteio-form h2{font:800 1.8rem 'Barlow Condensed',sans-serif;text-transform:uppercase}.form-select{background:#0b0c0e;border-color:#343941}.sorteio-team{display:flex;gap:.7rem;height:100%;padding:1rem 1rem 1rem 2.3rem;border:1px solid #343941;cursor:pointer}.sorteio-team small{display:block;color:#8d98ad}.sorteio-team:has(input:checked){border-color:#ed1b2f;background:rgba(237,27,47,.08)}</style></head><body>
 <?php if (!$embedded): ?><nav class="navbar fixed-top navbar-dark"><div class="container-fluid px-3 px-lg-4"><a class="navbar-brand" href="index.php"><img class="brand-mark d-inline-block me-2" src="../assets/img/logo-season3.webp?v=5" alt="Vascao Season 3"> SORTEADOR S3</a><div class="global-nav-links" aria-label="Seções públicas"><a href="../index.php#competicao">Competição</a><a href="../index.php#artilharia">Jogadores</a><a href="../index.php#participantes">Participantes</a><a href="../index.php#titulos">Títulos</a><a href="../index.php#midia">Vídeos</a></div><div><a href="index.php" class="btn btn-outline-light btn-sm me-2">Administração</a><a href="../index.php" class="btn btn-danger btn-sm" target="_blank">Abrir site</a></div></div></nav><?php endif; ?>
-<main class="admin-shell"><div class="<?= $embedded ? 'container-fluid px-0' : 'container' ?>"><span class="eyebrow">Sorteio automático</span><h1 class="display-4 fw-bold mb-4">CRIAR COMPETIÇÕES</h1><?php if (
+<main class="admin-shell"><div class="<?= $embedded ? 'container-fluid px-0': 'container' ?>"><span class="eyebrow">Sorteio automático</span><h1 class="display-4 fw-bold mb-4">CRIAR COMPETIÇÕES</h1><?php if (
     $notice
 ): ?><div class="alert alert-info"><?= e(
     $notice,
@@ -333,4 +333,4 @@ function checks(array $teams): string
 ) ?>"><input type="hidden" name="action" value="mata"><h2>Mata-mata</h2><p class="text-secondary">Selecione exatamente 4, 8, 10 ou 16 participantes.</p><div class="alert alert-info small"><strong class="selected-count"></strong><br>Com 10 participantes, quatro disputam duas vagas na Preliminar e os outros seis avançam diretamente às Quartas. A Final e o 3º Lugar podem ter formatos diferentes das fases anteriores.</div><div class="row g-2 mb-3"><?= checks(
     $teams,
 ) ?></div><div class="row g-2"><div class="col-12"><label class="form-label">Formato das fases anteriores</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div><div class="col-md-6"><label class="form-label">Formato da Final</label><select class="form-select" name="formato_final"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div><div class="col-md-6"><label class="form-label">Formato do 3º Lugar</label><select class="form-select" name="formato_terceiro"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div></div><button class="btn btn-danger mt-3">Iniciar sorteio</button></form></div>
-</div></div></main><script>const competitionModels=<?= json_encode($competitionModels,JSON_UNESCAPED_UNICODE|JSON_HEX_TAG) ?>;const roman=n=>{const map=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let out='';for(const [value,symbol] of map)while(n>=value){out+=symbol;n-=value}return out};document.querySelectorAll('.sorteio-form').forEach(form=>{const title=form.querySelector('h2');title.insertAdjacentHTML('afterend',`<label class="form-label mt-2">Modelo da competição</label><select class="form-select mb-2 competition-model" name="identidade_id"><option value="">Criar uma nova competição</option>${competitionModels.map(item=>`<option value="${item.id}">${item.nome} — próxima edição ${item.proxima_edicao}</option>`).join('')}</select><label class="form-label">Nome desta edição</label><input class="form-control mb-3" name="nome_campeonato" maxlength="150" placeholder="Ex.: Copa Vascão S3" required>`);const model=form.querySelector('.competition-model');model.addEventListener('change',()=>{const item=competitionModels.find(entry=>String(entry.id)===model.value);if(!item)return;form.nome_campeonato.value=item.nome+(item.proxima_edicao>1?' '+roman(item.proxima_edicao):'')});const update=()=>{const total=form.querySelectorAll('input[name="participantes[]"]:checked').length;form.querySelector('.selected-count').textContent=`${total} participante${total===1?'':'s'} selecionado${total===1?'':'s'}.`;};form.addEventListener('change',update);update();form.addEventListener('submit',async event=>{if(event.defaultPrevented)return;event.preventDefault();const button=event.submitter||form.querySelector('button');const old=button.textContent;button.disabled=true;button.textContent='Sorteando...';try{const payload=new FormData(form);payload.set('_ajax','1');const response=await fetch('sorteador.php',{method:'POST',body:payload,headers:{'Accept':'application/json'},credentials:'same-origin'});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível sortear.');form.nome_campeonato.value='';alert(data.message);}catch(error){alert(error.message);}finally{button.disabled=false;button.textContent=old;}});});</script></body></html>
+</div></div></main><script>const competitionModels=<?= json_encode($competitionModels,JSON_UNESCAPED_UNICODE|JSON_HEX_TAG) ?>;const roman=n=>{const map=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let out='';for(const [value,symbol] of map)while(n>=value){out+=symbol;n-=value}return out};document.querySelectorAll('.sorteio-form').forEach(form=>{const title=form.querySelector('h2');title.insertAdjacentHTML('afterend',`<label class="form-label mt-2">Modelo da competição</label><select class="form-select mb-2 competition-model" name="identidade_id"><option value="">Criar uma nova competição</option>${competitionModels.map(item=>`<option value="${item.id}">${item.nome}: próxima edição ${item.proxima_edicao}</option>`).join('')}</select><label class="form-label">Nome desta edição</label><input class="form-control mb-3" name="nome_campeonato" maxlength="150" placeholder="Ex.: Copa Vascão S3" required>`);const model=form.querySelector('.competition-model');model.addEventListener('change',()=>{const item=competitionModels.find(entry=>String(entry.id)===model.value);if(!item)return;form.nome_campeonato.value=item.nome+(item.proxima_edicao>1?' '+roman(item.proxima_edicao):'')});const update=()=>{const total=form.querySelectorAll('input[name="participantes[]"]:checked').length;form.querySelector('.selected-count').textContent=`${total} participante${total===1?'':'s'} selecionado${total===1?'':'s'}.`;};form.addEventListener('change',update);update();form.addEventListener('submit',async event=>{if(event.defaultPrevented)return;event.preventDefault();const button=event.submitter||form.querySelector('button');const old=button.textContent;button.disabled=true;button.textContent='Sorteando...';try{const payload=new FormData(form);payload.set('_ajax','1');const response=await fetch('sorteador.php',{method:'POST',body:payload,headers:{'Accept':'application/json'},credentials:'same-origin'});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível sortear.');form.nome_campeonato.value='';alert(data.message);}catch(error){alert(error.message);}finally{button.disabled=false;button.textContent=old;}});});</script></body></html>

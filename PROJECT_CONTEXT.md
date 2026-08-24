@@ -1,4 +1,4 @@
-# PROJECT_CONTEXT.md — Vascão Season 3
+# PROJECT_CONTEXT.md: Vascão Season 3
 
 > Documento de contexto obrigatório para humanos e assistentes de programação.
 > Leia este arquivo antes de alterar o projeto e atualize-o quando uma decisão estrutural mudar.
@@ -281,7 +281,7 @@ A primeira etapa está implementada para homologação:
 - nomes de times nas áreas públicas com identidade disponível apontam para a página do time;
 - formação, cofre, grito do time e escalação aparecem apenas como módulos futuros, sem edição ou regra de negócio ativa.
 
-### Funcionalidades planejadas — próximas etapas
+### Funcionalidades planejadas: próximas etapas
 
 ### Página oficial de cada time
 
