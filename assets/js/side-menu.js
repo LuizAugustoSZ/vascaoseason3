@@ -29,6 +29,40 @@
         if (event.key === 'Escape' && mobile() && document.body.classList.contains('site-menu-open')) setMobileOpen(false);
     });
 
+    // Na landing page, acompanha a seção visível e destaca seu atalho na sidebar.
+    const landingSections = ['competicao', 'artilharia', 'participantes']
+        .map(id => ({ id, section: document.getElementById(id), link: menu.querySelector(`a[href="#${id}"]`) }))
+        .filter(item => item.section && item.link);
+    if (landingSections.length) {
+        let scheduled = false;
+        const setLandingActive = activeId => {
+            landingSections.forEach(({ id, link }) => {
+                const active = id === activeId;
+                link.classList.toggle('active', active);
+                active ? link.setAttribute('aria-current', 'location') : link.removeAttribute('aria-current');
+            });
+        };
+        const updateLandingActive = () => {
+            scheduled = false;
+            const probe = Math.min(180, Math.max(90, innerHeight * .28));
+            const current = landingSections.find(({ section }) => {
+                const rect = section.getBoundingClientRect();
+                return rect.top <= probe && rect.bottom > probe;
+            });
+            setLandingActive(current?.id || '');
+        };
+        const scheduleLandingUpdate = () => {
+            if (scheduled) return;
+            scheduled = true;
+            requestAnimationFrame(updateLandingActive);
+        };
+        landingSections.forEach(({ id, link }) => link.addEventListener('click', () => setLandingActive(id)));
+        addEventListener('scroll', scheduleLandingUpdate, { passive: true });
+        addEventListener('resize', scheduleLandingUpdate);
+        addEventListener('hashchange', scheduleLandingUpdate);
+        updateLandingActive();
+    }
+
     const accountToggle = document.querySelector('[data-account-popover-toggle]');
     const accountPopover = document.getElementById('site-account-popover');
     if (accountToggle && accountPopover) {
