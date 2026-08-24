@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['18.7','Na página inicial, a sidebar agora acompanha a rolagem e destaca automaticamente Competição, Jogadores ou Participantes conforme a seção visível.','Menu acompanha a navegação'],
 ['18.6','A página do clube ganhou uma visualização gráfica da escalação por imagem, com envio pelo técnico, abas entre imagem e jogadores, fallback automático e paginação de reservas e transferências adaptada à altura dos cards.','Escalação visual por imagem'],
 ['18.5','O Próximo Confronto agora respeita a menor rodada futura realmente cadastrada para o time, mantendo o Confronto Direto sincronizado com o mesmo adversário.','Próximo confronto por rodada'],
 ['18.4','As seções da navbar global foram alinhadas à direita e a configuração de seções do Admin passou a controlar também a visibilidade na landing e na navegação pública.','Seções configuráveis no Admin'],
