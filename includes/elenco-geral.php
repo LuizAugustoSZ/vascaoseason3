@@ -37,7 +37,7 @@ function elenco_geral_inscrever_corte_brasileirao_ii(PDO $pdo): int
         WHERE g.participante_id=? AND g.ativo=1 AND g.entrou_em<'2026-08-18 00:00:00'
           AND NOT EXISTS(
               SELECT 1 FROM jogadores_elenco e
-              WHERE e.campeonato_id=? AND e.participante_id=g.participante_id AND e.ativo=1
+              WHERE e.campeonato_id=? AND e.participante_id=g.participante_id
                 AND (e.jogador_geral_id=g.id OR (e.nome=g.nome AND e.overall=g.overall AND e.posicao=g.posicao))
           )");
     $inserted = 0;
