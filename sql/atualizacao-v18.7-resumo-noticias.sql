@@ -1,0 +1,2 @@
+ALTER TABLE noticias
+    MODIFY resumo VARCHAR(500) NOT NULL;
