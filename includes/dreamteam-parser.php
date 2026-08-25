@@ -21,6 +21,12 @@ function dreamteam_goal_type(string $description): string
     };
 }
 
+function dreamteam_player_key(string $name): string
+{
+    $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', mb_strtolower(trim($name), 'UTF-8'));
+    return preg_replace('/[^a-z0-9]+/', '', $ascii !== false ? $ascii : mb_strtolower(trim($name), 'UTF-8')) ?? '';
+}
+
 function dreamteam_parse_summary(string $raw): array
 {
     $raw = str_replace(["\r\n", "\r"], "\n", trim($raw));
@@ -131,7 +137,7 @@ function dreamteam_parse_summary(string $raw): array
             }
             if (preg_match('/GOL ANULADO\s*-\s*(.+?)\s*\(([A-Z0-9]+)\)/ui', $line, $match)) {
                 for ($eventIndex = count($events) - 1; $eventIndex >= 0; $eventIndex--) {
-                    if ($events[$eventIndex]['type'] === 'goal' && !$events[$eventIndex]['cancelled'] && $events[$eventIndex]['team_code'] === $match[2] && mb_strtolower($events[$eventIndex]['player']) === mb_strtolower(trim($match[1]))) {
+                    if ($events[$eventIndex]['type'] === 'goal' && !$events[$eventIndex]['cancelled'] && $events[$eventIndex]['team_code'] === $match[2] && dreamteam_player_key($events[$eventIndex]['player']) === dreamteam_player_key($match[1])) {
                         $events[$eventIndex]['cancelled'] = true;
                         break;
                     }
