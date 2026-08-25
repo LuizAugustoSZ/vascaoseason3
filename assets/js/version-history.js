@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['18.9','O loading de tela inteira agora aparece somente no carregamento e na troca de páginas. Abertura de modais, edições e consultas internas permanecem visíveis sem bloqueio preto.','Modais sem loading global'],
 ['18.8','Compras e vendas diretas agora consultam negociações anteriores do mesmo jogador e OVR, oferecendo o último valor em dinheiro como preenchimento opcional. Packs, prancheta e outras entradas sem custo continuam fora da sugestão.','Sugestão de valor por card'],
 ['18.7','Na página inicial, a sidebar agora acompanha a rolagem e destaca automaticamente Competição, Jogadores ou Participantes conforme a seção visível.','Menu acompanha a navegação'],
 ['18.6','A página do clube ganhou uma visualização gráfica da escalação por imagem, com envio pelo técnico, abas entre imagem e jogadores, fallback automático e paginação de reservas e transferências adaptada à altura dos cards.','Escalação visual por imagem'],
