@@ -19,6 +19,8 @@ verify_csrf();
 $pdo = db();
 $historyId = 0;
 try {
+    // A produção já aceita resumos maiores; alinhe a coluna da homologação antes de copiar os dados.
+    ensure_news_summary_schema($pdo);
     sync_ensure_history($pdo);
     $before = sync_snapshot($pdo);
     $beforeHash = sync_hash($before);
