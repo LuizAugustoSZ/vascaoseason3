@@ -99,6 +99,75 @@ function identify_summary_context(PDO $pdo, array $parsed): array
     return ['home' => $home, 'away' => $away, 'candidates' => $candidates];
 }
 
+function summary_player_aliases(string $name): array
+{
+    $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', mb_strtolower(trim($name), 'UTF-8'));
+    $words = preg_split('/[^a-z0-9]+/', $ascii !== false ? $ascii : mb_strtolower(trim($name), 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    $aliases = [normalized_team_name($name)];
+    foreach ($words as $word) if (strlen($word) >= 3) $aliases[] = $word;
+    if (count($words) > 1) $aliases[] = substr($words[0], 0, 1) . $words[count($words) - 1];
+    return array_values(array_unique(array_filter($aliases)));
+}
+
+function summary_roster_resolver(array $rosterNames): array
+{
+    $resolver = [];
+    $exact = [];
+    foreach ($rosterNames as $rosterName) {
+        $official = trim((string)$rosterName);
+        $key = normalized_team_name($official);
+        if ($key !== '') $resolver[$key] = $exact[$key] = $official;
+    }
+    foreach ($rosterNames as $rosterName) {
+        $official = trim((string)$rosterName);
+        foreach (summary_player_aliases($official) as $alias) {
+            if (isset($exact[$alias])) continue;
+            if (!array_key_exists($alias, $resolver)) $resolver[$alias] = $official;
+            elseif ($resolver[$alias] !== $official) $resolver[$alias] = null;
+        }
+    }
+    return $resolver;
+}
+
+function summary_resolve_player(array $resolver, string $name): ?string
+{
+    $key = normalized_team_name($name);
+    return $key !== '' && array_key_exists($key, $resolver) && is_string($resolver[$key]) ? $resolver[$key] : null;
+}
+
+function summary_canonicalize_players(PDO $pdo, array $parsed, array $context, int $championshipId): array
+{
+    $codes = array_column($parsed['teams'], 'code');
+    if (count($codes) !== 2) return $parsed;
+    $teamByCode = [$codes[0] => $context['home'], $codes[1] => $context['away']];
+    $stmt = $pdo->prepare("SELECT nome FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND grupo IN ('titular','banco')");
+    $resolvers = [];
+    foreach ($teamByCode as $code => $team) {
+        $stmt->execute([$championshipId, (int)$team['id']]);
+        $resolvers[strtoupper(trim((string)$code))] = summary_roster_resolver($stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+    $canonical = static function (?string $name, ?string $code) use ($resolvers): ?string {
+        if ($name === null || trim($name) === '') return $name;
+        $resolver = $resolvers[strtoupper(trim((string)$code))] ?? [];
+        return summary_resolve_player($resolver, $name) ?? trim($name);
+    };
+    foreach ($parsed['events'] as &$event) {
+        foreach (['player','player_out','player_in','assist'] as $field) {
+            if (isset($event[$field])) $event[$field] = $canonical((string)$event[$field], $event['team_code'] ?? null);
+        }
+    }
+    unset($event);
+    foreach ($parsed['goals'] as &$goal) $goal['player'] = $canonical((string)$goal['player'], $goal['team_code'] ?? null);
+    unset($goal);
+    foreach ($parsed['teams'] as &$team) {
+        foreach ($team['scorers'] as &$scorer) $scorer['player'] = $canonical((string)$scorer['player'], $team['code'] ?? null);
+        unset($scorer);
+    }
+    unset($team);
+    if (!empty($parsed['man_of_match'])) $parsed['man_of_match'] = $canonical((string)$parsed['man_of_match'], $parsed['man_of_match_team_code'] ?? null);
+    return $parsed;
+}
+
 function summary_roster_issues(PDO $pdo, array $parsed, array $context, int $championshipId, string $championshipName): array
 {
     if (!str_contains(normalized_team_name($championshipName), 'brasileir')) return [];
@@ -134,10 +203,9 @@ function summary_roster_issues(PDO $pdo, array $parsed, array $context, int $cha
             $issues[] = $team['time_nome'] . ' não possui titulares ou reservas inscritos nesta edição do Brasileirão. Verifique a inscrição da competição.';
             continue;
         }
-        $allowed = [];
-        foreach ($rosterNames as $name) $allowed[normalized_team_name((string)$name)] = true;
+        $resolver = summary_roster_resolver($rosterNames);
         foreach (array_keys($mentioned[$code]) as $player) {
-            if (!isset($allowed[normalized_team_name($player)])) {
+            if (summary_resolve_player($resolver, $player) === null) {
                 $issues[] = 'Jogador ' . $player . ' não reconhecido entre os titulares ou reservas de ' . $team['time_nome'] . ' nesta competição.';
             }
         }
@@ -257,6 +325,7 @@ try {
     ))));
     $unreviewedRosterIssues = array_values(array_diff($rosterIssues, $ignoredRosterIssues));
     if ($unreviewedRosterIssues) throw new RuntimeException('Verifique a escalação: ' . implode(' ', $unreviewedRosterIssues));
+    $parsed = summary_canonicalize_players($pdo, $parsed, $context, (int)$candidate['campeonato_id']);
     $targetColumn = $type === 'pontos' ? 'partida_id' : 'jogo_mata_mata_id';
     $targetLookup = $pdo->prepare("SELECT id,dreamteam_id,origem,partida_id,jogo_mata_mata_id FROM sumulas_dreamteam WHERE origem=? AND `$targetColumn`=? LIMIT 1");
     $targetLookup->execute([$type,$matchId]);
