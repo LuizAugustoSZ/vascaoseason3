@@ -62,7 +62,7 @@ try {
         $montagemInicial = !(bool)$clube['elenco_confirmado'] && $rodada === 1;
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'atualizar_inscricao_geral') {
-            if ($campeonatoUsaCiclo && !mercado_pode_editar($clube, $rodada)) throw new RuntimeException('A inscrição desta competição está congelada neste ciclo.');
+            if (!$isMasterManagement && $campeonatoUsaCiclo && !mercado_pode_editar($clube, $rodada)) throw new RuntimeException('A inscrição desta competição está congelada neste ciclo.');
             $inscritos = array_values(array_unique(array_map('intval', (array)($_POST['inscrito_id'] ?? []))));
             $titulares = array_values(array_unique(array_map('intval', (array)($_POST['titular_geral_id'] ?? []))));
             if (count($titulares) !== 11) throw new RuntimeException('Selecione exatamente 11 titulares.');
@@ -339,6 +339,7 @@ $campeonatosComElenco = [];
 $elencoGeral = [];
 $inscritosGerais = $titularesGerais = [];
 $podeEditarMercado = $clube ? (!$campeonatoUsaCiclo || mercado_pode_editar($clube, $rodada)) : false;
+$podeEditarInscricao = $clube ? ($isMasterManagement || $podeEditarMercado) : false;
 $montagemInicial = $clube ? (!(bool)$clube['elenco_confirmado'] && $rodada === 1) : false;
 if ($clube) {
     $s = $pdo->prepare("SELECT * FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
@@ -402,7 +403,7 @@ if ($clube) {
                     </form>
                 </section><?php endif; ?>
             <div id="gestao-competicao" class="market-anchor" aria-hidden="true"></div>
-            <?php if ($podeEditarMercado): ?><section class="panel p-4 mb-4"><span class="eyebrow">Janela aberta · todos os jogadores disponíveis</span><h2>INSCRIÇÃO NA COMPETIÇÃO</h2><p class="text-secondary">Todos os jogadores ativos do Elenco Geral aparecem abaixo automaticamente. Escolha exatamente 11 titulares e até 15 reservas; quem não for marcado permanece somente no Geral.</p><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_inscricao_geral"><?php if($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><div class="roster-grid"><?php foreach($elencoGeral as $j): $gid=(int)$j['id']; ?><article class="roster-select-card"><label><input type="checkbox" name="inscrito_id[]" value="<?= $gid ?>" <?= isset($inscritosGerais[$gid])?'checked':'' ?>> Inscrito</label><label><input type="checkbox" name="titular_geral_id[]" value="<?= $gid ?>" <?= isset($titularesGerais[$gid])?'checked':'' ?>> Titular</label><b><?= e($j['nome']) ?></b><strong><?= (int)$j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar inscrição</button></form></section><?php else: ?><div class="alert alert-warning mb-4"><strong>Inscrição congelada.</strong> Os jogadores contratados agora ficam no Elenco Geral e aparecerão automaticamente aqui quando a próxima janela abrir. A escalação dos já inscritos continua editável abaixo.</div><?php endif; ?>
+            <?php if ($podeEditarInscricao): ?><section class="panel p-4 mb-4"><span class="eyebrow"><?= $isMasterManagement && !$podeEditarMercado ? 'Acesso Master · ciclo ignorado' : 'Janela aberta · todos os jogadores disponíveis' ?></span><h2>INSCRIÇÃO NA COMPETIÇÃO</h2><p class="text-secondary">Todos os jogadores ativos do Elenco Geral aparecem abaixo automaticamente. Escolha exatamente 11 titulares e até 15 reservas; quem não for marcado permanece somente no Geral.</p><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_inscricao_geral"><?php if($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><div class="roster-grid"><?php foreach($elencoGeral as $j): $gid=(int)$j['id']; ?><article class="roster-select-card"><label><input type="checkbox" name="inscrito_id[]" value="<?= $gid ?>" <?= isset($inscritosGerais[$gid])?'checked':'' ?>> Inscrito</label><label><input type="checkbox" name="titular_geral_id[]" value="<?= $gid ?>" <?= isset($titularesGerais[$gid])?'checked':'' ?>> Titular</label><b><?= e($j['nome']) ?></b><strong><?= (int)$j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar inscrição</button></form></section><?php else: ?><div class="alert alert-warning mb-4"><strong>Inscrição congelada.</strong> Os jogadores contratados agora ficam no Elenco Geral e aparecerão automaticamente aqui quando a próxima janela abrir. A escalação dos já inscritos continua editável abaixo.</div><?php endif; ?>
             <section class="panel p-4 mb-4" id="elenco">
                 <div class="d-flex justify-content-between">
                     <h2>ELENCO</h2>
