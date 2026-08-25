@@ -48,6 +48,25 @@ function e(?string $value): string
     return htmlspecialchars($value ?? "", ENT_QUOTES, "UTF-8");
 }
 
+// Mantém o resumo das notícias compatível com o limite do editor.
+function ensure_news_summary_schema(PDO $pdo): void
+{
+    static $checked = false;
+    if ($checked) return;
+
+    $column = $pdo->query("SHOW COLUMNS FROM noticias LIKE 'resumo'")->fetch();
+    if (!$column) {
+        throw new RuntimeException("A coluna de resumo das notícias não foi encontrada.");
+    }
+
+    if (preg_match('/^varchar\((\d+)\)$/i', (string) $column['Type'], $match) && (int) $match[1] < 500) {
+        $nullable = strtoupper((string) $column['Null']) === 'YES' ? 'NULL' : 'NOT NULL';
+        $pdo->exec("ALTER TABLE noticias MODIFY resumo VARCHAR(500) {$nullable}");
+    }
+
+    $checked = true;
+}
+
 // Mantém uma trilha técnica enxuta das ações relevantes do sistema.
 function audit_ensure_schema(): void
 {

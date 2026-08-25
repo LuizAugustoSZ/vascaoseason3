@@ -360,6 +360,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
         // Publica ou atualiza uma notícia dentro da aba do painel.
         if ($action === "salvar_noticia") {
+            ensure_news_summary_schema($pdo);
             $id = (int) ($_POST["noticia_id"] ?? 0);
             $title = trim((string) ($_POST["titulo"] ?? ""));
             $summary = trim((string) ($_POST["resumo"] ?? ""));
@@ -372,6 +373,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ) {
                 throw new RuntimeException(
                     "Preencha título, resumo e conteúdo da matéria.",
+                );
+            }
+            if (mb_strlen($summary, "UTF-8") > 500) {
+                throw new RuntimeException(
+                    "O resumo deve ter no máximo 500 caracteres.",
                 );
             }
             if (
