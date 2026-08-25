@@ -106,9 +106,7 @@ require __DIR__ . "/includes/public-layout.php"; ?>
                                                                                                                                                 ],
                                                                                                                                                 JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
                                                                                                                                             ) ?>;
-        </script><?php endif; ?><script src="assets/js/version-history.js?v=<?= filemtime(
-                                                                                __DIR__ . "/assets/js/version-history.js",
-                                                                            ) ?>"></script>
+        </script><?php endif; ?>
 </body>
 
 </html>
