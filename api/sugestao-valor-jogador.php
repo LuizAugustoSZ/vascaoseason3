@@ -12,8 +12,9 @@ try {
 
     $nome = trim((string)($_GET['nome'] ?? ''));
     $overall = (int)($_GET['overall'] ?? 0);
-    if ($nome === '' || mb_strlen($nome) > 150 || $overall < 1 || $overall > 99) {
-        throw new RuntimeException('Informe o nome e o OVR do jogador.');
+    $tipo = (string)($_GET['tipo'] ?? '');
+    if ($nome === '' || mb_strlen($nome) > 150 || $overall < 1 || $overall > 99 || !in_array($tipo, ['compra', 'venda'], true)) {
+        throw new RuntimeException('Informe o nome, o OVR e o tipo da negociação.');
     }
 
     $pdo = db();
@@ -27,10 +28,11 @@ try {
     WHERE TRIM(jogador_nome)=TRIM(?)
       AND jogador_overall=?
       AND valor>0
-      AND (tipo='venda' OR (tipo='compra' AND origem='compra_direta'))
+      AND tipo=?
+      AND (tipo='venda' OR origem='compra_direta')
     ORDER BY criado_em DESC
     LIMIT 1");
-    $stmt->execute([$nome, $overall]);
+    $stmt->execute([$nome, $overall, $tipo]);
     $sugestao = $stmt->fetch();
 
     json_response([
