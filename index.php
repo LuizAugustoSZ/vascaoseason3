@@ -390,9 +390,6 @@ if (
                                             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
                                         ) ?>;
         </script><?php endif; ?>
-    <script src="assets/js/version-history.js?v=<?= filemtime(
-                                                    __DIR__ . "/assets/js/version-history.js",
-                                                ) ?>"></script>
     <script src="assets/js/script.js?v=<?= filemtime(
                                             __DIR__ . "/assets/js/script.js",
                                         ) ?>"></script>
