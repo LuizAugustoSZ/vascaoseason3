@@ -26,7 +26,11 @@
       const options = knockout ? data.fases : data.rodadas;
       const current = knockout ? data.fase_atual : data.rodada_atual;
       stageLabel.textContent = knockout ? 'Fase' : 'Rodada';
-      round.innerHTML = options.map(item => {
+      const specialOptions = knockout ? '' : [
+        '<option value="chances_titulo">🏆 Porcentagem de ser campeão (G4)</option>',
+        '<option value="campeonato_completo">🏁 Todas as rodadas — matéria do campeão</option>'
+      ].join('');
+      round.innerHTML = specialOptions + options.map(item => {
         const value = knockout ? item.fase : item.rodada;
         const label = knockout ? (item.label || item.fase) : `${item.rodada}ª rodada`;
         return `<option value="${value}"${value === current ? ' selected' : ''}>${label}${item.tem_resultado ? '' : ', sem resultado'}</option>`;
@@ -40,7 +44,8 @@
   generate.addEventListener('click', async () => {
     generate.disabled = true; generate.textContent = 'GERANDO...'; status.textContent = '';
     try {
-      const stageParam = round.dataset.type === 'mata_mata' ? 'fase' : 'rodada';
+      const specialAction = round.dataset.type !== 'mata_mata' && ['chances_titulo', 'campeonato_completo'].includes(round.value);
+      const stageParam = specialAction ? 'acao' : (round.dataset.type === 'mata_mata' ? 'fase' : 'rodada');
       const response = await fetch(`${endpoint}?campeonato_id=${encodeURIComponent(championship.value)}&${stageParam}=${encodeURIComponent(round.value)}`, {headers: {'Accept': 'application/json'}});
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível gerar o prompt.');
