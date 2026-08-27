@@ -13,11 +13,103 @@ function prompt_json(array $data, int $status = 200): never
     exit;
 }
 
+function league_prompt_data(PDO $pdo, int $championshipId): array
+{
+    $stmt = $pdo->prepare("SELECT p.id,p.rodada,p.status,p.mandante_id,p.visitante_id,p.gols_mandante,p.gols_visitante,p.data_partida,m.time_nome mandante,m.nome tecnico_mandante,v.time_nome visitante,v.nome tecnico_visitante,s.estadio,s.clima,s.duracao,s.craque,s.craque_nota,s.dados_json,s.texto_original FROM partidas p JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id LEFT JOIN sumulas_dreamteam s ON s.origem='pontos' AND s.partida_id=p.id WHERE p.campeonato_id=? AND p.ativo=1 ORDER BY p.rodada,p.id");
+    $stmt->execute([$championshipId]);
+    $matches = $stmt->fetchAll();
+    $table = [];
+    $form = [];
+    $remaining = [];
+    $scorers = [];
+    $assists = [];
+    $totals = ['jogos'=>0,'gols'=>0,'amarelos'=>0,'vermelhos'=>0,'finalizacoes'=>0,'chutes_no_gol'=>0,'defesas'=>0,'escanteios'=>0];
+    $facts = [];
+    foreach ($matches as $match) {
+        foreach ([['id'=>(int)$match['mandante_id'],'nome'=>$match['mandante']], ['id'=>(int)$match['visitante_id'],'nome'=>$match['visitante']]] as $team) {
+            $table[$team['id']] ??= ['id'=>$team['id'],'nome'=>$team['nome'],'j'=>0,'v'=>0,'e'=>0,'d'=>0,'gp'=>0,'gc'=>0,'sg'=>0,'pts'=>0];
+            $form[$team['id']] ??= [];
+            $remaining[$team['id']] ??= [];
+        }
+        $finished = in_array((string)$match['status'], ['finalizada','wo'], true) && $match['gols_mandante'] !== null && $match['gols_visitante'] !== null;
+        $home=(int)$match['mandante_id']; $away=(int)$match['visitante_id'];
+        if (!$finished) {
+            $date = $match['data_partida'] ? date('d/m/Y H:i', strtotime((string)$match['data_partida'])) : 'data não informada';
+            $remaining[$home][] = $match['rodada'] . 'ª: ' . $match['visitante'] . ' (casa; ' . $date . ')';
+            $remaining[$away][] = $match['rodada'] . 'ª: ' . $match['mandante'] . ' (fora; ' . $date . ')';
+            $facts[] = $match['rodada'] . 'ª rodada: ' . $match['mandante'] . ' x ' . $match['visitante'] . ' — ' . $match['status'] . ' — ' . $date;
+            continue;
+        }
+        $hg=(int)$match['gols_mandante']; $ag=(int)$match['gols_visitante'];
+        $totals['jogos']++; $totals['gols'] += $hg + $ag;
+        $table[$home]['j']++; $table[$away]['j']++; $table[$home]['gp']+=$hg; $table[$home]['gc']+=$ag; $table[$away]['gp']+=$ag; $table[$away]['gc']+=$hg;
+        if ($hg>$ag) { $table[$home]['v']++; $table[$home]['pts']+=3; $table[$away]['d']++; $form[$home][]='V'; $form[$away][]='D'; }
+        elseif ($hg<$ag) { $table[$away]['v']++; $table[$away]['pts']+=3; $table[$home]['d']++; $form[$home][]='D'; $form[$away][]='V'; }
+        else { $table[$home]['e']++; $table[$away]['e']++; $table[$home]['pts']++; $table[$away]['pts']++; $form[$home][]='E'; $form[$away][]='E'; }
+        $detail = [$match['rodada'] . 'ª rodada: ' . $match['mandante'] . ' ' . $hg . ' x ' . $ag . ' ' . $match['visitante']];
+        if ($match['data_partida']) $detail[] = 'Data: ' . date('d/m/Y H:i', strtotime((string)$match['data_partida']));
+        if ($match['estadio']) $detail[] = 'Estádio: ' . $match['estadio'];
+        if ($match['clima']) $detail[] = 'Clima: ' . $match['clima'];
+        if ($match['duracao']) $detail[] = 'Duração: ' . (int)$match['duracao'] . ' minutos';
+        if ($match['craque']) $detail[] = 'Craque: ' . $match['craque'] . ($match['craque_nota'] !== null ? ' (nota ' . $match['craque_nota'] . ')' : '');
+        $parsed = $match['dados_json'] ? json_decode((string)$match['dados_json'], true) : null;
+        if (is_array($parsed)) {
+            foreach (($parsed['teams'] ?? []) as $team) {
+                if (!empty($team['stats'])) {
+                    $detail[] = 'Estatísticas de ' . ($team['name'] ?? $team['code'] ?? 'time') . ': ' . json_encode($team['stats'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    foreach ((array)$team['stats'] as $key=>$value) {
+                        $normalized = strtolower((string)$key);
+                        $number = is_numeric($value) ? (int)$value : 0;
+                        if (str_contains($normalized, 'finaliza')) $totals['finalizacoes'] += $number;
+                        if (str_contains($normalized, 'gol') && str_contains($normalized, 'chute')) $totals['chutes_no_gol'] += $number;
+                        if (str_contains($normalized, 'defesa')) $totals['defesas'] += $number;
+                        if (str_contains($normalized, 'escante')) $totals['escanteios'] += $number;
+                    }
+                }
+            }
+            foreach (($parsed['events'] ?? []) as $event) {
+                $type=(string)($event['type'] ?? ''); $player=trim((string)($event['player'] ?? '')); $assist=trim((string)($event['assist'] ?? ''));
+                if ($type==='goal' && empty($event['cancelled']) && ($event['goal_type'] ?? '') !== 'contra' && $player!=='') $scorers[$player]=($scorers[$player] ?? 0)+1;
+                if ($type==='goal' && empty($event['cancelled']) && $assist!=='') $assists[$assist]=($assists[$assist] ?? 0)+1;
+                if ($type==='yellow_card') $totals['amarelos']++;
+                if ($type==='red_card') $totals['vermelhos']++;
+            }
+        }
+        if (!empty($match['texto_original'])) $detail[] = "SÚMULA ORIGINAL COMPLETA:\n" . trim((string)$match['texto_original']);
+        $facts[] = implode("\n", $detail);
+    }
+    foreach ($table as &$team) { $team['sg']=$team['gp']-$team['gc']; $team['restantes']=count($remaining[$team['id']]); $team['max_pts']=$team['pts'] + ($team['restantes']*3); $team['forma']=implode('-', array_slice($form[$team['id']], -5)) ?: 'sem jogos'; }
+    unset($team);
+    $table=array_values($table);
+    usort($table, static function(array $a,array $b): int { foreach(['pts','v','sg','gp'] as $key) if($a[$key]!==$b[$key]) return $b[$key]<=>$a[$key]; return strcmp($a['nome'],$b['nome']); });
+    arsort($scorers); arsort($assists);
+    return compact('matches','table','remaining','scorers','assists','totals','facts');
+}
+
+function league_table_text(array $table, array $remaining): string
+{
+    $lines=[];
+    foreach ($table as $index=>$team) {
+        $games = $remaining[$team['id']] ? implode('; ', $remaining[$team['id']]) : 'nenhum';
+        $lines[] = sprintf('%dº %s: %d pts | J %d | V %d | E %d | D %d | GP %d | GC %d | SG %+d | forma (últimos 5) %s | jogos restantes %d | máximo possível %d pts | próximos: %s', $index+1,$team['nome'],$team['pts'],$team['j'],$team['v'],$team['e'],$team['d'],$team['gp'],$team['gc'],$team['sg'],$team['forma'],$team['restantes'],$team['max_pts'],$games);
+    }
+    return implode("\n", $lines);
+}
+
+function ranking_text(array $ranking, int $limit=10): string
+{
+    if (!$ranking) return 'nenhum dado identificado nas súmulas';
+    $lines=[]; $position=0;
+    foreach ($ranking as $name=>$value) { $lines[]=(++$position) . 'º ' . $name . ': ' . $value; if ($position >= $limit) break; }
+    return implode('; ', $lines);
+}
+
 try {
     $pdo = db();
     $campeonatoId = (int)($_GET['campeonato_id'] ?? 0);
     $rodada = (int)($_GET['rodada'] ?? 0);
     $fase = trim((string)($_GET['fase'] ?? ''));
+    $acao = trim((string)($_GET['acao'] ?? ''));
     if ($campeonatoId < 1) throw new RuntimeException('Selecione um campeonato.');
 
     $championshipStmt = $pdo->prepare("SELECT nome,tipo,status FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1");
@@ -39,6 +131,24 @@ try {
     $inicioCicloAtual = (($cicloAtual - 1) * 8) + 1;
     $fimCicloAtual = $inicioCicloAtual + 7;
     $contextoAtual = "Rodada atual: {$rodadaAtual}ª · Ciclo {$cicloAtual}: {$inicioCicloAtual}ª à {$fimCicloAtual}ª rodada";
+    if (in_array($acao, ['chances_titulo','campeonato_completo'], true)) {
+        $data = league_prompt_data($pdo, $campeonatoId);
+        if (!$data['matches']) throw new RuntimeException('Nenhuma partida cadastrada neste campeonato.');
+        $tableText = league_table_text($data['table'], $data['remaining']);
+        $finished = $data['totals']['jogos']; $total = count($data['matches']); $remainingCount = $total - $finished;
+        if ($acao === 'chances_titulo') {
+            $g4 = array_slice($data['table'], 0, 4);
+            $g4Names = implode(', ', array_column($g4, 'nome'));
+            $prompt = "Você é um jornalista esportivo e analista estatístico responsável pela cobertura do campeonato {$campeonato}.\n\nEscreva uma notícia sobre as chances de título dos quatro primeiros colocados (G4): {$g4Names}. Use EXCLUSIVAMENTE os números fornecidos. Calcule e apresente uma PORCENTAGEM ESTIMADA DE SER CAMPEÃO para cada integrante do G4, com uma casa decimal, e faça as quatro porcentagens somarem exatamente 100,0%. A estimativa deve considerar pontos, vitórias, saldo e gols pró (nesta ordem de desempate), forma nos últimos cinco jogos, mando e dificuldade dos confrontos restantes, máximo de pontos e combinações necessárias. Explique claramente que são projeções editoriais baseadas no momento, não probabilidades oficiais. Não invente resultados, lesões, suspensões, falas ou fatos. Mostre as contas e os caminhos possíveis de cada candidato, inclusive quem depende de tropeços.\n\nPADRÃO EDITORIAL OBRIGATÓRIO:\n1. TÍTULO: manchete forte, com até 180 caracteres.\n2. RESUMO: um parágrafo de até 500 caracteres.\n3. DESCRIÇÃO: repita o título; abra com o cenário; crie um bloco para cada time do G4 com sua porcentagem; inclua **📊 Como calculamos**, **🧮 Contas do título**, **🗓️ Jogos restantes** e **🏆 Veredito**. Use negrito nos números decisivos e emojis apenas nos subtítulos.\n\nENTREGUE EXATAMENTE SEPARADO ASSIM:\nTÍTULO:\n[texto]\n\nRESUMO:\n[texto]\n\nDESCRIÇÃO:\n[matéria completa]\n\nDADOS OFICIAIS FORNECIDOS:\nCAMPEONATO: {$campeonato}\nPARTIDAS ENCERRADAS: {$finished} de {$total}\nPARTIDAS RESTANTES: {$remainingCount}\nCRITÉRIOS DE DESEMPATE DISPONÍVEIS: pontos, vitórias, saldo de gols e gols pró.\n\nCLASSIFICAÇÃO E CENÁRIOS NUMÉRICOS:\n{$tableText}\n\nTODOS OS JOGOS DO CAMPEONATO:\n" . implode("\n\n---\n\n", $data['facts']);
+            prompt_json(['ok'=>true,'prompt'=>$prompt,'partidas'=>$total,'contexto'=>'Porcentagem de ser campeão · G4']);
+        }
+        $champion = $data['table'][0]['nome'] ?? 'não definido';
+        $completed = $remainingCount === 0;
+        $statusText = $completed ? "ENCERRADO — campeão: {$champion}" : "EM ANDAMENTO — ainda restam {$remainingCount} partidas; não declare campeão";
+        $average = $finished ? number_format($data['totals']['gols']/$finished, 2, ',', '.') : '0,00';
+        $prompt = "Você é um jornalista esportivo responsável pela cobertura do campeonato {$campeonato}.\n\nEscreva a grande matéria de encerramento usando EXCLUSIVAMENTE os dados fornecidos. {$statusText}. Se o campeonato estiver encerrado, dê parabéns ao campeão {$champion}, conte sua campanha completa rodada por rodada e destaque por que conquistou o título. Se ainda estiver em andamento, produza apenas uma prévia do encerramento e jamais trate o líder como campeão. Não invente fatos, falas, números ou acontecimentos.\n\nPADRÃO EDITORIAL OBRIGATÓRIO:\n1. TÍTULO: manchete forte, com até 180 caracteres, no formato de celebração ao campeão quando o torneio estiver encerrado.\n2. RESUMO: um parágrafo de até 500 caracteres.\n3. DESCRIÇÃO: repita o título e use blocos como **🏆 O campeão**, **🛣️ A campanha**, **⚽ Números gerais**, **🎯 Artilheiros**, **🅰️ Assistências**, **🔥 Jogos decisivos**, **📊 Classificação final** e **👏 Parabéns ao campeão**. Conte a trajetória inteira e encerre celebrando o título. Emojis apenas nos subtítulos.\n\nENTREGUE EXATAMENTE SEPARADO ASSIM:\nTÍTULO:\n[texto]\n\nRESUMO:\n[texto]\n\nDESCRIÇÃO:\n[matéria completa]\n\nDADOS OFICIAIS FORNECIDOS:\nCAMPEONATO: {$campeonato}\nSTATUS: {$statusText}\nPARTIDAS: {$finished} encerradas de {$total}\nGOLS: {$data['totals']['gols']}\nMÉDIA: {$average} gols por partida\nCARTÕES: {$data['totals']['amarelos']} amarelos; {$data['totals']['vermelhos']} vermelhos\nESTATÍSTICAS SOMADAS DAS SÚMULAS: {$data['totals']['finalizacoes']} finalizações; {$data['totals']['chutes_no_gol']} chutes no gol; {$data['totals']['defesas']} defesas; {$data['totals']['escanteios']} escanteios\nARTILHEIROS: " . ranking_text($data['scorers']) . "\nASSISTÊNCIAS: " . ranking_text($data['assists']) . "\n\nCLASSIFICAÇÃO COMPLETA:\n{$tableText}\n\nTODAS AS RODADAS E SÚMULAS:\n" . implode("\n\n---\n\n", $data['facts']);
+        prompt_json(['ok'=>true,'prompt'=>$prompt,'partidas'=>$total,'contexto'=>'Todas as rodadas · matéria do campeão']);
+    }
     if ($rodada < 1) prompt_json(['ok' => true, 'tipo' => 'pontos_corridos', 'rodadas' => $rodadas, 'rodada_atual' => $rodadaAtual, 'contexto' => $contextoAtual]);
     if (!in_array($rodada, array_column($rodadas, 'rodada'), true)) throw new RuntimeException('Rodada não encontrada neste campeonato.');
 
