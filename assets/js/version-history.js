@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['19.2','O Elenco Geral agora permite editar o OVR do jogador em um campo numérico já preenchido, sincronizando a evolução nas inscrições ativas. Os packs recebidos a partir de 27/08/2026 usam as novas faixas de OVR, enquanto as movimentações anteriores permanecem vinculadas às faixas antigas.','OVR editável e packs atualizados'],
 ['19.1','O patch de novidades voltou a abrir automaticamente ao entrar no site e agora reúne todas as versões lançadas desde a última atualização fechada pelo visitante.','Patch automático restaurado'],
 ['19.0','A importação de súmulas agora identifica jogadores sem diferenciar maiúsculas, minúsculas, acentos, pontuação ou abreviações inequívocas, salvando os eventos com o nome oficial do elenco.','Nomes normalizados nas súmulas'],
 ['18.9','O loading de tela inteira agora aparece somente no carregamento e na troca de páginas. Abertura de modais, edições e consultas internas permanecem visíveis sem bloqueio preto.','Modais sem loading global'],
