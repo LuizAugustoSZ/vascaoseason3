@@ -23,7 +23,8 @@ const MERCADO_FORMACOES = [
     '5-4-1',
 ];
 const MERCADO_POSICOES = ['GOL', 'LD', 'LE', 'ZAG', 'VOL', 'MC', 'MEI', 'PD', 'PE', 'ATA'];
-const MERCADO_PACKS = [
+const MERCADO_PACKS_VIGENCIA_ATUAL = '2026-08-27 00:00:00';
+const MERCADO_PACKS_ANTIGOS = [
     'reforco' => ['nome' => 'Pack Reforço', 'min' => 87, 'max' => 88, 'dream_points' => 200],
     'competitivo' => ['nome' => 'Pack Competitivo', 'min' => 87, 'max' => 89, 'dream_points' => 280],
     'elite' => ['nome' => 'Pack Elite', 'min' => 88, 'max' => 89, 'dream_points' => 420],
@@ -32,6 +33,21 @@ const MERCADO_PACKS = [
     'meta' => ['nome' => 'Pack Meta', 'min' => 90, 'max' => 90, 'dream_points' => 1200],
     'meta_posicional' => ['nome' => 'Pack Meta Posicional', 'min' => 90, 'max' => 90, 'dream_points' => 1700],
 ];
+const MERCADO_PACKS = [
+    'reforco' => ['nome' => 'Pack Reforço', 'min' => 88, 'max' => 89, 'dream_points' => 200],
+    'competitivo' => ['nome' => 'Pack Competitivo', 'min' => 88, 'max' => 90, 'dream_points' => 280],
+    'elite' => ['nome' => 'Pack Elite', 'min' => 89, 'max' => 90, 'dream_points' => 420],
+    'pre_meta' => ['nome' => 'Pack Pré-Meta', 'min' => 89, 'max' => 91, 'dream_points' => 650],
+    'quase_meta' => ['nome' => 'Pack Quase Meta', 'min' => 90, 'max' => 91, 'dream_points' => 900],
+    'meta' => ['nome' => 'Pack Meta', 'min' => 91, 'max' => 91, 'dream_points' => 1200],
+    'meta_posicional' => ['nome' => 'Pack Meta Posicional', 'min' => 91, 'max' => 91, 'dream_points' => 1700],
+];
+
+function mercado_packs_para_data(?string $data): array
+{
+    if ($data !== null && $data !== '' && $data < MERCADO_PACKS_VIGENCIA_ATUAL) return MERCADO_PACKS_ANTIGOS;
+    return MERCADO_PACKS;
+}
 
 function mercado_rotulo_origem(array $movimento): string
 {

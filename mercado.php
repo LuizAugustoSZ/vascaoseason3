@@ -200,7 +200,8 @@ try {
                 if ($movimento['tipo'] === 'venda' || $origem === 'compra_direta') {
                     $valor = mercado_parse_valor((string)($_POST['valor'] ?? ''));
                 } elseif ($origem === 'pack') {
-                    $pack = MERCADO_PACKS[(string)($_POST['pack'] ?? '')] ?? null;
+                    $packsDaMovimentacao = mercado_packs_para_data((string)($movimento['criado_em'] ?? ''));
+                    $pack = $packsDaMovimentacao[(string)($_POST['pack'] ?? '')] ?? null;
                     if (!$pack) throw new RuntimeException('Selecione o pack recebido.');
                     if ($overall < $pack['min'] || $overall > $pack['max']) throw new RuntimeException(sprintf('%s aceita jogadores com OVR entre %d e %d.', $pack['nome'], $pack['min'], $pack['max']));
                     $origemDetalhe = $pack['nome'];
