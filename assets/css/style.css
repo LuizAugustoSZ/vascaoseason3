@@ -660,14 +660,6 @@ body.site-has-sidebar.site-nav-collapsed{padding-left:68px}
     overflow: hidden
 }
 
-.rule-card>b {
-    position: absolute;
-    right: .8rem;
-    top: -.6rem;
-    color: rgba(255, 255, 255, .05);
-    font: 800 4rem "Barlow Condensed"
-}
-
 .rule-card h3 {
     font-size: 1.5rem;
     margin-bottom: .65rem
