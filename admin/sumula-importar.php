@@ -68,7 +68,7 @@ function identify_summary_context(PDO $pdo, array $parsed): array
     $homeId = (int) $home['id'];
     $awayId = (int) $away['id'];
     $candidates = [];
-    $stmt = $pdo->prepare("SELECT p.id,p.campeonato_id,p.rodada,p.mandante_id,p.visitante_id,p.status,c.nome campeonato,m.time_nome mandante,v.time_nome visitante FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND ((p.mandante_id=? AND p.visitante_id=?) OR (p.mandante_id=? AND p.visitante_id=?)) ORDER BY FIELD(p.status,'agendada','finalizada','wo'),p.id DESC");
+    $stmt = $pdo->prepare("SELECT p.id,p.campeonato_id,p.rodada,p.mandante_id,p.visitante_id,p.status,c.nome campeonato,m.time_nome mandante,v.time_nome visitante FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND ((p.mandante_id=? AND p.visitante_id=?) OR (p.mandante_id=? AND p.visitante_id=?)) ORDER BY FIELD(p.status,'agendada','finalizada','wo','penalidade'),p.id DESC");
     $stmt->execute([$homeId, $awayId, $awayId, $homeId]);
     foreach ($stmt->fetchAll() as $match) {
         $candidates[] = [

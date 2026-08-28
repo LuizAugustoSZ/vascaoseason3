@@ -435,7 +435,7 @@ function standings(PDO $pdo, ?int $championshipId = null): array
         ];
     }
     $gameStmt = $pdo->prepare(
-        "SELECT mandante_id,visitante_id,gols_mandante,gols_visitante FROM partidas WHERE campeonato_id=? AND ativo=1 AND status IN ('finalizada','wo')",
+        "SELECT mandante_id,visitante_id,gols_mandante,gols_visitante FROM partidas WHERE campeonato_id=? AND ativo=1 AND status IN ('finalizada','wo','penalidade')",
     );
     $gameStmt->execute([$championshipId]);
     $games = $gameStmt->fetchAll();
@@ -488,6 +488,14 @@ function standings(PDO $pdo, ?int $championshipId = null): array
     return $rows;
 }
 
+function ensure_league_penalty_schema(PDO $pdo): void
+{
+    $column = $pdo->query("SHOW COLUMNS FROM partidas LIKE 'status'")->fetch();
+    if ($column && str_starts_with(strtolower((string)$column['Type']), 'enum(') && !str_contains((string)$column['Type'], "'penalidade'")) {
+        $pdo->exec("ALTER TABLE partidas MODIFY status ENUM('agendada','finalizada','wo','penalidade') NOT NULL DEFAULT 'agendada'");
+    }
+}
+
 // Confirma o título por pontos quando nenhum adversário ainda pode alcançar o líder.
 // O empate no máximo possível não confirma o título, pois os critérios de desempate
 // (vitórias, saldo e gols pró) ainda podem mudar nas partidas restantes.
@@ -498,9 +506,9 @@ function league_title_status(PDO $pdo, int $championshipId, ?array $ranking = nu
 
     $remainingStmt = $pdo->prepare(
         "SELECT participante_id,COUNT(*) jogos_restantes FROM (
-            SELECT mandante_id participante_id FROM partidas WHERE campeonato_id=? AND ativo=1 AND status NOT IN ('finalizada','wo')
+            SELECT mandante_id participante_id FROM partidas WHERE campeonato_id=? AND ativo=1 AND status NOT IN ('finalizada','wo','penalidade')
             UNION ALL
-            SELECT visitante_id participante_id FROM partidas WHERE campeonato_id=? AND ativo=1 AND status NOT IN ('finalizada','wo')
+            SELECT visitante_id participante_id FROM partidas WHERE campeonato_id=? AND ativo=1 AND status NOT IN ('finalizada','wo','penalidade')
         ) pendentes GROUP BY participante_id",
     );
     $remainingStmt->execute([$championshipId, $championshipId]);

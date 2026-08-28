@@ -17,6 +17,7 @@ $adminPublicSections = [
 $adminPublicOrder = array_filter(array_map('trim', explode(',', (string)(public_site_config()['ordem_secoes'] ?? ''))));
 ensure_supercup_schema($pdo);
 ensure_knockout_wo_schema($pdo);
+ensure_league_penalty_schema($pdo);
 try {
     competition_identities_seed($pdo);
 } catch (Throwable $ignored) {
@@ -57,7 +58,7 @@ function require_previous_rounds(
         return;
     }
     $stmt = $pdo->prepare(
-        "SELECT COUNT(*) FROM partidas WHERE campeonato_id=? AND ativo=1 AND rodada<? AND status NOT IN ('finalizada','wo')",
+        "SELECT COUNT(*) FROM partidas WHERE campeonato_id=? AND ativo=1 AND rodada<? AND status NOT IN ('finalizada','wo','penalidade')",
     );
     $stmt->execute([$championshipId, $round]);
     if ((int) $stmt->fetchColumn() > 0) {
@@ -739,7 +740,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($action === "partida") {
             $partidaId = (int) ($_POST["partida_id"] ?? 0);
             $statusPartida = (string) ($_POST["status"] ?? "");
-            if (!in_array($statusPartida, ["agendada", "finalizada", "wo"], true)) {
+            if (!in_array($statusPartida, ["agendada", "finalizada", "wo", "penalidade"], true)) {
                 throw new RuntimeException("Selecione um status válido para a partida.");
             }
             $homeGoals =
@@ -760,7 +761,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
             if ($partidaId > 0) {
                 if (
-                    in_array($_POST["status"] ?? "", ["finalizada", "wo"], true)
+                    in_array($_POST["status"] ?? "", ["finalizada", "wo", "penalidade"], true)
                 ) {
                     $roundStmt = $pdo->prepare(
                         "SELECT campeonato_id,rodada FROM partidas WHERE id=? AND ativo=1",
@@ -790,6 +791,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $homeGoals = $woWinner === (int)$match["mandante_id"] ? 3: 0;
                     $awayGoals = $woWinner === (int)$match["visitante_id"] ? 3: 0;
                 }
+                if ($statusPartida === "penalidade") {
+                    $penalized = (int) ($_POST["penalizado_id"] ?? 0);
+                    if (!in_array($penalized, [(int)$match["mandante_id"], (int)$match["visitante_id"]], true)) {
+                        throw new RuntimeException("Escolha o time que sofreu a penalidade.");
+                    }
+                    $homeGoals = $penalized === (int)$match["mandante_id"] ? 0 : 3;
+                    $awayGoals = $penalized === (int)$match["visitante_id"] ? 0 : 3;
+                }
                 $pdo->beginTransaction();
                 $stmt = $pdo->prepare(
                     "UPDATE partidas SET gols_mandante=?,gols_visitante=?,data_partida=?,status=?,comprovacao_url=? WHERE id=? AND ativo=1",
@@ -808,8 +817,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     (int) $match["campeonato_id"],
                     (int) $match["mandante_id"],
                     (int) $match["visitante_id"],
-                    $statusPartida === "wo" ? null: $homeGoals,
-                    $statusPartida === "wo" ? null: $awayGoals,
+                    in_array($statusPartida, ["wo", "penalidade"], true) ? null: $homeGoals,
+                    in_array($statusPartida, ["wo", "penalidade"], true) ? null: $awayGoals,
                     $_POST,
                 );
                 $pdo->commit();
@@ -833,7 +842,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $homeGoals = $woWinner === $homeId ? 3: 0;
                 $awayGoals = $woWinner === $awayId ? 3: 0;
             }
-            if (in_array($_POST["status"] ?? "", ["finalizada", "wo"], true)) {
+            if ($statusPartida === "penalidade") {
+                $penalized = (int) ($_POST["penalizado_id"] ?? 0);
+                $homeId = (int)$_POST["mandante_id"];
+                $awayId = (int)$_POST["visitante_id"];
+                if (!in_array($penalized, [$homeId, $awayId], true)) throw new RuntimeException("Escolha o time que sofreu a penalidade.");
+                $homeGoals = $penalized === $homeId ? 0 : 3;
+                $awayGoals = $penalized === $awayId ? 0 : 3;
+            }
+            if (in_array($_POST["status"] ?? "", ["finalizada", "wo", "penalidade"], true)) {
                 require_previous_rounds(
                     $pdo,
                     $championshipId,
@@ -862,8 +879,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $championshipId,
                 (int) $_POST["mandante_id"],
                 (int) $_POST["visitante_id"],
-                $statusPartida === "wo" ? null: $homeGoals,
-                $statusPartida === "wo" ? null: $awayGoals,
+                in_array($statusPartida, ["wo", "penalidade"], true) ? null: $homeGoals,
+                in_array($statusPartida, ["wo", "penalidade"], true) ? null: $awayGoals,
                 $_POST,
             );
             $pdo->commit();

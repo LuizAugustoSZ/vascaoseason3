@@ -11,8 +11,8 @@ function currentGoalRows(){return [...document.querySelectorAll('#match-goals-ed
 // Cria uma linha para cada gol informado no placar, separando mandante e visitante.
 function renderMatchGoalEditor(existing=currentGoalRows()){
   const form=document.getElementById('form-partida'),editor=document.getElementById('match-goals-editor');if(!form||!editor)return;
-  if(form.gols_mandante.value!=='' && form.gols_visitante.value!=='' && form.status.value!=='wo')form.status.value='finalizada';
-  if(form.status.value==='wo'){editor.innerHTML='<div class="alert alert-secondary mb-0">Partidas por W.O. não contabilizam artilheiros.</div>';return;}
+  if(form.gols_mandante.value!=='' && form.gols_visitante.value!=='' && !['wo','penalidade'].includes(form.status.value))form.status.value='finalizada';
+  if(['wo','penalidade'].includes(form.status.value)){editor.innerHTML=`<div class="alert alert-secondary mb-0">${form.status.value==='penalidade'?'A penalidade':'O W.O.'} aplica placar administrativo e não contabiliza artilheiros.</div>`;return;}
   const homeTotal=Math.max(0,Number(form.gols_mandante.value||0)),awayTotal=Math.max(0,Number(form.gols_visitante.value||0));
   const homeId=form.mandante_id.value,awayId=form.visitante_id.value;
   const teamName=select=>select.options[select.selectedIndex]?.textContent.split(': Técnico ')[0]||'Time';
@@ -26,15 +26,17 @@ function renderMatchGoalEditor(existing=currentGoalRows()){
 }
 
 function updateLeagueWo(form){
-  const isWo=form.status.value==='wo',box=form.querySelector('[data-wo-winner]');box?.classList.toggle('d-none',!isWo);
+  const isWo=form.status.value==='wo',isPenalty=form.status.value==='penalidade',administrative=isWo||isPenalty,box=form.querySelector('[data-wo-winner]'),penaltyBox=form.querySelector('[data-penalized-team]');box?.classList.toggle('d-none',!isWo);penaltyBox?.classList.toggle('d-none',!isPenalty);
   if(form.vencedor_wo_id){const current=form.vencedor_wo_id.value;form.vencedor_wo_id.innerHTML='<option value="">Selecione o vencedor</option>';[form.mandante_id,form.visitante_id].forEach(select=>form.vencedor_wo_id.add(new Option(select.options[select.selectedIndex]?.textContent||'Time',select.value)));form.vencedor_wo_id.value=current;form.vencedor_wo_id.required=isWo;}
-  form.gols_mandante.readOnly=isWo;form.gols_visitante.readOnly=isWo;
-  if(isWo){form.gols_mandante.value='';form.gols_visitante.value='';}
+  if(form.penalizado_id){const current=form.penalizado_id.value;form.penalizado_id.innerHTML='<option value="">Selecione o time penalizado</option>';[form.mandante_id,form.visitante_id].forEach(select=>form.penalizado_id.add(new Option(select.options[select.selectedIndex]?.textContent||'Time',select.value)));form.penalizado_id.value=current;form.penalizado_id.required=isPenalty;}
+  form.gols_mandante.readOnly=administrative;form.gols_visitante.readOnly=administrative;
+  if(administrative){form.gols_mandante.value='';form.gols_visitante.value='';}
 }
 const leagueForm=document.getElementById('form-partida');
 if(leagueForm){
   const woOption=[...leagueForm.status.options].find(option=>option.value==='wo');if(woOption)woOption.textContent='Finalizada: W.O.';
-  leagueForm.status.closest('[class*="col-"]').insertAdjacentHTML('beforeend','<div class="mt-2 d-none" data-wo-winner><label class="form-label">Time vencedor do W.O.</label><select name="vencedor_wo_id" class="form-select"><option value="">Selecione o vencedor</option></select></div>');
+  if(![...leagueForm.status.options].some(option=>option.value==='penalidade'))leagueForm.status.add(new Option('Finalizada: Penalidade','penalidade'));
+  leagueForm.status.closest('[class*="col-"]').insertAdjacentHTML('beforeend','<div class="mt-2 d-none" data-wo-winner><label class="form-label">Time vencedor do W.O.</label><select name="vencedor_wo_id" class="form-select"><option value="">Selecione o vencedor</option></select></div><div class="mt-2 d-none" data-penalized-team><label class="form-label">Time penalizado</label><select name="penalizado_id" class="form-select"><option value="">Selecione o time penalizado</option></select><small class="text-secondary">O adversário receberá a vitória administrativa por 3 × 0.</small></div>');
   leagueForm.gols_mandante.addEventListener('input',()=>renderMatchGoalEditor());leagueForm.gols_visitante.addEventListener('input',()=>renderMatchGoalEditor());leagueForm.status.addEventListener('change',()=>{updateLeagueWo(leagueForm);renderMatchGoalEditor()});leagueForm.mandante_id.addEventListener('change',()=>renderMatchGoalEditor());leagueForm.visitante_id.addEventListener('change',()=>renderMatchGoalEditor());updateLeagueWo(leagueForm);
 }
 
@@ -44,8 +46,9 @@ document.querySelectorAll('.editar-partida').forEach(botao => botao.addEventList
   form.partida_id.value=botao.dataset.id;
   form.rodada.value=botao.dataset.rodada;
   // Mantém os times sorteados visíveis, mas bloqueados durante a edição do resultado.
-  selecionarTime(form.mandante_id,botao.dataset.mandante);
-  selecionarTime(form.visitante_id,botao.dataset.visitante);
+  const response=await fetch(`partida-dados.php?id=${encodeURIComponent(botao.dataset.id)}`);const data=await response.json();
+  form.mandante_id.value=String(data.mandante_id);
+  form.visitante_id.value=String(data.visitante_id);
   form.mandante_id.disabled=true;
   form.visitante_id.disabled=true;
   if(form.campeonato_id)form.campeonato_id.disabled=true;
@@ -53,8 +56,9 @@ document.querySelectorAll('.editar-partida').forEach(botao => botao.addEventList
   form.gols_visitante.value=botao.dataset.golsVisitante;
   form.status.value=botao.dataset.status;
   updateLeagueWo(form);
-  if(form.status.value==='wo')selecionarTime(form.vencedor_wo_id,Number(botao.dataset.golsMandante)>Number(botao.dataset.golsVisitante)?botao.dataset.mandante:botao.dataset.visitante);
-  const response=await fetch(`partida-dados.php?id=${encodeURIComponent(botao.dataset.id)}`);const data=await response.json();renderMatchGoalEditor(data.gols||[]);
+  if(form.status.value==='wo')form.vencedor_wo_id.value=Number(botao.dataset.golsMandante)>Number(botao.dataset.golsVisitante)?String(data.mandante_id):String(data.visitante_id);
+  if(form.status.value==='penalidade')form.penalizado_id.value=Number(botao.dataset.golsMandante)<Number(botao.dataset.golsVisitante)?String(data.mandante_id):String(data.visitante_id);
+  renderMatchGoalEditor(data.gols||[]);
   const aviso=document.getElementById('partida-edicao');
   aviso.querySelector('span').textContent=`Editando: ${botao.dataset.mandante} x ${botao.dataset.visitante}`;
   aviso.classList.remove('d-none');
@@ -195,7 +199,7 @@ function setupLeagueAdminTable(perPage=5){
   const teamFilter=filters.querySelector('.admin-team-filter');
   const roundFilter=filters.querySelector('.admin-round-filter');
   const count=filters.querySelector('.admin-filter-count');
-  const currentRound=rounds.find(round=>rows.some(row=>row.cells[0].textContent.trim()===round && !['finalizada','wo'].includes(row.cells[3].textContent.trim().toLocaleLowerCase('pt-BR'))));
+  const currentRound=rounds.find(round=>rows.some(row=>row.cells[0].textContent.trim()===round && !['finalizada','wo','penalidade'].includes(row.cells[3].textContent.trim().toLocaleLowerCase('pt-BR'))));
   if(currentRound)roundFilter.value=currentRound;
   let page=1;
   const rowSearch=row=>{const text=row.textContent;const people=teamOptions.filter(item=>text.includes(item.team)).map(item=>item.label).join(' ');return `${text} ${people}`.toLocaleLowerCase('pt-BR');};

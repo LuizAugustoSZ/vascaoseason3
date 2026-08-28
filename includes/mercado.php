@@ -210,7 +210,7 @@ function mercado_garantir_estrutura(PDO $pdo): void
 
 function mercado_partidas_concluidas(PDO $pdo, int $campeonatoId, int $participanteId): int
 {
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM partidas WHERE campeonato_id=? AND ativo=1 AND status IN ('finalizada','wo') AND (mandante_id=? OR visitante_id=?)");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM partidas WHERE campeonato_id=? AND ativo=1 AND status IN ('finalizada','wo','penalidade') AND (mandante_id=? OR visitante_id=?)");
     $stmt->execute([$campeonatoId, $participanteId, $participanteId]);
     return (int)$stmt->fetchColumn();
 }
@@ -251,7 +251,7 @@ function mercado_progresso_clube(PDO $pdo, int $campeonatoId, int $participanteI
         }
         $concluidas = array_filter(
             $porRodada[$rodada],
-            static fn(string $status): bool => in_array($status, ['finalizada', 'wo'], true)
+            static fn(string $status): bool => in_array($status, ['finalizada', 'wo', 'penalidade'], true)
         );
         if (count($concluidas) !== count($porRodada[$rodada])) {
             return [
@@ -291,7 +291,7 @@ function mercado_estado_clube(PDO $pdo, int $campeonatoId, int $participanteId):
     $progresso = mercado_progresso_clube($pdo, $campeonatoId, $participanteId);
     $stmt = $pdo->prepare("SELECT c.status,
         COUNT(p.id) total_partidas,
-        COALESCE(SUM(CASE WHEN p.id IS NOT NULL AND p.status NOT IN ('finalizada','wo') THEN 1 ELSE 0 END),0) partidas_pendentes
+        COALESCE(SUM(CASE WHEN p.id IS NOT NULL AND p.status NOT IN ('finalizada','wo','penalidade') THEN 1 ELSE 0 END),0) partidas_pendentes
         FROM campeonatos c
         LEFT JOIN partidas p ON p.campeonato_id=c.id AND p.ativo=1 AND (p.mandante_id=? OR p.visitante_id=?)
         WHERE c.id=? GROUP BY c.id,c.status");
