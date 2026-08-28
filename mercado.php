@@ -394,10 +394,10 @@ if ($clube) {
                 <strong>Inscrição liberada para a 14ª rodada.</strong> Todos os jogadores ativos do Elenco Geral já aparecem como opções para montar a nova lista da competição.
             </div><?php endif; ?>
             <section class="market-help-grid" aria-label="Ajuda para gestão do elenco">
-                <article><span>01</span><div><strong><?= $campeonatoUsaCiclo ? 'Janela de inscrição' : 'Mata-mata sem ciclo' ?></strong><p><?= $campeonatoUsaCiclo ? 'Este clube cumpriu '.$ciclo['etapas_concluidas'].' rodada(s), incluindo '.$ciclo['folgas'].' folga(s). A inscrição abre após a 5ª e fica liberada na 6ª, 7ª e 8ª rodadas do ciclo.' : 'Esta competição não usa janela por rodadas. Os jogadores do Elenco Geral permanecem disponíveis para montar a inscrição.' ?></p></div></article>
-                <article><span>02</span><div><strong>Titulares automáticos</strong><p>Marque somente os 11 titulares. Ao salvar, todos os jogadores não selecionados serão definidos automaticamente como banco.</p></div></article>
-                <article><span>03</span><div><strong>Formação e ordem automáticas</strong><p>Os titulares precisam respeitar os setores da formação. O sistema ordena ataque, meio, defesa e deixa o goleiro sempre por último.</p></div></article>
-                <article><span>04</span><div><strong>Inscrição e escalação</strong><p>A janela controla quais jogadores fazem parte da competição. Formação, titulares e banco podem ser reorganizados a qualquer momento entre os jogadores inscritos.</p></div></article>
+                <article><div><strong><?= $campeonatoUsaCiclo ? 'Janela de inscrição' : 'Mata-mata sem ciclo' ?></strong><p><?= $campeonatoUsaCiclo ? 'Este clube cumpriu '.$ciclo['etapas_concluidas'].' rodada(s), incluindo '.$ciclo['folgas'].' folga(s). A inscrição abre após a 5ª e fica liberada na 6ª, 7ª e 8ª rodadas do ciclo.' : 'Esta competição não usa janela por rodadas. Os jogadores do Elenco Geral permanecem disponíveis para montar a inscrição.' ?></p></div></article>
+                <article><div><strong>Titulares automáticos</strong><p>Marque somente os 11 titulares. Ao salvar, todos os jogadores não selecionados serão definidos automaticamente como banco.</p></div></article>
+                <article><div><strong>Formação e ordem automáticas</strong><p>Os titulares precisam respeitar os setores da formação. O sistema ordena ataque, meio, defesa e deixa o goleiro sempre por último.</p></div></article>
+                <article><div><strong>Inscrição e escalação</strong><p>A janela controla quais jogadores fazem parte da competição. Formação, titulares e banco podem ser reorganizados a qualquer momento entre os jogadores inscritos.</p></div></article>
             </section>
             <?php if ($montagemInicial): ?><section class="panel p-4 mb-4 market-config-panel">
                     <h2>CONFIGURAÇÃO INICIAL</h2>
