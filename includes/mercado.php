@@ -289,11 +289,28 @@ function mercado_estado_ciclo(int $rodada): array
 function mercado_estado_clube(PDO $pdo, int $campeonatoId, int $participanteId): array
 {
     $progresso = mercado_progresso_clube($pdo, $campeonatoId, $participanteId);
-    return mercado_estado_ciclo($progresso['proxima_rodada']) + [
+    $stmt = $pdo->prepare("SELECT c.status,
+        COUNT(p.id) total_partidas,
+        COALESCE(SUM(CASE WHEN p.id IS NOT NULL AND p.status NOT IN ('finalizada','wo') THEN 1 ELSE 0 END),0) partidas_pendentes
+        FROM campeonatos c
+        LEFT JOIN partidas p ON p.campeonato_id=c.id AND p.ativo=1 AND (p.mandante_id=? OR p.visitante_id=?)
+        WHERE c.id=? GROUP BY c.id,c.status");
+    $stmt->execute([$participanteId, $participanteId, $campeonatoId]);
+    $agenda = $stmt->fetch() ?: ['status' => '', 'total_partidas' => 0, 'partidas_pendentes' => 0];
+    $participacaoConcluida = (string)$agenda['status'] === 'finalizado'
+        || ((int)$agenda['total_partidas'] > 0 && (int)$agenda['partidas_pendentes'] === 0);
+    $estado = mercado_estado_ciclo($progresso['proxima_rodada']);
+    if ($participacaoConcluida) {
+        $estado['aberto'] = true;
+        $estado['restantes'] = 0;
+    }
+    return $estado + [
         'partidas_concluidas' => $progresso['partidas_concluidas'],
         'etapas_concluidas' => $progresso['etapas_concluidas'],
         'folgas' => $progresso['folgas'],
         'proxima_partida' => $progresso['proxima_rodada'],
+        'participacao_concluida' => $participacaoConcluida,
+        'partidas_pendentes' => (int)$agenda['partidas_pendentes'],
     ];
 }
 
@@ -313,10 +330,11 @@ function mercado_clube(PDO $pdo, int $campeonatoId, int $participanteId, bool $l
     return $stmt->fetch();
 }
 
-function mercado_pode_editar(array $clube, int $rodada): bool
+function mercado_pode_editar(array $clube, int $rodada, ?array $estado = null): bool
 {
     // Antes do início da competição, a montagem inicial permanece disponível.
     // Depois disso, até elenco ainda não confirmado obedece à janela do ciclo.
     return (!(bool)$clube['elenco_confirmado'] && $rodada === 1)
+        || (bool)($estado['participacao_concluida'] ?? false)
         || mercado_aberto_na_rodada($rodada);
 }

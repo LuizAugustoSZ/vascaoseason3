@@ -55,6 +55,7 @@ try {
         if (!$campeonatoId) throw new RuntimeException('Esta competição não está disponível para gestão.');
         if (!$participantId) throw new RuntimeException('Sua conta precisa estar vinculada a um time.');
         $rodada = $campeonatoUsaCiclo ? mercado_rodada_atual($pdo, $campeonatoId, $participantId) : 1;
+        $estadoClube = $campeonatoUsaCiclo ? mercado_estado_clube($pdo, $campeonatoId, $participantId) : null;
         $clube = mercado_clube($pdo, $campeonatoId, $participantId);
         if (!(bool)($clube['cofre_configurado'] ?? false)) {
             throw new RuntimeException('Informe primeiro o saldo inicial usando o lápis do Cofre do clube.');
@@ -62,7 +63,7 @@ try {
         $montagemInicial = !(bool)$clube['elenco_confirmado'] && $rodada === 1;
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'atualizar_inscricao_geral') {
-            if (!$isMasterManagement && $campeonatoUsaCiclo && !mercado_pode_editar($clube, $rodada)) throw new RuntimeException('A inscrição desta competição está congelada neste ciclo.');
+            if (!$isMasterManagement && $campeonatoUsaCiclo && !mercado_pode_editar($clube, $rodada, $estadoClube)) throw new RuntimeException('A inscrição desta competição está congelada neste ciclo.');
             $inscritos = array_values(array_unique(array_map('intval', (array)($_POST['inscrito_id'] ?? []))));
             $titulares = array_values(array_unique(array_map('intval', (array)($_POST['titular_geral_id'] ?? []))));
             if (count($titulares) !== 11) throw new RuntimeException('Selecione exatamente 11 titulares.');
@@ -111,7 +112,7 @@ try {
             $pdo->prepare("UPDATE clubes_campeonato SET formacao=? WHERE campeonato_id=? AND participante_id=?")->execute([$formacao, $campeonatoId, $participantId]);
             $message = 'Formação inicial configurada.';
         } elseif ($action === 'confirmar_elenco') {
-            if (!mercado_pode_editar($clube, $rodada)) throw new RuntimeException('O elenco está travado nesta rodada. Só é possível visualizar.');
+            if (!mercado_pode_editar($clube, $rodada, $estadoClube)) throw new RuntimeException('O elenco está travado nesta rodada. Só é possível visualizar.');
             $total = contar_titulares($pdo, $campeonatoId, $participantId);
             if ($total !== 11) throw new RuntimeException('Defina exatamente 11 titulares antes de confirmar.');
             mercado_validar_titulares_formacao($pdo, $campeonatoId, $participantId, (string)$clube['formacao']);
@@ -225,7 +226,7 @@ try {
             }
         } elseif (in_array($action, ['comprar', 'vender'], true)) {
             throw new RuntimeException('Contratações e vendas agora são feitas exclusivamente no Elenco Geral.');
-            if (!mercado_pode_editar($clube, $rodada) || $montagemInicial) throw new RuntimeException('O mercado está indisponível nesta rodada.');
+            if (!mercado_pode_editar($clube, $rodada, $estadoClube) || $montagemInicial) throw new RuntimeException('O mercado está indisponível nesta rodada.');
             $pdo->beginTransaction();
             $cofres = $pdo->prepare("SELECT * FROM clubes_campeonato WHERE participante_id=? ORDER BY id FOR UPDATE");
             $cofres->execute([$participantId]);
@@ -339,7 +340,7 @@ $totalTitularesAtual = 0;
 $campeonatosComElenco = [];
 $elencoGeral = [];
 $inscritosGerais = $titularesGerais = [];
-$podeEditarMercado = $clube ? (!$campeonatoUsaCiclo || mercado_pode_editar($clube, $rodada)) : false;
+$podeEditarMercado = $clube ? (!$campeonatoUsaCiclo || mercado_pode_editar($clube, $rodada, $ciclo)) : false;
 $podeEditarInscricao = $clube ? ($isMasterManagement || $podeEditarMercado) : false;
 $montagemInicial = $clube ? (!(bool)$clube['elenco_confirmado'] && $rodada === 1) : false;
 if ($clube) {
@@ -385,8 +386,10 @@ if ($clube) {
                 <div><small><?= $campeonatoUsaCiclo ? 'Próxima rodada do clube' : 'Formato da competição' ?></small><strong><?= $campeonatoUsaCiclo ? $rodada.'ª' : 'MATA-MATA' ?></strong></div>
                 <div><small><?= $campeonatoUsaCiclo ? 'Ciclo '.$ciclo['ciclo'] : 'Regra de inscrição' ?></small><strong><?= !$campeonatoUsaCiclo || $ciclo['aberto'] ? 'INSCRIÇÃO LIBERADA' : 'INSCRIÇÃO TRAVADA' ?></strong></div>
             </section>
-            <?php if ($campeonatoUsaCiclo && $rodada >= 9 && $rodada <= 13): ?><div class="alert alert-warning mb-4" role="status">
+            <?php if ($campeonatoUsaCiclo && !($ciclo['participacao_concluida'] ?? false) && $rodada >= 9 && $rodada <= 13): ?><div class="alert alert-warning mb-4" role="status">
                 <strong>Inscrição travada após a 8ª rodada.</strong> Novos jogadores podem continuar entrando no Elenco Geral, mas só poderão ser inscritos aqui quando a janela reabrir na 14ª rodada. Formação, titulares e banco dos já inscritos continuam editáveis. Folgas contam normalmente como rodada cumprida.
+            </div><?php elseif ($campeonatoUsaCiclo && ($ciclo['participacao_concluida'] ?? false)): ?><div class="alert alert-success mb-4" role="status">
+                <strong>Participação concluída.</strong> O clube já cumpriu todas as partidas desta competição; vendas, edições e alterações de inscrição estão liberadas, mesmo que os demais times ainda tenham jogos pendentes.
             </div><?php elseif ($campeonatoUsaCiclo && $rodada === 14): ?><div class="alert alert-success mb-4" role="status">
                 <strong>Inscrição liberada para a 14ª rodada.</strong> Todos os jogadores ativos do Elenco Geral já aparecem como opções para montar a nova lista da competição.
             </div><?php endif; ?>
