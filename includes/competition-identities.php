@@ -79,13 +79,16 @@ function competition_roman(int $number): string
 function competition_sync_champion_title(PDO $pdo, int $championshipId): ?int
 {
     competition_identities_ensure_schema($pdo);
-    $stmt = $pdo->prepare('SELECT id,nome,status FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id,nome,status,tipo FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1');
     $stmt->execute([$championshipId]); $competition = $stmt->fetch();
-    if (!$competition || $competition['status'] !== 'finalizado') return null;
+    if (!$competition) return null;
     $winnerId = competition_champion_id($pdo, $championshipId);
     if (!$winnerId) return null;
-    $insert = $pdo->prepare("INSERT INTO titulos(campeonato_id,participante_id,titulo,temporada,descricao,conquistado_em) VALUES(?,?,?,'Season 3','Título entregue automaticamente ao encerrar a competição',CURDATE()) ON DUPLICATE KEY UPDATE participante_id=VALUES(participante_id),titulo=VALUES(titulo),conquistado_em=VALUES(conquistado_em)");
-    $insert->execute([$championshipId,$winnerId,$competition['nome']]);
+    $description = $competition['status'] === 'finalizado'
+        ? 'Título entregue automaticamente ao encerrar a competição'
+        : 'Título entregue automaticamente após confirmação matemática antecipada';
+    $insert = $pdo->prepare("INSERT INTO titulos(campeonato_id,participante_id,titulo,temporada,descricao,conquistado_em) VALUES(?,?,?,'Season 3',?,CURDATE()) ON DUPLICATE KEY UPDATE participante_id=VALUES(participante_id),titulo=VALUES(titulo),descricao=VALUES(descricao)");
+    $insert->execute([$championshipId,$winnerId,$competition['nome'],$description]);
     return $winnerId;
 }
 
