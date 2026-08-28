@@ -54,6 +54,8 @@ try {
     // Mantém as vagas das Supercopas atualizadas também no acesso público.
     // O vice é calculado silenciosamente quando a regra de campeão repetido exigir.
     sync_supercup_slots($pdo);
+    // Entrega a taça assim que o campeão por pontos estiver matematicamente definido.
+    competition_sync_champion_title($pdo, $campeonatoId);
     // Busca os confrontos do chaveamento.
     $mataStmt = $pdo->prepare(
         "SELECT j.*,a.time_nome time_a,a.nome tecnico_a,a.sigla sigla_a,a.escudo_url escudo_a,a.ativo time_a_ativo,b.time_nome time_b,b.nome tecnico_b,b.sigla sigla_b,b.escudo_url escudo_b,b.ativo time_b_ativo,w.time_nome vencedor FROM jogos_mata_mata j LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id LEFT JOIN participantes w ON w.id=j.vencedor_id WHERE j.campeonato_id=? AND j.ativo=1 ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id",
