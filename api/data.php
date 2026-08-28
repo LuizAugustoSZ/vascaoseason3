@@ -168,6 +168,9 @@ try {
             ),
         );
     $classification = standings($pdo, $campeonatoId);
+    $leagueTitle = ($campeonato["tipo"] ?? "") === "pontos_corridos"
+        ? league_title_status($pdo, $campeonatoId, $classification)
+        : null;
     $enrolled = [];
     foreach ($partidas as $game) {
         $enrolled[(int) $game["mandante_id"]] = true;
@@ -205,6 +208,7 @@ try {
         "campeonato" => $campeonato,
         "resumo" => $resumo,
         "classificacao" => $classification,
+        "titulo_liga" => $leagueTitle,
         "participantes" => $participantes,
         "partidas" => $partidas,
         "mata_mata" => $mataMata,
