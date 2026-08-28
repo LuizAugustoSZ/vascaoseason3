@@ -500,13 +500,19 @@ function match_score(array $j): string
             <?php if ($titulos): ?>
                 <section class="titles-strip">
                     <h3>Títulos e campanhas</h3>
-                    <?php foreach ($titulos as $titulo): ?>
-                        <div>
-                            <?php if (!empty($titulo['trofeu_url'])): ?><img src="<?= e($titulo['trofeu_url']) ?>" alt="Taça <?= e($titulo['titulo']) ?>"><?php else: ?><span>🏆</span><?php endif; ?>
-                            <b><?= e($titulo["titulo"]) ?></b>
-                            <small><?= e($titulo["temporada"]) ?></small>
+                    <button class="titles-nav titles-nav--previous" type="button" aria-label="Ver títulos anteriores">‹</button>
+                    <div class="titles-viewport">
+                        <div class="titles-track">
+                            <?php foreach ($titulos as $titulo): ?>
+                                <div class="titles-item">
+                                    <?php if (!empty($titulo['trofeu_url'])): ?><img src="<?= e($titulo['trofeu_url']) ?>" alt="Taça <?= e($titulo['titulo']) ?>"><?php else: ?><span>🏆</span><?php endif; ?>
+                                    <b><?= e($titulo["titulo"]) ?></b>
+                                    <small><?= e($titulo["temporada"]) ?></small>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endforeach; ?>
+                    </div>
+                    <button class="titles-nav titles-nav--next" type="button" aria-label="Ver mais títulos">›</button>
                 </section>
             <?php endif; ?>
             <section class="future-label" id="conteudo-clube"><span>Conteúdo mantido pelo técnico</span></section>

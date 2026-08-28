@@ -432,9 +432,10 @@
 }
 
 .titles-strip {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 30px minmax(0,1fr) 30px;
     align-items: center;
-    gap: 18px;
+    gap: 10px;
     margin-top: var(--club-gap);
     padding: 10px 14px
 }
@@ -443,20 +444,33 @@
     margin: 0
 }
 
-.titles-strip>div {
+.titles-viewport {
+    min-width: 0;
+    overflow: hidden;
+    scroll-behavior: smooth
+}
+
+.titles-track {
+    display: flex;
+    width: max-content
+}
+
+.titles-item {
     display: grid;
     grid-template-columns: auto auto;
     gap: 0 6px;
+    min-width: 190px;
     padding-right: 18px;
+    margin-right: 18px;
     border-right: 1px solid var(--line);
     font-size: .68rem
 }
 
-.titles-strip>div span {
+.titles-item span {
     grid-row: span 2
 }
 
-.titles-strip>div>img {
+.titles-item>img {
     grid-row: span 2;
     width: 54px;
     height: 62px;
@@ -466,6 +480,22 @@
 .titles-strip small {
     color: var(--muted)
 }
+
+.titles-nav {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--red);
+    background: #111419;
+    color: #fff;
+    font-size: 1.4rem;
+    line-height: 1
+}
+
+.titles-nav:hover { background: var(--red) }
+.titles-nav:disabled { visibility: hidden }
 
 .future-label {
     margin: 12px 0 6px
@@ -733,9 +763,13 @@ footer {
     }
 
     .titles-strip {
-        align-items: flex-start;
-        overflow-x: auto
+        grid-template-columns: 1fr 30px 30px
     }
+
+    .titles-strip h3 { grid-column: 1/-1 }
+    .titles-viewport { grid-column: 1; grid-row: 2 }
+    .titles-nav--previous { grid-column: 2; grid-row: 2 }
+    .titles-nav--next { grid-column: 3; grid-row: 2 }
 
     .overview-card {
         min-height: auto
