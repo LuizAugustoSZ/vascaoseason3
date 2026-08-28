@@ -406,7 +406,6 @@ body.site-has-sidebar.site-nav-collapsed{padding-left:68px}
 }
 .standings-team-row{cursor:pointer}.standings-team-row:focus-visible{outline:2px solid var(--red);outline-offset:-2px}.standings-team-row:hover .team-cell{color:var(--red)}
 .standings-team-row.is-champion{--bs-table-bg:rgba(215,25,32,.08)}
-.standings-team-row.is-runner-up{--bs-table-bg:rgba(255,255,255,.035)}
 .standings-champion-label{display:block;width:max-content;margin-top:.2rem;padding:.12rem .38rem;border:1px solid var(--red);color:#fff;background:var(--red);font-size:.58rem;font-weight:900;line-height:1.15;letter-spacing:.06em}
 
 .position-pill {
