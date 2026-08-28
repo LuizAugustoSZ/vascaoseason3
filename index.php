@@ -180,7 +180,7 @@ if (
         ?>
         <section id="competicao" class="section-pad">
             <div class="container">
-                <div class="section-title"><span>01</span>
+                <div class="section-title">
                     <div><small>A DISPUTA</small>
                         <h2>COMPETIÇÃO</h2>
                     </div>
@@ -257,7 +257,7 @@ if (
         ?>
         <section id="participantes" class="section-pad bg-panel">
             <div class="container">
-                <div class="section-title"><span>02</span>
+                <div class="section-title">
                     <div><small>OS GIGANTES</small>
                         <h2>PARTICIPANTES</h2>
                     </div>
@@ -270,7 +270,7 @@ if (
         ?>
         <section id="artilharia" class="section-pad">
             <div class="container">
-                <div class="section-title"><span>03</span>
+                <div class="section-title">
                     <div><small>QUEM DECIDE</small>
                         <h2>JOGADORES</h2>
                     </div>
@@ -293,7 +293,7 @@ if (
         ?>
         <section id="titulos" class="section-pad bg-panel">
             <div class="container">
-                <div class="section-title"><span>04</span>
+                <div class="section-title">
                     <div><small>GALERIA DOS CAMPEÕES</small>
                         <h2>TÍTULOS</h2>
                     </div>
@@ -308,7 +308,7 @@ if (
         <section id="noticias" class="section-pad">
             <div class="container">
                 <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-                    <div class="section-title mb-0"><span>05</span>
+                    <div class="section-title mb-0">
                         <div><small>JORNAL DO SERVIDOR</small>
                             <h2>NOTÍCIAS</h2>
                         </div>
@@ -343,7 +343,7 @@ if (
         ?>
         <section id="midia" class="section-pad bg-panel">
             <div class="container">
-                <div class="section-title"><span>06</span>
+                <div class="section-title">
                     <div><small>NA REDE</small>
                         <h2>VÍDEOS</h2>
                     </div>
@@ -413,8 +413,6 @@ if (
             const sections = [...main.querySelectorAll(':scope > section')];
             sections.forEach((section, index) => {
                 section.classList.toggle('bg-panel', index % 2 === 1);
-                const number = section.querySelector('.section-title > span');
-                if (number) number.textContent = String(index + 1).padStart(2, '0')
             });
             const footer = document.querySelector('footer .container');
             if (!footer) return;
