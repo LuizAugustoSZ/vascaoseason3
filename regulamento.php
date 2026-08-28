@@ -37,37 +37,37 @@ require __DIR__ . "/includes/public-layout.php"; ?>
             <p class="lead text-secondary mb-3">Consulte as regras de pontuação, partidas, comprovação e conduta das competições.</p><a class="btn btn-danger mb-5" href="noticia.php?id=8" target="_blank" rel="noopener noreferrer">Ver regulamento do Brasileirão</a>
             <div class="row g-3">
                 <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100"><b>01</b>
+                    <article class="rule-card h-100">
                         <h3>Pontuação</h3>
                         <p>Vitória: 3 pontos. Empate: 1 ponto. Derrota: 0 pontos.</p>
                     </article>
                 </div>
                 <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100"><b>02</b>
+                    <article class="rule-card h-100">
                         <h3>Partidas</h3>
                         <p>Jogos pelo <code>/confronto</code>, dentro do prazo e com horário combinado. Uma rodada só termina quando todos os confrontos dela forem finalizados.</p>
                     </article>
                 </div>
                 <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100"><b>03</b>
+                    <article class="rule-card h-100">
                         <h3>Comprovação</h3>
                         <p>Envie captura com participantes e placar final. Sem prova, o resultado pode não ser contabilizado.</p>
                     </article>
                 </div>
                 <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100"><b>04</b>
+                    <article class="rule-card h-100">
                         <h3>Desempate</h3>
                         <p>Vitórias, saldo de gols, gols marcados, confronto direto, menor número de W.O. e decisão da organização.</p>
                     </article>
                 </div>
                 <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100"><b>05</b>
+                    <article class="rule-card h-100">
                         <h3>W.O.</h3>
                         <p>O participante ausente pode perder por 3 a 0. Tentativas de contato deverão ser comprovadas.</p>
                     </article>
                 </div>
                 <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100"><b>06</b>
+                    <article class="rule-card h-100">
                         <h3>Conduta</h3>
                         <p>Bugs, contas alternativas, resultados combinados e entrega proposital podem gerar punição ou expulsão.</p>
                     </article>
