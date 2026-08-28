@@ -77,6 +77,26 @@ document
   .querySelectorAll('[data-card-pages]')
   .forEach(initializeCardPagination);
 
+document.querySelectorAll('.titles-strip').forEach(carousel => {
+  const viewport = carousel.querySelector('.titles-viewport');
+  const previous = carousel.querySelector('.titles-nav--previous');
+  const next = carousel.querySelector('.titles-nav--next');
+  if (!viewport || !previous || !next) return;
+
+  const updateArrows = () => {
+    const maximum = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+    previous.disabled = viewport.scrollLeft <= 1;
+    next.disabled = viewport.scrollLeft >= maximum - 1;
+  };
+  const move = direction => viewport.scrollBy({ left: direction * Math.max(190, viewport.clientWidth * .75), behavior: 'smooth' });
+
+  previous.addEventListener('click', () => move(-1));
+  next.addEventListener('click', () => move(1));
+  viewport.addEventListener('scroll', updateArrows, { passive: true });
+  if ('ResizeObserver' in window) new ResizeObserver(updateArrows).observe(viewport);
+  requestAnimationFrame(updateArrows);
+});
+
 document.querySelectorAll('.lineup-placeholder').forEach(module => {
   const tabs = [...module.querySelectorAll('[data-lineup-tab]')];
   const panels = [...module.querySelectorAll('[data-lineup-panel]')];
