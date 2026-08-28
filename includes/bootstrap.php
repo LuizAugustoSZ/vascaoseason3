@@ -488,17 +488,75 @@ function standings(PDO $pdo, ?int $championshipId = null): array
     return $rows;
 }
 
+// Confirma o título por pontos quando nenhum adversário ainda pode alcançar o líder.
+// O empate no máximo possível não confirma o título, pois os critérios de desempate
+// (vitórias, saldo e gols pró) ainda podem mudar nas partidas restantes.
+function league_title_status(PDO $pdo, int $championshipId, ?array $ranking = null): ?array
+{
+    $ranking ??= standings($pdo, $championshipId);
+    if (!$ranking) return null;
+
+    $remainingStmt = $pdo->prepare(
+        "SELECT participante_id,COUNT(*) jogos_restantes FROM (
+            SELECT mandante_id participante_id FROM partidas WHERE campeonato_id=? AND ativo=1 AND status NOT IN ('finalizada','wo')
+            UNION ALL
+            SELECT visitante_id participante_id FROM partidas WHERE campeonato_id=? AND ativo=1 AND status NOT IN ('finalizada','wo')
+        ) pendentes GROUP BY participante_id",
+    );
+    $remainingStmt->execute([$championshipId, $championshipId]);
+    $remaining = [];
+    foreach ($remainingStmt->fetchAll() as $row) {
+        $remaining[(int)$row['participante_id']] = (int)$row['jogos_restantes'];
+    }
+
+    $leader = $ranking[0];
+    $leaderId = (int)$leader['id'];
+    $totalRemaining = array_sum($remaining);
+    $allFinished = $totalRemaining === 0;
+    if (!$allFinished) {
+        foreach (array_slice($ranking, 1) as $rival) {
+            $rivalMaximum = (int)$rival['pts'] + 3 * ($remaining[(int)$rival['id']] ?? 0);
+            if ((int)$leader['pts'] <= $rivalMaximum) return null;
+        }
+    }
+
+    $runnerUpId = null;
+    if (isset($ranking[1])) {
+        $runnerUp = $ranking[1];
+        $runnerUpGuaranteed = true;
+        foreach (array_slice($ranking, 2) as $rival) {
+            $rivalMaximum = (int)$rival['pts'] + 3 * ($remaining[(int)$rival['id']] ?? 0);
+            if ((int)$runnerUp['pts'] <= $rivalMaximum) {
+                $runnerUpGuaranteed = false;
+                break;
+            }
+        }
+        if ($runnerUpGuaranteed) $runnerUpId = (int)$runnerUp['id'];
+    }
+
+    return [
+        'campeao_id' => $leaderId,
+        'campeao_antecipado' => !$allFinished,
+        'jogos_restantes_campeao' => $remaining[$leaderId] ?? 0,
+        'vice_id' => $runnerUpId,
+        'vice_antecipado' => $runnerUpId !== null && !$allFinished,
+    ];
+}
+
 // Retorna o campeão confirmado de qualquer competição que possa alimentar uma Supercopa.
 function competition_champion_id(PDO $pdo, int $championshipId): ?int
 {
     $stmt = $pdo->prepare("SELECT tipo,status FROM campeonatos WHERE id=? AND ativo=1");
     $stmt->execute([$championshipId]);
     $competition = $stmt->fetch();
-    if (!$competition || $competition["status"] !== "finalizado") return null;
+    if (!$competition) return null;
     if ($competition["tipo"] === "pontos_corridos") {
         $ranking = standings($pdo, $championshipId);
-        return isset($ranking[0]["id"]) ? (int)$ranking[0]["id"] : null;
+        if ($competition["status"] === "finalizado") return isset($ranking[0]["id"]) ? (int)$ranking[0]["id"] : null;
+        $title = league_title_status($pdo, $championshipId, $ranking);
+        return $title ? (int)$title['campeao_id'] : null;
     }
+    if ($competition["status"] !== "finalizado") return null;
     $winner = $pdo->prepare("SELECT vencedor_id FROM jogos_mata_mata WHERE campeonato_id=? AND fase='Final' AND ativo=1 AND status='finalizado' AND vencedor_id IS NOT NULL ORDER BY jogo DESC,id DESC LIMIT 1");
     $winner->execute([$championshipId]);
     $id = $winner->fetchColumn();
@@ -537,11 +595,14 @@ function competition_runner_up_id(PDO $pdo, int $championshipId): ?int
     $stmt = $pdo->prepare("SELECT tipo,status FROM campeonatos WHERE id=? AND ativo=1");
     $stmt->execute([$championshipId]);
     $competition = $stmt->fetch();
-    if (!$competition || $competition["status"] !== "finalizado") return null;
+    if (!$competition) return null;
     if ($competition["tipo"] === "pontos_corridos") {
         $ranking = standings($pdo, $championshipId);
-        return isset($ranking[1]["id"]) ? (int)$ranking[1]["id"] : null;
+        if ($competition["status"] === "finalizado") return isset($ranking[1]["id"]) ? (int)$ranking[1]["id"] : null;
+        $title = league_title_status($pdo, $championshipId, $ranking);
+        return !empty($title['vice_id']) ? (int)$title['vice_id'] : null;
     }
+    if ($competition["status"] !== "finalizado") return null;
     $final = $pdo->prepare("SELECT time_a_id,time_b_id,vencedor_id FROM jogos_mata_mata WHERE campeonato_id=? AND fase='Final' AND ativo=1 AND status='finalizado' AND vencedor_id IS NOT NULL ORDER BY jogo DESC,id DESC LIMIT 1");
     $final->execute([$championshipId]);
     $row = $final->fetch();
