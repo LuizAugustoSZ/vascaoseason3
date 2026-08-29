@@ -4,6 +4,7 @@ require __DIR__ . "/../includes/bootstrap.php";
 require __DIR__ . "/../includes/public-layout.php";
 require __DIR__ . "/../includes/sync.php";
 require __DIR__ . "/../includes/knockout.php";
+require_once __DIR__ . "/../includes/g4-knockout.php";
 admin_required();
 $pdo = db();
 $adminPublicSections = [
@@ -1282,6 +1283,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 // Reconcilia resultados antigos ao abrir o painel e preenche as próximas chaves.
 reconcile_knockout_summaries($pdo);
 sync_supercup_slots($pdo);
+sync_g4_knockout_slots($pdo);
 foreach (
     $pdo
         ->query(

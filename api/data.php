@@ -2,6 +2,7 @@
 declare(strict_types=1);
 // Carrega as funções e abre o acesso ao banco.
 require __DIR__ . "/../includes/bootstrap.php";
+require_once __DIR__ . "/../includes/g4-knockout.php";
 
 try {
     $pdo = db();
@@ -54,6 +55,8 @@ try {
     // Mantém as vagas das Supercopas atualizadas também no acesso público.
     // O vice é calculado silenciosamente quando a regra de campeão repetido exigir.
     sync_supercup_slots($pdo);
+    // O chaveamento do G4 acompanha a classificação até sua primeira partida começar.
+    sync_g4_knockout_slots($pdo, $campeonatoId);
     // Entrega a taça assim que o campeão por pontos estiver matematicamente definido.
     competition_sync_champion_title($pdo, $campeonatoId);
     // Busca os confrontos do chaveamento.
