@@ -105,6 +105,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
         // Cria semifinais ligadas às quatro primeiras posições de uma liga.
         if ($action === "g4") {
+            $officialIdentity = $pdo->query("SELECT id FROM competicao_identidades WHERE chave='libertadores g4' LIMIT 1")->fetchColumn();
+            if (!$officialIdentity) throw new RuntimeException('A identidade oficial da Libertadores do G4 não foi encontrada.');
+            $identityId = (int)$officialIdentity;
             $sourceId = (int)($_POST['origem_campeonato_id'] ?? 0);
             $format = $_POST['formato'] ?? 'unico';
             $finalFormat = $_POST['formato_final'] ?? 'unico';

@@ -2,3 +2,5 @@
 .champion-team-link{display:block;margin-bottom:3px;color:#fff;text-decoration:none}.champion-team-link>small{margin-bottom:2px;color:#ed1b2f;font-size:.65rem;font-weight:900;letter-spacing:.06em}.champion-team-link:hover strong,.champion-shield:hover{color:#ff555b}
 .champion-team-link>small{display:none}
 .titles-hero{max-width:900px;text-align:left}.titles-hero h1{margin:8px 0 0}.titles-hero p{margin:18px 0 0}
+.trophy-coming{font-size:7rem;filter:grayscale(1);opacity:.28}
+.trophy-logo-coming{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:.45rem .8rem;border:1px dashed #596170;border-radius:8px;color:#8d98ad;font-size:.7rem;font-weight:800;letter-spacing:.12em}
