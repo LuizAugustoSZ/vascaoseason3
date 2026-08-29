@@ -28,7 +28,9 @@ $proximas = [];
 $titulos = [];
 $responsavel = null;
 $elencoPublico = [];
+$elencoGeralPublico = [];
 $clubePublico = null;
+$competicaoReservasSituacao = null;
 $lineupImagePath = null;
 $jogadorFavorito = null;
 $jogadorFavoritoGols = 0;
@@ -50,6 +52,7 @@ try {
     mercado_garantir_estrutura($pdo);
     elenco_geral_garantir_estrutura($pdo);
     lineup_image_ensure_schema($pdo);
+    $elencoGeralPublico = elenco_geral_do_clube($pdo, $id);
     $profileAction = (string)($_POST['action'] ?? '');
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($profileAction, ['salvar_imagem_escalacao', 'remover_imagem_escalacao'], true)) {
         try {
@@ -214,16 +217,22 @@ try {
         } catch (Throwable $ignored) {
         }
         try {
-            $stmt = $pdo->prepare("SELECT cc.saldo,cc.cofre_configurado,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,c.nome campeonato
+            $stmt = $pdo->prepare("SELECT cc.saldo,cc.cofre_configurado,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,c.nome campeonato,c.status,
+                    EXISTS(SELECT 1 FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND p.status IN ('finalizada','wo','penalidade')) AS iniciada
                 FROM clubes_campeonato cc
                 JOIN campeonatos c ON c.id=cc.campeonato_id
-                LEFT JOIN competicao_identidades ci ON ci.id=c.identidade_id
                 WHERE cc.participante_id=? AND c.ativo=1 AND c.tipo='pontos_corridos'
-                  AND (ci.chave='brasileirao' OR c.nome LIKE '%Brasileir%')
-                ORDER BY c.status='ativo' DESC,c.id DESC LIMIT 1");
+                ORDER BY CASE
+                    WHEN c.status='ativo' AND EXISTS(SELECT 1 FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND p.status IN ('finalizada','wo','penalidade')) THEN 0
+                    WHEN c.status='ativo' THEN 1
+                    ELSE 2
+                END,c.criado_em DESC,c.id DESC LIMIT 1");
             $stmt->execute([$id]);
             $clubePublico = $stmt->fetch() ?: null;
             if ($clubePublico) {
+                $competicaoReservasSituacao = $clubePublico['status'] === 'finalizado'
+                    ? 'Última finalizada'
+                    : (!empty($clubePublico['iniciada']) ? 'Em andamento' : 'Próxima competição');
                 $lineupImageStmt = $pdo->prepare("SELECT caminho,CASE WHEN conteudo IS NOT NULL AND OCTET_LENGTH(conteudo)>0 THEN 1 ELSE 0 END tem_conteudo FROM imagens_escalacao WHERE campeonato_id=? AND participante_id=? LIMIT 1");
                 $lineupImageStmt->execute([(int)$clubePublico['campeonato_id'], $id]);
                 $lineupImageData = $lineupImageStmt->fetch() ?: null;
@@ -544,11 +553,20 @@ function match_score(array $j): string
                     <div class="transfer-page-items"><?php foreach ($transferenciasPublicas as $transferencia): ?><button type="button" class="transfer-entry player-open" data-transfer-type="<?= e($transferencia['tipo']) ?>" data-player-name="<?= e($transferencia['jogador_nome']) ?>" data-player-team="<?= $id ?>"><span class="transfer-kind <?= $transferencia['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= e(($transferencia['tipo'] === 'venda' ? 'Venda' : (($transferencia['origem'] ?? '') === 'pack' ? 'Pack' : mercado_rotulo_origem($transferencia)))) ?></span><b><?= e($transferencia['jogador_nome']) ?></b><small><?= (int)$transferencia['jogador_overall'] ?> · <?= e($transferencia['jogador_posicao']) ?><?= !empty($transferencia['origem_detalhe']) ? ' · ' . e($transferencia['origem_detalhe']) : '' ?> · <?= e(format_datetime_br((string)$transferencia['criado_em'])) ?></small><strong><?= e(mercado_valor_movimento($transferencia)) ?></strong></button><?php endforeach; ?><?php if (!$transferenciasPublicas): ?><p class="module-empty">Nenhuma transferência registrada.</p><?php endif; ?></div>
                     <nav class="transfer-pages card-pages"></nav>
                 </article>
-                <article class="reserves-module" data-card-pages="dynamic">
-                    <h3>Banco de reservas</h3>
-                    <div class="card-page-items"><?php $reservas = array_values(array_filter($elencoPublico, fn($j) => $j['grupo'] === 'banco'));
-                                                    foreach ($reservas as $jogador): ?><button class="player-open reserve-player" type="button" data-player-name="<?= e($jogador['nome']) ?>" data-player-team="<?= $id ?>"><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></button><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado.</div><?php endif; ?></div>
-                    <nav class="card-pages"></nav>
+                <article class="reserves-module club-roster-module">
+                    <h3>Elenco do clube</h3>
+                    <div class="club-roster-tabs" role="tablist" aria-label="Visualização do elenco"><button class="active" type="button" role="tab" data-roster-tab="reserves" aria-selected="true">Banco de reservas</button><button type="button" role="tab" data-roster-tab="general" aria-selected="false">Elenco geral</button></div>
+                    <div class="club-roster-panel" data-roster-panel="reserves" data-card-pages="dynamic">
+                        <?php if ($clubePublico): ?><small class="roster-competition"><b><?= e($competicaoReservasSituacao) ?></b> · <?= e($clubePublico['campeonato']) ?></small><?php endif; ?>
+                        <div class="card-page-items"><?php $reservas = array_values(array_filter($elencoPublico, fn($j) => $j['grupo'] === 'banco'));
+                                                        foreach ($reservas as $jogador): ?><button class="player-open reserve-player" type="button" data-player-name="<?= e($jogador['nome']) ?>" data-player-team="<?= $id ?>"><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></button><?php endforeach; ?><?php if (!$reservas): ?><div class="module-empty">Nenhum reserva informado para esta competição.</div><?php endif; ?></div>
+                        <nav class="card-pages"></nav>
+                    </div>
+                    <div class="club-roster-panel" data-roster-panel="general" data-card-pages="dynamic" hidden>
+                        <small class="roster-competition"><b><?= count($elencoGeralPublico) ?> jogadores</b> vinculados ao clube</small>
+                        <div class="card-page-items"><?php foreach ($elencoGeralPublico as $jogador): ?><button class="player-open reserve-player" type="button" data-player-name="<?= e($jogador['nome']) ?>" data-player-team="<?= $id ?>"><strong><?= e($jogador['nome']) ?></strong> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></button><?php endforeach; ?><?php if (!$elencoGeralPublico): ?><div class="module-empty">Nenhum jogador vinculado ao clube.</div><?php endif; ?></div>
+                        <nav class="card-pages"></nav>
+                    </div>
                 </article>
                 <article class="favorite-player-module">
                     <div class="club-card-heading"><h3>Herói do time</h3><?php if ($canEditClubProfile && $clubePublico): ?><button class="club-card-edit" type="button" data-bs-toggle="modal" data-bs-target="#club-hero-modal" aria-label="Editar herói do time" title="Editar herói do time">✎</button><?php endif; ?></div>

@@ -49,6 +49,7 @@ function initializeCardPagination(card) {
       >›</button>
     ` : '';
   }
+  card.renderCardPage = renderPage;
 
   pagination.addEventListener('click', event => {
     const button = event.target.closest('button[data-go]');
@@ -76,6 +77,23 @@ function initializeCardPagination(card) {
 document
   .querySelectorAll('[data-card-pages]')
   .forEach(initializeCardPagination);
+
+document.querySelectorAll('.club-roster-module').forEach(module => {
+  const tabs = [...module.querySelectorAll('[data-roster-tab]')];
+  const panels = [...module.querySelectorAll('[data-roster-panel]')];
+  tabs.forEach(tab => tab.addEventListener('click', () => {
+    tabs.forEach(item => {
+      const selected = item === tab;
+      item.classList.toggle('active', selected);
+      item.setAttribute('aria-selected', String(selected));
+    });
+    panels.forEach(panel => {
+      panel.hidden = panel.dataset.rosterPanel !== tab.dataset.rosterTab;
+    });
+    const activePanel = panels.find(panel => !panel.hidden);
+    requestAnimationFrame(() => activePanel?.renderCardPage?.());
+  }));
+});
 
 document.querySelectorAll('.titles-strip').forEach(carousel => {
   const viewport = carousel.querySelector('.titles-viewport');
