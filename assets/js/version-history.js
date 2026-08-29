@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['19.5','As imagens exportadas de classificação, mata-mata e Supercopa agora exibem a logo oficial da competição no cabeçalho, pronta para divulgação nas redes e no Discord.','Logo nos cards exportados'],
 ['19.4','A Libertadores do G4 agora possui identidade oficial própria no banco e já aparece na Vitrine de Taças antes mesmo de conhecer seu primeiro campeão, pronta para receber logo e taça pelo Admin.','Identidade e taça do G4'],
 ['19.3','O Sorteador ganhou a Libertadores do G4: as semifinais usam os quatro primeiros de um campeonato de pontos corridos, acompanham automaticamente as mudanças na classificação e congelam os classificados quando o mata-mata começa.','Libertadores do G4 dinâmica'],
 ['19.2','O Elenco Geral agora permite editar o OVR do jogador em um campo numérico já preenchido, sincronizando a evolução nas inscrições ativas. Os packs recebidos a partir de 27/08/2026 usam as novas faixas de OVR, enquanto as movimentações anteriores permanecem vinculadas às faixas antigas.','OVR editável e packs atualizados'],
