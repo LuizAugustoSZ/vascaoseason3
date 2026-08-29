@@ -46,9 +46,8 @@ document.querySelectorAll('.editar-partida').forEach(botao => botao.addEventList
   form.partida_id.value=botao.dataset.id;
   form.rodada.value=botao.dataset.rodada;
   // Mantém os times sorteados visíveis, mas bloqueados durante a edição do resultado.
-  const response=await fetch(`partida-dados.php?id=${encodeURIComponent(botao.dataset.id)}`);const data=await response.json();
-  form.mandante_id.value=String(data.mandante_id);
-  form.visitante_id.value=String(data.visitante_id);
+  form.mandante_id.value=botao.dataset.mandanteId;
+  form.visitante_id.value=botao.dataset.visitanteId;
   form.mandante_id.disabled=true;
   form.visitante_id.disabled=true;
   if(form.campeonato_id)form.campeonato_id.disabled=true;
@@ -56,9 +55,10 @@ document.querySelectorAll('.editar-partida').forEach(botao => botao.addEventList
   form.gols_visitante.value=botao.dataset.golsVisitante;
   form.status.value=botao.dataset.status;
   updateLeagueWo(form);
-  if(form.status.value==='wo')form.vencedor_wo_id.value=Number(botao.dataset.golsMandante)>Number(botao.dataset.golsVisitante)?String(data.mandante_id):String(data.visitante_id);
-  if(form.status.value==='penalidade')form.penalizado_id.value=Number(botao.dataset.golsMandante)<Number(botao.dataset.golsVisitante)?String(data.mandante_id):String(data.visitante_id);
-  renderMatchGoalEditor(data.gols||[]);
+  if(form.status.value==='wo')form.vencedor_wo_id.value=Number(botao.dataset.golsMandante)>Number(botao.dataset.golsVisitante)?botao.dataset.mandanteId:botao.dataset.visitanteId;
+  if(form.status.value==='penalidade')form.penalizado_id.value=Number(botao.dataset.golsMandante)<Number(botao.dataset.golsVisitante)?botao.dataset.mandanteId:botao.dataset.visitanteId;
+  let goals=[];try{const response=await fetch(`partida-dados.php?id=${encodeURIComponent(botao.dataset.id)}`,{cache:'no-store'});const data=await response.json();if(response.ok&&data.ok)goals=data.gols||[];}catch(error){}
+  renderMatchGoalEditor(goals);
   const aviso=document.getElementById('partida-edicao');
   aviso.querySelector('span').textContent=`Editando: ${botao.dataset.mandante} x ${botao.dataset.visitante}`;
   aviso.classList.remove('d-none');

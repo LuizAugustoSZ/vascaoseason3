@@ -1550,7 +1550,7 @@ function admin_nav_icon(string $name): string
     $g["status"],
 ) ?></td><td><div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-light editar-partida" data-id="<?= $g[
     "id"
-] ?>" data-rodada="<?= $g["rodada"] ?>" data-mandante="<?= e(
+] ?>" data-rodada="<?= $g["rodada"] ?>" data-mandante-id="<?= (int)$g["mandante_id"] ?>" data-visitante-id="<?= (int)$g["visitante_id"] ?>" data-mandante="<?= e(
     $g["mandante"],
 ) ?>" data-visitante="<?= e($g["visitante"]) ?>" data-gols-mandante="<?= e(
     (string) $g["gols_mandante"],
