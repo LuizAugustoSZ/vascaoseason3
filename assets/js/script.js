@@ -48,7 +48,7 @@ function renderScorers() {
 }
 
 // Informa se todos os confrontos de uma rodada já receberam resultado.
-const roundFinished = games => games.length > 0 && games.every(game => ['finalizada','wo'].includes(game.status));
+const roundFinished = games => games.length > 0 && games.every(game => ['finalizada','wo','penalidade'].includes(game.status));
 const roundTimeline = games => {
   const rounds=[...new Set(games.map(game=>Number(game.rodada)))].sort((a,b)=>a-b);
   const current=rounds.find(round=>!roundFinished(games.filter(game=>Number(game.rodada)===round)));
@@ -62,7 +62,7 @@ function renderLeagueGames() {
   const query=($('#game-search').val() || '').toLocaleLowerCase('pt-BR').trim();
   let games=leagueGames.filter(game=>selected==='all' || String(game.rodada)===selected);
   if(query) games=games.filter(game=>`${game.mandante} ${game.tecnico_mandante} ${game.visitante} ${game.tecnico_visitante}`.toLocaleLowerCase('pt-BR').includes(query));
-  if(selected!=='all')games.sort((a,b)=>Number(!['finalizada','wo'].includes(a.status))-Number(!['finalizada','wo'].includes(b.status)));
+  if(selected!=='all')games.sort((a,b)=>Number(!['finalizada','wo','penalidade'].includes(a.status))-Number(!['finalizada','wo','penalidade'].includes(b.status)));
   const totalPages=Math.max(1,Math.ceil(games.length/gamesPerPage));
   leaguePage=Math.min(Math.max(1,leaguePage),totalPages);
   const visibleGames=games.slice((leaguePage-1)*gamesPerPage,leaguePage*gamesPerPage);

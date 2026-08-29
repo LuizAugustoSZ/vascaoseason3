@@ -169,7 +169,7 @@ try {
             if (
                 in_array(
                     $jogo["status"],
-                    ["finalizada", "finalizado", "wo"],
+                    ["finalizada", "finalizado", "wo", "penalidade"],
                     true,
                 )
             ) {

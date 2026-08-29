@@ -31,7 +31,7 @@ function league_prompt_data(PDO $pdo, int $championshipId): array
             $form[$team['id']] ??= [];
             $remaining[$team['id']] ??= [];
         }
-        $finished = in_array((string)$match['status'], ['finalizada','wo'], true) && $match['gols_mandante'] !== null && $match['gols_visitante'] !== null;
+        $finished = in_array((string)$match['status'], ['finalizada','wo','penalidade'], true) && $match['gols_mandante'] !== null && $match['gols_visitante'] !== null;
         $home=(int)$match['mandante_id']; $away=(int)$match['visitante_id'];
         if (!$finished) {
             $date = $match['data_partida'] ? date('d/m/Y H:i', strtotime((string)$match['data_partida'])) : 'data não informada';
@@ -163,7 +163,7 @@ try {
     $matchesStmt->execute([$campeonatoId, $rodada]);
     $partidas = $matchesStmt->fetchAll();
     if (!$partidas) throw new RuntimeException('Nenhuma partida cadastrada nesta rodada.');
-    $finishedMatches = count(array_filter($partidas, static fn(array $match): bool => in_array($match['status'], ['finalizada','wo'], true)));
+    $finishedMatches = count(array_filter($partidas, static fn(array $match): bool => in_array($match['status'], ['finalizada','wo','penalidade'], true)));
     $roundStatus = $finishedMatches === count($partidas) ? 'rodada encerrada': "rodada em andamento ({$finishedMatches} de " . count($partidas) . ' partidas encerradas)';
 
     $facts = [];
@@ -216,7 +216,7 @@ try {
     arsort($goalTotals);
     $scorers = $goalTotals ? implode(', ', array_map(static fn($name, $goals) => $name . ' (' . $goals . ')', array_keys($goalTotals), $goalTotals)): 'nenhum artilheiro identificado nas súmulas';
 
-    $campaignStmt = $pdo->prepare("SELECT p.mandante_id,p.visitante_id,p.gols_mandante,p.gols_visitante,m.time_nome mandante,v.time_nome visitante FROM partidas p JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.campeonato_id=? AND p.ativo=1 AND p.rodada<=? AND p.status IN ('finalizada','wo') ORDER BY p.rodada,p.id");
+    $campaignStmt = $pdo->prepare("SELECT p.mandante_id,p.visitante_id,p.gols_mandante,p.gols_visitante,m.time_nome mandante,v.time_nome visitante FROM partidas p JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.campeonato_id=? AND p.ativo=1 AND p.rodada<=? AND p.status IN ('finalizada','wo','penalidade') ORDER BY p.rodada,p.id");
     $campaignStmt->execute([$campeonatoId, $rodada]);
     $campaignGames = $campaignStmt->fetchAll();
     $table = [];
