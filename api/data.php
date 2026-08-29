@@ -9,10 +9,10 @@ try {
     $campeonatos = $pdo
         ->query(
             "SELECT c.id,c.nome,c.identidade_id,c.tipo,c.formato,c.status,c.criado_em,
-                CASE WHEN EXISTS(SELECT 1 FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND(p.status IN('finalizada','wo') OR(p.gols_mandante IS NOT NULL AND p.gols_visitante IS NOT NULL)))
+                CASE WHEN EXISTS(SELECT 1 FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND(p.status IN('finalizada','wo','penalidade') OR(p.gols_mandante IS NOT NULL AND p.gols_visitante IS NOT NULL)))
                     OR EXISTS(SELECT 1 FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1 AND(j.status IN('finalizado','wo') OR(j.gols_a IS NOT NULL AND j.gols_b IS NOT NULL))) THEN 1 ELSE 0 END iniciado,
                 GREATEST(
-                    COALESCE((SELECT MAX(p.data_partida) FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND p.status IN('finalizada','wo')), '1970-01-01 00:00:00'),
+                    COALESCE((SELECT MAX(p.data_partida) FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND p.status IN('finalizada','wo','penalidade')), '1970-01-01 00:00:00'),
                     COALESCE((SELECT MAX(s.criado_em) FROM sumulas_dreamteam s
                         LEFT JOIN partidas sp ON s.origem='pontos' AND sp.id=s.partida_id
                         LEFT JOIN jogos_mata_mata sj ON s.origem='mata' AND sj.id=s.jogo_mata_mata_id
@@ -161,7 +161,7 @@ try {
                 $partidas,
                 fn($jogo) => in_array(
                     $jogo["status"],
-                    ["finalizada", "wo"],
+                    ["finalizada", "wo", "penalidade"],
                     true,
                 ),
             ),
