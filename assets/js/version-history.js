@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['19.7','Jogadores vendidos agora podem ser contratados novamente: o Elenco Geral preserva o histórico da negociação anterior, reativa a mesma carta e registra a recompra como uma nova movimentação.','Recontratação de jogadores'],
 ['19.6','A página do clube agora reúne Banco de Reservas e Elenco Geral no módulo Elenco do Clube, seleciona automaticamente a competição de pontos corridos prioritária e mantém nomes longos ajustados dentro dos cards da escalação.','Elenco do clube completo'],
 ['19.5','As imagens exportadas de classificação, mata-mata e Supercopa agora exibem a logo oficial da competição no cabeçalho, pronta para divulgação nas redes e no Discord.','Logo nos cards exportados'],
 ['19.4','A Libertadores do G4 agora possui identidade oficial própria no banco e já aparece na Vitrine de Taças antes mesmo de conhecer seu primeiro campeão, pronta para receber logo e taça pelo Admin.','Identidade e taça do G4'],
