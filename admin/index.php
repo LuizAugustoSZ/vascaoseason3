@@ -1245,6 +1245,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ]);
             redirect_notice("Vídeo publicado.");
         }
+        if ($action === "regulamentos") {
+            $selectedIds = array_values(array_unique(array_filter(
+                array_map('intval', (array)($_POST['noticia_ids'] ?? [])),
+                static fn(int $id): bool => $id > 0,
+            )));
+            if ($selectedIds) {
+                $placeholders = implode(',', array_fill(0, count($selectedIds), '?'));
+                $validStmt = $pdo->prepare("SELECT id FROM noticias WHERE ativo=1 AND id IN ($placeholders)");
+                $validStmt->execute($selectedIds);
+                $validIds = array_map('intval', $validStmt->fetchAll(PDO::FETCH_COLUMN));
+                $selectedIds = array_values(array_filter($selectedIds, static fn(int $id): bool => in_array($id, $validIds, true)));
+            }
+            $pdo->prepare("INSERT INTO configuracoes_site(chave,valor) VALUES('regulamento_noticias',?) ON DUPLICATE KEY UPDATE valor=VALUES(valor)")
+                ->execute([implode(',', $selectedIds)]);
+            redirect_notice("Regulamentos públicos atualizados.", "regulamentos");
+        }
         if ($action === "configuracoes") {
             $allowed = [
                 "footer_nome",
@@ -1379,6 +1395,7 @@ $siteConfig = [
     "youtube_url" => "https://www.youtube.com/@DreamBotSeason2",
     "ordem_secoes" =>
         "noticias,competicao,participantes,artilharia,titulos,midia",
+    "regulamento_noticias" => "8",
 ];
 try {
     foreach (
@@ -1482,6 +1499,7 @@ function admin_nav_icon(string $name): string
         'videos' => '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="m10 9 5 3-5 3Z"/>',
         'configuracoes' => '<circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/>',
         'noticias' => '<path d="M4 5.5h16v13H4zM7 9h4v3H7zm7 0h3M14 12h3M7 15h10"/>',
+        'regulamentos' => '<path d="M6 3.5h9l3 3V20H6zM15 3.5V7h3M9 11h6M9 14h6M9 17h4"/>',
         'site' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9S14.5 18.5 12 21c-2.5-2.5-3.5-5.5-3.5-9S9.5 5.5 12 3Z"/>',
     ];
     return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' . ($paths[$name] ?? $paths['dashboard']) . '</svg>';
@@ -1528,7 +1546,7 @@ function admin_nav_icon(string $name): string
             <?php if (account_is_master()): ?><li><button class="nav-link" data-bs-target="#tab-sorteador" title="Sorteador"><i><?= admin_nav_icon('sorteador') ?></i><span>Sorteador</span><b>›</b></button></li><?php endif; ?>
         </ul></section>
         <?php if (account_is_master()): ?><section class="admin-nav-group"><span class="admin-side-label">PESSOAS &amp; CLUBES</span><ul><li><button class="nav-link" data-bs-target="#tab-times" title="Técnicos e times"><i><?= admin_nav_icon('times') ?></i><span>Técnicos e times</span><b>›</b></button></li><li><button class="nav-link" data-bs-target="#tab-usuarios" title="Usuários"><i><?= admin_nav_icon('usuarios') ?></i><span>Usuários</span><b>›</b></button></li><li><button class="nav-link" data-bs-target="#tab-mercado" title="Mercado"><i><?= admin_nav_icon('mercado') ?></i><span>Mercado</span><b>›</b></button></li><li><button class="nav-link" data-bs-target="#tab-titulos" title="Títulos"><i><?= admin_nav_icon('titulos') ?></i><span>Títulos</span><b>›</b></button></li></ul></section><?php endif; ?>
-        <section class="admin-nav-group"><span class="admin-side-label">CONTEÚDO &amp; SITE</span><ul><?php if (account_is_master()): ?><li><button class="nav-link" data-bs-target="#tab-videos" title="Vídeos"><i><?= admin_nav_icon('videos') ?></i><span>Vídeos</span><b>›</b></button></li><li><button class="nav-link" data-bs-target="#tab-configuracoes" title="Configurações"><i><?= admin_nav_icon('configuracoes') ?></i><span>Configurações</span><b>›</b></button></li><?php endif; ?><li><button class="nav-link" data-bs-target="#tab-noticias" title="Notícias"><i><?= admin_nav_icon('noticias') ?></i><span>Notícias</span><b>›</b></button></li></ul></section>
+        <section class="admin-nav-group"><span class="admin-side-label">CONTEÚDO &amp; SITE</span><ul><?php if (account_is_master()): ?><li><button class="nav-link" data-bs-target="#tab-videos" title="Vídeos"><i><?= admin_nav_icon('videos') ?></i><span>Vídeos</span><b>›</b></button></li><li><button class="nav-link" data-bs-target="#tab-configuracoes" title="Configurações"><i><?= admin_nav_icon('configuracoes') ?></i><span>Configurações</span><b>›</b></button></li><?php endif; ?><li><button class="nav-link" data-bs-target="#tab-noticias" title="Notícias"><i><?= admin_nav_icon('noticias') ?></i><span>Notícias</span><b>›</b></button></li><li><button class="nav-link" data-bs-target="#tab-regulamentos" title="Regulamento"><i><?= admin_nav_icon('regulamentos') ?></i><span>Regulamento</span><b>›</b></button></li></ul></section>
     </nav>
     <div class="admin-side-actions"><a class="admin-open-site" href="../index.php" target="_blank" rel="noopener">Abrir site</a><a href="../logout.php">Sair</a></div>
 </aside>
@@ -1737,7 +1755,10 @@ function admin_nav_icon(string $name): string
     ? "Desativar"
    : "Reativar" ?></button></form></td></tr><?php endforeach; ?></tbody></table></div></div></div></div></section>
 <?php require __DIR__ .
-    "/noticias-tab.php"; ?><section id="tab-videos" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form class="panel admin-form" method="post"><h2>Publicar vídeo</h2><input type="hidden" name="csrf" value="<?= e(
+    "/noticias-tab.php"; ?>
+<?php $selectedRegulations = array_map('intval', array_filter(explode(',', (string)$siteConfig['regulamento_noticias']))); ?>
+<section id="tab-regulamentos" class="tab-pane fade"><form class="panel admin-form" method="post"><span class="eyebrow">Página pública</span><h2 class="mt-2">Regulamentos</h2><p class="text-secondary">Selecione as notícias que serão apresentadas como regulamentos. Você pode trocar a seleção a qualquer momento sem alterar ou duplicar a publicação original.</p><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="regulamentos"><div class="row g-3"><?php foreach ($newsAdmin as $item): ?><div class="col-lg-6"><label class="d-flex gap-3 align-items-start border rounded p-3 h-100"><input class="form-check-input mt-1" type="checkbox" name="noticia_ids[]" value="<?= (int)$item['id'] ?>" <?= in_array((int)$item['id'], $selectedRegulations, true) ? 'checked' : '' ?>><span><strong class="d-block"><?= e($item['titulo']) ?></strong><small class="text-secondary"><?= e(format_datetime_br($item['publicado_em'])) ?></small><span class="d-block text-secondary small mt-1"><?= e($item['resumo']) ?></span></span></label></div><?php endforeach; ?><?php if (!$newsAdmin): ?><div class="col-12"><div class="alert alert-warning mb-0">Publique uma notícia antes de criar um regulamento.</div></div><?php endif; ?></div><div class="d-flex flex-wrap gap-2 mt-4"><button class="btn btn-danger">Salvar regulamentos</button><a class="btn btn-outline-light" href="../regulamento.php" target="_blank" rel="noopener">Ver página pública</a></div></form></section>
+<section id="tab-videos" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form class="panel admin-form" method="post"><h2>Publicar vídeo</h2><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="video"><label class="form-label">Título</label><input class="form-control mb-2" name="titulo" required><label class="form-label">URL do YouTube</label><input class="form-control" type="url" name="youtube_url" required><button class="btn btn-danger mt-3">Publicar</button></form></div><div class="col-lg-7"><div class="panel"><div class="panel-head"><h3>Vídeos publicados</h3><span><?= count(
     $videosAdmin,

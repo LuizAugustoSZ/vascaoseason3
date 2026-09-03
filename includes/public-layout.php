@@ -15,6 +15,7 @@ function public_site_config(): array
         "discord_url" => "https://discord.gg/nkDynjHbMM",
         "youtube_url" => "https://www.youtube.com/@DreamBotSeason2",
         "ordem_secoes" => "noticias,competicao,participantes,artilharia,titulos,midia",
+        "regulamento_noticias" => "8",
     ];
 
     try {

@@ -1,5 +1,19 @@
 <?php require __DIR__ . "/includes/bootstrap.php";
-require __DIR__ . "/includes/public-layout.php"; ?>
+require __DIR__ . "/includes/public-layout.php";
+$siteConfig = public_site_config();
+$regulationIds = array_values(array_unique(array_filter(
+    array_map('intval', explode(',', (string)($siteConfig['regulamento_noticias'] ?? ''))),
+    static fn(int $id): bool => $id > 0,
+)));
+$regulations = [];
+if ($regulationIds) {
+    $placeholders = implode(',', array_fill(0, count($regulationIds), '?'));
+    $order = implode(',', $regulationIds);
+    $stmt = db()->prepare("SELECT id,titulo,resumo,capa_base64,autor,publicado_em FROM noticias WHERE ativo=1 AND id IN ($placeholders) ORDER BY FIELD(id,$order)");
+    $stmt->execute($regulationIds);
+    $regulations = $stmt->fetchAll();
+}
+?>
 <!doctype html>
 <html lang="pt-BR" data-bs-theme="dark">
 
@@ -14,6 +28,7 @@ require __DIR__ . "/includes/public-layout.php"; ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/branding.css?v=5">
+    <link rel="stylesheet" href="assets/css/news.css?v=<?= filemtime(__DIR__ . '/assets/css/news.css') ?>">
     <link rel="stylesheet" href="assets/css/season3-update.css?v=<?= filemtime(
                                                                         __DIR__ . "/assets/css/season3-update.css",
                                                                     ) ?>">
@@ -34,45 +49,12 @@ require __DIR__ . "/includes/public-layout.php"; ?>
                     <h2>REGULAMENTO</h2>
                 </div>
             </div>
-            <p class="lead text-secondary mb-3">Consulte as regras de pontuação, partidas, comprovação e conduta das competições.</p><a class="btn btn-danger mb-5" href="noticia.php?id=8" target="_blank" rel="noopener noreferrer">Ver regulamento do Brasileirão</a>
-            <div class="row g-3">
+            <p class="lead text-secondary mb-5">Consulte os regulamentos oficiais publicados para as competições da temporada.</p>
+            <div class="row g-4"><?php foreach ($regulations as $item): ?>
                 <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100">
-                        <h3>Pontuação</h3>
-                        <p>Vitória: 3 pontos. Empate: 1 ponto. Derrota: 0 pontos.</p>
-                    </article>
+                    <article class="news-card h-100"><a href="noticia.php?id=<?= (int)$item['id'] ?>"><img src="<?= e($item['capa_base64']) ?>" alt=""></a><div class="news-card-body"><span class="news-meta"><?= e(format_datetime_br($item['publicado_em'])) ?> • <?= e($item['autor']) ?></span><h2 class="mt-2"><a class="text-white text-decoration-none" href="noticia.php?id=<?= (int)$item['id'] ?>"><?= e($item['titulo']) ?></a></h2><?php if ($item['resumo']): ?><p><?= e($item['resumo']) ?></p><?php endif; ?><a class="btn btn-danger btn-sm" href="noticia.php?id=<?= (int)$item['id'] ?>">Ver regulamento</a></div></article>
                 </div>
-                <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100">
-                        <h3>Partidas</h3>
-                        <p>Jogos pelo <code>/confronto</code>, dentro do prazo e com horário combinado. Uma rodada só termina quando todos os confrontos dela forem finalizados.</p>
-                    </article>
-                </div>
-                <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100">
-                        <h3>Comprovação</h3>
-                        <p>Envie captura com participantes e placar final. Sem prova, o resultado pode não ser contabilizado.</p>
-                    </article>
-                </div>
-                <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100">
-                        <h3>Desempate</h3>
-                        <p>Vitórias, saldo de gols, gols marcados, confronto direto, menor número de W.O. e decisão da organização.</p>
-                    </article>
-                </div>
-                <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100">
-                        <h3>W.O.</h3>
-                        <p>O participante ausente pode perder por 3 a 0. Tentativas de contato deverão ser comprovadas.</p>
-                    </article>
-                </div>
-                <div class="col-md-6 col-xl-4">
-                    <article class="rule-card h-100">
-                        <h3>Conduta</h3>
-                        <p>Bugs, contas alternativas, resultados combinados e entrega proposital podem gerar punição ou expulsão.</p>
-                    </article>
-                </div>
-            </div>
+            <?php endforeach; ?><?php if (!$regulations): ?><div class="col-12"><div class="empty-state">Nenhum regulamento publicado no momento.</div></div><?php endif; ?></div>
         </div>
     </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><?php if (
                                                                                                                                             account_is_admin()
