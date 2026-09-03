@@ -46,7 +46,7 @@
     format_datetime_br($item["publicado_em"]),
 ) ?> • <?= e(
      $item["autor"],
- ) ?></small><div class="d-flex gap-2 mt-2"><button type="button" class="btn btn-sm btn-outline-light editar-noticia" data-id="<?= $item[
+ ) ?></small><div class="d-flex flex-wrap gap-2 mt-2"><a class="btn btn-sm btn-outline-info" href="../noticia.php?id=<?= (int)$item['id'] ?>" target="_blank" rel="noopener">Ver notícia</a><button type="button" class="btn btn-sm btn-outline-light editar-noticia" data-id="<?= $item[
     "id"
 ] ?>">Editar</button><form method="post"><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),

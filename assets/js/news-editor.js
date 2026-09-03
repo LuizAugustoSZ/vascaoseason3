@@ -72,6 +72,23 @@
     const notice = document.getElementById('news-editing'); notice.querySelector('span').textContent = `Editando: ${item.titulo}`; notice.classList.remove('d-none'); notice.classList.add('d-flex');
     form.scrollIntoView({behavior: 'smooth', block: 'start'});
   }));
+  const requestedNewsId = new URLSearchParams(location.search).get('editar_noticia');
+  if (requestedNewsId) document.querySelector(`.editar-noticia[data-id="${CSS.escape(requestedNewsId)}"]`)?.click();
+  const confirmNewsRemoval = title => new Promise(resolve => {
+    let element = document.getElementById('admin-news-delete-modal');
+    if (!element) {
+      element = document.createElement('div'); element.id = 'admin-news-delete-modal'; element.className = 'modal fade news-delete-modal'; element.tabIndex = -1;
+      element.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><small class="eyebrow">Exclusão segura</small><h2 class="modal-title">REMOVER NOTÍCIA?</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><p data-delete-message></p><div class="alert alert-secondary mb-0">O registro será ocultado do site, mas continuará preservado no banco de dados.</div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-danger" data-delete-confirm>Sim, remover</button></div></div></div>';
+      document.body.append(element);
+    }
+    element.querySelector('[data-delete-message]').textContent = `“${title}” deixará de aparecer no jornal e nos regulamentos.`;
+    const modal = bootstrap.Modal.getOrCreateInstance(element); let answered = false;
+    const accept = () => { answered = true; modal.hide(); resolve(true); };
+    const closed = () => { element.querySelector('[data-delete-confirm]').removeEventListener('click', accept); if (!answered) resolve(false); };
+    element.querySelector('[data-delete-confirm]').addEventListener('click', accept, {once: true});
+    element.addEventListener('hidden.bs.modal', closed, {once: true});
+    modal.show();
+  });
   form.addEventListener('submit', async event => {
     event.preventDefault(); event.stopImmediatePropagation();
     if (!coverData.value) return showToast('Selecione uma imagem de capa.', 'danger');
@@ -86,7 +103,9 @@
     } catch (error) { button.disabled = false; button.textContent = old; showToast(error.message, 'danger'); }
   });
   document.querySelectorAll('.admin-news-list form[method="post"]').forEach(deleteForm => deleteForm.addEventListener('submit', async event => {
-    event.preventDefault(); event.stopImmediatePropagation(); if (!confirm('Remover esta notícia do jornal?')) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    const title = deleteForm.closest('article')?.querySelector('h3')?.textContent?.trim() || 'Esta notícia';
+    if (!await confirmNewsRemoval(title)) return;
     try {
       const payload = new FormData(deleteForm); payload.set('_ajax', '1');
       const response = await fetch('index.php', {method: 'POST', body: payload, headers: {Accept: 'application/json'}, credentials: 'same-origin'}); const data = await response.json();
