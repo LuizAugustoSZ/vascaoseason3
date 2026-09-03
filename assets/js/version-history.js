@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['19.8','As sidebars pública e administrativa ganharam navegação compacta mais fluida, com rótulos animados que completam os ícones no hover, destaque correto apenas para o clube vinculado à conta, scroll protegido contra sobreposições e detalhes do perfil que abrem ao passar o mouse ou permanecem fixos após o clique.','Sidebars mais fluidas e inteligentes'],
 ['19.7','Jogadores vendidos agora podem ser contratados novamente: o Elenco Geral preserva o histórico da negociação anterior, reativa a mesma carta e registra a recompra como uma nova movimentação.','Recontratação de jogadores'],
 ['19.6','A página do clube agora reúne Banco de Reservas e Elenco Geral no módulo Elenco do Clube, seleciona automaticamente a competição de pontos corridos prioritária e mantém nomes longos ajustados dentro dos cards da escalação.','Elenco do clube completo'],
 ['19.5','As imagens exportadas de classificação, mata-mata e Supercopa agora exibem a logo oficial da competição no cabeçalho, pronta para divulgação nas redes e no Discord.','Logo nos cards exportados'],
