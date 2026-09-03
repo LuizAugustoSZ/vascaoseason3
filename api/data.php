@@ -158,55 +158,33 @@ try {
             "SELECT id, titulo, youtube_url FROM videos WHERE ativo=1 ORDER BY criado_em DESC",
         )
         ->fetchAll();
-    $finalizadas =
-        count(
-            array_filter(
-                $partidas,
-                fn($jogo) => in_array(
-                    $jogo["status"],
-                    ["finalizada", "wo", "penalidade"],
-                    true,
-                ),
-            ),
-        ) +
-        count(
-            array_filter(
-                $mataMata,
-                fn($jogo) => in_array($jogo["status"], ["finalizado", "wo"], true),
-            ),
-        );
+    // O card da home resume a temporada inteira, não apenas a competição selecionada.
+    $finalizadas = (int) $pdo
+        ->query(
+            "SELECT
+                (SELECT COUNT(*) FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id WHERE p.ativo=1 AND c.ativo=1 AND p.status IN('finalizada','wo','penalidade')) +
+                (SELECT COUNT(*) FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id WHERE j.ativo=1 AND c.ativo=1 AND j.status IN('finalizado','wo'))",
+        )
+        ->fetchColumn();
     $classification = standings($pdo, $campeonatoId);
     $leagueTitle = ($campeonato["tipo"] ?? "") === "pontos_corridos"
         ? league_title_status($pdo, $campeonatoId, $classification)
         : null;
-    $enrolled = [];
-    foreach ($partidas as $game) {
-        $enrolled[(int) $game["mandante_id"]] = true;
-        $enrolled[(int) $game["visitante_id"]] = true;
-    }
-    foreach ($mataMata as $game) {
-        if ($game["time_a_id"] !== null) {
-            $enrolled[(int) $game["time_a_id"]] = true;
-        }
-        if ($game["time_b_id"] !== null) {
-            $enrolled[(int) $game["time_b_id"]] = true;
-        }
-    }
-    $temCampeonatoAtivo =
+    $temCampeonatoEmDisputa =
         count(
             array_filter(
                 $campeonatos,
-                fn($item) => $item["status"] === "ativo",
+                fn($item) => $item["status"] === "ativo" && (int) $item["iniciado"] === 1,
             ),
         ) > 0;
-    $statusTemporada = $temCampeonatoAtivo
+    $statusTemporada = $temCampeonatoEmDisputa
         ? "Em disputa"
         : ($campeonatos
             ? "Aguardando próxima competição"
             : "Novidades em breve");
     $resumo = [
         "status" => $statusTemporada,
-        "participantes" => count($enrolled),
+        "participantes" => count($participantes),
         "partidas_finalizadas" => $finalizadas,
     ];
     // Entrega todos os dados em JSON para o script.js.
