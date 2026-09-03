@@ -39,16 +39,21 @@ function advance_knockout(PDO $pdo, int $championshipId, string $phase, int $ord
             $penalties[$b] = (int)$match["penaltis_b"];
         }
     }
-    if (count($penalties) < 2 && !$allFinished) return;
+    // Um vencedor de partida (inclusive por pênaltis) não decide sozinho um
+    // confronto de ida e volta. A classificação só existe quando todas as
+    // pernas previstas foram encerradas; o fluxo de W.O. já encerra todas.
+    if (!$allFinished) return;
 
     arsort($scores);
     $ids = array_keys($scores);
     $winner = null;
-    if (count($penalties) >= 2) {
-        $penaltyIds = array_keys($penalties);
-        $winner = $penalties[$penaltyIds[0]] > $penalties[$penaltyIds[1]] ? (int)$penaltyIds[0] : (int)$penaltyIds[1];
-    } elseif (count($ids) >= 2 && $scores[$ids[0]] > $scores[$ids[1]]) {
+    if (count($ids) >= 2 && $scores[$ids[0]] > $scores[$ids[1]]) {
         $winner = (int)$ids[0];
+    } elseif (count($penalties) >= 2) {
+        $penaltyIds = array_keys($penalties);
+        if ($penalties[$penaltyIds[0]] !== $penalties[$penaltyIds[1]]) {
+            $winner = $penalties[$penaltyIds[0]] > $penalties[$penaltyIds[1]] ? (int)$penaltyIds[0] : (int)$penaltyIds[1];
+        }
     }
     if ($winner === null) {
         $pdo->prepare("UPDATE jogos_mata_mata SET vencedor_id=NULL WHERE campeonato_id=? AND fase=? AND ordem=? AND ativo=1")
