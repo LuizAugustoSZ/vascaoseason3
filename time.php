@@ -334,6 +334,9 @@ foreach ($jogadas as $j) {
     }
 }
 $stats["Saldo"] = $stats["Gols pró"] - $stats["Gols contra"];
+if ($titulos) {
+    $stats["Títulos"] = count($titulos);
+}
 $rival = null;
 if ($proximas) {
     $nextMatch = $proximas[0];
@@ -463,7 +466,7 @@ function match_score(array $j): string
         <main class="wide-container club-page">
             <?php if ($profileNotice): ?><div class="alert alert-success club-profile-notice"><?= e($profileNotice) ?></div><?php endif; ?>
             <?php if ($lineupImageError): ?><div class="alert alert-danger club-profile-notice" role="alert"><?= e($lineupImageError) ?></div><?php endif; ?>
-            <section class="club-stats"><?php foreach (
+            <section class="club-stats<?= $titulos ? ' club-stats--with-titles' : '' ?>"><?php foreach (
                                             $stats
                                             as $label => $value
                                         ): ?><div><small><?= e($label) ?></small><strong><?= ($label === "Saldo" &&

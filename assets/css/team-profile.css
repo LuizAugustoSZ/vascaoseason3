@@ -170,8 +170,12 @@
 
 .club-stats {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: var(--club-gap)
+}
+
+.club-stats--with-titles {
+    grid-template-columns: repeat(8, minmax(0, 1fr))
 }
 
 .club-stats>div {
