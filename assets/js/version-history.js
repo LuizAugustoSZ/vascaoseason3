@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['19.9.2','Perfis dos clubes ganharam o total de títulos no resumo, cards padronizados e uma vitrine sem duplicações, com as conquistas da Season 3 ordenadas pela data real do evento.','Vitrine de títulos organizada'],
 ['19.9.1','Administradores agora podem editar ou remover uma notícia diretamente na página publicada, com confirmação visual e exclusão segura, além de abrir cada matéria em uma nova aba pela listagem do painel.','Ações administrativas nas notícias'],
 ['19.9','A página de Regulamento agora exibe notícias selecionadas dinamicamente, e o painel administrativo ganhou uma área própria para associar, trocar ou remover essas publicações.','Regulamentos ligados às notícias'],
 ['19.8','As sidebars pública e administrativa ganharam navegação compacta mais fluida, com rótulos animados que completam os ícones no hover, destaque correto apenas para o clube vinculado à conta, scroll protegido contra sobreposições e detalhes do perfil que abrem ao passar o mouse ou permanecem fixos após o clique.','Sidebars mais fluidas e inteligentes'],
