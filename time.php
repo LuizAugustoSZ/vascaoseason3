@@ -197,10 +197,24 @@ try {
         });
         $proximas = ordenar_proximos_confrontos($proximas, $jogadas);
         $stmt = $pdo->prepare(
-            "SELECT id,titulo,temporada,CASE WHEN imagem_base64 IS NOT NULL AND imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem FROM titulos WHERE participante_id=? ORDER BY conquistado_em DESC,id DESC",
+            "SELECT id,titulo,temporada,CASE WHEN imagem_base64 IS NOT NULL AND imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem
+             FROM titulos
+             WHERE participante_id=?
+             ORDER BY CAST(SUBSTRING_INDEX(temporada,' ',-1) AS UNSIGNED) DESC,conquistado_em DESC,id DESC",
         );
         $stmt->execute([$id]);
         $titulos = $stmt->fetchAll();
+        // Registros históricos podem ter sido importados mais de uma vez. Na vitrine,
+        // cada conquista deve aparecer uma única vez dentro da respectiva Season.
+        $uniqueTitles = [];
+        $titulos = array_values(array_filter($titulos, static function (array $title) use (&$uniqueTitles): bool {
+            $normalizedTitle = preg_replace('/\s+/u', ' ', mb_strtolower(trim((string)$title['titulo'])));
+            $normalizedSeason = preg_replace('/\s+/u', ' ', mb_strtolower(trim((string)$title['temporada'])));
+            $key = $normalizedTitle . '|' . $normalizedSeason;
+            if (isset($uniqueTitles[$key])) return false;
+            $uniqueTitles[$key] = true;
+            return true;
+        }));
         try {
             $identityCompetitions = $pdo->query('SELECT c.id,c.nome FROM campeonatos c WHERE c.ativo=1 AND c.identidade_id IS NOT NULL ORDER BY c.id DESC')->fetchAll();
             foreach ($titulos as &$titleItem) {
