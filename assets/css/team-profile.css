@@ -452,7 +452,13 @@
 
 .titles-track {
     display: flex;
-    width: max-content
+    width: max-content;
+    transition: transform .32s ease;
+    will-change: transform
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .titles-track { transition: none }
 }
 
 .titles-item {

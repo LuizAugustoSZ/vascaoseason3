@@ -97,22 +97,35 @@ document.querySelectorAll('.club-roster-module').forEach(module => {
 
 document.querySelectorAll('.titles-strip').forEach(carousel => {
   const viewport = carousel.querySelector('.titles-viewport');
+  const track = carousel.querySelector('.titles-track');
   const previous = carousel.querySelector('.titles-nav--previous');
   const next = carousel.querySelector('.titles-nav--next');
-  if (!viewport || !previous || !next) return;
+  if (!viewport || !track || !previous || !next) return;
 
-  const updateArrows = () => {
-    const maximum = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
-    previous.disabled = viewport.scrollLeft <= 1;
-    next.disabled = viewport.scrollLeft >= maximum - 1;
+  let position = 0;
+  let maximum = 0;
+
+  const render = () => {
+    maximum = Math.max(0, track.scrollWidth - viewport.clientWidth);
+    position = Math.min(maximum, Math.max(0, position));
+    track.style.transform = `translate3d(${-position}px, 0, 0)`;
+    previous.disabled = position <= 0;
+    next.disabled = position >= maximum;
   };
-  const move = direction => viewport.scrollBy({ left: direction * Math.max(190, viewport.clientWidth * .75), behavior: 'smooth' });
+  const move = direction => {
+    const item = track.querySelector('.titles-item');
+    const itemWidth = item ? item.getBoundingClientRect().width : 190;
+    const step = Math.max(itemWidth, viewport.clientWidth * .75);
+    position = direction < 0
+      ? Math.max(0, position - step)
+      : Math.min(maximum, position + step);
+    render();
+  };
 
   previous.addEventListener('click', () => move(-1));
   next.addEventListener('click', () => move(1));
-  viewport.addEventListener('scroll', updateArrows, { passive: true });
-  if ('ResizeObserver' in window) new ResizeObserver(updateArrows).observe(viewport);
-  requestAnimationFrame(updateArrows);
+  if ('ResizeObserver' in window) new ResizeObserver(render).observe(viewport);
+  requestAnimationFrame(render);
 });
 
 document.querySelectorAll('.lineup-placeholder').forEach(module => {
