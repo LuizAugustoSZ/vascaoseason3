@@ -117,7 +117,9 @@ try {
     $championship = $championshipStmt->fetch();
     $campeonato = (string)($championship['nome'] ?? '');
     if ($campeonato === '') throw new RuntimeException('Campeonato não encontrado.');
-    if (($championship['tipo'] ?? '') === 'mata_mata') {
+    // Mata-matas e Supercopas usam jogos_mata_mata. Tratar a Supercopa como
+    // pontos corridos fazia o painel procurar rodadas inexistentes e exibir G4.
+    if (in_array((string)($championship['tipo'] ?? ''), ['mata_mata', 'supercopa'], true)) {
         knockout_prompt_response($pdo, $campeonatoId, $campeonato, $fase);
     }
 

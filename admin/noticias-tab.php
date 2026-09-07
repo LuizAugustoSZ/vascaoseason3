@@ -1,7 +1,7 @@
 <section id="tab-noticias" class="tab-pane fade">
   <div class="panel news-prompt-generator mb-4">
     <div class="panel-head">
-      <div><small>ASSISTENTE DE NOTÍCIAS</small><h3>GERAR PROMPT DA RODADA</h3></div>
+      <div><small>ASSISTENTE DE NOTÍCIAS</small><h3>GERAR PROMPT DA COMPETIÇÃO</h3></div>
       <span id="round-prompt-context">Identificando a rodada atual...</span>
     </div>
     <p class="text-secondary">O sistema reúne placares, estatísticas, artilheiros e todos os acontecimentos registrados nas súmulas. Depois é só copiar e colar no ChatGPT.</p>
