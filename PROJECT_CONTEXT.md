@@ -65,6 +65,7 @@ Antes de criar um arquivo novo, verificar se a responsabilidade já pertence a u
 - `feature/nome-da-feature`: desenvolvimento isolado.
 - Mudanças entram por pull request depois de revisão e testes.
 - Não fazer deploy de produção a cada salvamento da IDE.
+- Mensagens de commit devem ser escritas em português, descrevendo diretamente a alteração, sem prefixos como `fix:`, `feat:` ou `chore:`. Exemplo: `Adaptar importação ao novo formato de súmulas`.
 
 ### Ambientes
 
