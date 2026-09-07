@@ -151,6 +151,13 @@ function summary_canonicalize_players(PDO $pdo, array $parsed, array $context, i
         $resolver = $resolvers[strtoupper(trim((string)$code))] ?? [];
         return summary_resolve_player($resolver, $name) ?? trim($name);
     };
+    if (!empty($parsed['man_of_match']) && empty($parsed['man_of_match_team_code'])) {
+        $matches = [];
+        foreach ($resolvers as $code => $resolver) {
+            if (summary_resolve_player($resolver, $parsed['man_of_match']) !== null) $matches[] = $code;
+        }
+        if (count($matches) === 1) $parsed['man_of_match_team_code'] = $matches[0];
+    }
     foreach ($parsed['events'] as &$event) {
         foreach (['player','player_out','player_in','assist'] as $field) {
             if (isset($event[$field])) $event[$field] = $canonical((string)$event[$field], $event['team_code'] ?? null);
@@ -291,6 +298,7 @@ try {
     $parsed = dreamteam_parse_summary($raw);
     if (!$parsed['dreamteam_id']) throw new RuntimeException('O ID único DT-... não foi encontrado.');
     $context = identify_summary_context($pdo, $parsed);
+    $parsed = dreamteam_bind_team_codes($parsed, [$context['home'], $context['away']]);
     $duplicate = $pdo->prepare("SELECT id,origem,partida_id,jogo_mata_mata_id FROM sumulas_dreamteam WHERE dreamteam_id=? LIMIT 1");
     $duplicate->execute([$parsed['dreamteam_id']]);
     $existingSummary = $duplicate->fetch() ?: null;
