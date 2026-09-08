@@ -386,12 +386,14 @@ if ($clube) {
                 <div><small><?= $campeonatoUsaCiclo ? 'Próxima rodada do clube' : 'Formato da competição' ?></small><strong><?= $campeonatoUsaCiclo ? $rodada.'ª' : 'MATA-MATA' ?></strong></div>
                 <div><small><?= $campeonatoUsaCiclo ? 'Ciclo '.$ciclo['ciclo'] : 'Regra de inscrição' ?></small><strong><?= !$campeonatoUsaCiclo || $ciclo['aberto'] ? 'INSCRIÇÃO LIBERADA' : 'INSCRIÇÃO TRAVADA' ?></strong></div>
             </section>
-            <?php if ($campeonatoUsaCiclo && !($ciclo['participacao_concluida'] ?? false) && $rodada >= 9 && $rodada <= 13): ?><div class="alert alert-warning mb-4" role="status">
-                <strong>Inscrição travada após a 8ª rodada.</strong> Novos jogadores podem continuar entrando no Elenco Geral, mas só poderão ser inscritos aqui quando a janela reabrir na 14ª rodada. Formação, titulares e banco dos já inscritos continuam editáveis. Folgas contam normalmente como rodada cumprida.
+            <?php if ($campeonatoUsaCiclo && !($ciclo['participacao_concluida'] ?? false) && ($ciclo['pre_estreia'] ?? false)): ?><div class="alert alert-success mb-4" role="status">
+                <strong>Inscrição liberada até a estreia.</strong> O ciclo de cinco rodadas travadas começa somente depois da primeira partida disputada pelo clube.
+            </div><?php elseif ($campeonatoUsaCiclo && !($ciclo['participacao_concluida'] ?? false) && !$ciclo['aberto'] && $ciclo['ciclo'] > 1): ?><div class="alert alert-warning mb-4" role="status">
+                <strong>Inscrição travada neste ciclo.</strong> Novos jogadores podem continuar entrando no Elenco Geral, mas só poderão ser inscritos quando a janela reabrir. Formação, titulares e banco dos já inscritos continuam editáveis. Folgas após a estreia contam normalmente como rodada cumprida.
             </div><?php elseif ($campeonatoUsaCiclo && ($ciclo['participacao_concluida'] ?? false)): ?><div class="alert alert-success mb-4" role="status">
                 <strong>Participação concluída.</strong> O clube já cumpriu todas as partidas desta competição; vendas, edições e alterações de inscrição estão liberadas, mesmo que os demais times ainda tenham jogos pendentes.
-            </div><?php elseif ($campeonatoUsaCiclo && $rodada === 14): ?><div class="alert alert-success mb-4" role="status">
-                <strong>Inscrição liberada para a 14ª rodada.</strong> Todos os jogadores ativos do Elenco Geral já aparecem como opções para montar a nova lista da competição.
+            </div><?php elseif ($campeonatoUsaCiclo && $ciclo['aberto']): ?><div class="alert alert-success mb-4" role="status">
+                <strong>Janela de inscrição liberada.</strong> Todos os jogadores ativos do Elenco Geral já aparecem como opções para montar a nova lista da competição.
             </div><?php endif; ?>
             <section class="market-help-grid" aria-label="Ajuda para gestão do elenco">
                 <article><div><strong><?= $campeonatoUsaCiclo ? 'Janela de inscrição' : 'Mata-mata sem ciclo' ?></strong><p><?= $campeonatoUsaCiclo ? 'Este clube cumpriu '.$ciclo['etapas_concluidas'].' rodada(s), incluindo '.$ciclo['folgas'].' folga(s). A inscrição abre após a 5ª e fica liberada na 6ª, 7ª e 8ª rodadas do ciclo.' : 'Esta competição não usa janela por rodadas. Os jogadores do Elenco Geral permanecem disponíveis para montar a inscrição.' ?></p></div></article>
