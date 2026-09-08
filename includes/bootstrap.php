@@ -10,6 +10,7 @@ $config = require is_file($localConfig)
     : __DIR__ . "/../config/config.example.php";
 date_default_timezone_set($config["app"]["timezone"]);
 require_once __DIR__ . '/competition-identities.php';
+require_once __DIR__ . '/competition-schedule.php';
 
 // Cria e reutiliza a conexão PDO com o MySQL.
 function db(): PDO

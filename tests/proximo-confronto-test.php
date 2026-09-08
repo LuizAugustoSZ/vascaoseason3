@@ -2,10 +2,16 @@
 
 declare(strict_types=1);
 require __DIR__ . '/../includes/proximo-confronto.php';
+require __DIR__ . '/../includes/competition-schedule.php';
 
 function jogo(int $id, int $rodada, string $status, int $mandante = 1, int $visitante = 2, ?string $data = null): array
 {
     return ['id' => $id, 'campeonato_id' => 10, 'etapa' => $rodada, 'status' => $status, 'origem' => 'pontos', 'mandante_id' => $mandante, 'visitante_id' => $visitante, 'data_jogo' => $data];
+}
+
+function mata(int $id, string $data): array
+{
+    return ['id' => $id, 'campeonato_id' => 20, 'etapa' => 'Semifinal', 'status' => 'agendado', 'origem' => 'mata', 'mandante_id' => 1, 'visitante_id' => 3, 'data_jogo' => $data];
 }
 
 function verificar(bool $condicao, string $mensagem): void
@@ -29,5 +35,15 @@ $mesmaRodada = ordenar_proximos_confrontos([jogo(4, 15, 'agendada', 1, 2, '2026-
 verificar((int)$mesmaRodada[0]['id'] === 3, 'Data e hora devem desempatar jogos da mesma rodada.');
 
 verificar(ordenar_proximos_confrontos([], $finalizados) === [], 'Sem partidas futuras, o resultado deve permanecer vazio.');
+
+$calendario = ordenar_proximos_confrontos([
+    mata(30, '2026-09-13'),
+    jogo(1, 1, 'agendada', 1, 2, '2026-09-08'),
+    mata(31, '2026-09-19'),
+], []);
+verificar((int)$calendario[0]['id'] === 1 && $calendario[0]['origem'] === 'pontos', 'A rodada 1 deve vir antes dos mata-matas futuros.');
+verificar((int)$calendario[1]['id'] === 30 && (int)$calendario[2]['id'] === 31, 'Mata-matas devem respeitar a data da competição.');
+verificar(competition_round_date('2026-09-08', 1) === '2026-09-08 00:00:00', 'A rodada 1 deve usar a data inicial.');
+verificar(competition_round_date('2026-09-08', 14) === '2026-09-21 00:00:00', 'A rodada 14 deve acontecer treze dias depois da rodada 1.');
 
 echo "OK: seleção do próximo confronto validada.\n";
