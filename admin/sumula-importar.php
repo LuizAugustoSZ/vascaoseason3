@@ -135,6 +135,16 @@ function summary_resolve_player(array $resolver, string $name): ?string
     return $key !== '' && array_key_exists($key, $resolver) && is_string($resolver[$key]) ? $resolver[$key] : null;
 }
 
+function summary_upper_player_name(string $name): string
+{
+    return mb_strtoupper(preg_replace('/\s+/u', ' ', trim($name)) ?? trim($name), 'UTF-8');
+}
+
+function summary_roster_issue_message(array|string $issue): string
+{
+    return is_array($issue) ? (string)($issue['message'] ?? '') : $issue;
+}
+
 function summary_canonicalize_players(PDO $pdo, array $parsed, array $context, int $championshipId): array
 {
     $codes = array_column($parsed['teams'], 'code');
@@ -201,19 +211,31 @@ function summary_roster_issues(PDO $pdo, array $parsed, array $context, int $cha
     }
     $addPlayer($mentioned, $parsed['man_of_match_team_code'] ?? null, $parsed['man_of_match'] ?? null);
 
-    $exactRoster = $pdo->prepare("SELECT nome FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND grupo IN ('titular','banco')");
+    $exactRoster = $pdo->prepare("SELECT id,jogador_geral_id,nome,overall,posicao FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND grupo IN ('titular','banco') ORDER BY nome");
     $issues = [];
     foreach ($teamByCode as $code => $team) {
         $exactRoster->execute([$championshipId, (int)$team['id']]);
-        $rosterNames = $exactRoster->fetchAll(PDO::FETCH_COLUMN);
-        if (!$rosterNames) {
-            $issues[] = $team['time_nome'] . ' não possui titulares ou reservas inscritos nesta edição do Brasileirão. Verifique a inscrição da competição.';
+        $roster = $exactRoster->fetchAll();
+        $rosterNames = array_column($roster, 'nome');
+        if (!$roster) {
+            $message = $team['time_nome'] . ' não possui titulares ou reservas inscritos nesta edição do Brasileirão. Verifique a inscrição da competição.';
+            $issues[] = ['message'=>$message,'player'=>null,'team_id'=>(int)$team['id'],'team_name'=>$team['time_nome'],'options'=>[]];
             continue;
         }
         $resolver = summary_roster_resolver($rosterNames);
         foreach (array_keys($mentioned[$code]) as $player) {
             if (summary_resolve_player($resolver, $player) === null) {
-                $issues[] = 'Jogador ' . $player . ' não reconhecido entre os titulares ou reservas de ' . $team['time_nome'] . ' nesta competição.';
+                $needleAliases = summary_player_aliases($player);
+                foreach ($roster as &$option) {
+                    $score = count(array_intersect($needleAliases, summary_player_aliases((string)$option['nome'])));
+                    $needle = normalized_team_name($player); $candidate = normalized_team_name((string)$option['nome']);
+                    if ($needle !== '' && $candidate !== '' && (str_ends_with($needle, $candidate) || str_ends_with($candidate, $needle))) $score += 10;
+                    $option['score'] = $score;
+                }
+                unset($option);
+                usort($roster, static fn(array $a,array $b): int => ($b['score'] <=> $a['score']) ?: strcasecmp((string)$a['nome'], (string)$b['nome']));
+                $message = 'Jogador ' . $player . ' não reconhecido entre os titulares ou reservas de ' . $team['time_nome'] . ' nesta competição.';
+                $issues[] = ['message'=>$message,'player'=>$player,'team_id'=>(int)$team['id'],'team_name'=>$team['time_nome'],'options'=>array_map(static fn(array $item): array => ['id'=>(int)$item['id'],'name'=>$item['nome'],'overall'=>(int)$item['overall'],'position'=>$item['posicao']], $roster)];
             }
         }
     }
@@ -318,6 +340,36 @@ try {
         $existingMatchKey = $existingSummary ? $existingSummary['origem'] . ':' . $existingMatchId : ($rewriteMatchKeys[0] ?? null);
         summary_json_response(['ok'=>true,'parsed'=>$parsed,'candidates'=>$context['candidates'],'teams'=>['home'=>$context['home'],'away'=>$context['away']],'is_rewrite'=>(bool)$existingSummary || (bool)$rewriteMatchKeys,'existing_match_key'=>$existingMatchKey,'rewrite_match_keys'=>$rewriteMatchKeys,'roster_issues'=>$rosterIssues]);
     }
+    if (($_POST['action'] ?? '') === 'correct_player') {
+        [$type,$idText] = array_pad(explode(':', (string)($_POST['match_key'] ?? ''), 2), 2, '');
+        $matchId = (int)$idText; $candidate = null;
+        foreach ($context['candidates'] as $item) if ($item['type'] === $type && $item['id'] === $matchId) $candidate = $item;
+        if (!$candidate) throw new RuntimeException('Selecione uma partida compatível.');
+        $sourceName = trim((string)($_POST['source_name'] ?? '')); $rosterId = (int)($_POST['roster_id'] ?? 0);
+        $issues = summary_roster_issues($pdo, $parsed, $context, (int)$candidate['campeonato_id'], (string)$candidate['championship_name']);
+        $selectedIssue = null;
+        foreach ($issues as $issue) if (is_array($issue) && $issue['player'] === $sourceName) {
+            foreach ($issue['options'] as $option) if ((int)$option['id'] === $rosterId) $selectedIssue = $issue;
+        }
+        if (!$selectedIssue) throw new RuntimeException('A correção escolhida não corresponde a este aviso de escalação.');
+        $newName = summary_upper_player_name($sourceName);
+        if ($newName === '' || mb_strlen($newName, 'UTF-8') > 150) throw new RuntimeException('O nome do jogador é inválido.');
+        $pdo->beginTransaction();
+        $lookup = $pdo->prepare("SELECT id,jogador_geral_id,nome FROM jogadores_elenco WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1 FOR UPDATE");
+        $lookup->execute([$rosterId,(int)$candidate['campeonato_id'],(int)$selectedIssue['team_id']]); $playerRow = $lookup->fetch();
+        if (!$playerRow) throw new RuntimeException('Jogador do elenco não encontrado.');
+        if (!empty($playerRow['jogador_geral_id'])) {
+            $generalId = (int)$playerRow['jogador_geral_id'];
+            $pdo->prepare('UPDATE jogadores_gerais SET nome=? WHERE id=? AND participante_id=?')->execute([$newName,$generalId,(int)$selectedIssue['team_id']]);
+            $pdo->prepare('UPDATE jogadores_elenco SET nome=? WHERE jogador_geral_id=? AND participante_id=?')->execute([$newName,$generalId,(int)$selectedIssue['team_id']]);
+            $pdo->prepare('UPDATE movimentacoes_elenco_geral SET jogador_nome=?,conta_id=? WHERE jogador_geral_id=? AND participante_id=?')->execute([$newName,(int)($_SESSION['conta_id']??0),$generalId,(int)$selectedIssue['team_id']]);
+        } else {
+            $pdo->prepare('UPDATE jogadores_elenco SET nome=? WHERE id=?')->execute([$newName,$rosterId]);
+        }
+        $pdo->commit();
+        audit_post_success('sumulas', 'Nome de jogador corrigido pela súmula: ' . $playerRow['nome'] . ' → ' . $newName . '.');
+        summary_json_response(['ok'=>true,'message'=>'Jogador corrigido para ' . $newName . '. Analise a súmula novamente.']);
+    }
     if ($parsed['warnings']) throw new RuntimeException('A súmula possui alertas que precisam ser corrigidos antes da importação: ' . implode(' ', $parsed['warnings']));
     [$type,$idText] = array_pad(explode(':', (string) ($_POST['match_key'] ?? ''), 2), 2, '');
     $matchId = (int) $idText;
@@ -331,7 +383,8 @@ try {
         static fn($issue): string => is_string($issue) ? trim($issue) : '',
         array_slice($postedIgnoredIssues, 0, 100)
     ))));
-    $unreviewedRosterIssues = array_values(array_diff($rosterIssues, $ignoredRosterIssues));
+    $rosterIssueMessages = array_map('summary_roster_issue_message', $rosterIssues);
+    $unreviewedRosterIssues = array_values(array_diff($rosterIssueMessages, $ignoredRosterIssues));
     if ($unreviewedRosterIssues) throw new RuntimeException('Verifique a escalação: ' . implode(' ', $unreviewedRosterIssues));
     $parsed = summary_canonicalize_players($pdo, $parsed, $context, (int)$candidate['campeonato_id']);
     $targetColumn = $type === 'pontos' ? 'partida_id' : 'jogo_mata_mata_id';
@@ -362,7 +415,7 @@ try {
     }
     $pdo->commit();
     $actionLabel = $summaryToRewrite ? 'reescrita' : 'importada';
-    $ignoredLabel = $ignoredRosterIssues ? ' ' . count(array_intersect($rosterIssues, $ignoredRosterIssues)) . ' aviso(s) de escalação ignorado(s) após revisão.' : '';
+    $ignoredLabel = $ignoredRosterIssues ? ' ' . count(array_intersect($rosterIssueMessages, $ignoredRosterIssues)) . ' aviso(s) de escalação ignorado(s) após revisão.' : '';
     audit_post_success('sumulas', 'Súmula ' . $actionLabel . ' e partida atualizada.' . $ignoredLabel);
     summary_json_response(['ok'=>true,'message'=>'Súmula ' . $actionLabel . ', resultado atualizado e eventos armazenados com sucesso.']);
 } catch (Throwable $error) {
