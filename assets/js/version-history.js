@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['19.9.54','A paginação administrativa foi isolada dos demais módulos e agora é reconstruída mesmo se outro componente da aba falhar, preservando também a aba correta após cada ação.','Paginação administrativa resiliente'],
 ['19.9.53','Participantes podem ser retirados apenas de competições futuras, sem apagar ou ocultar o time, partidas, títulos e demais registros históricos.','Controle de participações futuras'],
 ['19.9.52','Operações repetidas no painel administrativo agora mantêm um único fluxo de eventos, evitando submits duplicados, modais antigos e degradação das paginações após atualizar as listagens.','Atualização estável das listagens administrativas'],
 ['19.9.51','Detalhes das partidas agora exibem o xG das novas súmulas, e o histórico individual cruza jogador e sigla do clube para não misturar homônimos de equipes adversárias.','xG e históricos por clube'],

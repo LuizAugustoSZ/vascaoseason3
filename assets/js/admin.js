@@ -235,7 +235,7 @@ function setupLeagueAdminTable(perPage=5){
 }
 
 // Ativa a paginação nos pontos corridos e no mata-mata.
-setupLeagueAdminTable();
+// Inicializado por admin-lists.js para permanecer independente dos demais módulos.
 
 // Troca o campo de URL por upload e converte o escudo para WebP em Base64.
 const shieldData=document.querySelector('#tab-times input[name="escudo_url"]');
@@ -473,7 +473,7 @@ function setupUniversalAdminLists(){
     controls.addEventListener('input',()=>{page=1;render()});controls.addEventListener('change',()=>{page=1;render()});pagination.addEventListener('click',event=>{if(event.target.closest('.prev'))page--;else if(event.target.closest('.next'))page++;else return;render()});render();
   });
 }
-setupUniversalAdminLists();
+// Inicializado por admin-lists.js para permanecer independente dos demais módulos.
 
 // Preenche o modal sem transportar as imagens base64 dentro do HTML da listagem.
 document.querySelectorAll('.editar-campeonato').forEach(button=>button.addEventListener('click',()=>{
@@ -543,7 +543,7 @@ document.addEventListener('submit',async event=>{
   try{
     const payload=new FormData(form);payload.set('_ajax','1');const response=await fetch('index.php',{method:'POST',body:payload,headers:{'Accept':'application/json'},credentials:'same-origin'});const data=await response.json().catch(()=>({ok:false,message:'Resposta inválida do servidor.'}));if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível salvar.');
     const active=data.tab||document.querySelector('.admin-side-nav .nav-link.active')?.dataset.bsTarget?.replace('#tab-','')||'';const top=window.scrollY;const url=new URL(location.href);if(active)url.searchParams.set('tab',active);
-    try{url.searchParams.set('_refresh',Date.now());const html=await fetch(url,{cache:'no-store',credentials:'same-origin'}).then(result=>{if(!result.ok)throw new Error('Não foi possível atualizar a lista.');return result.text()});url.searchParams.delete('_refresh');const parsed=new DOMParser().parseFromString(html,'text/html');const fresh=parsed.querySelector('.tab-content');if(!fresh)throw new Error('A lista atualizada não foi encontrada.');document.querySelector('.tab-content').replaceWith(fresh);history.replaceState(null,'',url);for(const file of ['news-editor.js','news-round-prompt.js','sumula-importer.js','admin.js']){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=`../assets/js/${file}?v=${Date.now()}`;script.onload=resolve;script.onerror=reject;document.body.append(script)})}window.scrollTo({top,behavior:'instant'});}catch(refreshError){hideAdminListLoading(currentPane);form.dataset.ajaxBusy='0';if(button){button.disabled=false;button.textContent=oldText;}showAdminToast(`${data.message} Porém, ${refreshError.message.toLocaleLowerCase('pt-BR')}`,'warning');return;}
+    try{url.searchParams.set('_refresh',Date.now());const html=await fetch(url,{cache:'no-store',credentials:'same-origin'}).then(result=>{if(!result.ok)throw new Error('Não foi possível atualizar a lista.');return result.text()});url.searchParams.delete('_refresh');const parsed=new DOMParser().parseFromString(html,'text/html');const fresh=parsed.querySelector('.tab-content');if(!fresh)throw new Error('A lista atualizada não foi encontrada.');document.querySelector('.tab-content').replaceWith(fresh);const activePane=document.getElementById(`tab-${active}`);if(activePane){document.querySelectorAll('.tab-content>.tab-pane').forEach(pane=>pane.classList.remove('show','active'));activePane.classList.add('show','active');document.querySelectorAll('.admin-side-nav [data-bs-target]').forEach(item=>{const selected=item.dataset.bsTarget===`#tab-${active}`;item.classList.toggle('active',selected);item.setAttribute('aria-selected',String(selected))})}history.replaceState(null,'',url);for(const file of ['news-editor.js','news-round-prompt.js','sumula-importer.js','admin.js','admin-lists.js']){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=`../assets/js/${file}?v=${Date.now()}`;script.onload=resolve;script.onerror=reject;document.body.append(script)})}window.scrollTo({top,behavior:'instant'});}catch(refreshError){hideAdminListLoading(currentPane);form.dataset.ajaxBusy='0';if(button){button.disabled=false;button.textContent=oldText;}showAdminToast(`${data.message} Porém, ${refreshError.message.toLocaleLowerCase('pt-BR')}`,'warning');return;}
     showAdminToast(data.message,'success');
   }catch(error){hideAdminListLoading(currentPane);form.dataset.ajaxBusy='0';if(button){button.disabled=false;button.textContent=oldText;}showAdminToast(error.message,'danger');}
 });

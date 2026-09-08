@@ -1808,6 +1808,8 @@ function admin_nav_icon(string $name): string
     __DIR__ . "/../assets/js/sumula-importer.js",
 ) ?>"></script><script src="../assets/js/admin.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/admin.js",
+) ?>"></script><script src="../assets/js/admin-lists.js?v=<?= filemtime(
+    __DIR__ . "/../assets/js/admin-lists.js",
 ) ?>"></script><?php if (
     sync_user_allowed()
 ): ?><script src="../assets/js/sync-admin.js?v=<?= filemtime(
