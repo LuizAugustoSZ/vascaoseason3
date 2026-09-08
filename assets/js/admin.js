@@ -290,7 +290,7 @@ if(participantDataElement && participantForm){
     participantButtons.forEach(button=>{
       const participant=participants.find(item=>Number(item.id)===Number(button.dataset.id));if(!participant)return;
       const active=Number(participant.ativo)===1,row=button.closest('tr'),actionCell=button.closest('td');
-      const statusCell=document.createElement('td');statusCell.textContent=active?'Ativo':'Inativo';actionCell.before(statusCell);
+      const futureEntries=Number(participant.participacoes_futuras)!==0;const statusCell=document.createElement('td');statusCell.textContent=active?(futureEntries?'Ativo':'Ativo · Fora de futuros sorteios'):'Inativo';actionCell.before(statusCell);
       row.classList.toggle('opacity-50',!active);
       const actionGroup=document.createElement('div');actionGroup.className='d-flex gap-2 flex-wrap align-items-center';
       actionCell.insertBefore(actionGroup,button);actionGroup.append(button);
@@ -306,6 +306,7 @@ if(participantDataElement && participantForm){
     participantForm.time_nome.value=participant.time_nome;
     participantForm.sigla.value=participant.sigla;
     participantForm.descricao.value=participant.descricao || '';
+    participantForm.desativar_participacoes_futuras.checked=Number(participant.participacoes_futuras)===0;
     shieldData.value=participant.escudo_url || '';
     if(shieldFile)shieldFile.value='';
     if(shieldPreview){shieldPreview.src=shieldData.value;shieldPreview.classList.toggle('d-none',!shieldData.value);}
@@ -315,7 +316,7 @@ if(participantDataElement && participantForm){
     participantForm.scrollIntoView({behavior:'smooth'});
   }));
   document.querySelector('.cancelar-participante').addEventListener('click',()=>{
-    participantForm.reset(); participantForm.participante_id.value=''; shieldData.value='';
+    participantForm.reset(); participantForm.participante_id.value=''; participantForm.desativar_participacoes_futuras.checked=false; shieldData.value='';
     if(shieldPreview){shieldPreview.src='';shieldPreview.classList.add('d-none');}
     document.getElementById('participante-form-title').textContent='Novo técnico e time';
     document.getElementById('participante-submit').textContent='Cadastrar técnico';

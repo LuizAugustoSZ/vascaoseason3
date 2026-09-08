@@ -43,6 +43,18 @@ function format_datetime_br(string $value, string $format = "d/m/Y H:i"): string
     return (new DateTimeImmutable($value, new DateTimeZone((string)$config["app"]["timezone"])))->format($format);
 }
 
+// Separa a existência histórica do participante da disponibilidade para novos sorteios.
+function participant_future_entries_ensure_schema(PDO $pdo): void
+{
+    static $ready = false;
+    if ($ready) return;
+    $column = $pdo->query("SHOW COLUMNS FROM participantes LIKE 'participacoes_futuras'")->fetch();
+    if (!$column) {
+        $pdo->exec("ALTER TABLE participantes ADD participacoes_futuras TINYINT(1) NOT NULL DEFAULT 1 AFTER ativo");
+    }
+    $ready = true;
+}
+
 // Escapa textos antes de exibir no HTML.
 function e(?string $value): string
 {

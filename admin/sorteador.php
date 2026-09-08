@@ -4,6 +4,7 @@ require __DIR__ . "/../includes/bootstrap.php";
 require_once __DIR__ . "/../includes/g4-knockout.php";
 master_required();
 $pdo = db();
+participant_future_entries_ensure_schema($pdo);
 competition_identities_seed($pdo);
 competition_schedule_ensure_schema($pdo);
 $embedded = isset($_GET["embed"]);
@@ -43,7 +44,7 @@ function selected(PDO $pdo): array
     }
     $marks = implode(",", array_fill(0, count($ids), "?"));
     $stmt = $pdo->prepare(
-        "SELECT id FROM participantes WHERE ativo=1 AND id IN ($marks)",
+        "SELECT id FROM participantes WHERE ativo=1 AND participacoes_futuras=1 AND id IN ($marks)",
     );
     $stmt->execute($ids);
     $valid = array_map("intval", $stmt->fetchAll(PDO::FETCH_COLUMN));
@@ -307,7 +308,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 $teams = $pdo
     ->query(
-        "SELECT id,nome,time_nome FROM participantes WHERE ativo=1 ORDER BY time_nome",
+        "SELECT id,nome,time_nome FROM participantes WHERE ativo=1 AND participacoes_futuras=1 ORDER BY time_nome",
     )
     ->fetchAll();
 $leagueSources = $pdo->query("SELECT id,nome,status FROM campeonatos WHERE ativo=1 AND tipo='pontos_corridos' ORDER BY criado_em DESC,id DESC")->fetchAll();

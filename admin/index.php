@@ -7,6 +7,7 @@ require __DIR__ . "/../includes/knockout.php";
 require_once __DIR__ . "/../includes/g4-knockout.php";
 admin_required();
 $pdo = db();
+participant_future_entries_ensure_schema($pdo);
 $adminPublicSections = [
     'noticias' => ['../index.php#noticias', 'Notícias'],
     'competicao' => ['../index.php#competicao', 'Competição'],
@@ -442,6 +443,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Cadastra o técnico e os dados do seu time.
         if ($action === "participante") {
             $participantId = (int) ($_POST["participante_id"] ?? 0);
+            $futureEntries = isset($_POST["desativar_participacoes_futuras"]) ? 0 : 1;
             $shield = trim($_POST["escudo_url"] ?? "");
             if (
                 $shield !== "" &&
@@ -459,7 +461,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
             if ($participantId > 0) {
                 $stmt = $pdo->prepare(
-                    "UPDATE participantes SET nome=?,time_nome=?,sigla=?,escudo_url=?,descricao=? WHERE id=?",
+                    "UPDATE participantes SET nome=?,time_nome=?,sigla=?,escudo_url=?,descricao=?,participacoes_futuras=? WHERE id=?",
                 );
                 $stmt->execute([
                     trim($_POST["nome"]),
@@ -467,12 +469,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     strtoupper(trim($_POST["sigla"])),
                     $shield,
                     trim($_POST["descricao"]),
+                    $futureEntries,
                     $participantId,
                 ]);
                 redirect_notice("Técnico, time e escudo atualizados.", "times");
             }
             $stmt = $pdo->prepare(
-                "INSERT INTO participantes(nome,time_nome,sigla,escudo_url,descricao) VALUES(?,?,?,?,?)",
+                "INSERT INTO participantes(nome,time_nome,sigla,escudo_url,descricao,participacoes_futuras) VALUES(?,?,?,?,?,?)",
             );
             $stmt->execute([
                 trim($_POST["nome"]),
@@ -480,6 +483,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 strtoupper(trim($_POST["sigla"])),
                 $shield,
                 trim($_POST["descricao"]),
+                $futureEntries,
             ]);
             redirect_notice("Técnico e time cadastrados.", "times");
         }
@@ -1334,7 +1338,7 @@ $teams = $pdo
     ->fetchAll();
 $participantsAdmin = $pdo
     ->query(
-        "SELECT id,nome,time_nome,sigla,escudo_url,descricao,ativo FROM participantes ORDER BY ativo DESC,time_nome,nome",
+        "SELECT id,nome,time_nome,sigla,escudo_url,descricao,ativo,participacoes_futuras FROM participantes ORDER BY ativo DESC,participacoes_futuras DESC,time_nome,nome",
     )
     ->fetchAll();
 $accounts = account_is_master()
@@ -1662,7 +1666,7 @@ function admin_nav_icon(string $name): string
 <section id="tab-supercopa" class="tab-pane fade"><div class="row g-4"><div class="col-lg-5"><form class="panel admin-form" method="post"><span class="eyebrow">Confronto entre campeões</span><h2 class="mt-2">Criar Supercopa</h2><p class="text-secondary">As vagas são preenchidas automaticamente, inclusive quando um dos campeões ainda não foi definido.</p><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="criar_supercopa"><label class="form-label">Nome da competição</label><input class="form-control mb-3" name="nome" maxlength="150" placeholder="Ex.: Recopa dos Gigantes" required><label class="form-label">Campeão da primeira competição</label><select class="form-select mb-3" name="origem_a_campeonato_id" required><option value="">Selecione</option><?php foreach ($supercupSources as $source): ?><option value="<?= (int) $source['id'] ?>"><?= e($source['nome']) ?>: <?= $source['status'] === 'finalizado' ? 'campeão definido': 'aguardando campeão' ?></option><?php endforeach; ?></select><label class="form-label">Campeão da segunda competição</label><select class="form-select mb-3" name="origem_b_campeonato_id" required><option value="">Selecione</option><?php foreach ($supercupSources as $source): ?><option value="<?= (int) $source['id'] ?>"><?= e($source['nome']) ?>: <?= $source['status'] === 'finalizado' ? 'campeão definido': 'aguardando campeão' ?></option><?php endforeach; ?></select><div class="alert alert-info small">Se o mesmo clube conquistar as duas competições, o sistema sorteia automaticamente qual dos dois vices ficará com a outra vaga.</div><label class="form-label">Formato da decisão</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select><button class="btn btn-danger mt-3">Criar confronto</button></form></div><div class="col-lg-7"><div class="panel"><div class="panel-head"><h3>Supercopas cadastradas</h3><span><?= count($supercupsAdmin) ?> registros</span></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Competição</th><th>Vaga 1</th><th>Vaga 2</th><th>Status</th></tr></thead><tbody><?php foreach ($supercupsAdmin as $supercup): ?><tr><td><strong><?= e($supercup['nome']) ?></strong></td><td><?= $supercup['time_a'] ? e($supercup['time_a']): '<span class="text-secondary">Aguardando campeão de '.e($supercup['origem_a']).'</span>' ?></td><td><?= $supercup['time_b'] ? e($supercup['time_b']): '<span class="text-secondary">Aguardando campeão de '.e($supercup['origem_b']).'</span>' ?></td><td><?= e($supercup['status']) ?></td></tr><?php endforeach; ?><?php if (!$supercupsAdmin): ?><tr><td colspan="4" class="text-center text-secondary py-4">Nenhuma Supercopa criada.</td></tr><?php endif; ?></tbody></table></div></div><div class="panel p-3 mt-4"><strong>Sugestões:</strong><span class="text-secondary"> Recopa, Derby das Américas, Desafio dos Campeões, Taça dos Gigantes ou Copa Intercontinental.</span></div></div></div></section>
 <section id="tab-times" class="tab-pane fade"><div class="row g-4"><div class="col-lg-6"><form id="form-participante" class="panel admin-form" method="post"><h2 id="participante-form-title">Novo técnico e time</h2><input type="hidden" name="participante_id" value=""><div id="participante-edicao" class="alert alert-info d-none justify-content-between align-items-center"><span></span><button type="button" class="btn btn-sm btn-outline-info cancelar-participante">Cancelar edição</button></div><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
-) ?>"><input type="hidden" name="action" value="participante"><div class="row g-2"><div class="col-md-6"><label class="form-label">Nome do técnico</label><input class="form-control" name="nome" required></div><div class="col-md-6"><label class="form-label">Nome do time</label><input class="form-control" name="time_nome" required></div><div class="col-md-4"><label class="form-label">Sigla do time</label><input class="form-control" name="sigla" maxlength="5" required></div><div class="col-md-8"><label class="form-label">Escudo do time (opcional)</label><input class="form-control" type="url" name="escudo_url"></div><div class="col-12"><label class="form-label">Descrição</label><textarea class="form-control" name="descricao" rows="2"></textarea></div></div><button id="participante-submit" class="btn btn-danger mt-3">Cadastrar técnico</button></form></div><div class="col-lg-6"><div class="panel"><div class="panel-head"><h3>Técnicos cadastrados</h3><span><?= count(
+) ?>"><input type="hidden" name="action" value="participante"><div class="row g-2"><div class="col-md-6"><label class="form-label">Nome do técnico</label><input class="form-control" name="nome" required></div><div class="col-md-6"><label class="form-label">Nome do time</label><input class="form-control" name="time_nome" required></div><div class="col-md-4"><label class="form-label">Sigla do time</label><input class="form-control" name="sigla" maxlength="5" required></div><div class="col-md-8"><label class="form-label">Escudo do time (opcional)</label><input class="form-control" type="url" name="escudo_url"></div><div class="col-12"><label class="form-label">Descrição</label><textarea class="form-control" name="descricao" rows="2"></textarea></div><div class="col-12"><label class="form-check border rounded p-3"><input class="form-check-input ms-0 me-2" type="checkbox" name="desativar_participacoes_futuras" value="1"><strong>Desativar participações futuras</strong><small class="d-block text-secondary mt-1">Mantém time, partidas, títulos e todo o histórico; remove apenas dos próximos sorteios.</small></label></div></div><button id="participante-submit" class="btn btn-danger mt-3">Cadastrar técnico</button></form></div><div class="col-lg-6"><div class="panel"><div class="panel-head"><h3>Técnicos cadastrados</h3><span><?= count(
     $participantsAdmin,
 ) ?> ativos</span></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Escudo</th><th>Técnico / Time</th><th>Sigla</th><th>Ação</th></tr></thead><tbody><?php foreach (
      $participantsAdmin
