@@ -14,7 +14,7 @@ function competition_identity_defaults(): array
         'brasileirao' => ['Brasileirão', 'brasileirao-logo.webp', 'brasileirao-trofeu.webp'],
         'amistosos dreamteam' => ['Amistosos Dream Team', 'amistosos-dreamteam-logo.webp', 'amistosos-dreamteam-trofeu.webp'],
         'copa do brasil' => ['Copa do Brasil', 'copa-do-brasil-logo.webp', 'copa-do-brasil-trofeu.webp'],
-        'supercopa r' => ['Supercopa R', 'supercopa-r-logo.webp', 'supercopa-r-trofeu.webp'],
+        'supercopa r' => ['Supercopa Rei', 'supercopa-r-logo.webp', 'supercopa-r-trofeu.webp'],
         'mundial' => ['Mundial de Clubes', 'mundial-logo.webp', 'mundial-trofeu.webp'],
         'evento carnavalesco' => ['Evento Carnavalesco', 'evento-carnavalesco-logo.webp', 'evento-carnavalesco-trofeu.webp'],
         'evento pascualino' => ['Evento Pascualino', 'evento-pascualino-logo.webp', 'evento-pascualino-trofeu.webp'],
@@ -98,6 +98,8 @@ function competition_sync_champion_title(PDO $pdo, int $championshipId): ?int
 function competition_identities_seed(PDO $pdo): void
 {
     competition_identities_ensure_schema($pdo);
+    // Corrige o nome legado sem sobrescrever um nome personalizado pelo administrador.
+    $pdo->exec("UPDATE competicao_identidades SET nome='Supercopa Rei' WHERE chave='supercopa r' AND nome='Supercopa R'");
     $select = $pdo->prepare('SELECT id,logo_base64,trofeu_base64 FROM competicao_identidades WHERE chave=? LIMIT 1');
     $insert = $pdo->prepare('INSERT INTO competicao_identidades(chave,nome,logo_base64,trofeu_base64) VALUES(?,?,?,?)');
     $updateEmpty = $pdo->prepare("UPDATE competicao_identidades SET logo_base64=COALESCE(NULLIF(logo_base64,''),?),trofeu_base64=COALESCE(NULLIF(trofeu_base64,''),?) WHERE id=?");
