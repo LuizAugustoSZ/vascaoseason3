@@ -17,6 +17,7 @@ check(count($p['goals'])===4 && count($p['events'])===5, 'Adjacent events');
 check(array_column($p['goals'],'assist')===['Ronaldinho Gaucho','Joshua Kimmich',null,'Neymar'], 'Assists');
 check($p['man_of_match']==='Cristiano Ronaldo', 'MOTM');
 check($p['weather']==='Garoa · 7 °C', 'Weather');
+check($p['teams'][0]['stats']['xg']===1.94 && $p['teams'][1]['stats']['xg']===3.12, 'xG');
 $zero = <<<'REPORT'
 **PARTIDA FINALIZADA - 90'**
 **Estádio do Dragão**&#x20;**&#x20;Garoa · 23 °C** Arbitragem: Rigoroso **Criatividade FC** **`0x1`** **Locomotiva FC**

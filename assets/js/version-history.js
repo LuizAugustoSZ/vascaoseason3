@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['19.9.51','Detalhes das partidas agora exibem o xG das novas súmulas, e o histórico individual cruza jogador e sigla do clube para não misturar homônimos de equipes adversárias.','xG e históricos por clube'],
 ['19.9.5','Competições agora recebem uma data inicial no sorteio; as rodadas do Brasileirão são agendadas em dias consecutivos e os próximos confrontos respeitam a data dos mata-matas.','Calendário automático das competições'],
 ['19.9.4','As listagens do painel administrativo agora atualizam somente a tabela após cada alteração, com loading localizado e preservação da busca, dos filtros e da página atual.','Listagens administrativas sem recarregar a tela'],
 ['19.9.3','O importador reconhece o novo formato de súmulas do DreamTeam, incluindo gols, assistências, cartões e substituições colados junto com as estatísticas.','Novo formato de súmulas'],

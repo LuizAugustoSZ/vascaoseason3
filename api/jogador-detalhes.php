@@ -3,14 +3,25 @@ declare(strict_types=1);
 
 require __DIR__ . '/../includes/bootstrap.php';
 
+function normalized_identity(string $value): string
+{
+    $value = mb_strtolower(trim($value), 'UTF-8');
+    $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+    return preg_replace('/[^a-z0-9]+/', '', $ascii !== false ? $ascii : $value) ?? '';
+}
+
 function same_player(string $left, string $right): bool
 {
-    $normalize = static function (string $value): string {
-        $value = mb_strtolower(trim($value), 'UTF-8');
-        $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
-        return preg_replace('/[^a-z0-9]+/', '', $ascii !== false ? $ascii : $value) ?? '';
-    };
-    return $normalize($left) !== '' && $normalize($left) === $normalize($right);
+    return normalized_identity($left) !== '' && normalized_identity($left) === normalized_identity($right);
+}
+
+function summary_participant_code(array $summary, string $teamName): ?string
+{
+    $teams = array_values($summary['teams'] ?? []);
+    if (count($teams) !== 2) return null;
+    if (same_player((string)($summary['home_name'] ?? ''), $teamName)) return (string)($teams[0]['code'] ?? '') ?: null;
+    if (same_player((string)($summary['away_name'] ?? ''), $teamName)) return (string)($teams[1]['code'] ?? '') ?: null;
+    return null;
 }
 
 try {
@@ -35,8 +46,11 @@ try {
     foreach ($stmt->fetchAll() as $row) {
         $summary = json_decode((string)$row['dados_json'], true);
         if (!is_array($summary)) continue;
+        $participantCode = summary_participant_code($summary, $teamName);
+        if ($participantCode === null) continue;
         $events = [];
         foreach (($summary['events'] ?? []) as $event) {
+            if ((string)($event['team_code'] ?? '') !== $participantCode) continue;
             $type = (string)($event['type'] ?? '');
             $isPlayer = same_player((string)($event['player'] ?? ''), $player);
             $isAssist = $type === 'goal' && empty($event['cancelled']) && same_player((string)($event['assist'] ?? ''), $player);
@@ -49,7 +63,8 @@ try {
             if ($type === 'red_card' && $isPlayer) $totals['red_cards']++;
             if (str_starts_with($type, 'var_') && $isPlayer) $totals['var']++;
         }
-        $motm = same_player((string)($summary['man_of_match'] ?? ''), $player);
+        $motm = (string)($summary['man_of_match_team_code'] ?? '') === $participantCode
+            && same_player((string)($summary['man_of_match'] ?? ''), $player);
         if ($motm) $totals['man_of_match']++;
         if (!$events && !$motm) continue;
         $games[] = [
