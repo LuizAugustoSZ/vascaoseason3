@@ -43,6 +43,28 @@ const MERCADO_PACKS = [
     'meta_posicional' => ['nome' => 'Pack Meta Posicional', 'min' => 91, 'max' => 91, 'dream_points' => 1700],
 ];
 
+/**
+ * Retorna somente as competicoes de pontos corridos em que o clube realmente
+ * participa. A agenda e a classificacao usam as mesmas partidas como fonte de
+ * verdade, portanto a Gestao da Competicao deve seguir esse mesmo vinculo.
+ */
+function mercado_campeonatos_do_participante(PDO $pdo, int $participanteId): array
+{
+    if ($participanteId < 1) return [];
+
+    $stmt = $pdo->prepare("SELECT c.id,c.nome,c.tipo
+        FROM campeonatos c
+        WHERE c.ativo=1 AND c.status='ativo' AND c.tipo='pontos_corridos'
+          AND EXISTS (
+              SELECT 1 FROM partidas p
+              WHERE p.campeonato_id=c.id AND p.ativo=1
+                AND (p.mandante_id=? OR p.visitante_id=?)
+          )
+        ORDER BY c.id DESC");
+    $stmt->execute([$participanteId, $participanteId]);
+    return $stmt->fetchAll();
+}
+
 function mercado_packs_para_data(?string $data): array
 {
     if ($data !== null && $data !== '' && $data < MERCADO_PACKS_VIGENCIA_ATUAL) return MERCADO_PACKS_ANTIGOS;
