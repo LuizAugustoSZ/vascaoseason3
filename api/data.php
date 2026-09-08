@@ -82,7 +82,11 @@ try {
             $labelA = "Campeão: " . $supercup["origem_a_nome"];
             $labelB = "Campeão: " . $supercup["origem_b_nome"];
             if ($championA && $championB && $championA === $championB) {
-                $labelA = "Vice: " . $supercup["origem_a_nome"];
+                if ($supercup["regra_mesmo_campeao"] === "vice_origem_b") {
+                    $labelB = "Vice: " . $supercup["origem_b_nome"];
+                } else {
+                    $labelA = "Vice: " . $supercup["origem_a_nome"];
+                }
             }
             foreach ($mataMata as &$game) {
                 $game["classificacao_a"] = (int) $game["jogo"] === 2 ? $labelB : $labelA;

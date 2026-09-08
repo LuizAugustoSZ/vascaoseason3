@@ -630,7 +630,8 @@ function sync_supercup_slots(PDO $pdo): void
         $teamA = competition_champion_id($pdo, (int)$row["origem_a_campeonato_id"]);
         $teamB = competition_champion_id($pdo, (int)$row["origem_b_campeonato_id"]);
         if ($teamA && $teamB && $teamA === $teamB) {
-            $teamA = competition_runner_up_id($pdo, (int)$row["origem_a_campeonato_id"]);
+            if ($row["regra_mesmo_campeao"] === "vice_origem_b") $teamB = competition_runner_up_id($pdo, (int)$row["origem_b_campeonato_id"]);
+            else $teamA = competition_runner_up_id($pdo, (int)$row["origem_a_campeonato_id"]);
         }
         $games = $pdo->prepare("SELECT id,jogo,status FROM jogos_mata_mata WHERE campeonato_id=? AND fase='Final' AND ativo=1 ORDER BY jogo,id");
         $games->execute([(int)$row["campeonato_id"]]);
