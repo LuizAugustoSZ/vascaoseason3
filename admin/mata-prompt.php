@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-function knockout_prompt_response(PDO $pdo, int $championshipId, string $championship, string $phase): never
+function knockout_prompt_response(PDO $pdo, int $championshipId, string $championship, string $phase, bool $notStarted = false): never
 {
     $stmt = $pdo->prepare("SELECT fase,COUNT(*) jogos,SUM(status='finalizado') finalizados,MAX(status='finalizado') tem_resultado FROM jogos_mata_mata WHERE campeonato_id=? AND ativo=1 GROUP BY fase ORDER BY FIELD(fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),MIN(id)");
     $stmt->execute([$championshipId]);
@@ -27,7 +27,7 @@ function knockout_prompt_response(PDO $pdo, int $championshipId, string $champio
     if ($allFinished) $currentPhase = 'Campeonato completo';
     if ($currentPhase === '' && $phases) $currentPhase = $phases[0]['fase'];
     if ($phase === '') {
-        prompt_json(['ok'=>true,'tipo'=>'mata_mata','fases'=>$phases,'fase_atual'=>$currentPhase,'contexto'=>$currentPhase ? "Fase selecionada: {$currentPhase}": 'Nenhuma fase cadastrada']);
+        prompt_json(['ok'=>true,'tipo'=>'mata_mata','fases'=>$phases,'fase_atual'=>$currentPhase,'nao_iniciada'=>$notStarted,'contexto'=>$notStarted ? 'Competição sorteada e ainda não iniciada' : ($currentPhase ? "Fase selecionada: {$currentPhase}": 'Nenhuma fase cadastrada')]);
     }
     if (!in_array($phase, array_column($phases, 'fase'), true)) throw new RuntimeException('Fase não encontrada neste campeonato.');
 

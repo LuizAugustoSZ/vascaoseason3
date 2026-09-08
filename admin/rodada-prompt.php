@@ -104,6 +104,48 @@ function ranking_text(array $ranking, int $limit=10): string
     return implode('; ', $lines);
 }
 
+function upcoming_competition_prompt(PDO $pdo, int $championshipId, array $championship): never
+{
+    $name = (string)$championship['nome'];
+    $type = (string)$championship['tipo'];
+    $format = str_replace('_', ' e ', (string)($championship['formato'] ?? 'não informado'));
+    $matches = [];
+    $participants = [];
+
+    if ($type === 'pontos_corridos') {
+        $stmt = $pdo->prepare("SELECT p.rodada,p.turno,p.data_partida,m.time_nome time_a,m.nome tecnico_a,v.time_nome time_b,v.nome tecnico_b FROM partidas p JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.campeonato_id=? AND p.ativo=1 ORDER BY p.rodada,p.id");
+        $stmt->execute([$championshipId]);
+        foreach ($stmt->fetchAll() as $match) {
+            $participants[$match['time_a']] = $match['tecnico_a'];
+            $participants[$match['time_b']] = $match['tecnico_b'];
+            $date = $match['data_partida'] ? date('d/m/Y H:i', strtotime((string)$match['data_partida'])) : 'data e horário ainda não informados';
+            $matches[] = sprintf('%dª rodada (turno %d): %s x %s — %s', (int)$match['rodada'], (int)$match['turno'], $match['time_a'], $match['time_b'], $date);
+        }
+        $typeLabel = 'pontos corridos';
+        $drawLabel = 'RODADAS E CONFRONTOS SORTEADOS';
+    } else {
+        $stmt = $pdo->prepare("SELECT j.fase,j.ordem,j.jogo,a.time_nome time_a,a.nome tecnico_a,b.time_nome time_b,b.nome tecnico_b,j.origem_a_fase,j.origem_a_ordem,j.origem_b_fase,j.origem_b_ordem FROM jogos_mata_mata j LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id WHERE j.campeonato_id=? AND j.ativo=1 ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id");
+        $stmt->execute([$championshipId]);
+        foreach ($stmt->fetchAll() as $match) {
+            if ($match['time_a']) $participants[$match['time_a']] = $match['tecnico_a'];
+            if ($match['time_b']) $participants[$match['time_b']] = $match['tecnico_b'];
+            $teamA = $match['time_a'] ?: 'vencedor de ' . ($match['origem_a_fase'] ?: 'fase anterior') . ' ' . (int)$match['origem_a_ordem'];
+            $teamB = $match['time_b'] ?: 'vencedor de ' . ($match['origem_b_fase'] ?: 'fase anterior') . ' ' . (int)$match['origem_b_ordem'];
+            $matches[] = sprintf('%s, confronto %d, jogo %d: %s x %s', $match['fase'], (int)$match['ordem'], (int)$match['jogo'], $teamA, $teamB);
+        }
+        $typeLabel = $type === 'supercopa' ? 'Supercopa' : 'mata-mata';
+        $drawLabel = 'CHAVEAMENTO E CONFRONTOS SORTEADOS';
+    }
+
+    if (!$matches) throw new RuntimeException('Nenhum confronto foi sorteado nesta competição.');
+    $participantText = $participants
+        ? implode("\n", array_map(static fn($team, $coach): string => "{$team} — técnico: {$coach}", array_keys($participants), $participants))
+        : 'Os classificados ainda serão definidos pelas fases anteriores.';
+    $matchText = implode("\n", $matches);
+    $prompt = "Você é um jornalista esportivo responsável pela cobertura do campeonato {$name}.\n\nEscreva uma notícia de LANÇAMENTO anunciando que a competição vai começar em breve. Use EXCLUSIVAMENTE os dados oficiais fornecidos. O principal destaque deve ser a ESTREIA: nos pontos corridos, apresente primeiro todos os jogos da 1ª rodada e antecipe também as primeiras rodadas; no mata-mata ou Supercopa, apresente primeiro todos os confrontos da fase inicial. Depois, mostre o restante das rodadas ou o chaveamento completo, sem omitir confrontos. Cite os participantes e valorize o sorteio já realizado. Não trate nenhuma equipe como favorita sem dados, não simule resultados e não invente data de estreia, falas, rivalidades, regulamento ou fatos. Quando a data não estiver informada, diga apenas que a organização divulgará os horários.\n\nPADRÃO EDITORIAL OBRIGATÓRIO:\n1. TÍTULO: manchete forte de lançamento, com até 180 caracteres.\n2. RESUMO: um único parágrafo de até 500 caracteres, citando que o sorteio foi definido e destacando as estreias.\n3. DESCRIÇÃO: repita o título na abertura; anuncie que o campeonato vai começar; explique o formato; crie um bloco **🚀 As estreias** com todos os primeiros confrontos; destaque as primeiras rodadas ou a fase inicial; cite os times e técnicos confirmados; apresente depois o sorteio completo; e encerre convocando a comunidade para acompanhar. Use emojis apenas nos subtítulos.\n\nENTREGUE EXATAMENTE SEPARADO ASSIM:\nTÍTULO:\n[texto]\n\nRESUMO:\n[texto]\n\nDESCRIÇÃO:\n[matéria completa]\n\nDADOS OFICIAIS FORNECIDOS:\nCAMPEONATO: {$name}\nSTATUS: AINDA NÃO INICIADO — competição sorteada e pronta para começar\nMODALIDADE: {$typeLabel}\nFORMATO: {$format}\nTOTAL DE CONFRONTOS/JOGOS CADASTRADOS: " . count($matches) . "\n\nPARTICIPANTES CONFIRMADOS:\n{$participantText}\n\n{$drawLabel}:\n{$matchText}";
+    prompt_json(['ok'=>true,'tipo'=>$type,'prompt'=>$prompt,'partidas'=>count($matches),'contexto'=>'Vai iniciar · sorteio completo']);
+}
+
 try {
     $pdo = db();
     $campeonatoId = (int)($_GET['campeonato_id'] ?? 0);
@@ -112,15 +154,27 @@ try {
     $acao = trim((string)($_GET['acao'] ?? ''));
     if ($campeonatoId < 1) throw new RuntimeException('Selecione um campeonato.');
 
-    $championshipStmt = $pdo->prepare("SELECT nome,tipo,status FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1");
+    $championshipStmt = $pdo->prepare("SELECT nome,tipo,status,formato FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1");
     $championshipStmt->execute([$campeonatoId]);
     $championship = $championshipStmt->fetch();
     $campeonato = (string)($championship['nome'] ?? '');
     if ($campeonato === '') throw new RuntimeException('Campeonato não encontrado.');
+    $type = (string)($championship['tipo'] ?? '');
+    if ($type === 'pontos_corridos') {
+        $startedStmt = $pdo->prepare("SELECT COUNT(*) FROM partidas WHERE campeonato_id=? AND ativo=1 AND status IN ('finalizada','wo','penalidade')");
+    } else {
+        $startedStmt = $pdo->prepare("SELECT COUNT(*) FROM jogos_mata_mata WHERE campeonato_id=? AND ativo=1 AND status IN ('finalizado','wo')");
+    }
+    $startedStmt->execute([$campeonatoId]);
+    $notStarted = (int)$startedStmt->fetchColumn() === 0;
+    if ($acao === 'vai_iniciar') {
+        if (!$notStarted) throw new RuntimeException('Esta competição já começou. Use o prompt da rodada ou fase atual.');
+        upcoming_competition_prompt($pdo, $campeonatoId, $championship);
+    }
     // Mata-matas e Supercopas usam jogos_mata_mata. Tratar a Supercopa como
     // pontos corridos fazia o painel procurar rodadas inexistentes e exibir G4.
     if (in_array((string)($championship['tipo'] ?? ''), ['mata_mata', 'supercopa'], true)) {
-        knockout_prompt_response($pdo, $campeonatoId, $campeonato, $fase);
+        knockout_prompt_response($pdo, $campeonatoId, $campeonato, $fase, $notStarted);
     }
 
     $roundStmt = $pdo->prepare("SELECT rodada,MAX(CASE WHEN gols_mandante IS NOT NULL AND gols_visitante IS NOT NULL THEN 1 ELSE 0 END) tem_resultado FROM partidas WHERE campeonato_id=? AND ativo=1 GROUP BY rodada ORDER BY rodada");
@@ -151,7 +205,7 @@ try {
         $prompt = "Você é um jornalista esportivo responsável pela cobertura do campeonato {$campeonato}.\n\nEscreva a grande matéria de encerramento usando EXCLUSIVAMENTE os dados fornecidos. {$statusText}. Se o campeonato estiver encerrado, dê parabéns ao campeão {$champion}, conte sua campanha completa rodada por rodada e destaque por que conquistou o título. Se ainda estiver em andamento, produza apenas uma prévia do encerramento e jamais trate o líder como campeão. Não invente fatos, falas, números ou acontecimentos.\n\nPADRÃO EDITORIAL OBRIGATÓRIO:\n1. TÍTULO: manchete forte, com até 180 caracteres, no formato de celebração ao campeão quando o torneio estiver encerrado.\n2. RESUMO: um parágrafo de até 500 caracteres.\n3. DESCRIÇÃO: repita o título e use blocos como **🏆 O campeão**, **🛣️ A campanha**, **⚽ Números gerais**, **🎯 Artilheiros**, **🅰️ Assistências**, **🔥 Jogos decisivos**, **📊 Classificação final** e **👏 Parabéns ao campeão**. Conte a trajetória inteira e encerre celebrando o título. Emojis apenas nos subtítulos.\n\nENTREGUE EXATAMENTE SEPARADO ASSIM:\nTÍTULO:\n[texto]\n\nRESUMO:\n[texto]\n\nDESCRIÇÃO:\n[matéria completa]\n\nDADOS OFICIAIS FORNECIDOS:\nCAMPEONATO: {$campeonato}\nSTATUS: {$statusText}\nPARTIDAS: {$finished} encerradas de {$total}\nGOLS: {$data['totals']['gols']}\nMÉDIA: {$average} gols por partida\nCARTÕES: {$data['totals']['amarelos']} amarelos; {$data['totals']['vermelhos']} vermelhos\nESTATÍSTICAS SOMADAS DAS SÚMULAS: {$data['totals']['finalizacoes']} finalizações; {$data['totals']['chutes_no_gol']} chutes no gol; {$data['totals']['defesas']} defesas; {$data['totals']['escanteios']} escanteios\nARTILHEIROS: " . ranking_text($data['scorers']) . "\nASSISTÊNCIAS: " . ranking_text($data['assists']) . "\n\nCLASSIFICAÇÃO COMPLETA:\n{$tableText}\n\nTODAS AS RODADAS E SÚMULAS:\n" . implode("\n\n---\n\n", $data['facts']);
         prompt_json(['ok'=>true,'prompt'=>$prompt,'partidas'=>$total,'contexto'=>'Todas as rodadas · matéria do campeão']);
     }
-    if ($rodada < 1) prompt_json(['ok' => true, 'tipo' => 'pontos_corridos', 'rodadas' => $rodadas, 'rodada_atual' => $rodadaAtual, 'contexto' => $contextoAtual]);
+    if ($rodada < 1) prompt_json(['ok' => true, 'tipo' => 'pontos_corridos', 'rodadas' => $rodadas, 'rodada_atual' => $rodadaAtual, 'nao_iniciada' => $notStarted, 'contexto' => $notStarted ? 'Competição sorteada e ainda não iniciada' : $contextoAtual]);
     if (!in_array($rodada, array_column($rodadas, 'rodada'), true)) throw new RuntimeException('Rodada não encontrada neste campeonato.');
 
     $ciclo = intdiv($rodada - 1, 8) + 1;

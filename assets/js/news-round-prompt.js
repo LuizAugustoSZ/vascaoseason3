@@ -26,17 +26,18 @@
       const options = knockout ? data.fases : data.rodadas;
       const current = knockout ? data.fase_atual : data.rodada_atual;
       stageLabel.textContent = knockout ? 'Fase' : 'Rodada';
-      const specialOptions = knockout ? '' : [
+      const upcomingOption = data.nao_iniciada ? '<option value="vai_iniciar">🚀 Vai iniciar — anúncio e sorteio completo</option>' : '';
+      const specialOptions = knockout ? upcomingOption : upcomingOption + [
         '<option value="chances_titulo">🏆 Porcentagem de ser campeão (G4)</option>',
         '<option value="campeonato_completo">🏁 Todas as rodadas — matéria do campeão</option>'
       ].join('');
       round.innerHTML = specialOptions + options.map(item => {
         const value = knockout ? item.fase : item.rodada;
         const label = knockout ? (item.label || item.fase) : `${item.rodada}ª rodada`;
-        return `<option value="${value}"${value === current ? ' selected' : ''}>${label}${item.tem_resultado ? '' : ', sem resultado'}</option>`;
+        return `<option value="${value}"${!data.nao_iniciada && value === current ? ' selected' : ''}>${label}${item.tem_resultado ? '' : ', sem resultado'}</option>`;
       }).join('');
       round.dataset.type = data.tipo;
-      round.disabled = !options.length; generate.disabled = !options.length;
+      round.disabled = !options.length && !data.nao_iniciada; generate.disabled = !options.length && !data.nao_iniciada;
       context.textContent = data.contexto;
     } catch (error) { showError(error.message); }
   };
@@ -44,7 +45,7 @@
   generate.addEventListener('click', async () => {
     generate.disabled = true; generate.textContent = 'GERANDO...'; status.textContent = '';
     try {
-      const specialAction = round.dataset.type !== 'mata_mata' && ['chances_titulo', 'campeonato_completo'].includes(round.value);
+      const specialAction = round.value === 'vai_iniciar' || (round.dataset.type !== 'mata_mata' && ['chances_titulo', 'campeonato_completo'].includes(round.value));
       const stageParam = specialAction ? 'acao' : (round.dataset.type === 'mata_mata' ? 'fase' : 'rodada');
       const response = await fetch(`${endpoint}?campeonato_id=${encodeURIComponent(championship.value)}&${stageParam}=${encodeURIComponent(round.value)}`, {headers: {'Accept': 'application/json'}});
       const data = await response.json();
