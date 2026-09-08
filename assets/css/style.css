@@ -387,7 +387,7 @@ body.site-has-sidebar.site-nav-collapsed{padding-left:68px}
     --bs-table-bg: transparent;
     --bs-table-color: #fff;
     --bs-table-border-color: var(--line);
-    font-size: .88rem
+    font-size: .96rem
 }
 
 .ranking-table th {
@@ -399,7 +399,7 @@ body.site-has-sidebar.site-nav-collapsed{padding-left:68px}
 
 .ranking-table td,
 .ranking-table th {
-    padding: 1rem .8rem;
+    padding: 1.15rem .8rem;
     vertical-align: middle
 }
 
@@ -407,8 +407,11 @@ body.site-has-sidebar.site-nav-collapsed{padding-left:68px}
     --bs-table-bg: rgba(255, 255, 255, .025)
 }
 .standings-team-row{cursor:pointer}.standings-team-row:focus-visible{outline:2px solid var(--red);outline-offset:-2px}.standings-team-row:hover .team-cell{color:var(--red)}
+.standings-team-row.is-libertadores td:first-child{box-shadow:inset 3px 0 #2f80ed}
 .standings-team-row.is-champion{--bs-table-bg:rgba(215,25,32,.08)}
 .standings-champion-label{display:block;width:max-content;margin-top:.2rem;padding:.12rem .38rem;border:1px solid var(--red);color:#fff;background:var(--red);font-size:.58rem;font-weight:900;line-height:1.15;letter-spacing:.06em}
+.standings-legend{display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.standings-legend span{display:flex;align-items:center;gap:.45rem}.standings-legend-color{display:block;width:3px;height:18px;background:#2f80ed}
 
 .position-pill {
     display: inline-grid;
@@ -422,14 +425,30 @@ body.site-has-sidebar.site-nav-collapsed{padding-left:68px}
 }
 
 .position-pill.top {
-    background: var(--red)
+    background: #2f80ed
 }
 
 .team-cell {
     display: flex;
     align-items: center;
     gap: .75rem;
+    font-size: 1rem;
     font-weight: 700
+}
+
+.ranking-table .team-badge {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px
+}
+
+.ranking-table .team-badge-image img {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    padding: 3px;
+    object-fit: contain
 }
 
 .team-badge {
@@ -724,6 +743,12 @@ footer {
     .ranking-table td,
     .ranking-table th {
         padding: .75rem .55rem
+    }
+
+    .ranking-table .team-badge {
+        flex-basis: 38px;
+        width: 38px;
+        height: 38px
     }
 
     .bracket {

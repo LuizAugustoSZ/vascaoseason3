@@ -216,6 +216,9 @@ if (
                                             <tbody id="standings-body"></tbody>
                                         </table>
                                     </div>
+                                    <div class="standings-legend" aria-label="Legenda da classificação">
+                                        <span><i class="standings-legend-color" aria-hidden="true"></i> Libertadores</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-xl-4">
