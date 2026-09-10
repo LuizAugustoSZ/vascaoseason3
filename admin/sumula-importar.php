@@ -164,7 +164,8 @@ function summary_canonicalize_players(PDO $pdo, array $parsed, array $context, i
     if (!empty($parsed['man_of_match']) && empty($parsed['man_of_match_team_code'])) {
         $matches = [];
         foreach ($resolvers as $code => $resolver) {
-            if (summary_resolve_player($resolver, $parsed['man_of_match']) !== null) $matches[] = $code;
+            // O PHP converte siglas numéricas usadas como chaves de array em inteiros.
+            if (summary_resolve_player($resolver, $parsed['man_of_match']) !== null) $matches[] = (string)$code;
         }
         if (count($matches) === 1) $parsed['man_of_match_team_code'] = $matches[0];
     }
