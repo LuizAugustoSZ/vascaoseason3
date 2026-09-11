@@ -87,22 +87,27 @@ function dreamteam_parse_compact_summary(string $raw): ?array
     preg_match_all('/(\d+(?:\+\d+)?)\'\s*(.*?)(?=(?<!\d)\d+(?:\+\d+)?\'|$)/u', $eventText, $rows, PREG_SET_ORDER);
     foreach ($rows as $row) {
         $body = trim($row[2]);
+        if (preg_match('/^Revisão do VAR$/ui', $body)) {
+            $events[] = ['type'=>'var_review','minute'=>$row[1],'team_code'=>null,'description'=>$body];
+            continue;
+        }
         if (preg_match('/^Substituição\s*-\s*Sai\s+(.+?),?\s+entra\s+(.+?)\s*\[([A-Z0-9]+)\]/ui', $body, $m)) {
             $events[] = ['type'=>'substitution','minute'=>$row[1],'player_out'=>rtrim(trim($m[1]), ','),'player_in'=>trim($m[2]),'team_code'=>$m[3]];
             continue;
         }
-        if (!preg_match('/^(Gol(?:\s+anulado)?|Cartão amarelo|Cartão vermelho|Lesão|Pênalti cancelado)\s*-\s*(.+?)\s*\[([A-Z0-9]+)\](.*)$/ui', $body, $m)) {
+        if (!preg_match('/^(Gol(?:\s+anulado|\s+de\s+p[êe]nalti)?|Cartão amarelo|Cartão vermelho|Lesão|P[êe]nalti (?:cancelado|defendido))\s*-\s*(.+?)\s*\[([A-Z0-9]+)\](.*)$/ui', $body, $m)) {
             $warnings[] = 'Lance não reconhecido aos '.$row[1].' minutos: '.$body;
             continue;
         }
         $type = match (mb_strtolower($m[1])) {
-            'gol'=>'goal', 'gol anulado'=>'var_goal_cancelled', 'cartão amarelo'=>'yellow_card',
+            'gol', 'gol de pênalti', 'gol de penalti'=>'goal', 'gol anulado'=>'var_goal_cancelled', 'cartão amarelo'=>'yellow_card',
+            'pênalti defendido', 'penalti defendido'=>'penalty_saved',
             'cartão vermelho'=>'red_card', 'lesão'=>'injury', default=>'var_penalty_cancelled',
         };
         $event = ['type'=>$type,'minute'=>$row[1],'player'=>trim($m[2]),'team_code'=>$m[3],'description'=>trim($m[4], " \t-·")];
         if ($type === 'goal') {
             preg_match('/Assistência de\s+(.+?)\s*\[([A-Z0-9]+)\]/ui', $m[4], $assist);
-            $event += ['goal_type'=>dreamteam_goal_type(preg_split('/Assistência de/ui', $m[4], 2)[0]),'assist'=>isset($assist[1])?trim($assist[1]):null,'cancelled'=>false];
+            $event += ['goal_type'=>dreamteam_goal_type($m[1].' '.preg_split('/Assistência de/ui', $m[4], 2)[0]),'assist'=>isset($assist[1])?trim($assist[1]):null,'cancelled'=>false];
         }
         if ($type === 'yellow_card') $event['via_var'] = str_contains(mb_strtolower($m[4]), 'var');
         if ($type === 'var_goal_cancelled') {
@@ -154,6 +159,7 @@ function dreamteam_bind_team_codes(array $parsed, array $participants): array
     $codes=array_column($parsed['teams'], 'code');
     if (count(array_unique($codes))!==2) $parsed['warnings'][]='As siglas dos times são ambíguas.';
     foreach ($parsed['events'] as $event) {
+        if ($event['type'] === 'var_review' && $event['team_code'] === null) continue;
         if (!in_array($event['team_code'], $codes, true)) $parsed['warnings'][]='Sigla dos lances não vinculada a um time: '.$event['team_code'].'.';
     }
     foreach ($parsed['teams'] as $i=>$team) {
