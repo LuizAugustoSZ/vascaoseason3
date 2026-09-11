@@ -36,4 +36,59 @@ check($p['events'][0]['description']==='entrada temerária', 'Card description')
 $rejected=false;
 try { dreamteam_parse_summary($raw."\n".$zero); } catch (RuntimeException $e) { $rejected=true; }
 check($rejected, 'Multiple matches rejected');
+$penalties = <<<'REPORT'
+PARTIDA FINALIZADA - 92'
+🏟️ Estádio Municipal de Portimão
+🌦️ Tempo aberto · 13 °C
+⚖️ Arbitragem: Imprevisível
+COMPARSAS FC 2x3 Lords FC
+&#x20;
+:coroa: Man of the Match: :CopaSudamericana: Marcos Antônio
+:00boladt: 1 gol
+⭐ Nota: 7,63
+Destaques: jogo com bola e posicionamento.
+COMPARSAS FC
+Finalizações: 6 No gol: 6 Defesas: 3 Escanteios: 0 Posse: 57% Faltas Sofridas: 2 Amarelos: 1 Vermelhos: 0 xG: 2,35
+Marcadores:
+:00boladt: :FutebolArte: Lionel Messi: 1 gol
+:00boladt: :UFC: Diego Costa: 1 gol
+&#x20;
+Lords FC
+Finalizações: 7 No gol: 6 Defesas: 4 Escanteios: 0 Posse: 43% Faltas Sofridas: 2 Amarelos: 0 Vermelhos: 0 xG: 3,03
+Marcadores:
+:00boladt: :UFC: Hristo Stoichkov: 1 gol
+:00boladt: :CopaSudamericana: Marcos Antônio: 1 gol
+:00boladt: :CDB: Ramón Sosa: 1 gol
+PARTIDA FINALIZADA - 92'
+Imagem
+dreamteam.futbol - Partida entre COMPARSAS FC e Lords FC
+🎙️ Lances da Partida
+9' Revisão do VAR
+9' Cartão amarelo - :UFC: Roy Keane [COM] · entrada temerária
+9' Gol de pênalti - :UFC: Hristo Stoichkov [LOR]
+41' Gol - :CopaSudamericana: Marcos Antônio [LOR]
+Assistência de :SurpresasMundiais: Vozinha [LOR]
+44' Gol - :FutebolArte: Lionel Messi [COM]
+Assistência de :CDB: Jonathan Jesus [COM]
+62' Revisão do VAR
+62' Substituição - Sai :CopaSudamericana: Marcos Antônio, entra :SurpresasMundiais: Puerta [LOR]
+62' Substituição - Sai :FutebolArte: Ronaldinho Gaucho, entra :FutebolArte: Rayan Cherki [LOR]
+62' Substituição - Sai :UFC: Júnior Baiano, entra :CopaSudamericana: Emmanuel oliveira [LOR]
+62' Substituição - Sai :CopaLibertadores: Pedro, entra :CopaSudamericana: Gabigol [LOR]
+62' Pênalti defendido - :CopaDoMundo: David Raya [COM]
+69' Gol - :UFC: Diego Costa [COM]
+76' Substituição - Sai :UFC: Hristo Stoichkov, entra :CopaLibertadores: Jhon Arias [LOR]
+86' Gol - :CDB: Ramón Sosa [LOR]
+REPORT;
+foreach ([$penalties, str_replace('pênalti', 'penalti', str_replace('Pênalti', 'Penalti', $penalties))] as $report) {
+    $p=dreamteam_bind_team_codes(dreamteam_parse_summary($report), [['sigla'=>'COM'],['sigla'=>'LOR']]);
+    check($p['warnings']===[], implode(' ', $p['warnings']));
+    check(count($p['goals'])===5 && count($p['events'])===14, 'Penalty report totals');
+    check($p['goals'][0]['goal_type']==='penalti' && $p['goals'][0]['player']==='Hristo Stoichkov', 'Penalty scorer');
+    check($p['events'][10]['type']==='penalty_saved' && $p['events'][10]['player']==='David Raya', 'Saved penalty is not a goal');
+    check($p['events'][0]['type']==='var_review' && $p['events'][5]['type']==='var_review', 'Standalone VAR reviews');
+    check(array_column($p['teams'],'code')===['COM','LOR'], 'Penalty report team codes');
+}
+$p=dreamteam_parse_summary(str_replace('Gol de pênalti', 'Lance desconhecido', $penalties));
+check(count($p['warnings'])>=2, 'Unknown events and score mismatch still require review');
 echo "DreamTeam parser tests passed.\n";
