@@ -312,6 +312,24 @@ function mercado_estado_ciclo(int $rodada): array
     return ['ciclo' => $ciclo, 'posicao' => $posicao, 'aberto' => $posicao >= 6, 'restantes' => $posicao >= 6 ? 9 - $posicao : 6 - $posicao];
 }
 
+function mercado_descricao_janela(array $estado): string
+{
+    $progresso = 'Este clube cumpriu '.$estado['etapas_concluidas'].' rodada(s), incluindo '.$estado['folgas'].' folga(s). ';
+    if ($estado['participacao_concluida']) {
+        return $progresso.'Participação concluída: a inscrição está liberada.';
+    }
+    $abertura = ($estado['ciclo'] - 1) * 8 + 5;
+    $fechamento = $abertura + 3;
+    $janela = ($abertura + 1).'ª, '.($abertura + 2).'ª e '.$fechamento.'ª';
+    if ($estado['pre_estreia']) {
+        return $progresso.'A inscrição está liberada até o primeiro jogo. Depois, reabre após cumprir '.$abertura.' rodadas e fica liberada para a '.$janela.' rodadas do clube.';
+    }
+    if ($estado['aberto']) {
+        return $progresso.'A inscrição abriu após cumprir '.$abertura.' rodadas e fica liberada para a '.$janela.' rodadas do clube. Fecha ao completar '.$fechamento.' rodadas.';
+    }
+    return $progresso.'A inscrição está travada. Reabre após cumprir '.$abertura.' rodadas (faltam '.$estado['restantes'].') e fica liberada para a '.$janela.' rodadas do clube.';
+}
+
 function mercado_estado_clube(PDO $pdo, int $campeonatoId, int $participanteId): array
 {
     $progresso = mercado_progresso_clube($pdo, $campeonatoId, $participanteId);
