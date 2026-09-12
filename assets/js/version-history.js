@@ -1,5 +1,6 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 const siteVersions=[
+['19.9.8','O sorteador de mata-mata e Libertadores do G4 agora mostra uma prévia do chaveamento antes de confirmar. O Admin pode excluir uma edição e refazer o sorteio com o mesmo número.','Prévia do sorteio e exclusão de edições'],
 ['19.9.7','As notícias agora oferecem modo claro ou escuro no bloco de leitura, com contraste adaptado e preferência salva no navegador.','Modo escuro nas notícias'],
 ['19.9.6','A classificação ficou mais confortável de ler, com linhas, nomes e escudos maiores sem alterar a largura da seção. As quatro primeiras posições agora recebem destaque azul e legenda de classificação para a Libertadores.','Classificação maior e G4 da Libertadores'],
 ['19.9.54','A paginação administrativa foi isolada dos demais módulos e agora é reconstruída mesmo se outro componente da aba falhar, preservando também a aba correta após cada ação.','Paginação administrativa resiliente'],
