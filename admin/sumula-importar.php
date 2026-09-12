@@ -361,9 +361,7 @@ try {
         if (!$playerRow) throw new RuntimeException('Jogador do elenco não encontrado.');
         if (!empty($playerRow['jogador_geral_id'])) {
             $generalId = (int)$playerRow['jogador_geral_id'];
-            $pdo->prepare('UPDATE jogadores_gerais SET nome=? WHERE id=? AND participante_id=?')->execute([$newName,$generalId,(int)$selectedIssue['team_id']]);
-            $pdo->prepare('UPDATE jogadores_elenco SET nome=? WHERE jogador_geral_id=? AND participante_id=?')->execute([$newName,$generalId,(int)$selectedIssue['team_id']]);
-            $pdo->prepare('UPDATE movimentacoes_elenco_geral SET jogador_nome=?,conta_id=? WHERE jogador_geral_id=? AND participante_id=?')->execute([$newName,(int)($_SESSION['conta_id']??0),$generalId,(int)$selectedIssue['team_id']]);
+            elenco_geral_corrigir_nome($pdo, $generalId, (int)$selectedIssue['team_id'], $newName);
         } else {
             $pdo->prepare('UPDATE jogadores_elenco SET nome=? WHERE id=?')->execute([$newName,$rosterId]);
         }
