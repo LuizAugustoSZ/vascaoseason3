@@ -4,7 +4,8 @@ const escape=value=>String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<'
 const team=(id,url,name)=>`<a class="match-details-team" href="time.php?id=${Number(id)}">${url?`<img src="${escape(url)}" alt="Escudo de ${escape(name)}">`:'<span>?</span>'}<span>${escape(name)}</span></a>`;
 const labels={shots:'Finalizações',shots_on_target:'No gol',saves:'Defesas',corners:'Escanteios',possession:'Posse de bola',fouls_suffered:'Faltas sofridas',yellow_cards:'Cartões amarelos',red_cards:'Cartões vermelhos',xg:'Gols esperados (xG)'};
 const statValue=(value,key)=>{if(value===null||value===undefined)return '-';if(key==='possession')return `${value}%`;if(key==='xg'){const number=Number(value);return Number.isFinite(number)?number.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):escape(value)}return escape(value)};
-const eventText=event=>{if(event.type==='goal')return `⚽ ${escape(event.player)}${event.assist?`: assistência de ${escape(event.assist)}`:''}${event.goal_type!=='normal'?` • ${escape(event.goal_type)}`:''}`;if(event.type==='yellow_card')return `🟨 ${escape(event.player)}${event.via_var?' • após VAR':''}`;if(event.type==='red_card')return `🟥 ${escape(event.player)}`;if(event.type==='substitution')return `🔁 Sai ${escape(event.player_out)}, entra ${escape(event.player_in)}`;if(event.type==='injury')return `🚑 ${escape(event.player)}: ${escape(event.description)}`;if(event.type==='var_goal_cancelled')return `❌ Gol anulado: ${escape(event.player)}`;if(event.type==='var_penalty_cancelled')return `❌ Pênalti cancelado: ${escape(event.player)}`;return escape(event.description||event.type)};
+const playerLink=(name,teamId)=>name&&Number(teamId)>0?`<button type="button" class="player-open match-player-open" data-player-name="${escape(name)}" data-player-team="${Number(teamId)}">${escape(name)}</button>`:escape(name);
+const eventText=(event,teamId)=>{if(event.type==='goal')return `⚽ ${playerLink(event.player,teamId)}${event.assist?`: assistência de ${playerLink(event.assist,teamId)}`:''}${event.goal_type!=='normal'?` • ${escape(event.goal_type)}`:''}`;if(event.type==='yellow_card')return `🟨 ${playerLink(event.player,teamId)}${event.via_var?' • após VAR':''}`;if(event.type==='red_card')return `🟥 ${playerLink(event.player,teamId)}`;if(event.type==='substitution')return `🔁 Sai ${playerLink(event.player_out,teamId)}, entra ${playerLink(event.player_in,teamId)}`;if(event.type==='injury')return `🚑 ${playerLink(event.player,teamId)}: ${escape(event.description)}`;if(event.type==='var_goal_cancelled')return `❌ Gol anulado: ${playerLink(event.player,teamId)}`;if(event.type==='var_penalty_cancelled')return `❌ Pênalti cancelado: ${playerLink(event.player,teamId)}`;return escape(event.description||event.type)};
 const normalize=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const renderGame=(m,s,title='')=>{
   const played=m.gols_a!==null&&m.gols_b!==null,isWo=m.status==='wo',isPenalty=m.status==='penalidade';
@@ -13,46 +14,26 @@ const renderGame=(m,s,title='')=>{
   if(isPenalty)return html+'<div class="alert alert-warning text-center"><strong>RESULTADO ALTERADO POR PENALIDADE</strong><br>Vitória administrativa por 3 a 0 para o adversário do time penalizado. Os gols não são atribuídos a nenhum jogador.</div></section>';
   if(!s)return html+`<div class="alert alert-secondary text-center">${played?'As estatísticas detalhadas desta partida ainda não foram importadas.':'Partida ainda não realizada.'}</div></section>`;
   html+=`<p class="match-details-meta">🏟️ ${escape(s.stadium)} • ${escape(s.weather)} • ${s.duration}'</p>`;
-  if(s.man_of_match)html+=`<div class="alert alert-warning text-center">⭐ Craque: <strong>${escape(s.man_of_match)}</strong> • Nota ${escape(s.man_of_match_rating)}</div>`;
   const reversed=normalize(s.home_name)!==normalize(m.time_a)&&normalize(s.away_name)===normalize(m.time_a),teams=reversed?[s.teams?.[1],s.teams?.[0]]:s.teams,codes=[teams?.[0]?.code,teams?.[1]?.code];
+  const participantId=code=>code&&code===codes[0]?m.time_a_id:code&&code===codes[1]?m.time_b_id:null;
+  if(s.man_of_match)html+=`<div class="alert alert-warning text-center">⭐ Craque: <strong>${playerLink(s.man_of_match,participantId(s.man_of_match_team_code))}</strong> • Nota ${escape(s.man_of_match_rating)}</div>`;
   if(teams?.length===2){html+='<h3>Estatísticas</h3>';for(const [key,label] of Object.entries(labels)){const a=teams[0].stats[key],b=teams[1].stats[key];if(key==='xg'&&a==null&&b==null)continue;html+=`<div class="match-stats-row"><span>${statValue(a,key)}</span><b>${label}</b><span>${statValue(b,key)}</span></div>`}}
-  html+='<h3 class="mt-4">Lances da partida</h3><ol class="match-timeline">'+(s.events||[]).map(event=>{const side=event.team_code===codes[1]?'away':'home';return `<li class="event-${side}"><span class="event-copy">${eventText(event)}</span><time>${escape(event.minute)}'</time></li>`}).join('')+'</ol></section>';return html;
+  html+='<h3 class="mt-4">Lances da partida</h3><ol class="match-timeline">'+(s.events||[]).map(event=>{const side=event.team_code===codes[1]?'away':'home';return `<li class="event-${side}"><span class="event-copy">${eventText(event,participantId(event.team_code))}</span><time>${escape(event.minute)}'</time></li>`}).join('')+'</ol></section>';return html;
 };
 const render=(data,selectedId=null)=>{const legs=Array.isArray(data.matches)&&data.matches.length>1?data.matches:null;if(legs){const selectedIndex=Math.max(0,legs.findIndex(item=>String(item.match.id)===String(selectedId)));const tabs=legs.map((item,index)=>`<li class="nav-item" role="presentation"><button class="nav-link${index===selectedIndex?' active':''}" id="match-leg-tab-${index}" data-bs-toggle="tab" data-bs-target="#match-leg-pane-${index}" type="button" role="tab">${index===0?'Jogo de ida':'Jogo de volta'}</button></li>`).join('');const panes=legs.map((item,index)=>`<div class="tab-pane fade${index===selectedIndex?' show active':''}" id="match-leg-pane-${index}" role="tabpanel">${renderGame(item.match,item.summary)}</div>`).join('');body.innerHTML=`<ul class="nav nav-tabs match-leg-tabs" role="tablist">${tabs}</ul><div class="tab-content match-leg-content">${panes}</div>`;return}body.innerHTML=renderGame(data.match,data.summary)};
-let opening=false,returnToPlayer=null;
-modalElement.addEventListener('hidden.bs.modal',()=>{
-  const context=returnToPlayer;returnToPlayer=null;if(!context)return;
-  context.modal.addEventListener('shown.bs.modal',()=>{
-    context.body.scrollTop=context.scrollTop;
-    if(context.trigger.isConnected)context.trigger.focus({preventScroll:true});
-  },{once:true});
-  bootstrap.Modal.getOrCreateInstance(context.modal).show();
-});
-document.addEventListener('click',async event=>{
+document.addEventListener('click',event=>{
   const target=event.target.closest('[data-match-id]');if(!target)return;
   if(event.target.closest('[data-current-team]'))return;
   const control=event.target.closest('a,button');if(control&&control!==target)return;
-  event.preventDefault();if(opening)return;opening=true;
-  const sourceModal=target.closest('.modal.show');
-  returnToPlayer=sourceModal?.id==='player-stats-modal'?{
-    modal:sourceModal,body:sourceModal.querySelector('.modal-body'),
-    scrollTop:sourceModal.querySelector('.modal-body').scrollTop,trigger:target
-  }:null;
-  const fromPlayer=!!returnToPlayer;
-  body.innerHTML='<p class="text-center" role="status">Carregando partida…</p>';
-  if(sourceModal&&sourceModal!==modalElement){
-    await new Promise(resolve=>{
-      sourceModal.addEventListener('hidden.bs.modal',resolve,{once:true});
-      bootstrap.Modal.getOrCreateInstance(sourceModal).hide();
-    });
-  }
-  bootstrap.Modal.getOrCreateInstance(modalElement).show();
-  try{
-    const response=await fetch(`api/partida-detalhes.php?tipo=${encodeURIComponent(target.dataset.matchType||'pontos')}&id=${encodeURIComponent(target.dataset.matchId)}`);
-    const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível carregar a partida.');
-    render(data,fromPlayer?target.dataset.matchId:null);
-  }catch(error){body.innerHTML=`<div class="alert alert-danger">${escape(error.message)}</div>`}
-  finally{opening=false}
+  event.preventDefault();
+  const fromPlayer=!!target.closest('#player-stats-modal');
+  window.statsModalNavigation.open(modalElement,target,async()=>{
+    try{
+      const response=await fetch(`api/partida-detalhes.php?tipo=${encodeURIComponent(target.dataset.matchType||'pontos')}&id=${encodeURIComponent(target.dataset.matchId)}`);
+      const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível carregar a partida.');
+      return ()=>render(data,fromPlayer?target.dataset.matchId:null);
+    }catch(error){return ()=>{body.innerHTML=`<div class="alert alert-danger">${escape(error.message)}</div>`}}
+  });
 });
 document.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-match-id]:not(button):not(a)')){event.preventDefault();event.target.click()}});
 })();
