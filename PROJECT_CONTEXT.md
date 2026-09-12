@@ -19,6 +19,8 @@ O **Vascão Season 3** é um sistema web para organizar campeonatos da comunidad
 
 ## 2. Princípios do projeto
 
+- A vitrine permite ordenar as taças diretamente pela conta ativa Slower com papel Admin Master, validada no banco. A posição pública fica em `competicao_identidades.ordem_exibicao`; novas taças sem posição ficam ao final. Conquistas históricas manuais da mesma edição/Season 3 têm precedência sobre a geração automática de títulos.
+
 - Toda mudança pública, incluindo correções visuais, deve gerar uma nova entrada no histórico e incrementar a versão do rodapé exatamente em **+0.1**, sem saltos (por exemplo: `7.8`, `7.9`, `8.0`, `8.1`).
 
 1. Preservar todos os dados reais já cadastrados.

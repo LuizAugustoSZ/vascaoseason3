@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['19.9.8','A galeria de Amistosos Dream Team apresenta as quatro edições, preservando os campeões históricos sem repetir conquistas.','Histórico de títulos corrigido'],
 ['19.9.7','As notícias agora oferecem modo claro ou escuro no bloco de leitura, com contraste adaptado e preferência salva no navegador.','Modo escuro nas notícias'],
 ['19.9.6','A classificação ficou mais confortável de ler, com linhas, nomes e escudos maiores sem alterar a largura da seção. As quatro primeiras posições agora recebem destaque azul e legenda de classificação para a Libertadores.','Classificação maior e G4 da Libertadores'],
 ['19.9.54','A paginação administrativa foi isolada dos demais módulos e agora é reconstruída mesmo se outro componente da aba falhar, preservando também a aba correta após cada ação.','Paginação administrativa resiliente'],

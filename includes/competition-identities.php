@@ -46,6 +46,8 @@ function competition_identities_ensure_schema(PDO $pdo): void
     if (!$titleImageColumn) $pdo->exec("ALTER TABLE titulos ADD COLUMN imagem_base64 MEDIUMTEXT NULL AFTER descricao");
     $titleCompetitionColumn = $pdo->query("SHOW COLUMNS FROM titulos LIKE 'campeonato_id'")->fetch();
     if (!$titleCompetitionColumn) $pdo->exec("ALTER TABLE titulos ADD COLUMN campeonato_id INT UNSIGNED NULL AFTER participante_id, ADD UNIQUE KEY uk_titulo_campeonato (campeonato_id)");
+    $orderColumn = $pdo->query("SHOW COLUMNS FROM competicao_identidades LIKE 'ordem_exibicao'")->fetch();
+    if (!$orderColumn) $pdo->exec("ALTER TABLE competicao_identidades ADD COLUMN ordem_exibicao INT UNSIGNED NULL");
 }
 
 function competition_identity_data_url(string $filename): string
@@ -84,6 +86,15 @@ function competition_sync_champion_title(PDO $pdo, int $championshipId): ?int
     $stmt = $pdo->prepare('SELECT id,nome,status,tipo FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1');
     $stmt->execute([$championshipId]); $competition = $stmt->fetch();
     if (!$competition) return null;
+    // Uma conquista histórica cadastrada manualmente é a fonte de verdade.
+    // Edições antigas podem apontar para participantes remanejados posteriormente.
+    $manualTitles = $pdo->query("SELECT titulo,participante_id FROM titulos WHERE campeonato_id IS NULL AND temporada='Season 3'")->fetchAll();
+    $editionKey = str_replace(' ', '', competition_identity_key((string)$competition['nome']));
+    foreach ($manualTitles as $manualTitle) {
+        if (str_replace(' ', '', competition_identity_key((string)$manualTitle['titulo'])) === $editionKey) {
+            return $manualTitle['participante_id'] === null ? null : (int)$manualTitle['participante_id'];
+        }
+    }
     $winnerId = competition_champion_id($pdo, $championshipId);
     if (!$winnerId) return null;
     $description = $competition['status'] === 'finalizado'
