@@ -18,7 +18,41 @@ const renderGame=(m,s,title='')=>{
   if(teams?.length===2){html+='<h3>Estatísticas</h3>';for(const [key,label] of Object.entries(labels)){const a=teams[0].stats[key],b=teams[1].stats[key];if(key==='xg'&&a==null&&b==null)continue;html+=`<div class="match-stats-row"><span>${statValue(a,key)}</span><b>${label}</b><span>${statValue(b,key)}</span></div>`}}
   html+='<h3 class="mt-4">Lances da partida</h3><ol class="match-timeline">'+(s.events||[]).map(event=>{const side=event.team_code===codes[1]?'away':'home';return `<li class="event-${side}"><span class="event-copy">${eventText(event)}</span><time>${escape(event.minute)}'</time></li>`}).join('')+'</ol></section>';return html;
 };
-const render=data=>{const legs=Array.isArray(data.matches)&&data.matches.length>1?data.matches:null;if(legs){const tabs=legs.map((item,index)=>`<li class="nav-item" role="presentation"><button class="nav-link${index===0?' active':''}" id="match-leg-tab-${index}" data-bs-toggle="tab" data-bs-target="#match-leg-pane-${index}" type="button" role="tab">${index===0?'Jogo de ida':'Jogo de volta'}</button></li>`).join('');const panes=legs.map((item,index)=>`<div class="tab-pane fade${index===0?' show active':''}" id="match-leg-pane-${index}" role="tabpanel">${renderGame(item.match,item.summary)}</div>`).join('');body.innerHTML=`<ul class="nav nav-tabs match-leg-tabs" role="tablist">${tabs}</ul><div class="tab-content match-leg-content">${panes}</div>`;return}body.innerHTML=renderGame(data.match,data.summary)};
-document.addEventListener('click',async event=>{const target=event.target.closest('[data-match-id]');if(!target)return;if(event.target.closest('[data-current-team]'))return;if(event.target.closest('a,button')&&event.target!==target)return;event.preventDefault();const sourceModal=target.closest('.modal.show');body.replaceChildren();try{const response=await fetch(`api/partida-detalhes.php?tipo=${encodeURIComponent(target.dataset.matchType||'pontos')}&id=${encodeURIComponent(target.dataset.matchId)}`);const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message);render(data)}catch(error){body.innerHTML=`<div class="alert alert-danger">${escape(error.message)}</div>`}const show=()=>bootstrap.Modal.getOrCreateInstance(modalElement).show();if(sourceModal&&sourceModal!==modalElement){sourceModal.addEventListener('hidden.bs.modal',show,{once:true});bootstrap.Modal.getOrCreateInstance(sourceModal).hide()}else show()});
-document.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-match-id]'))event.target.click()});
+const render=(data,selectedId=null)=>{const legs=Array.isArray(data.matches)&&data.matches.length>1?data.matches:null;if(legs){const selectedIndex=Math.max(0,legs.findIndex(item=>String(item.match.id)===String(selectedId)));const tabs=legs.map((item,index)=>`<li class="nav-item" role="presentation"><button class="nav-link${index===selectedIndex?' active':''}" id="match-leg-tab-${index}" data-bs-toggle="tab" data-bs-target="#match-leg-pane-${index}" type="button" role="tab">${index===0?'Jogo de ida':'Jogo de volta'}</button></li>`).join('');const panes=legs.map((item,index)=>`<div class="tab-pane fade${index===selectedIndex?' show active':''}" id="match-leg-pane-${index}" role="tabpanel">${renderGame(item.match,item.summary)}</div>`).join('');body.innerHTML=`<ul class="nav nav-tabs match-leg-tabs" role="tablist">${tabs}</ul><div class="tab-content match-leg-content">${panes}</div>`;return}body.innerHTML=renderGame(data.match,data.summary)};
+let opening=false,returnToPlayer=null;
+modalElement.addEventListener('hidden.bs.modal',()=>{
+  const context=returnToPlayer;returnToPlayer=null;if(!context)return;
+  context.modal.addEventListener('shown.bs.modal',()=>{
+    context.body.scrollTop=context.scrollTop;
+    if(context.trigger.isConnected)context.trigger.focus({preventScroll:true});
+  },{once:true});
+  bootstrap.Modal.getOrCreateInstance(context.modal).show();
+});
+document.addEventListener('click',async event=>{
+  const target=event.target.closest('[data-match-id]');if(!target)return;
+  if(event.target.closest('[data-current-team]'))return;
+  const control=event.target.closest('a,button');if(control&&control!==target)return;
+  event.preventDefault();if(opening)return;opening=true;
+  const sourceModal=target.closest('.modal.show');
+  returnToPlayer=sourceModal?.id==='player-stats-modal'?{
+    modal:sourceModal,body:sourceModal.querySelector('.modal-body'),
+    scrollTop:sourceModal.querySelector('.modal-body').scrollTop,trigger:target
+  }:null;
+  const fromPlayer=!!returnToPlayer;
+  body.innerHTML='<p class="text-center" role="status">Carregando partida…</p>';
+  if(sourceModal&&sourceModal!==modalElement){
+    await new Promise(resolve=>{
+      sourceModal.addEventListener('hidden.bs.modal',resolve,{once:true});
+      bootstrap.Modal.getOrCreateInstance(sourceModal).hide();
+    });
+  }
+  bootstrap.Modal.getOrCreateInstance(modalElement).show();
+  try{
+    const response=await fetch(`api/partida-detalhes.php?tipo=${encodeURIComponent(target.dataset.matchType||'pontos')}&id=${encodeURIComponent(target.dataset.matchId)}`);
+    const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível carregar a partida.');
+    render(data,fromPlayer?target.dataset.matchId:null);
+  }catch(error){body.innerHTML=`<div class="alert alert-danger">${escape(error.message)}</div>`}
+  finally{opening=false}
+});
+document.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-match-id]:not(button):not(a)')){event.preventDefault();event.target.click()}});
 })();
