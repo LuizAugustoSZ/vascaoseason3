@@ -1,0 +1,16 @@
+.draw-preview-modal{width:96vw;max-width:1500px;max-height:92vh;padding:0;border:1px solid #454b58;border-radius:16px;background:#101319;color:#fff;overflow:hidden}
+.draw-preview-modal[open]{display:flex;flex-direction:column}
+.draw-preview-modal::backdrop{background:rgba(0,0,0,.8)}
+.draw-preview-header{padding:20px 24px 8px;flex-shrink:0;border-bottom:1px solid #343941}
+.draw-preview-header h2{font-weight:800;margin:6px 0;outline:none}
+.draw-preview-header p{font-size:.85rem;color:#adb6c7;margin:6px 0}
+.draw-preview-body{overflow:auto;min-height:0}
+.draw-preview-body .bracket{min-height:480px;grid-auto-columns:minmax(270px,1fr)}
+.draw-preview-body .bracket-team-info>span:last-child{white-space:normal;overflow:visible}
+.draw-preview-body .bracket-team-info small{display:block;color:#adb6c7}
+.draw-preview-body .team-badge{flex-shrink:0}
+.draw-preview-body .bracket-legs{display:block;color:#adb6c7;font-size:.7rem;margin-bottom:6px}
+.draw-preview-footer{padding:14px 24px;flex-shrink:0;border-top:1px solid #343941}
+.draw-preview-footer>div{display:flex;justify-content:flex-end;gap:12px}
+.draw-preview-footer [data-error]:empty{display:none}
+@media(max-width:600px){.draw-preview-header{padding:14px}.draw-preview-header h2{font-size:1.4rem}.draw-preview-footer{padding:12px}.draw-preview-footer .btn{font-size:.85rem}.draw-preview-body .bracket{padding:18px;gap:20px;grid-auto-columns:270px}}
