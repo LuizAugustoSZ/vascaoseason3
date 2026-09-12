@@ -642,6 +642,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "usuarios",
             );
         }
+        if ($action === 'excluir_campeonato') {
+            master_required();
+            require_once __DIR__ . '/../includes/competition-delete.php';
+            competition_delete_edition($pdo, (int)($_POST['campeonato_id'] ?? 0));
+            redirect_notice('Edição excluída. Você pode refazer o sorteio usando o mesmo nome e número.', 'campeonatos');
+        }
         // Finaliza ou reabre um campeonato diretamente pelo painel principal.
         if ($action === "status_campeonato") {
             $campeonatoId = (int) ($_POST["campeonato_id"] ?? 0);
@@ -1656,7 +1662,7 @@ function admin_nav_icon(string $name): string
     ? "btn-outline-danger"
    : "btn-outline-light" ?>"><?= $championship["status"] === "ativo"
     ? "Finalizar"
-   : "Reabrir" ?></button></form><button type="button" class="btn btn-sm btn-outline-warning editar-campeonato ms-1" data-bs-toggle="modal" data-bs-target="#competition-edit-modal" data-id="<?= (int)$championship['id'] ?>" data-name="<?= e($championship['nome']) ?>" data-status="<?= e($championship['status']) ?>">Editar</button></td></tr><?php endforeach;
+   : "Reabrir" ?></button></form><button type="button" class="btn btn-sm btn-outline-warning editar-campeonato ms-1" data-bs-toggle="modal" data-bs-target="#competition-edit-modal" data-id="<?= (int)$championship['id'] ?>" data-name="<?= e($championship['nome']) ?>" data-status="<?= e($championship['status']) ?>">Editar</button><form method="post" class="d-inline-block ms-1" onsubmit="return confirm('Excluir esta edição, seus jogos e seu título? A edição deixará de aparecer no site e poderá ser sorteada novamente.')"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="excluir_campeonato"><input type="hidden" name="campeonato_id" value="<?= (int)$championship['id'] ?>"><button class="btn btn-sm btn-outline-danger">Excluir</button></form></td></tr><?php endforeach;
  if (
      !$championshipsAdmin
  ): ?><tr><td colspan="6" class="text-center text-secondary py-4">Nenhuma competição criada até o momento.</td></tr><?php endif;
