@@ -325,9 +325,9 @@ function mercado_estado_clube(PDO $pdo, int $campeonatoId, int $participanteId):
     $agenda = $stmt->fetch() ?: ['status' => '', 'total_partidas' => 0, 'partidas_pendentes' => 0];
     $participacaoConcluida = (string)$agenda['status'] === 'finalizado'
         || ((int)$agenda['total_partidas'] > 0 && (int)$agenda['partidas_pendentes'] === 0);
-    // A primeira partida disputada inicia a sequência de cinco etapas travadas.
-    // Antes da estreia, mesmo com elenco já confirmado, a inscrição fica aberta.
-    $estado = mercado_estado_ciclo(max(1, $progresso['etapas_concluidas']));
+    // A janela vale para a próxima etapa: cinco cumpridas abrem, oito fecham.
+    // O módulo de oito repete o fluxo sem depender da rodada do calendário.
+    $estado = mercado_estado_ciclo($progresso['etapas_concluidas'] + 1);
     if ($progresso['partidas_concluidas'] === 0) {
         $estado['aberto'] = true;
         $estado['restantes'] = 0;
