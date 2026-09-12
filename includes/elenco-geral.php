@@ -2,6 +2,32 @@
 
 declare(strict_types=1);
 
+// Chamado dentro da transação da correção de súmula.
+function elenco_geral_corrigir_nome(PDO $pdo, int $generalId, int $teamId, string $newName): void
+{
+    $lookup = $pdo->prepare('SELECT id,nome,overall,posicao,ativo FROM jogadores_gerais WHERE id=? AND participante_id=? FOR UPDATE');
+    $lookup->execute([$generalId, $teamId]);
+    $source = $lookup->fetch();
+    if (!$source) throw new RuntimeException('Jogador do elenco geral não encontrado.');
+
+    $lookup = $pdo->prepare('SELECT id FROM jogadores_gerais WHERE participante_id=? AND nome=? AND overall=? AND posicao=? AND id<>? FOR UPDATE');
+    $lookup->execute([$teamId, $newName, $source['overall'], $source['posicao'], $generalId]);
+    $existingId = $lookup->fetchColumn();
+    if ($existingId !== false) {
+        // A carta já existe: reaproveitar seu cadastro sem excluir o anterior
+        // nem alterar autoria, valores ou nomes históricos das movimentações.
+        $pdo->prepare('UPDATE jogadores_elenco SET nome=?,jogador_geral_id=? WHERE jogador_geral_id=? AND participante_id=?')->execute([$newName, (int)$existingId, $generalId, $teamId]);
+        if ((int)$source['ativo'] === 1) {
+            $pdo->prepare('UPDATE jogadores_gerais SET ativo=1,saiu_em=NULL WHERE id=? AND participante_id=?')->execute([(int)$existingId, $teamId]);
+        }
+        $pdo->prepare('UPDATE jogadores_gerais SET ativo=0 WHERE id=? AND participante_id=?')->execute([$generalId, $teamId]);
+        return;
+    }
+
+    $pdo->prepare('UPDATE jogadores_gerais SET nome=? WHERE id=? AND participante_id=?')->execute([$newName, $generalId, $teamId]);
+    $pdo->prepare('UPDATE jogadores_elenco SET nome=? WHERE jogador_geral_id=? AND participante_id=?')->execute([$newName, $generalId, $teamId]);
+}
+
 function elenco_geral_garantir_estrutura(PDO $pdo): void
 {
     $migration = file_get_contents(__DIR__ . '/../sql/atualizacao-v16.7-elenco-geral.sql');
