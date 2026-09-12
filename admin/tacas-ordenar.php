@@ -19,7 +19,7 @@ try {
     }
     if (empty($_SESSION['csrf']) || empty($_SERVER['HTTP_X_CSRF_TOKEN'])
         || !hash_equals($_SESSION['csrf'], (string) $_SERVER['HTTP_X_CSRF_TOKEN'])) {
-        http_response_code(419);
+        http_response_code(403);
         echo json_encode(['ok'=>false,'message'=>'Sessão expirada. Atualize a página.']);
         exit;
     }
