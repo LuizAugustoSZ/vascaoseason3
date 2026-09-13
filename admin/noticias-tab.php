@@ -31,10 +31,10 @@
         <label class="form-label">Título</label><input class="form-control" name="titulo" maxlength="180" required>
         <label class="form-label mt-3">Resumo</label><textarea class="form-control" name="resumo" rows="3" maxlength="500" required></textarea>
         <label class="form-label mt-3">Imagem de capa</label><input id="cover-file" class="form-control" type="file" accept="image/jpeg,image/png,image/webp"><img id="cover-preview" class="news-cover-preview d-none mt-3" alt="Prévia da capa">
-        <label class="form-label mt-3">Conteúdo da matéria</label>
+        <div class="d-flex flex-wrap align-items-center gap-3 mt-3 mb-2"><label class="form-label mb-0">Conteúdo da matéria</label><button id="news-submit" type="submit" class="btn btn-danger">Publicar notícia</button></div>
         <div class="editor-toolbar"><button type="button" data-command="bold"><strong>N</strong></button><button type="button" data-command="italic"><em>I</em></button><button type="button" data-block="h2">Título</button><button type="button" data-block="p">Texto</button><button type="button" id="insert-image">Inserir imagem</button><input id="body-image" class="d-none" type="file" accept="image/jpeg,image/png,image/webp"></div>
         <div id="news-editor" class="news-editor" contenteditable="true" data-placeholder="Escreva ou cole a matéria e encaixe imagens onde quiser." role="textbox" aria-multiline="true" aria-label="Conteúdo da matéria"></div>
-        <p class="small text-secondary mt-2">As imagens são reduzidas e convertidas para WebP antes de serem salvas.</p><button id="news-submit" class="btn btn-danger mt-2">Publicar notícia</button>
+        <p class="small text-secondary mt-2">As imagens são reduzidas e convertidas para WebP antes de serem salvas.</p>
       </form>
     </div>
     <div class="col-xl-4"><div class="panel"><div class="panel-head"><h3>Postagens</h3><span><?= count(
