@@ -58,6 +58,7 @@ const roundTimeline = games => {
 
 // Mostra somente a rodada e os times pesquisados pelo usuário.
 function renderLeagueGames() {
+  updateRoundNavigation();
   const selected=$('#round-select').val() || 'all';
   const query=($('#game-search').val() || '').toLocaleLowerCase('pt-BR').trim();
   let games=leagueGames.filter(game=>selected==='all' || String(game.rodada)===selected);
@@ -74,6 +75,21 @@ function renderLeagueGames() {
   }
   $('#league-games').html(visibleGames.length ? `<div class="game-sides-head"><span>MANDANTE</span><i aria-hidden="true"></i><span>VISITANTE</span></div>${visibleGames.map(g=>`<div class="game-item match-open" tabindex="0" role="button" data-match-type="pontos" data-match-id="${Number(g.id)}"><div class="game-meta"><span>Rodada ${g.rodada}</span><span>${g.status}</span></div><div class="game-score">${gameTeam(g,'home')}<b class="score">${g.gols_mandante ?? '-'} × ${g.gols_visitante ?? '-'}</b>${gameTeam(g,'away')}</div></div>`).join('')}`: publicEmpty(leagueGames.length?'Nenhuma partida corresponde à sua busca.':'O calendário de jogos será divulgado em breve.'));
   $('#league-pagination').html(games.length>gamesPerPage ? `<button type="button" class="page-game" data-page="${leaguePage-1}" ${leaguePage===1?'disabled':''}>Anterior</button><span>Página ${leaguePage} de ${totalPages}</span><button type="button" class="page-game" data-page="${leaguePage+1}" ${leaguePage===totalPages?'disabled':''}>Próxima</button>`: '');
+}
+
+function updateRoundNavigation() {
+  const {rounds}=roundTimeline(leagueGames);
+  const index=rounds.indexOf(Number($('#round-select').val()));
+  $('#round-prev').prop('disabled',index<=0);
+  $('#round-next').prop('disabled',!rounds.length || index===rounds.length-1);
+}
+
+function moveRound(direction) {
+  const {rounds}=roundTimeline(leagueGames);
+  const index=rounds.indexOf(Number($('#round-select').val()));
+  const target=index+direction;
+  if(target<0 || target>=rounds.length)return;
+  $('#round-select').val(String(rounds[target])).trigger('change');
 }
 
 // Preenche o seletor e abre automaticamente a primeira rodada ainda pendente.
@@ -163,6 +179,8 @@ $(function(){
   $('#mata-mata .panel-head').first().append(`<button class="competition-download d-none" data-export="mata" type="button" title="Baixar chaveamento como PNG" aria-label="Baixar chaveamento como PNG">${downloadIcon}</button>`);
   $('#supercopa .panel-head').first().append(`<button class="competition-download d-none" data-export="mata" type="button" title="Baixar decisão como PNG" aria-label="Baixar decisão como PNG">${downloadIcon}</button>`);
   $('#round-select').on('change', function(){leaguePage=1;renderLeagueGames()});
+  $('#round-prev').on('click',()=>moveRound(-1));
+  $('#round-next').on('click',()=>moveRound(1));
   $('#game-search').on('input', function(){leaguePage=1;renderLeagueGames()});
   $('#league-pagination').on('click','.page-game',function(){if(this.disabled)return;leaguePage=Number(this.dataset.page);renderLeagueGames()});
   $('#scorers-pagination').on('click','.page-scorer',function(){if(this.disabled)return;scorersPage=Number(this.dataset.page);renderScorers()});

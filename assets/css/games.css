@@ -22,6 +22,47 @@
   max-width: none;
 }
 
+.round-navigation {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 6px;
+}
+
+.round-navigation .form-select {
+  min-width: 0;
+  height: 36px;
+  padding: .35rem 1.6rem .35rem .5rem;
+  background-position: right .45rem center;
+  font-size: .75rem;
+  text-overflow: ellipsis;
+}
+
+.round-arrow {
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: #0b0c0e;
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.round-arrow:hover:not(:disabled) {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+.round-arrow:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
+.round-arrow:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+
 .game-pagination {
   display: flex;
   align-items: center;
