@@ -110,8 +110,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $_POST['draw_token'] = $token;
         }
         $action = $_POST["action"] ?? "";
-        if (!in_array($action, ['mata', 'g4', 'pontos'], true)) throw new RuntimeException('Ação inválida.');
-        $ids = $action === "g4" ? [] : selected($pdo);
+        if (!in_array($action, ['mata', 'g4', 'g8', 'pontos'], true)) throw new RuntimeException('Ação inválida.');
+        $ids = in_array($action, ["g4", "g8"], true) ? [] : selected($pdo);
         if ($confirmedDraft && $action === 'mata') $ids = $confirmedDraft['ids'];
         $championshipName = trim($_POST["nome_campeonato"] ?? "");
         $startDate = competition_start_date_from_post();
@@ -125,9 +125,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             throw new RuntimeException("Informe o nome do campeonato.");
         }
         // Cria semifinais ligadas às quatro primeiras posições de uma liga.
-        if ($action === "g4") {
-            $officialIdentity = $pdo->query("SELECT id FROM competicao_identidades WHERE chave='libertadores g4' LIMIT 1")->fetchColumn();
-            if (!$officialIdentity) throw new RuntimeException('A identidade oficial da Libertadores do G4 não foi encontrada.');
+        if (in_array($action, ["g4", "g8"], true)) {
+            $isSulamericana = $action === "g8";
+            $identityKey = $isSulamericana ? "sul americana g8" : "libertadores g4";
+            $tournamentLabel = $isSulamericana ? "Sul-Americana do G8" : "Libertadores do G4";
+            $officialIdentity = $pdo->query("SELECT id FROM competicao_identidades WHERE chave='{$identityKey}' LIMIT 1")->fetchColumn();
+            if (!$officialIdentity) throw new RuntimeException('A identidade oficial da competição não foi encontrada.');
             $identityId = (int)$officialIdentity;
             $sourceId = (int)($_POST['origem_campeonato_id'] ?? 0);
             $format = $_POST['formato'] ?? 'unico';
@@ -139,9 +142,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $source->execute([$sourceId]);
             if (!$source->fetch()) throw new RuntimeException('Selecione um Brasileirão válido.');
             $ranking = standings($pdo, $sourceId);
-            if (count($ranking) < 4) throw new RuntimeException('A competição de origem precisa ter pelo menos quatro participantes.');
+            if (count($ranking) < ($isSulamericana ? 8 : 4)) throw new RuntimeException('A competição de origem precisa ter pelo menos ' . ($isSulamericana ? 'oito' : 'quatro') . ' participantes.');
 
-            $positions = [1, 2, 3, 4];
+            $positions = $isSulamericana ? [5, 6, 7, 8] : [1, 2, 3, 4];
             if ($confirmedDraft) $positions = $confirmedDraft['positions'];
             else shuffle($positions);
             ensure_g4_knockout_schema($pdo);
@@ -169,7 +172,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 ->execute([$championshipId, $sourceId, json_encode($positions)]);
             draw_preview_finish($pdo, $championshipId, [], $positions);
             $pdo->commit();
-            go('Libertadores do G4 sorteada. As vagas acompanharão a classificação até a primeira semifinal começar.');
+            go($tournamentLabel . ' sorteada. As vagas acompanharão a classificação até a primeira semifinal começar.');
         }
         // Sorteia todas as rodadas dos pontos corridos.
         if ($action === "pontos") {
@@ -408,4 +411,5 @@ function checks(array $teams): string
     $teams,
 ) ?></div><label class="form-label">Data dos jogos</label><input class="form-control mb-3" type="date" name="data_inicio" value="<?= date('Y-m-d') ?>" required><div class="row g-2"><div class="col-12"><label class="form-label">Formato das fases anteriores</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div><div class="col-md-6"><label class="form-label">Formato da Final</label><select class="form-select" name="formato_final"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div><div class="col-md-6"><label class="form-label">Formato do 3º Lugar</label><select class="form-select" name="formato_terceiro"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div></div><button class="btn btn-danger mt-3">Iniciar sorteio</button></form></div>
 <div class="col-12"><form class="panel sorteio-form sorteio-g4" method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="g4"><h2>Libertadores do G4</h2><p class="text-secondary">Sorteia semifinais entre os quatro primeiros de um Brasileirão e mantém as vagas ligadas à classificação.</p><div class="alert alert-info small">Os confrontos acompanham automaticamente quem estiver em 1º, 2º, 3º e 4º. A lista congela quando o primeiro resultado deste mata-mata for lançado.</div><div class="row g-2"><div class="col-lg-4"><label class="form-label">Brasileirão de origem</label><select class="form-select" name="origem_campeonato_id" required><option value="">Selecione</option><?php foreach ($leagueSources as $source): ?><option value="<?= (int)$source['id'] ?>"><?= e($source['nome']) ?> · <?= $source['status'] === 'finalizado' ? 'finalizado' : 'em andamento' ?></option><?php endforeach; ?></select></div><div class="col-md-6 col-lg-3"><label class="form-label">Data dos jogos</label><input class="form-control" type="date" name="data_inicio" value="<?= date('Y-m-d') ?>" required></div><div class="col-md-6 col-lg-2"><label class="form-label">Formato das semifinais</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div><div class="col-md-6 col-lg-3"><label class="form-label">Formato da Final</label><select class="form-select" name="formato_final"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div></div><button class="btn btn-danger mt-3" <?= !$leagueSources ? 'disabled' : '' ?>>Sortear G4</button><?php if (!$leagueSources): ?><small class="text-secondary ms-2">Crie primeiro uma competição de pontos corridos.</small><?php endif; ?></form></div>
+<div class="col-12"><form class="panel sorteio-form sorteio-g8" method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="g8"><h2>Sul-Americana do G8</h2><p class="text-secondary">Sorteia semifinais entre os colocados do 5º ao 8º lugar de um Brasileirão e mantém as vagas ligadas à classificação.</p><div class="alert alert-info small">Os confrontos acompanham automaticamente quem estiver em 5º, 6º, 7º e 8º. A lista congela quando o primeiro resultado deste mata-mata for lançado.</div><div class="row g-2"><div class="col-lg-4"><label class="form-label">Brasileirão de origem</label><select class="form-select" name="origem_campeonato_id" required><option value="">Selecione</option><?php foreach ($leagueSources as $source): ?><option value="<?= (int)$source['id'] ?>"><?= e($source['nome']) ?> · <?= $source['status'] === 'finalizado' ? 'finalizado' : 'em andamento' ?></option><?php endforeach; ?></select></div><div class="col-md-6 col-lg-3"><label class="form-label">Data dos jogos</label><input class="form-control" type="date" name="data_inicio" value="<?= date('Y-m-d') ?>" required></div><div class="col-md-6 col-lg-2"><label class="form-label">Formato das semifinais</label><select class="form-select" name="formato"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div><div class="col-md-6 col-lg-3"><label class="form-label">Formato da Final</label><select class="form-select" name="formato_final"><option value="unico">Jogo único</option><option value="ida_volta">Ida e volta</option></select></div></div><button class="btn btn-danger mt-3" <?= !$leagueSources ? 'disabled' : '' ?>>Sortear G8</button><?php if (!$leagueSources): ?><small class="text-secondary ms-2">Crie primeiro uma competição de pontos corridos.</small><?php endif; ?></form></div>
 </div></div></main><script>const competitionModels=<?= json_encode($competitionModels,JSON_UNESCAPED_UNICODE|JSON_HEX_TAG) ?>;const roman=n=>{const map=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let out='';for(const [value,symbol] of map)while(n>=value){out+=symbol;n-=value}return out};document.querySelectorAll('.sorteio-form').forEach(form=>{const title=form.querySelector('h2');title.insertAdjacentHTML('afterend',`<label class="form-label mt-2">Modelo da competição</label><select class="form-select mb-2 competition-model" name="identidade_id"><option value="">Criar uma nova competição</option>${competitionModels.map(item=>`<option value="${item.id}">${item.nome}: próxima edição ${item.proxima_edicao}</option>`).join('')}</select><label class="form-label">Nome desta edição</label><input class="form-control mb-3" name="nome_campeonato" maxlength="150" placeholder="Ex.: Copa Vascão S3" required>`);const model=form.querySelector('.competition-model');model.addEventListener('change',()=>{const item=competitionModels.find(entry=>String(entry.id)===model.value);if(!item)return;form.nome_campeonato.value=item.nome+(item.proxima_edicao>1?' '+roman(item.proxima_edicao):'')});const countLabel=form.querySelector('.selected-count');const update=()=>{if(!countLabel)return;const total=form.querySelectorAll('input[name="participantes[]"]:checked').length;countLabel.textContent=`${total} participante${total===1?'':'s'} selecionado${total===1?'':'s'}.`;};form.addEventListener('change',update);update();form.addEventListener('submit',async event=>{if(event.defaultPrevented)return;event.preventDefault();const button=event.submitter||form.querySelector('button');const old=button.textContent;button.disabled=true;button.textContent='Sorteando...';try{const payload=new FormData(form);payload.set('_ajax','1');const response=await fetch('sorteador.php',{method:'POST',body:payload,headers:{'Accept':'application/json'},credentials:'same-origin'});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível sortear.');if(data.preview){await openDrawPreview(data,form);return;}alert(data.message);location.reload();}catch(error){alert(error.message);}finally{button.disabled=false;button.textContent=old;}});});</script><script src="../assets/js/draw-preview.js?v=1"></script></body></html>
