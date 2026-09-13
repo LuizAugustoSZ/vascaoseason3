@@ -68,7 +68,7 @@ function identify_summary_context(PDO $pdo, array $parsed): array
     $homeId = (int) $home['id'];
     $awayId = (int) $away['id'];
     $candidates = [];
-    $stmt = $pdo->prepare("SELECT p.id,p.campeonato_id,p.rodada,p.mandante_id,p.visitante_id,p.status,c.nome campeonato,m.time_nome mandante,v.time_nome visitante FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND ((p.mandante_id=? AND p.visitante_id=?) OR (p.mandante_id=? AND p.visitante_id=?)) ORDER BY FIELD(p.status,'agendada','finalizada','wo','penalidade'),p.id DESC");
+    $stmt = $pdo->prepare("SELECT p.id,p.campeonato_id,p.rodada,p.mandante_id,p.visitante_id,p.status,c.nome campeonato,m.time_nome mandante,v.time_nome visitante FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND c.status<>'finalizado' AND ((p.mandante_id=? AND p.visitante_id=?) OR (p.mandante_id=? AND p.visitante_id=?)) ORDER BY FIELD(p.status,'agendada','finalizada','wo','penalidade'),p.id DESC");
     $stmt->execute([$homeId, $awayId, $awayId, $homeId]);
     foreach ($stmt->fetchAll() as $match) {
         $candidates[] = [
@@ -82,7 +82,7 @@ function identify_summary_context(PDO $pdo, array $parsed): array
             'reversed' => (int) $match['mandante_id'] !== $homeId,
         ];
     }
-    $stmt = $pdo->prepare("SELECT j.id,j.campeonato_id,j.fase,j.ordem,j.jogo,j.time_a_id,j.time_b_id,j.status,c.nome campeonato,a.time_nome time_a,b.time_nome time_b FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND ((j.time_a_id=? AND j.time_b_id=?) OR (j.time_a_id=? AND j.time_b_id=?)) ORDER BY (j.time_a_id=? AND j.time_b_id=?) DESC,FIELD(j.status,'agendado','finalizado'),j.id DESC");
+    $stmt = $pdo->prepare("SELECT j.id,j.campeonato_id,j.fase,j.ordem,j.jogo,j.time_a_id,j.time_b_id,j.status,c.nome campeonato,a.time_nome time_a,b.time_nome time_b FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND c.status<>'finalizado' AND ((j.time_a_id=? AND j.time_b_id=?) OR (j.time_a_id=? AND j.time_b_id=?)) ORDER BY (j.time_a_id=? AND j.time_b_id=?) DESC,FIELD(j.status,'agendado','finalizado'),j.id DESC");
     $stmt->execute([$homeId, $awayId, $awayId, $homeId, $homeId, $awayId]);
     foreach ($stmt->fetchAll() as $match) {
         $candidates[] = [
