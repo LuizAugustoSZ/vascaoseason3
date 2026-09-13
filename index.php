@@ -226,9 +226,14 @@ if (
                                     <div class="panel-head">
                                         <h3>Jogos</h3><span id="round-status">Selecione a rodada</span>
                                     </div>
-                                    <div class="game-tools"><label class="form-label" for="round-select">Rodada</label><select id="round-select" class="form-select">
+                                    <div class="game-tools"><label class="form-label" for="round-select">Rodada</label>
+                                        <div class="round-navigation">
+                                        <button type="button" id="round-prev" class="round-arrow" aria-label="Rodada anterior" title="Rodada anterior" disabled>‹</button>
+                                        <select id="round-select" class="form-select">
                                             <option value="all">Todas as rodadas</option>
                                         </select>
+                                        <button type="button" id="round-next" class="round-arrow" aria-label="Próxima rodada" title="Próxima rodada" disabled>›</button>
+                                        </div>
                                         <div class="command-search game-search mt-2"><span>⌕</span><input id="game-search" type="search" placeholder="Buscar técnico ou time..." autocomplete="off"></div>
                                     </div>
                                     <div id="league-games" class="game-list"></div>
