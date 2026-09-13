@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['19.9.9','Do 5º ao 8º lugar, os clubes ganham destaque na classificação e disputam a Sul-Americana. O sorteador acompanha as vagas automaticamente até o primeiro resultado, como na Libertadores.','Sul-Americana automática do G8'],
 ['19.9.85','O seletor de rodadas ficou mais compacto e ganhou setas para acessar a rodada anterior ou seguinte com um clique.','Navegação rápida entre rodadas'],
 ['19.9.8','Abra partidas pelo histórico individual e consulte jogadores diretamente nos lances e no destaque de craque. Use a seta ou feche o modal para voltar à tela anterior, preservando a página, a aba e a rolagem.','Históricos individuais e partidas conectados'],
 ['19.9.7','As notícias agora oferecem modo claro ou escuro no bloco de leitura, com contraste adaptado e preferência salva no navegador.','Modo escuro nas notícias'],

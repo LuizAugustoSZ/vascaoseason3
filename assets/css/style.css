@@ -779,3 +779,8 @@ footer {
     color: #fff;
     background: #e21b2d
 }
+
+.standings-team-row.is-sulamericana td:first-child{box-shadow:inset 3px 0 #e6a23c}
+.position-pill.sulamericana{background:#e6a23c;color:#111}
+.standings-legend-color.sulamericana{background:#e6a23c}
+.standings-legend{flex-wrap:wrap}

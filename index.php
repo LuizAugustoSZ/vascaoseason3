@@ -217,7 +217,8 @@ if (
                                         </table>
                                     </div>
                                     <div class="standings-legend" aria-label="Legenda da classificação">
-                                        <span><i class="standings-legend-color" aria-hidden="true"></i> Libertadores</span>
+                                        <span><i class="standings-legend-color" aria-hidden="true"></i> Libertadores · 1º ao 4º</span>
+                                        <span><i class="standings-legend-color sulamericana" aria-hidden="true"></i> Sul-Americana · 5º ao 8º</span>
                                     </div>
                                 </div>
                             </div>

@@ -20,6 +20,7 @@ function competition_identity_defaults(): array
         'evento pascualino' => ['Evento Pascualino', 'evento-pascualino-logo.webp', 'evento-pascualino-trofeu.webp'],
         'champions league' => ['Champions League', 'champions-league-logo.webp', 'champions-league-trofeu.webp'],
         'libertadores g4' => ['Libertadores do G4', '', ''],
+        'sul americana g8' => ['Sul-Americana do G8', '', ''],
     ];
 }
 
@@ -67,6 +68,7 @@ function competition_identity_match(string $name): ?string
     if (str_starts_with($compact, 'eventopascualino')) return 'evento pascualino';
     if (str_starts_with($compact, 'championsleague') || str_starts_with($compact, 'champiosleague')) return 'champions league';
     if (str_contains($compact, 'libertadores') && str_contains($compact, 'g4')) return 'libertadores g4';
+    if (str_contains($compact, 'sulamericana')) return 'sul americana g8';
     return null;
 }
 
