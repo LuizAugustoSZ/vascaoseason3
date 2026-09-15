@@ -41,7 +41,23 @@ const MERCADO_PACKS = [
     'quase_meta' => ['nome' => 'Pack Quase Meta', 'min' => 90, 'max' => 91, 'dream_points' => 900],
     'meta' => ['nome' => 'Pack Meta', 'min' => 91, 'max' => 91, 'dream_points' => 1200],
     'meta_posicional' => ['nome' => 'Pack Meta Posicional', 'min' => 91, 'max' => 91, 'dream_points' => 1700],
+    'aniversario' => ['nome' => 'Pack de Aniversário', 'min' => 92, 'max' => 92, 'valor' => 100, 'moeda' => 'DD'],
 ];
+
+function mercado_pack_valor(array $pack): float
+{
+    return (float)($pack['valor'] ?? $pack['dream_points']);
+}
+
+function mercado_pack_moeda(array $pack): string
+{
+    return $pack['moeda'] ?? 'DP';
+}
+
+function mercado_pack_preco(array $pack): string
+{
+    return number_format(mercado_pack_valor($pack), 0, ',', '.') . ' ' . mercado_pack_moeda($pack);
+}
 
 /**
  * Retorna somente as competicoes de pontos corridos em que o clube realmente
@@ -88,7 +104,8 @@ function mercado_rotulo_origem(array $movimento): string
 function mercado_valor_movimento(array $movimento): string
 {
     if (($movimento['origem'] ?? '') === 'pack') {
-        return number_format((float)($movimento['valor_origem'] ?? 0), 0, ',', '.') . ' DP';
+        $moeda = ($movimento['moeda_origem'] ?? '') === 'DD' ? 'DD' : 'DP';
+        return number_format((float)($movimento['valor_origem'] ?? 0), 0, ',', '.') . ' ' . $moeda;
     }
     if (in_array(($movimento['origem'] ?? ''), ['passe', 'sorteio', 'prancheta', 'obter', 'importacao'], true)) return 'Sem custo';
     return 'R$ ' . number_format((float)($movimento['valor'] ?? 0), 0, ',', '.');
