@@ -198,7 +198,7 @@ document.querySelectorAll('.market-contract-panel form').forEach(form => {
     }
     note.hidden = isDirect;
     if (note) note.textContent = isPack
-      ? 'O custo do pack será registrado em DP e não altera o cofre em Real.'
+      ? 'O custo será registrado na moeda do pack e não altera o cofre em Real.'
       : type === 'passe'
         ? 'Jogador recebido pelo passe: entrada sem custo e sem alteração no cofre.'
         : type === 'prancheta'
