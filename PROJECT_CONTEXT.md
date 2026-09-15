@@ -318,6 +318,7 @@ Fluxo proposto:
 
 Regras implementadas:
 
+- Exceção única do Brasileirão III (campeonato ID 8): a inscrição de cada clube permanece aberta até a conclusão de sua partida da 9ª rodada; ao concluir essa partida, trava novamente. As janelas seguintes mantêm o ciclo original (reabertura após 13 etapas). Outras edições não recebem essa exceção.
 - o ciclo é individual por clube e usa somente as partidas concluídas daquele participante;
 - as primeiras 5 partidas ficam travadas, as próximas 3 ficam abertas e o ciclo de 8 partidas se repete;
 - assim que o clube conclui a 5ª partida, pode alterar o elenco sem esperar os demais jogos da rodada;
