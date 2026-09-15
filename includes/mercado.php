@@ -335,6 +335,9 @@ function mercado_descricao_janela(array $estado): string
     if ($estado['participacao_concluida']) {
         return $progresso.'Participação concluída: a inscrição está liberada.';
     }
+    if ($estado['excecao_nona_rodada'] ?? false) {
+        return $progresso.'Excepcionalmente no Brasileirão III, a inscrição fica liberada até este clube concluir sua partida da 9ª rodada. Ao concluir esse jogo, a inscrição trava novamente.';
+    }
     $abertura = ($estado['ciclo'] - 1) * 8 + 5;
     $fechamento = $abertura + 3;
     $janela = ($abertura + 1).'ª, '.($abertura + 2).'ª e '.$fechamento.'ª';
@@ -369,6 +372,30 @@ function mercado_estado_clube(PDO $pdo, int $campeonatoId, int $participanteId):
         $estado['pre_estreia'] = true;
     } else {
         $estado['pre_estreia'] = false;
+    }
+    // Exceção única da edição Brasileirão III (ID 8 em produção e homologação).
+    // A conclusão da partida da 9ª rodada encerra a liberação individual;
+    // os ciclos seguintes mantêm seu calendário original.
+    if ($campeonatoId === 8 && !$participacaoConcluida) {
+        $nona = $pdo->prepare("SELECT COUNT(*) total,
+            COALESCE(SUM(CASE WHEN status IN ('finalizada','wo','penalidade') THEN 1 ELSE 0 END),0) concluidas
+            FROM partidas WHERE campeonato_id=? AND ativo=1 AND rodada=9
+                AND (mandante_id=? OR visitante_id=?)");
+        $nona->execute([$campeonatoId, $participanteId, $participanteId]);
+        $partidaNona = $nona->fetch();
+        $nonaConcluida = (int)$partidaNona['total'] > 0
+            && (int)$partidaNona['concluidas'] === (int)$partidaNona['total'];
+        if (!$nonaConcluida) {
+            $estado['aberto'] = true;
+            $estado['restantes'] = 0;
+            $estado['excecao_nona_rodada'] = true;
+        } elseif ($progresso['etapas_concluidas'] < 9) {
+            // Um jogo atrasado não mantém a exceção aberta após a 9ª rodada.
+            $estado['aberto'] = false;
+            $estado['pre_estreia'] = false;
+            $estado['ciclo'] = 2;
+            $estado['restantes'] = 13 - $progresso['etapas_concluidas'];
+        }
     }
     if ($participacaoConcluida) {
         $estado['aberto'] = true;
