@@ -20,6 +20,17 @@ if($championshipId){$titleWhere[]='t.campeonato_id=?';$titleParams[]=$championsh
 if($clubId){$titleWhere[]='t.participante_id=?';$titleParams[]=$clubId;}
 $titleStmt=$pdo->prepare("SELECT COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,p.id club_id,p.sigla,p.escudo_url,COUNT(*) titles FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):'')." GROUP BY COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico'),p.id,p.sigla,p.escudo_url ORDER BY titles DESC,name");
 $titleStmt->execute($titleParams);$titleRanking=$titleStmt->fetchAll();
+$titleRecordsStmt=$pdo->prepare("SELECT t.titulo,COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,t.participante_id FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):''));
+$titleRecordsStmt->execute($titleParams);
+$competitionTitles=[];
+foreach($pdo->query('SELECT chave,nome FROM competicao_identidades ORDER BY ordem_exibicao IS NULL,ordem_exibicao,nome')->fetchAll() as $identity){$competitionTitles[$identity['chave']]=['name'=>$identity['nome'],'clubs'=>[]];}
+foreach($titleRecordsStmt->fetchAll() as $record){
+    $key=competition_identity_match((string)$record['titulo'])?:'other-'.md5((string)$record['titulo']);
+    if(!isset($competitionTitles[$key]))$competitionTitles[$key]=['name'=>$record['titulo'],'clubs'=>[]];
+    $owner=$record['participante_id']?'club-'.$record['participante_id']:'name-'.$record['name'];
+    if(!isset($competitionTitles[$key]['clubs'][$owner]))$competitionTitles[$key]['clubs'][$owner]=['name'=>$record['name'],'titles'=>0];
+    $competitionTitles[$key]['clubs'][$owner]['titles']++;
+}
 
 $totalGoals=array_sum(array_column($matches,'gols_a'))+array_sum(array_column($matches,'gols_b'));
 $totalCompetitions=count(array_unique(array_column($matches,'campeonato_id')));
@@ -52,6 +63,18 @@ $add('Clubes','team-gd','Melhor saldo de gols',$teamRank('gd'),'name','gd',' gol
 $eligiblePct=array_values(array_filter($teams,static fn($t)=>$t['games']>=3));
 $add('Clubes','team-pct','Maior percentual de vitórias',statistics_sort($eligiblePct,'win_pct'),'name','win_pct','%',null,'Mínimo de 3 jogos para evitar recordes enganosos.');
 $add('Títulos','titles','Maior campeão',$titleRanking,'name','titles',' títulos');
+foreach($competitionTitles as $key=>$competition){
+    $ranking=statistics_sort(array_values($competition['clubs']),'titles');
+    $cardKey='titles-'.$key;
+    if($ranking){
+        $add('Títulos',$cardKey,$competition['name'],$ranking,'name','titles',' títulos');
+        $leaders=array_filter($ranking,static fn($row)=>(int)$row['titles']===(int)$ranking[0]['titles']);
+        $cards['Títulos'][array_key_last($cards['Títulos'])]['name']=implode(' • ',array_column($leaders,'name'));
+    }else{
+        $cards['Títulos'][]=['key'=>$cardKey,'label'=>$competition['name'],'name'=>'Nenhum campeão neste recorte','value'=>'0 títulos','note'=>'Ver ranking'];
+        $details[$cardKey]=['title'=>$competition['name'],'note'=>'Ainda não há títulos registrados para os filtros selecionados.','rows'=>[]];
+    }
+}
 $add('Jogadores','goals','Maior artilheiro',$playerRank('goals'),'name','goals',' gols');
 $add('Jogadores','assists','Maior assistente',$playerRank('assists'),'name','assists',' assistências');
 $add('Jogadores','contributions','Participações em gols',$playerRank('contributions'),'name','contributions',' participações');
@@ -82,7 +105,7 @@ $pairJson=[];foreach($pairs as $pair){$compact=['a_id'=>$pair['a_id'],'b_id'=>$p
 <section class="statistics-global" aria-label="Resumo histórico"><article><strong><?=count($matches)?></strong><span>partidas finalizadas</span></article><article><strong><?=$totalGoals?></strong><span>gols registrados</span></article><article><strong><?=$totalCompetitions?></strong><span>competições no recorte</span></article><article><strong><?=count($players)?></strong><span>jogadores com eventos</span></article><article><strong><?=count($finance['moves'])?></strong><span>transferências</span></article><article><strong><?=e($formatMoney($transferVolume))?></strong><span>movimentados</span></article></section>
 <nav class="statistics-tabs" aria-label="Categorias"><a class="active" href="#destaques" data-stat-category="all">Visão geral</a><?php foreach($sectionIds as $label=>$id):?><a href="#<?=$id?>" data-stat-category="<?=$id?>"><?=e($label)?></a><?php endforeach;?></nav>
 <?php if($featured):?><section class="statistics-section statistics-featured" id="destaques" data-stat-section="all"><div class="statistics-section-title"><span>★</span><h2>Destaques históricos</h2><p>Os principais recordes da história do Vascão.</p></div><div class="statistics-featured-grid"><?php foreach($featured as $card):?><button class="statistics-card" type="button" data-stat-card="<?=e($card['key'])?>"><small><?=e($card['label'])?></small><strong><?=e($card['name'])?></strong><b><?=e($card['value'])?></b><span>Ver ranking completo →</span></button><?php endforeach;?></div></section><?php endif;?>
-<?php foreach($cards as $section=>$sectionCards):$sectionId=$sectionIds[$section]??'';?><section class="statistics-section" id="<?=$sectionId?>" data-stat-section="<?=$sectionId?>" hidden><div class="statistics-section-title"><span><?=e(mb_strtoupper($section))?></span><h2><?=e($section)?></h2></div><div class="statistics-grid"><?php foreach($sectionCards as $card):if(in_array($card['key'],['titles','goals','assists'],true))continue;?><button class="statistics-card" type="button" data-stat-card="<?=e($card['key'])?>"><small><?=e($card['label'])?></small><strong><?=e($card['name'])?></strong><b><?=e($card['value'])?></b><span><?=e($card['note']?:'Ver ranking e detalhes')?> →</span></button><?php endforeach;?></div></section><?php endforeach;?>
+<?php foreach($cards as $section=>$sectionCards):$sectionId=$sectionIds[$section]??'';?><section class="statistics-section" id="<?=$sectionId?>" data-stat-section="<?=$sectionId?>" hidden><div class="statistics-section-title"><h2><?=e($section)?></h2></div><div class="statistics-grid"><?php foreach($sectionCards as $card):?><button class="statistics-card" type="button" data-stat-card="<?=e($card['key'])?>"><small><?=e($card['label'])?></small><strong><?=e($card['name'])?></strong><b><?=e($card['value'])?></b><span><?=e($card['note']?:'Ver ranking e detalhes')?> →</span></button><?php endforeach;?></div></section><?php endforeach;?>
 <section class="statistics-section" data-stat-section="retrospectos" hidden><div class="statistics-section-title"><span>CONSULTA HISTÓRICA</span><h2>Confronto direto</h2></div><div class="head-to-head-search"><label>Clube A<select class="form-select" data-h2h-a><option value="">Selecione</option><?php foreach($clubs as $club):?><option value="<?=$club['id']?>"><?=e($club['time_nome'])?></option><?php endforeach;?></select></label><span>×</span><label>Clube B<select class="form-select" data-h2h-b><option value="">Selecione</option><?php foreach($clubs as $club):?><option value="<?=$club['id']?>"><?=e($club['time_nome'])?></option><?php endforeach;?></select></label><button class="btn btn-danger" type="button" data-h2h-search>Ver retrospecto</button></div><div class="head-to-head-result" data-h2h-result><p>Selecione dois clubes para consultar jogos, vitórias, empates e gols.</p></div></section>
 <?php if(!$matches):?><div class="statistics-empty">Sem dados disponíveis para os filtros selecionados.</div><?php endif;?></div></main>
 <div class="modal fade statistics-modal" id="statistics-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><div><small>Central histórica</small><h2 class="modal-title" data-stat-title>Ranking</h2></div><button class="btn-close btn-close-white" type="button" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><p class="statistics-modal-note" data-stat-note></p><div class="statistics-ranking" data-stat-ranking></div></div></div></div></div>
