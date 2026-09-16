@@ -68,14 +68,15 @@
         updateLandingActive();
     }
 
-    const accountToggle = document.querySelector('[data-account-popover-toggle]');
+    const accountToggles = [...document.querySelectorAll('[data-account-popover-toggle]')];
     const accountPopover = document.getElementById('site-account-popover');
-    if (accountToggle && accountPopover) {
+    if (accountToggles.length && accountPopover) {
         let accountPinned = false;
         let accountCloseTimer = 0;
-        const setAccountOpen = open => {
+        const setAccountOpen = (open, source = null) => {
             document.body.classList.toggle('site-account-open', open);
-            accountToggle.setAttribute('aria-expanded', String(open));
+            if (source) accountPopover.classList.toggle('from-topbar', source.dataset.accountPopoverOrigin === 'top');
+            accountToggles.forEach(toggle => toggle.setAttribute('aria-expanded', String(open)));
             accountPopover.setAttribute('aria-hidden', String(!open));
         };
         const cancelAccountClose = () => clearTimeout(accountCloseTimer);
@@ -83,7 +84,8 @@
             cancelAccountClose();
             if (!accountPinned) accountCloseTimer = setTimeout(() => setAccountOpen(false), 140);
         };
-        accountToggle.addEventListener('pointerenter', () => { if (!mobile()) { cancelAccountClose(); setAccountOpen(true); } });
+        accountToggles.forEach(accountToggle => {
+        accountToggle.addEventListener('pointerenter', () => { if (!mobile()) { cancelAccountClose(); setAccountOpen(true, accountToggle); } });
         accountToggle.addEventListener('pointerleave', () => { if (!mobile()) scheduleAccountClose(); });
         accountPopover.addEventListener('pointerenter', cancelAccountClose);
         accountPopover.addEventListener('pointerleave', () => { if (!mobile()) scheduleAccountClose(); });
@@ -91,7 +93,8 @@
             event.stopPropagation();
             accountPinned = !accountPinned;
             cancelAccountClose();
-            setAccountOpen(accountPinned || mobile() && !document.body.classList.contains('site-account-open'));
+            setAccountOpen(accountPinned || mobile() && !document.body.classList.contains('site-account-open'), accountToggle);
+        });
         });
         accountPopover.addEventListener('click', event => event.stopPropagation());
         document.addEventListener('click', () => { accountPinned = false; setAccountOpen(false); });

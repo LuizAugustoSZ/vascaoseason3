@@ -118,6 +118,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         <div class="container">
             <a class="navbar-brand site-mobile-brand align-items-center gap-2" href="<?= $onLandingPage ? '#inicio' : 'index.php' ?>"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
             <div class="global-nav-links" aria-label="Seções principais"><?php foreach ($globalLinks as [$href, $label]): ?><a href="<?= e($href) ?>"><?= e($label) ?></a><?php endforeach; ?></div>
+            <?php if (account_logged_in()): ?><button class="site-topbar-profile" type="button" data-account-popover-toggle data-account-popover-origin="top" aria-expanded="false" aria-controls="site-account-popover"><span class="site-topbar-avatar"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><b hidden><?= e($teamInitials) ?></b><?php else: ?><b><?= e($participantId > 0 ? $teamInitials : 'S3') ?></b><?php endif; ?></span><span><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><small><i></i><?= e($participantId > 0 ? $teamNavLabel : (account_is_admin() ? 'Administração' : 'Online')) ?></small></span><em>⌄</em></button><?php endif; ?>
             <button class="site-mobile-menu-trigger" type="button" aria-controls="site-side-menu" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span><span></span></button>
         </div>
     </nav>
