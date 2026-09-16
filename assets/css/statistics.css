@@ -15,3 +15,4 @@
 @media(prefers-reduced-motion:reduce){.statistics-card{transition:none}}
 .statistics-page>.container{width:min(1400px,calc(100% - 40px));max-width:1400px}.statistics-hero small{display:block;margin-top:12px;color:#8996a7;font-size:.74rem}.statistics-tabs a:first-child{border-color:#303b46;background:#10151a;color:#d1d7df}.statistics-tabs a.active{border-color:#ed1b2f;background:#d7192b;color:#fff}.statistics-section[hidden]{display:none}
 @media(max-width:575px){.statistics-page>.container{width:min(100% - 20px,1400px)}}
+.statistics-card{position:relative;isolation:isolate;overflow:hidden}.statistics-card-shield{position:absolute;z-index:-1;right:12px;top:50%;width:42%;height:76%;object-fit:contain;transform:translateY(-50%);opacity:.13;pointer-events:none}.statistics-card-shield[hidden]{display:none}.statistics-featured-grid .statistics-card-shield{right:18px;width:38%;height:80%}
