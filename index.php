@@ -178,88 +178,7 @@ if (
         <?php
         // Classificação, jogos e chaveamento alimentados pela API.
         ?>
-        <section id="competicao" class="section-pad">
-            <div class="container">
-                <div class="section-title">
-                    <div><small>A DISPUTA</small>
-                        <h2>COMPETIÇÃO</h2>
-                    </div>
-                </div>
-                <ul class="nav competition-tabs" role="tablist">
-                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pontos-corridos">Pontos corridos</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mata-mata">Mata-mata</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#supercopa">Supercopa</button></li>
-                </ul>
-                <div class="tab-content pt-4">
-                    <div class="tab-pane fade show active" id="pontos-corridos">
-                        <div class="row g-4">
-                            <div class="col-xl-8">
-                                <div class="panel">
-                                    <div class="panel-head">
-                                        <h3>Classificação</h3><span>Atualização automática</span>
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table class="table ranking-table mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>#</th>
-                                                    <th>Time</th>
-                                                    <th>Técnico</th>
-                                                    <th>PTS</th>
-                                                    <th>J</th>
-                                                    <th>V</th>
-                                                    <th>E</th>
-                                                    <th>D</th>
-                                                    <th>SG</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="standings-body"></tbody>
-                                        </table>
-                                    </div>
-                                    <div class="standings-legend" aria-label="Legenda da classificação">
-                                        <span><i class="standings-legend-color" aria-hidden="true"></i> Libertadores · 1º ao 4º</span>
-                                        <span><i class="standings-legend-color sulamericana" aria-hidden="true"></i> Sul-Americana · 5º ao 8º</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4">
-                                <div class="panel h-100">
-                                    <div class="panel-head">
-                                        <h3>Jogos</h3><span id="round-status">Selecione a rodada</span>
-                                    </div>
-                                    <div class="game-tools"><label class="form-label" for="round-select">Rodada</label>
-                                        <div class="round-navigation">
-                                        <button type="button" id="round-prev" class="round-arrow" aria-label="Rodada anterior" title="Rodada anterior" disabled>‹</button>
-                                        <select id="round-select" class="form-select">
-                                            <option value="all">Todas as rodadas</option>
-                                        </select>
-                                        <button type="button" id="round-next" class="round-arrow" aria-label="Próxima rodada" title="Próxima rodada" disabled>›</button>
-                                        </div>
-                                        <div class="command-search game-search mt-2"><span>⌕</span><input id="game-search" type="search" placeholder="Buscar técnico ou time..." autocomplete="off"></div>
-                                    </div>
-                                    <div id="league-games" class="game-list"></div>
-                                    <div id="league-pagination" class="game-pagination"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane fade" id="mata-mata">
-                        <div class="panel">
-                            <div class="panel-head">
-                                <h3>Chaveamento</h3><span>Da primeira fase até a final</span>
-                            </div>
-                            <div id="bracket" class="bracket"></div>
-                        </div>
-                    </div>
-                    <div class="tab-pane fade" id="supercopa">
-                        <div class="panel">
-                            <div class="panel-head"><h3>Decisão dos campeões</h3><span>Vagas automáticas</span></div>
-                            <div id="supercup-bracket" class="bracket"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <section id="competicao" class="section-pad"><div class="container"><div class="section-title"><div><small>VASCÃO SEASON 3</small><h2>COMPETIÇÃO</h2></div></div><div class="panel p-4 p-lg-5"><p class="text-secondary">Acompanhe a classificação, os jogos e as estatísticas da competição.</p><a class="btn btn-danger btn-lg" href="competicao.php">Ver competição →</a></div></div></section>
 
         <?php
         // Cards dos técnicos e times cadastrados no painel.
@@ -277,25 +196,7 @@ if (
         <?php
         // Rankings dos jogadores com mais gols e assistências.
         ?>
-        <section id="artilharia" class="section-pad">
-            <div class="container">
-                <div class="section-title">
-                    <div><small>QUEM DECIDE</small>
-                        <h2>JOGADORES</h2>
-                    </div>
-                </div>
-                <div class="panel p-3 mb-3"><label class="form-label small" for="scorers-championship-select">CAMPEONATO</label><select id="scorers-championship-select" class="form-select"></select><small id="scorers-championship-title" class="text-secondary"></small></div>
-                <div class="panel">
-                    <div class="panel-head">
-                        <div class="player-ranking-tabs" role="tablist" aria-label="Ranking de jogadores"><button type="button" class="active" data-ranking="goals" role="tab" aria-selected="true">Artilheiros</button><button type="button" data-ranking="assists" role="tab" aria-selected="false">Assistências</button></div><button id="scorers-download" class="competition-download" type="button" title="Baixar ranking completo como PNG" aria-label="Baixar ranking completo como PNG"><svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 3v12m0 0 5-5m-5 5-5-5M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg></button>
-                    </div>
-                    <div id="scorers-list" class="scorers-list"></div>
-                    <div id="scorers-pagination" class="scorers-pagination"></div>
-                </div>
-            </div>
-        </section>
+        <section id="artilharia" class="section-pad"><div class="container"><div class="section-title"><div><small>VASCÃO SEASON 3</small><h2>JOGADORES</h2></div></div><div class="panel p-4 p-lg-5"><p class="text-secondary">Os craques que fazem a diferença em campo.</p><a class="btn btn-danger btn-lg" href="jogadores.php">Ver jogadores →</a></div></div></section>
 
         <?php
         // Galeria das conquistas registradas por técnico.

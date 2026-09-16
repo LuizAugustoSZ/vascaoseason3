@@ -13,7 +13,7 @@ let leagueGames = [];
 let leaguePage = 1;
 let currentChampionship = null;
 let allChampionships = [];
-const gamesPerPage = 5;
+const gamesPerPage = document.body.classList.contains('competition-page') ? 100 : 5;
 let scorers = [];
 let assists = [];
 let playerRanking = 'goals';
@@ -140,9 +140,9 @@ function renderSite(data) {
   $('#videos-grid').html(data.videos.length ? data.videos.map(v=>{const id=(v.youtube_url.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/)||[])[1];return id?`<div class="col-lg-6"><article class="video-card"><iframe src="https://www.youtube-nocookie.com/embed/${id}" title="${esc(v.titulo)}" loading="lazy" allowfullscreen></iframe><h3>${esc(v.titulo)}</h3></article></div>`:''}).join(''): publicEmpty('Novos vídeos da comunidade aparecerão aqui.'));
   // Se um escudo estiver inválido, volta automaticamente para a sigla do time.
   document.querySelectorAll('.team-badge-image img').forEach(image=>image.addEventListener('error',()=>{image.classList.add('d-none');image.nextElementSibling.classList.add('d-grid');}));
-  if(data.campeonato?.tipo==='supercopa')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#supercopa"]')).show();
-  else if(data.campeonato?.tipo==='mata_mata')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#mata-mata"]')).show();
-  else if(data.campeonato?.tipo==='pontos_corridos')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#pontos-corridos"]')).show();
+  if(document.querySelector('[data-bs-target=\"#supercopa\"]') && data.campeonato?.tipo==='supercopa')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#supercopa"]')).show();
+  else if(document.getElementById('mata-mata') && data.campeonato?.tipo==='mata_mata')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#mata-mata"]')).show();
+  else if(document.getElementById('pontos-corridos') && data.campeonato?.tipo==='pontos_corridos')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#pontos-corridos"]')).show();
 }
 
 function loadChampionship(id=''){$.getJSON('api/data.php',id?{campeonato_id:id}:{}).done(res=>{if(res.ok)renderSite(res)});}

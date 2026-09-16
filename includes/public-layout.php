@@ -53,9 +53,9 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
     $home = $onLandingPage ? "" : "index.php";
     $sectionLinks = [
         "noticias" => ["noticias.php", "Notícias"],
-        "competicao" => [$home . "#competicao", "Competição"],
+        "competicao" => ["competicao.php", "Competição"],
         "participantes" => [$home . "#participantes", "Participantes"],
-        "artilharia" => [$home . "#artilharia", "Jogadores"],
+        "artilharia" => ["jogadores.php", "Jogadores"],
         "titulos" => ["titulos.php", "Títulos"],
         "estatisticas" => ["estatisticas.php", "Estatísticas"],
         "midia" => [$home . "#midia", "Vídeos"],

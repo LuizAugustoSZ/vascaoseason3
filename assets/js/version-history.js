@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['23.0','Competição e Jogadores agora têm páginas próprias: classificação, jogos e resumo da rodada reunidos; artilheiros e assistências com pódio e ranking. A página inicial ganhou atalhos diretos, e a sidebar voltou ao visual anterior.','Novas páginas de Competição e Jogadores'],
 ['22.0','Navegação refinada com sidebar mais limpa, ícones leves e destaque discreto da tela atual. A barra superior reúne pesquisa do site, notificações e perfil, com melhor organização e leitura no desktop e no celular.','Navegação e sidebar melhoradas'],
 ['20.0','A nova Central de Estatísticas transforma todo o histórico oficial em recordes, rankings, retrospectos, sequências, números de jogadores, partidas, títulos e mercado. A gestão de competição também ganhou seleção visual, filtros por posição e ordenação por overall.','Central histórica de estatísticas e nova gestão de elenco'],
 ['19.9.9','Do 5º ao 8º lugar, os clubes ganham destaque na classificação e disputam a Sul-Americana. O sorteador acompanha as vagas automaticamente até o primeiro resultado, como na Libertadores.','Sul-Americana automática do G8'],

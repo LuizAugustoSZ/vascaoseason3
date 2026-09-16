@@ -3,7 +3,7 @@ require __DIR__.'/../includes/bootstrap.php';
 header('Content-Type: application/json; charset=utf-8');header('Cache-Control: no-store');
 $query=mb_substr(trim((string)($_GET['q']??'')),0,80);$results=[];
 if(mb_strlen($query)<2){echo '[]';exit;}
-$pages=['Notícias'=>'noticias.php','Competição'=>'index.php#competicao','Participantes'=>'index.php#participantes','Jogadores'=>'index.php#artilharia','Vídeos'=>'index.php#midia','Títulos'=>'titulos.php','Estatísticas e recordes'=>'estatisticas.php','Mercado'=>'mercado-transferencias.php','Comandos'=>'comandos.php','Regulamento'=>'regulamento.php'];
+$pages=['Notícias'=>'noticias.php','Competição'=>'competicao.php','Participantes'=>'index.php#participantes','Jogadores'=>'jogadores.php','Vídeos'=>'index.php#midia','Títulos'=>'titulos.php','Estatísticas e recordes'=>'estatisticas.php','Mercado'=>'mercado-transferencias.php','Comandos'=>'comandos.php','Regulamento'=>'regulamento.php'];
 if(account_logged_in())$pages+=['Elenco geral'=>'elenco-geral.php','Gestão da competição'=>'mercado.php','Notificações'=>'notificacoes.php'];
 foreach($pages as $label=>$url)if(mb_stripos($label,$query)!==false)$results[]=['label'=>$label,'type'=>'Tela','url'=>$url];
 $like='%'.strtr($query,['!'=>'!!','%'=>'!%','_'=>'!_']).'%';
