@@ -24,7 +24,7 @@ $titleStmt->execute($titleParams);$titleRanking=$titleStmt->fetchAll();
 $totalGoals=array_sum(array_column($matches,'gols_a'))+array_sum(array_column($matches,'gols_b'));
 $totalCompetitions=count(array_unique(array_column($matches,'campeonato_id')));
 $transferVolume=array_sum(array_map(static fn($m)=>(float)$m['valor'],$finance['moves']));
-$formatMoney=static fn(float $v):string=>'R$ '.number_format($v,0,',','.');
+$formatMoney=static fn(mixed $v):string=>'R$ '.number_format((float)$v,0,',','.');
 $teamRank=static fn(string $field,bool $asc=false):array=>statistics_sort($teams,$field,$asc);
 $playerRank=static fn(string $field):array=>statistics_sort($players,$field);
 $financeRank=static fn(string $field):array=>statistics_sort($finance['clubs'],$field);
