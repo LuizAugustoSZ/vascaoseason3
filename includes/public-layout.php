@@ -36,6 +36,7 @@ function public_nav_icon(string $name): string
         'artilharia' => '<circle cx="12" cy="8" r="3.5"/><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"/>',
         'participantes' => '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.5 19c.5-4 2.4-6 5.5-6s5 2 5.5 6m0-5c3.2 0 5 1.7 5.5 5"/>',
         'titulos' => '<circle cx="12" cy="14" r="5"/><path d="m9 9-3-5h4l2 4 2-4h4l-3 5m-5 5 1.4 1.1L13 13"/>',
+        'estatisticas' => '<path d="M4 20V10h4v10m4 0V4h4v16m4 0v-7h-4M3 20h18"/>',
         'transferencias' => '<path d="M4 8h13m-3-3 3 3-3 3m6 5H7m3-3-3 3 3 3"/>',
         'comandos' => '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="m7 10 3 2-3 2m5 1h5"/>',
         'regulamento' => '<path d="M6 3.5h9l3 3V20H6zM15 3.5V7h3M9 11h6M9 14h6M9 17h4"/>',
@@ -56,6 +57,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         "participantes" => [$home . "#participantes", "Participantes"],
         "artilharia" => [$home . "#artilharia", "Jogadores"],
         "titulos" => ["titulos.php", "Títulos"],
+        "estatisticas" => ["estatisticas.php", "Estatísticas"],
     ];
     $configuredOrder = array_filter(array_map(
         'trim',
@@ -72,7 +74,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
     ];
     $navGroups = [
         'principal' => ['label' => 'Principal', 'links' => ['noticias']],
-        'competicao' => ['label' => 'Competição', 'links' => ['competicao', 'artilharia', 'participantes', 'titulos']],
+        'competicao' => ['label' => 'Competição', 'links' => ['competicao', 'artilharia', 'participantes', 'titulos', 'estatisticas']],
         'mercado' => ['label' => 'Mercado', 'links' => ['transferencias']],
         'informacoes' => ['label' => 'Informações', 'links' => ['comandos', 'regulamento']],
     ];
