@@ -8,4 +8,5 @@ rm -f /etc/apache2/mods-enabled/mpm_event.load \
       /etc/apache2/mods-enabled/mpm_worker.load \
       /etc/apache2/mods-enabled/mpm_worker.conf
 
+php /var/www/html/bin/notifications-worker.php &
 exec docker-php-entrypoint "$@"

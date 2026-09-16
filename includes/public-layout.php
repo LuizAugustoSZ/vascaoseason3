@@ -58,6 +58,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         "artilharia" => [$home . "#artilharia", "Jogadores"],
         "titulos" => ["titulos.php", "Títulos"],
         "estatisticas" => ["estatisticas.php", "Estatísticas"],
+        "midia" => [$home . "#midia", "Vídeos"],
     ];
     $configuredOrder = array_filter(array_map(
         'trim',
@@ -69,12 +70,13 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
     }
     $links += [
         "estatisticas" => ["estatisticas.php", "Estatísticas"],
+        "midia" => [$home . "#midia", "Vídeos"],
         "transferencias" => ["mercado-transferencias.php", "Mercado"],
         "comandos" => ["comandos.php", "Comandos"],
         "regulamento" => ["regulamento.php", "Regulamento"],
     ];
     $navGroups = [
-        'principal' => ['label' => 'Principal', 'links' => ['noticias']],
+        'principal' => ['label' => 'Principal', 'links' => ['noticias', 'midia']],
         'competicao' => ['label' => 'Competição', 'links' => ['competicao', 'artilharia', 'participantes', 'titulos', 'estatisticas']],
         'mercado' => ['label' => 'Mercado', 'links' => ['transferencias']],
         'informacoes' => ['label' => 'Informações', 'links' => ['comandos', 'regulamento']],
@@ -108,6 +110,8 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
     }
 ?>
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/../assets/css/style.css') ?>">
+    <link rel="stylesheet" href="assets/css/site-toolbar.css?v=<?=filemtime(__DIR__.'/../assets/css/site-toolbar.css')?>">
+    <script defer src="assets/js/site-toolbar.js?v=<?=filemtime(__DIR__.'/../assets/js/site-toolbar.js')?>"></script>
     <script>document.body.classList.add('site-has-sidebar');if(innerWidth>=768){document.body.classList.add('site-nav-collapsed');try{if(sessionStorage.getItem('site-sidebar-state')==='expanded')document.body.classList.remove('site-nav-collapsed')}catch(error){}}</script>
     <div class="site-loading-screen" role="status" aria-live="polite" aria-label="Carregando página">
         <img src="assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true">
@@ -117,7 +121,8 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
     <nav class="navbar fixed-top navbar-dark site-topbar">
         <div class="container">
             <a class="navbar-brand site-mobile-brand align-items-center gap-2" href="<?= $onLandingPage ? '#inicio' : 'index.php' ?>"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
-            <div class="global-nav-links" aria-label="Seções principais"><?php foreach ($globalLinks as [$href, $label]): ?><a href="<?= e($href) ?>"><?= e($label) ?></a><?php endforeach; ?></div>
+            <div class="site-search"><input type="search" data-site-search placeholder="Buscar no Vascão…" aria-label="Buscar telas, clubes, jogadores e notícias" autocomplete="off"><div class="site-search-results" data-search-results hidden aria-live="polite"></div></div>
+            <?php if(account_logged_in()): ?><div class="site-notifications"><button class="site-notification-toggle" data-notification-toggle data-csrf="<?=e(csrf_token())?>" aria-label="Notificações" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M9 21h6"/></svg><b data-notification-count hidden></b></button><div class="site-notification-panel" data-notification-panel hidden><button data-notification-read>Marcar como lidas</button><div data-notification-list></div><a href="notificacoes.php">Histórico e preferências</a></div></div><?php endif; ?>
             <?php if (account_logged_in()): ?><button class="site-topbar-profile" type="button" data-account-popover-toggle data-account-popover-origin="top" aria-expanded="false" aria-controls="site-account-popover"><span class="site-topbar-avatar"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><b hidden><?= e($teamInitials) ?></b><?php else: ?><b><?= e($participantId > 0 ? $teamInitials : 'S3') ?></b><?php endif; ?></span><span><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><small><i></i><?= e($participantId > 0 ? $teamNavLabel : (account_is_admin() ? 'Administração' : 'Online')) ?></small></span><em>⌄</em></button><?php endif; ?>
             <?php if (!account_logged_in()): ?><a class="btn btn-outline-light ms-auto me-2" href="login.php">Entrar</a><?php endif; ?>
             <button class="site-mobile-menu-trigger" type="button" aria-controls="site-side-menu" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span><span></span></button>
@@ -137,7 +142,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
     </aside>
     <?php if (account_logged_in()): ?><aside id="site-account-popover" class="site-account-popover" aria-label="Conta e time" aria-hidden="true">
         <div class="site-account-popover-profile"><div class="site-account-popover-shield"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="Escudo do <?= e($teamNavLabel) ?>"><?php else: ?><span><?= e($participantId > 0 ? $teamInitials : 'S3') ?></span><?php endif; ?></div><div><small><?= account_is_admin() ? 'ADMINISTRAÇÃO' : 'CONTA CONECTADA' ?></small><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><span><?= e($participantId > 0 ? $teamNavLabel : 'Sem time associado') ?></span></div></div>
-        <nav><?php if ($participantId > 0): ?><a href="time.php?id=<?= $participantId ?>"><i><?= public_nav_icon('time') ?></i><span>Página do clube</span></a><?php endif; ?><a href="trocar-senha.php"><i><?= public_nav_icon('gestao') ?></i><span>Segurança da conta</span></a><?php if (account_is_admin()): ?><a href="admin/"><i><?= public_nav_icon('admin') ?></i><span>Painel administrativo</span></a><?php endif; ?><a class="site-account-logout" href="logout.php"><i><?= public_nav_icon('transferencias') ?></i><span>Sair da conta</span></a></nav>
+        <nav><?php if ($participantId > 0): ?><a href="time.php?id=<?= $participantId ?>"><i><?= public_nav_icon('time') ?></i><span>Página do clube</span></a><?php endif; ?><a href="trocar-senha.php"><i><?= public_nav_icon('gestao') ?></i><span>Segurança da conta</span></a><a href="notificacoes.php"><i><?= public_nav_icon('noticias') ?></i><span>Notificações e e-mails</span></a><?php if (account_is_admin()): ?><a href="admin/"><i><?= public_nav_icon('admin') ?></i><span>Painel administrativo</span></a><?php endif; ?><a class="site-account-logout" href="logout.php"><i><?= public_nav_icon('transferencias') ?></i><span>Sair da conta</span></a></nav>
     </aside><?php endif; ?>
 <?php
 }
