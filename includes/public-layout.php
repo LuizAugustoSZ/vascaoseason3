@@ -68,6 +68,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         if (isset($sectionLinks[$key]) && !isset($links[$key])) $links[$key] = $sectionLinks[$key];
     }
     $links += [
+        "estatisticas" => ["estatisticas.php", "Estatísticas"],
         "transferencias" => ["mercado-transferencias.php", "Mercado"],
         "comandos" => ["comandos.php", "Comandos"],
         "regulamento" => ["regulamento.php", "Regulamento"],
