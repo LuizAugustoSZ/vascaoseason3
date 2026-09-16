@@ -382,6 +382,40 @@ if ($clube) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/market.css">
+
+    <style>
+        /* Estilos exclusivos do conteúdo de Gestão da Competição. */
+        .competition-registration .registration-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+        .competition-registration .registration-heading h2{margin:5px 0 10px}
+        .competition-registration .registration-legend{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 12px;padding:0;list-style:none}
+        .competition-registration [data-state="starter"]{--state-color:#ed2338;--state-tint:rgba(237,35,56,.13)}
+        .competition-registration [data-state="reserve"]{--state-color:#087ff5;--state-tint:rgba(8,127,245,.12)}
+        .competition-registration [data-state="out"]{--state-color:#566570;--state-tint:rgba(86,101,112,.08)}
+        .competition-registration .registration-legend li{display:flex;gap:9px;align-items:flex-start;font-size:.8rem}
+        .competition-registration .registration-legend i{width:13px;height:13px;border-radius:50%;background:var(--state-color);margin-top:3px;flex-shrink:0}
+        .competition-registration .registration-legend small{display:block;color:#a5b0bd;font-size:.7rem}
+        .competition-registration .registration-counts{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;margin:14px 0;color:#c5cfda;font-size:.85rem}
+        .competition-registration .registration-counts strong{color:#fff}
+        .competition-registration .registration-counts small{margin-left:auto;color:#a5b0bd}
+        .competition-registration .registration-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px}
+        .competition-registration .registration-card{min-width:0;padding:11px 9px 8px;border:1px solid var(--state-color);border-radius:10px;background:linear-gradient(135deg,var(--state-tint),#101418);display:flex;flex-direction:column;gap:9px;transition:border-color .15s,background .15s}
+        .competition-registration .registration-badge{align-self:flex-start;border-radius:20px;padding:4px 10px;background:var(--state-color);color:#fff;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
+        .competition-registration .registration-name{font-size:.85rem;line-height:1.25;min-height:2.5em;overflow-wrap:anywhere;text-transform:uppercase;color:#fff;padding:0 3px}
+        .competition-registration .registration-rating{display:flex;gap:10px;align-items:center;margin-top:auto;padding:0 3px}
+        .competition-registration .registration-rating strong{font:800 2rem/1 'Barlow Condensed',sans-serif;color:#ef3940}
+        .competition-registration .registration-rating span{font-size:.7rem;color:#a5b0bd}
+        .competition-registration .registration-options{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:2px;border:1px solid #303b45;border-radius:6px;background:#151b21;padding:2px}
+        .competition-registration .registration-options button{min-width:0;padding:7px 2px;min-height:34px;border:0;border-radius:4px;background:transparent;color:#bcc8d4;font-size:.65rem;cursor:pointer;transition:background .15s,color .15s}
+        .competition-registration .registration-options button[aria-pressed="true"]{background:var(--state-color);color:#fff;font-weight:700}
+        .competition-registration .registration-options button:hover{color:#fff;background:#303b45}
+        .competition-registration .registration-options button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+        .market-page #elenco .roster-select-card.is-starter{border-color:#ed2338;background:linear-gradient(135deg,rgba(237,35,56,.13),#101418)}
+        .market-page #elenco .roster-select-card b{overflow-wrap:anywhere;min-width:0}
+        @media(min-width:1400px){.competition-registration .registration-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+        @media(max-width:575px){.competition-registration{padding:16px!important}.competition-registration .registration-legend{gap:10px}.competition-registration .registration-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.competition-registration .registration-counts small{width:100%;margin:0}.competition-registration .registration-options{grid-template-columns:1fr}.competition-registration .registration-options button{min-height:36px}}
+        @media(max-width:359px){.competition-registration .registration-grid{grid-template-columns:minmax(0,1fr)}.competition-registration .registration-options{grid-template-columns:1.2fr 1fr 1fr}}
+        @media(prefers-reduced-motion:reduce){.competition-registration .registration-card,.competition-registration .registration-options button{transition:none}}
+    </style>
 </head>
 
 <body><?php public_navbar('mercado'); ?><main class="container market-page" data-market-editable="<?= $podeEditarMercado ? '1' : '0' ?>"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
@@ -413,7 +447,39 @@ if ($clube) {
                     </form>
                 </section><?php endif; ?>
             <div id="gestao-competicao" class="market-anchor" aria-hidden="true"></div>
-            <?php if ($podeEditarInscricao): ?><section class="panel p-4 mb-4"><span class="eyebrow"><?= $isMasterManagement && !$podeEditarMercado ? 'Acesso Master · ciclo ignorado' : 'Janela aberta · todos os jogadores disponíveis' ?></span><h2>INSCRIÇÃO NA COMPETIÇÃO</h2><p class="text-secondary">Todos os jogadores ativos do Elenco Geral aparecem abaixo automaticamente. Escolha exatamente 11 titulares e até 15 reservas; quem não for marcado permanece somente no Geral.</p><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_inscricao_geral"><?php if($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><div class="roster-grid"><?php foreach($elencoGeral as $j): $gid=(int)$j['id']; ?><article class="roster-select-card"><label><input type="checkbox" name="inscrito_id[]" value="<?= $gid ?>" <?= isset($inscritosGerais[$gid])?'checked':'' ?>> Inscrito</label><label><input type="checkbox" name="titular_geral_id[]" value="<?= $gid ?>" <?= isset($titularesGerais[$gid])?'checked':'' ?>> Titular</label><b><?= e($j['nome']) ?></b><strong><?= (int)$j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar inscrição</button></form></section><?php else: ?><div class="alert alert-warning mb-4"><strong>Inscrição congelada.</strong> Os jogadores contratados agora ficam no Elenco Geral e aparecerão automaticamente aqui quando a próxima janela abrir. A escalação dos já inscritos continua editável abaixo.</div><?php endif; ?>
+            <?php if ($podeEditarInscricao): ?><section class="panel p-4 mb-4 competition-registration">
+                <div class="registration-heading">
+                    <div><span class="eyebrow"><?= $isMasterManagement && !$podeEditarMercado ? 'Acesso Master · ciclo ignorado' : 'Janela aberta · todos os jogadores disponíveis' ?></span><h2>INSCRIÇÃO NA COMPETIÇÃO</h2></div>
+                    <ul class="registration-legend" aria-label="Estados de inscrição">
+                        <li data-state="starter"><i aria-hidden="true"></i><div><b>Titular</b><small>Equipe inicial · máximo de 11</small></div></li>
+                        <li data-state="reserve"><i aria-hidden="true"></i><div><b>Reserva</b><small>Inscrito e disponível no banco</small></div></li>
+                        <li data-state="out"><i aria-hidden="true"></i><div><b>Não inscrito</b><small>Fora desta competição</small></div></li>
+                    </ul>
+                </div>
+                <p class="text-secondary">Escolha exatamente 11 titulares e até 15 reservas do Elenco Geral. As alterações serão aplicadas ao salvar a inscrição.</p>
+                <form method="post" data-registration-form>
+                    <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_inscricao_geral"><?php if($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?>
+                    <div class="registration-counts" role="status" aria-live="polite"><strong><span data-registration-starters><?= count($titularesGerais) ?></span>/11 titulares selecionados</strong><span><span data-registration-reserves><?= count($inscritosGerais) - count($titularesGerais) ?></span>/15 reservas</span><small data-registration-unsaved>Inscrição atual</small></div>
+                    <noscript><p class="alert alert-warning">Ative o JavaScript para alterar os estados e salvar a inscrição.</p></noscript>
+                    <div class="roster-grid registration-grid">
+                        <?php foreach($elencoGeral as $j): $gid=(int)$j['id']; $estado=isset($titularesGerais[$gid])?'starter':(isset($inscritosGerais[$gid])?'reserve':'out'); ?>
+                        <article class="registration-card" data-state="<?= $estado ?>">
+                            <!-- Campos legados preservados para o backend e o modal de confirmação. -->
+                            <input hidden type="checkbox" name="inscrito_id[]" value="<?= $gid ?>" <?= isset($inscritosGerais[$gid])?'checked':'' ?>>
+                            <input hidden type="checkbox" name="titular_geral_id[]" value="<?= $gid ?>" <?= isset($titularesGerais[$gid])?'checked':'' ?>>
+                            <span class="registration-badge"><?= ['starter'=>'Titular','reserve'=>'Reserva','out'=>'Não inscrito'][$estado] ?></span>
+                            <b class="registration-name" id="registration-player-<?= $gid ?>"><?= e($j['nome']) ?></b>
+                            <div class="registration-rating"><strong><?= (int)$j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></div>
+                            <div class="registration-options" role="group" aria-labelledby="registration-player-<?= $gid ?>">
+                                <?php foreach(['out'=>'Não inscrito','reserve'=>'Reserva','starter'=>'Titular'] as $valor=>$rotulo): ?><button type="button" data-registration-state="<?= $valor ?>" aria-pressed="<?= $estado===$valor?'true':'false' ?>"><?= $rotulo ?></button><?php endforeach; ?>
+                            </div>
+                        </article>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php if (!$elencoGeral): ?><p class="text-secondary">Nenhum jogador ativo no Elenco Geral.</p><?php endif; ?>
+                    <button class="btn btn-danger mt-3" data-registration-save disabled>Salvar inscrição</button>
+                </form>
+            </section><?php else: ?><div class="alert alert-warning mb-4"><strong>Inscrição congelada.</strong> Os jogadores contratados agora ficam no Elenco Geral e aparecerão automaticamente aqui quando a próxima janela abrir. A escalação dos já inscritos continua editável abaixo.</div><?php endif; ?>
             <section class="panel p-4 mb-4" id="elenco">
                 <div class="d-flex justify-content-between">
                     <h2>ELENCO</h2>
@@ -430,6 +496,59 @@ if ($clube) {
             <div class="modal fade market-movement-modal" id="market-undo-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><small class="eyebrow">Ação definitiva</small><h2 class="modal-title">DESFAZER MOVIMENTAÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><form method="post"><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><input type="hidden" name="action" value="desfazer_movimentacao"><input type="hidden" name="movimentacao_id"><p class="movement-undo-copy"></p><div class="alert alert-warning mb-0 movement-undo-detail"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Voltar</button><button class="btn btn-danger">Sim, desfazer</button></div></form></div></div></div><?php endif; ?>
             <?php endif; ?>
     </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('[data-registration-form]');
+    if (!form) return;
+    const cards = [...form.querySelectorAll('.registration-card')];
+    const labels = {out: 'Não inscrito', reserve: 'Reserva', starter: 'Titular'};
+    const counts = () => ({starters: cards.filter(card => card.dataset.state === 'starter').length, reserves: cards.filter(card => card.dataset.state === 'reserve').length});
+    const snapshot = () => cards.map(card => card.dataset.state).join(',');
+    const initial = snapshot();
+    const notify = message => askClubConfirmation('REVISE A INSCRIÇÃO', message, 'Entendi');
+    function updateCounts() {
+        const count = counts();
+        form.querySelector('[data-registration-starters]').textContent = count.starters;
+        form.querySelector('[data-registration-reserves]').textContent = count.reserves;
+        form.querySelector('[data-registration-unsaved]').textContent = snapshot() === initial ? 'Inscrição atual' : 'Alterações não salvas';
+    }
+    form.addEventListener('click', event => {
+        const button = event.target.closest('[data-registration-state]');
+        if (!button) return;
+        const card = button.closest('.registration-card');
+        const state = button.dataset.registrationState;
+        if (state === card.dataset.state) return;
+        const count = counts();
+        if (state === 'starter' && count.starters >= 11) {
+            notify('Você já selecionou os 11 titulares. Mude um titular para reserva ou não inscrito antes de escolher outro.');
+            return;
+        }
+        if (state === 'reserve' && count.reserves >= 15) {
+            notify('O limite é de 15 reservas. Mude o estado de um reserva antes de escolher outro.');
+            return;
+        }
+        card.dataset.state = state;
+        card.querySelector('input[name="inscrito_id[]"]').checked = state !== 'out';
+        card.querySelector('input[name="titular_geral_id[]"]').checked = state === 'starter';
+        card.querySelector('.registration-badge').textContent = labels[state];
+        card.querySelectorAll('[data-registration-state]').forEach(option => option.setAttribute('aria-pressed', String(option.dataset.registrationState === state)));
+        delete form.dataset.confirmedSubmit;
+        updateCounts();
+    });
+    // Captura antes do modal de confirmação compartilhado; a validação definitiva segue no backend.
+    form.addEventListener('submit', event => {
+        const count = counts();
+        if (count.starters === 11 && count.reserves <= 15) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        delete form.dataset.confirmedSubmit;
+        notify(count.starters !== 11 ? 'Selecione exatamente 11 titulares antes de salvar a inscrição.' : 'A inscrição permite no máximo 15 reservas.');
+    }, true);
+    updateCounts();
+    form.querySelector('[data-registration-save]').disabled = false;
+});
+</script>
 </body>
 
 </html>
