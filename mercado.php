@@ -424,6 +424,7 @@ if ($clube) {
         .competition-roster .roster-tools{display:grid;grid-template-columns:minmax(140px,1.4fr) minmax(120px,1fr) minmax(170px,1.2fr) auto;gap:10px;align-items:end;margin:16px 0 12px}
         .competition-roster .roster-tools label{display:grid;gap:5px;color:#aebbc9;font-size:.75rem;min-width:0}
         .competition-roster .roster-tools .form-control,.competition-roster .roster-tools .form-select{min-width:0;font-size:.8rem;min-height:40px}
+        .competition-roster .roster-tools [data-roster-clear]{width:100%;height:40px;white-space:nowrap}
         .competition-roster .roster-position-filters{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
         .competition-roster .roster-position-filters button{display:flex;align-items:center;gap:7px;min-height:38px;padding:7px 11px;border:1px solid #36424f;border-radius:7px;color:#c3ccd7;background:#151b21;font-size:.75rem;cursor:pointer}
         .competition-roster .roster-position-filters button[aria-pressed="true"]{border-color:#ed2338;background:#3a1720;color:#fff}
