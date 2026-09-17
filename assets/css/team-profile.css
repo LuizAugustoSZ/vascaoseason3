@@ -187,30 +187,32 @@
 }
 
 .club-stats>div:has(.stat-icon) {
-    grid-template-columns:34px auto;
+    grid-template-columns:38px minmax(0,auto);
     grid-template-rows:auto auto;
     align-content:center;
     justify-content:center;
-    column-gap:8px;
+    column-gap:10px;
 }
 
 .club-stats>div>.stat-icon {
     grid-column:1;
-    grid-row:2;
+    grid-row:1/3;
     align-self:center;
     margin:0;
 }
 
 .club-stats>div>small {
-    grid-column:1/3;
+    grid-column:2;
     grid-row:1;
-    margin-bottom:5px;
+    align-self:end;
+    margin:0 0 3px;
+    text-align:left;
 }
 
 .club-stats>div>strong {
     grid-column:2;
     grid-row:2;
-    align-self:center;
+    align-self:start;
     text-align:left;
 }
 

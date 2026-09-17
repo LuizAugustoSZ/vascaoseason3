@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['24.1','Estatísticas e perfil de clube agora reutilizam exatamente o componente de ícone aprovado em Competição e Notificações, sem tamanhos ou contornos adicionais.','Componente de ícone unificado'],
 ['24.0','Ícones dos cards agora ficam sempre na mesma linha e imediatamente à esquerda do valor calculado, com o nome da métrica acima, nas telas de clube, competição e estatísticas.','Ícones alinhados aos valores'],
 ['23.9','A Central de Estatísticas passou a alinhar todos os ícones na coluna esquerda, com títulos, dados dinâmicos e valores organizados à direita em todos os cards.','Alinhamento dos cards de estatísticas'],
 ['23.8','Cards de resumo reorganizados com ícone à esquerda, nome da métrica acima e estatística em destaque abaixo, seguindo a mesma hierarquia visual em competição e rodadas.','Hierarquia dos cards de estatísticas'],
