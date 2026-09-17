@@ -6,3 +6,14 @@
 .competition-page #round-summary .round-summary-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;padding:0 18px 16px}
 .competition-page #round-summary p{padding-inline:18px}
 @media(max-width:767px){.competition-page #round-summary .round-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.competition-page #round-summary .round-summary-grid article:last-child{grid-column:1/-1}}
+/* Escudos inteiros, sem recorte pelo contêiner. */
+.competition-page .team-badge-image{overflow:visible;flex-shrink:0;line-height:0}
+.competition-page .team-badge-image img{display:block;object-fit:contain;object-position:center;min-height:0;min-width:0}
+.competition-page .ranking-table .team-badge-image{width:34px;height:38px;flex-basis:34px}
+.competition-page .ranking-table .team-badge-image img{width:34px;height:38px;padding:0}
+.competition-page .game-team-side .team-badge-image img{width:34px;height:34px}
+.round-summary-grid article{display:flex;align-items:center;gap:14px}
+.round-stat-icon{flex-shrink:0;font-size:26px;color:#e8edf3;line-height:1}
+.round-highlight{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:0 18px 18px;color:#9aabbc;font-size:12px}
+.round-highlight-game{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:12px 16px;border:1px solid #34424d;border-radius:5px;background:var(--surface-background);color:#fff;text-align:left}
+.round-highlight-game b{font-size:18px}.round-highlight-game small{color:#aab9cb}.round-highlight-game:hover,.round-highlight-game:focus-visible{border-color:#ed172b}
