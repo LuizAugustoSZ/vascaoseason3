@@ -17,3 +17,5 @@
 .round-highlight{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:0 18px 18px;color:#9aabbc;font-size:12px}
 .round-highlight-game{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:12px 16px;border:1px solid #34424d;border-radius:5px;background:var(--surface-background);color:#fff;text-align:left}
 .round-highlight-game b{font-size:18px}.round-highlight-game small{color:#aab9cb}.round-highlight-game:hover,.round-highlight-game:focus-visible{border-color:#ed172b}
+
+.players-page .player-ranking-tabs{gap:8px;flex:1;min-width:0}.players-page .panel-head:has(.player-ranking-tabs){gap:18px}.players-page .competition-identity-panel{grid-template-columns:100px minmax(0,1fr)}.players-page #scorers-championship-identity{width:100px;height:100px;object-fit:contain}

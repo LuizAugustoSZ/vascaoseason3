@@ -1,6 +1,9 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['23.6','Abas com fundo escuro, borda inferior sempre vermelha e contorno vermelho na seleção. Jogadores ganhou espaçamento entre Artilheiros e Assistências e a logo do campeonato ao lado do seletor.','Abas e identidade dos campeonatos'],
+['23.5','Escudos inteiros e dimensionados sem recortes na classificação, jogos e pódio. O resumo da rodada ganhou ícones e acesso aos detalhes da partida com maior diferença de gols.','Escudos e destaque da rodada'],
+['23.4','Fundos de cards e modais padronizados em #101216, incluindo o admin. Na index, faixas somente em Notícias, Jogadores e Títulos; removida a divisória entre a identificação do clube e suas estatísticas.','Superfícies e faixas padronizadas'],
 ['23.3','A landing voltou a separar suas seções em faixas de fundo. Ver competição abre a página própria, e o rodapé acompanha o fim da janela mesmo com zoom reduzido. Sidebar, navbar e footer compartilham a mesma cor; o título de Estatísticas fica livre de caixas.','Faixas da landing e acabamento do layout'],
 ['23.2','Cabeçalhos simplificados e fundo padronizado com linhas diagonais e brilho vermelho. O painel administrativo passou a compartilhar pesquisa, notificações e perfil com o site público, com regras de consistência registradas na documentação.','Identidade visual e navegação compartilhadas'],
 ['23.1','Estilos de Competição e Jogadores corrigidos, escudos sem molduras, controles e paginação ajustados. O perfil acompanha o botão ao redimensionar, e o resumo da rodada ocupa toda a largura abaixo da classificação e dos jogos.','Correções visuais e resumo da rodada'],

@@ -3,6 +3,7 @@ let dedicatedTeams=[];
 const originalRenderSite=renderSite;
 renderSite=function(data){
  dedicatedTeams=data.participantes||[];originalRenderSite(data);
+ const championshipLogo=$('#scorers-championship-identity');if(data.campeonato?.logo_url){championshipLogo.attr('src',data.campeonato.logo_url).attr('alt',`Logo ${data.campeonato.nome}`).removeClass('d-none')}else championshipLogo.addClass('d-none');
  if(!document.body.classList.contains('competition-page'))return;
  const games=data.partidas||[],finished=games.filter(g=>['finalizada','wo','penalidade'].includes(g.status));
  $('#competition-summary').remove();
