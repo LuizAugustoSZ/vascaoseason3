@@ -48,8 +48,9 @@ function public_nav_icon(string $name): string
     return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' . ($paths[$name] ?? $paths['admin']) . '</svg>';
 }
 
-function public_navbar(string $active = "", bool $onLandingPage = false): void
+function public_navbar(string $active = "", bool $onLandingPage = false, bool $adminLayout = false): void
 {
+    $root = $adminLayout ? '../' : '';
     $home = $onLandingPage ? "" : "index.php";
     $sectionLinks = [
         "noticias" => ["noticias.php", "Notícias"],
@@ -109,42 +110,46 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
         }
     }
 ?>
-    <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/../assets/css/style.css') ?>">
-    <link rel="stylesheet" href="assets/css/site-toolbar.css?v=<?=filemtime(__DIR__.'/../assets/css/site-toolbar.css')?>">
-    <link rel="stylesheet" href="assets/css/page-headings.css?v=<?=filemtime(__DIR__.'/../assets/css/page-headings.css')?>">
-    <link rel="stylesheet" href="assets/css/navigation-v22.css?v=<?=filemtime(__DIR__.'/../assets/css/navigation-v22.css')?>">
-    <script defer src="assets/js/site-toolbar.js?v=<?=filemtime(__DIR__.'/../assets/js/site-toolbar.js')?>"></script>
-    <script>document.body.classList.add('site-has-sidebar');if(innerWidth>=768){document.body.classList.add('site-nav-collapsed');try{if(sessionStorage.getItem('site-sidebar-state')==='expanded')document.body.classList.remove('site-nav-collapsed')}catch(error){}}</script>
+    <link rel="stylesheet" href="<?= $root ?>assets/css/style.css?v=<?= filemtime(__DIR__ . '/../assets/css/style.css') ?>">
+    <link rel="stylesheet" href="<?= $root ?>assets/css/site-toolbar.css?v=<?=filemtime(__DIR__.'/../assets/css/site-toolbar.css')?>">
+    <link rel="stylesheet" href="<?= $root ?>assets/css/page-headings.css?v=<?=filemtime(__DIR__.'/../assets/css/page-headings.css')?>">
+    <link rel="stylesheet" href="<?= $root ?>assets/css/navigation-v22.css?v=<?=filemtime(__DIR__.'/../assets/css/navigation-v22.css')?>">
+    <script defer src="<?= $root ?>assets/js/account-menu.js?v=<?=filemtime(__DIR__.'/../assets/js/account-menu.js')?>"></script>
+    <script defer src="<?= $root ?>assets/js/site-toolbar.js?v=<?=filemtime(__DIR__.'/../assets/js/site-toolbar.js')?>"></script>
+    <?php if (!$adminLayout): ?><script>document.body.classList.add('site-has-sidebar');if(innerWidth>=768){document.body.classList.add('site-nav-collapsed');try{if(sessionStorage.getItem('site-sidebar-state')==='expanded')document.body.classList.remove('site-nav-collapsed')}catch(error){}}</script>
     <div class="site-loading-screen" role="status" aria-live="polite" aria-label="Carregando página">
-        <img src="assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true">
+        <img src="<?= $root ?>assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true">
         <span class="site-loading-spinner"></span>
         <strong>CARREGANDO</strong>
     </div>
-    <nav class="navbar fixed-top navbar-dark site-topbar">
+    <?php endif; ?>
+    <nav class="navbar fixed-top navbar-dark site-topbar" data-site-root="<?= $root ?>">
         <div class="container">
-            <a class="navbar-brand site-mobile-brand align-items-center gap-2" href="<?= $onLandingPage ? '#inicio' : 'index.php' ?>"><img class="brand-mark" src="assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
+            <a class="navbar-brand site-mobile-brand align-items-center gap-2" href="<?= $root . ($onLandingPage ? '#inicio' : 'index.php') ?>"><img class="brand-mark" src="<?= $root ?>assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
             <div class="site-search"><input type="search" data-site-search placeholder="Buscar no Vascão…" aria-label="Buscar telas, clubes, jogadores e notícias" autocomplete="off"><div class="site-search-results" data-search-results hidden aria-live="polite"></div></div>
-            <?php if(account_logged_in()): ?><div class="site-notifications"><button class="site-notification-toggle" data-notification-toggle data-csrf="<?=e(csrf_token())?>" aria-label="Notificações" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M9 21h6"/></svg><b data-notification-count hidden></b></button><div class="site-notification-panel" data-notification-panel hidden><button data-notification-read>Marcar como lidas</button><div data-notification-list></div><a href="notificacoes.php">Histórico e preferências</a></div></div><?php endif; ?>
+            <?php if(account_logged_in()): ?><div class="site-notifications"><button class="site-notification-toggle" data-notification-toggle data-csrf="<?=e(csrf_token())?>" aria-label="Notificações" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M9 21h6"/></svg><b data-notification-count hidden></b></button><div class="site-notification-panel" data-notification-panel hidden><button data-notification-read>Marcar como lidas</button><div data-notification-list></div><a href="<?= $root ?>notificacoes.php">Histórico e preferências</a></div></div><?php endif; ?>
             <?php if (account_logged_in()): ?><button class="site-topbar-profile" type="button" data-account-popover-toggle data-account-popover-origin="top" aria-expanded="false" aria-controls="site-account-popover"><span class="site-topbar-avatar"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><b hidden><?= e($teamInitials) ?></b><?php else: ?><b><?= e($participantId > 0 ? $teamInitials : 'S3') ?></b><?php endif; ?></span><span><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><small><i></i><?= e($participantId > 0 ? $teamNavLabel : (account_is_admin() ? 'Administração' : 'Online')) ?></small></span><em>⌄</em></button><?php endif; ?>
-            <?php if (!account_logged_in()): ?><a class="btn btn-outline-light ms-auto me-2" href="login.php">Entrar</a><?php endif; ?>
-            <button class="site-mobile-menu-trigger" type="button" aria-controls="site-side-menu" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span><span></span></button>
+            <?php if (!account_logged_in()): ?><a class="btn btn-outline-light ms-auto me-2" href="<?= $root ?>login.php">Entrar</a><?php endif; ?>
+            <button class="<?= $adminLayout ? 'admin-menu-toggle' : 'site-mobile-menu-trigger' ?>" type="button" aria-controls="<?= $adminLayout ? 'admin-side-menu' : 'site-side-menu' ?>" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span><span></span></button>
         </div>
     </nav>
+    <?php if (!$adminLayout): ?>
     <div class="site-menu-backdrop" data-site-menu-close></div>
     <aside id="site-side-menu" class="site-side-menu" aria-label="Menu principal" aria-hidden="true">
         <div class="site-side-head">
-            <a class="site-side-brand" href="<?= $onLandingPage ? "#inicio" : "index.php" ?>"><img src="assets/img/logo-season3.webp?v=5" alt=""><span>VASCÃO <b>SEASON 3</b></span></a>
+            <a class="site-side-brand" href="<?= $onLandingPage ? "#inicio" : "index.php" ?>"><img src="<?= $root ?>assets/img/logo-season3.webp?v=5" alt=""><span>VASCÃO <b>SEASON 3</b></span></a>
             <button type="button" class="site-menu-close" data-sidebar-toggle aria-label="Recolher menu" title="Expandir ou recolher">‹</button>
         </div>
         <nav class="site-side-nav">
             <?php foreach ($navGroups as $groupKey => $group): $visibleGroupLinks = array_values(array_filter($group['links'], static fn(string $key): bool => isset($links[$key]))); if (!$visibleGroupLinks) continue; ?><section class="site-nav-group" data-nav-group="<?= e($groupKey) ?>"><span class="site-side-label"><?= e(mb_strtoupper($group['label'])) ?></span><ul><?php foreach ($visibleGroupLinks as $key): [$href, $label] = $links[$key]; ?><li><a class="<?= $active === $key ? 'active' : '' ?>" href="<?= e($href) ?>" aria-label="<?= e($label) ?>"><i><?= public_nav_icon($key) ?></i><span><?= e($label) ?></span><b aria-hidden="true">›</b></a></li><?php endforeach; ?></ul></section><?php endforeach; ?>
-            <?php if ($participantId > 0): ?><section class="site-nav-group" data-nav-group="clube"><span class="site-side-label">MEU CLUBE</span><ul><li><a class="<?= $isOwnTeamPage ? 'active' : '' ?>" href="time.php?id=<?= $participantId ?>" aria-label="Página do <?= e($teamNavLabel) ?>"<?= $isOwnTeamPage ? ' aria-current="page"' : '' ?>><i><?= public_nav_icon('time') ?></i><span>Página do <?= e($teamNavLabel) ?></span><b>›</b></a></li><li><a class="<?= $active === 'elenco-geral' ? 'active' : '' ?>" href="elenco-geral.php" aria-label="Elenco geral"><i><?= public_nav_icon('elenco') ?></i><span>Elenco geral</span><b>›</b></a></li><li><a class="<?= $active === 'mercado' ? 'active' : '' ?>" href="mercado.php" aria-label="Gestão da competição"><i><?= public_nav_icon('gestao') ?></i><span>Gestão da competição</span><b>›</b></a></li></ul></section><?php endif; ?>
-            <?php if (account_logged_in() && account_is_admin()): ?><section class="site-nav-group"><span class="site-side-label">SISTEMA</span><ul><li><a href="admin/" aria-label="Administração"><i><?= public_nav_icon('admin') ?></i><span>Administração</span><b>›</b></a></li></ul></section><?php endif; ?>
+            <?php if ($participantId > 0): ?><section class="site-nav-group" data-nav-group="clube"><span class="site-side-label">MEU CLUBE</span><ul><li><a class="<?= $isOwnTeamPage ? 'active' : '' ?>" href="<?= $root ?>time.php?id=<?= $participantId ?>" aria-label="Página do <?= e($teamNavLabel) ?>"<?= $isOwnTeamPage ? ' aria-current="page"' : '' ?>><i><?= public_nav_icon('time') ?></i><span>Página do <?= e($teamNavLabel) ?></span><b>›</b></a></li><li><a class="<?= $active === 'elenco-geral' ? 'active' : '' ?>" href="elenco-geral.php" aria-label="Elenco geral"><i><?= public_nav_icon('elenco') ?></i><span>Elenco geral</span><b>›</b></a></li><li><a class="<?= $active === 'mercado' ? 'active' : '' ?>" href="mercado.php" aria-label="Gestão da competição"><i><?= public_nav_icon('gestao') ?></i><span>Gestão da competição</span><b>›</b></a></li></ul></section><?php endif; ?>
+            <?php if (account_logged_in() && account_is_admin()): ?><section class="site-nav-group"><span class="site-side-label">SISTEMA</span><ul><li><a href="<?= $root ?>admin/" aria-label="Administração"><i><?= public_nav_icon('admin') ?></i><span>Administração</span><b>›</b></a></li></ul></section><?php endif; ?>
         </nav>
     </aside>
+    <?php endif; ?>
     <?php if (account_logged_in()): ?><aside id="site-account-popover" class="site-account-popover" aria-label="Conta e time" aria-hidden="true">
         <div class="site-account-popover-profile"><div class="site-account-popover-shield"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="Escudo do <?= e($teamNavLabel) ?>"><?php else: ?><span><?= e($participantId > 0 ? $teamInitials : 'S3') ?></span><?php endif; ?></div><div><small><?= account_is_admin() ? 'ADMINISTRAÇÃO' : 'CONTA CONECTADA' ?></small><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><span><?= e($participantId > 0 ? $teamNavLabel : 'Sem time associado') ?></span></div></div>
-        <nav><?php if ($participantId > 0): ?><a href="time.php?id=<?= $participantId ?>"><i><?= public_nav_icon('time') ?></i><span>Página do clube</span></a><?php endif; ?><a href="trocar-senha.php"><i><?= public_nav_icon('gestao') ?></i><span>Segurança da conta</span></a><a href="notificacoes.php"><i><?= public_nav_icon('noticias') ?></i><span>Notificações e e-mails</span></a><?php if (account_is_admin()): ?><a href="admin/"><i><?= public_nav_icon('admin') ?></i><span>Painel administrativo</span></a><?php endif; ?><a class="site-account-logout" href="logout.php"><i><?= public_nav_icon('transferencias') ?></i><span>Sair da conta</span></a></nav>
+        <nav><?php if ($adminLayout): ?><a href="../index.php"><i><?= public_nav_icon('noticias') ?></i><span>Abrir site</span></a><?php endif; ?><?php if ($participantId > 0): ?><a href="<?= $root ?>time.php?id=<?= $participantId ?>"><i><?= public_nav_icon('time') ?></i><span>Página do clube</span></a><?php endif; ?><a href="<?= $root ?>trocar-senha.php"><i><?= public_nav_icon('gestao') ?></i><span>Segurança da conta</span></a><a href="<?= $root ?>notificacoes.php"><i><?= public_nav_icon('noticias') ?></i><span>Notificações e e-mails</span></a><?php if (account_is_admin()): ?><a href="<?= $root ?>admin/"><i><?= public_nav_icon('admin') ?></i><span>Painel administrativo</span></a><?php endif; ?><a class="site-account-logout" href="<?= $root ?>logout.php"><i><?= public_nav_icon('transferencias') ?></i><span>Sair da conta</span></a></nav>
     </aside><?php endif; ?>
 <?php
 }

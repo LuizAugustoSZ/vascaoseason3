@@ -104,3 +104,11 @@ php tests/proximo-confronto-test.php
 ```
 
 O fluxo de publicação e os cuidados com os bancos estão detalhados em [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Regra de consistência visual: site público e administração
+Alterações gerais em navbar, sidebar, perfil, cabeçalhos, responsividade e estilos compartilhados devem ser aplicadas e verificadas tanto no site público quanto no painel `/admin/`, na mesma entrega. Não considerar concluída uma melhoria global que deixe o admin com o padrão anterior.
+- A navbar e o perfil vêm de `public_navbar()` em `includes/public-layout.php`; o admin usa o argumento `adminLayout`.
+- Pesquisa e notificações usam `assets/js/site-toolbar.js`, com caminhos relativos à raiz informada por `data-site-root`.
+- O perfil usa `assets/js/account-menu.js` em ambos os contextos.
+- Cabeçalhos compartilham `assets/css/page-headings.css`; ajustes específicos do shell administrativo ficam em `assets/css/admin-navigation.css`.
+- Verificar desktop/mobile, menu recolhido/expandido, perfil, links, pesquisa e notificações; preservar permissões de Master/Editor e as abas administrativas.

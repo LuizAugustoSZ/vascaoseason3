@@ -36,3 +36,5 @@ main .dedicated-hero h1 { margin:0!important; }
 main .titles-hero h1 { margin-bottom:0; }
 main .statistics-hero { grid-template-columns:1fr;min-height:0;padding-block:28px; }
 main .section-title.mt-4 { margin-top:0!important; }
+
+.hero .eyebrow,.hero h1+p,.admin-heading .eyebrow{display:none!important}
