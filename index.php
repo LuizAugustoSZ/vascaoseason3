@@ -100,7 +100,7 @@ if (
                                                             ) ?>">
 </head>
 
-<body>
+<body class="landing-page">
     <?php
     // Menu principal com atalhos para as seções da página.
     ?>
@@ -117,7 +117,7 @@ if (
                     <span class="eyebrow">DreamTeam • Campeonato da comunidade</span>
                     <h1>SEASON <span>3</span><br>O GIGANTE VOLTOU.</h1>
                     <p class="lead text-secondary">Classificação, confrontos, mata-mata e tudo que acontece na competição.</p>
-                    <a href="#competicao" class="btn btn-danger btn-lg">Ver competição</a>
+                    <a href="competicao.php" class="btn btn-danger btn-lg">Ver competição</a>
                 </div>
                 <div class="col-lg-5">
                     <div id="hero-feature-carousel" class="carousel slide hero-feature-carousel" data-bs-ride="carousel" data-bs-interval="7000" data-bs-pause="hover">

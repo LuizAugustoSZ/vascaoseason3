@@ -114,3 +114,4 @@ Alterações gerais em navbar, sidebar, perfil, cabeçalhos, responsividade e es
 - Verificar desktop/mobile, menu recolhido/expandido, perfil, links, pesquisa e notificações; preservar permissões de Master/Editor e as abas administrativas.
 - O fundo global tem uma única fonte: `assets/css/site-background.css`, importado por `style.css` em todas as páginas, inclusive login e admin. Manter a mesma base escura, linhas diagonais discretas e brilho vermelho. Não criar fundos de página divergentes; preservar superfícies legíveis para cards, tabelas e formulários.
 - Sidebar, navbar e footer compartilham `--site-chrome-background` em `site-background.css`. Cabeçalhos principais ficam livres de caixas; preservar a tipografia e as cores do título.
+- Mensagens de commit devem ser escritas em português. As faixas alternadas de seção são exclusivas da landing page; páginas internas usam o fundo global contínuo.
