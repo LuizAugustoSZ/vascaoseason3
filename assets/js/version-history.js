@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['24.6','O item Vídeos da navegação agora usa um ícone de play compatível e visível em todas as páginas.','Ícone de Vídeos corrigido'],
 ['24.5','Ícones corrigidos para medalha em Títulos, saída clássica no logout e YouTube em Vídeos. Pesquisas usam o mesmo botão Lucide clicável e os cards de Notificações compartilham a superfície padrão da Classificação.','Ícones, pesquisa e superfícies'],
 ['24.4','O componente compartilhado dos ícones agora força centralização perfeita do SVG nos dois eixos, mantendo caixas quadradas idênticas inclusive nos cards dinâmicos de Títulos.','Centralização dos ícones'],
 ['24.3','Ícones semânticos foram ampliados para os títulos dos cards: tabela em Competição e Classificação, troféu em Títulos, cifrão em Mercado e identificadores próprios em Jogos, Chaveamento e Resumo da rodada.','Ícones semânticos nos cards'],

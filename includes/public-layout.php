@@ -45,7 +45,7 @@ function public_nav_icon(string $name): string
         'gestao' => 'settings',
         'admin' => 'shield-check',
         'notificacoes' => 'bell',
-        'midia' => 'youtube',
+        'midia' => 'play',
         'logout' => 'log-out',
     ];
     $icon = $icons[$name] ?? 'circle';
