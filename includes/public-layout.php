@@ -111,6 +111,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false): void
 ?>
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/../assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/site-toolbar.css?v=<?=filemtime(__DIR__.'/../assets/css/site-toolbar.css')?>">
+    <link rel="stylesheet" href="assets/css/page-headings.css?v=<?=filemtime(__DIR__.'/../assets/css/page-headings.css')?>">
     <link rel="stylesheet" href="assets/css/navigation-v22.css?v=<?=filemtime(__DIR__.'/../assets/css/navigation-v22.css')?>">
     <script defer src="assets/js/site-toolbar.js?v=<?=filemtime(__DIR__.'/../assets/js/site-toolbar.js')?>"></script>
     <script>document.body.classList.add('site-has-sidebar');if(innerWidth>=768){document.body.classList.add('site-nav-collapsed');try{if(sessionStorage.getItem('site-sidebar-state')==='expanded')document.body.classList.remove('site-nav-collapsed')}catch(error){}}</script>

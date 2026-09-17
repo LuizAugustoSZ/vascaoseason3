@@ -1,0 +1,38 @@
+/* Cabeçalhos públicos: somente o título, sem chamadas decorativas. */
+main .section-title small,
+main .section-title > span,
+main > .eyebrow,
+main > .container > .eyebrow,
+main > .panel > .eyebrow,
+main .hero .eyebrow,
+main .dedicated-hero > a,
+main .dedicated-hero > span,
+main .dedicated-hero > p,
+main .titles-hero > .eyebrow,
+main .titles-hero > p,
+main .statistics-hero .eyebrow,
+main .statistics-hero p,
+main .statistics-hero small,
+main .statistics-hero > strong,
+main .statistics-section-title > span,
+main .statistics-section-title > p,
+main .general-roster-hero .eyebrow,
+main .general-list-heading .eyebrow,
+.commands-intro,
+main.commands-page + p,
+main .section-title + p.lead,
+#competicao > .container > .panel > p,
+#artilharia > .container > .panel > p,
+#titulos > .container > .panel > p { display:none!important; }
+main .dedicated-hero,
+main .titles-hero,
+main .section-title,
+main .statistics-section-title { border-left:0!important; }
+main .dedicated-hero::before,
+main .section-title::before,
+main .statistics-section-title::before { display:none!important; }
+main .dedicated-hero { padding:20px 0!important;background:none!important; }
+main .dedicated-hero h1 { margin:0!important; }
+main .titles-hero h1 { margin-bottom:0; }
+main .statistics-hero { grid-template-columns:1fr;min-height:0;padding-block:28px; }
+main .section-title.mt-4 { margin-top:0!important; }
