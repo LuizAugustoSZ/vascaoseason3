@@ -45,3 +45,4 @@ body .panel-head,
 body .site-account-popover,
 body .site-account-popover-profile,
 body .competition-art-editor-card{background:var(--surface-background)!important}
+body .statistics-global article,body .statistics-filters,body .statistics-ranking article,body .head-to-head-result,body .general-player-row,body .general-flow-grid article,body .general-guidance,body .general-balance,body .general-import-banner,body .market-summary>div,body .roster-grid article,body .market-help-grid article,body .market-inline-help,body .release-notes-hero,body .release-feature-grid,body .release-feature-grid article,body .version-modal{background:var(--surface-background)!important}
