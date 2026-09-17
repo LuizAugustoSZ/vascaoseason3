@@ -19,7 +19,7 @@
     padding: 26px 0 18px;
     overflow: hidden;
     background: radial-gradient(circle at 88% 40%, rgba(215, 25, 32, .2), transparent 35%), #0b0d10;
-    border-bottom: 1px solid var(--line)
+    border-bottom: 0
 }
 
 .club-hero-grid {
