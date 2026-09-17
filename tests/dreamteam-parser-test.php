@@ -91,6 +91,15 @@ foreach ([$penalties, str_replace('pênalti', 'penalti', str_replace('Pênalti',
 }
 $p=dreamteam_parse_summary(str_replace('Gol de pênalti', 'Lance desconhecido', $penalties));
 check(count($p['warnings'])>=2, 'Unknown events and score mismatch still require review');
+$dismissal = str_replace(
+    "69' Gol - :UFC: Diego Costa [COM]",
+    "68' Expulsão - :SaoPaulo: Lucas Moura [COM] · entrada temerária\n69' Gol - :UFC: Diego Costa [COM]",
+    $penalties,
+);
+$p=dreamteam_parse_summary($dismissal);
+$redCards=array_values(array_filter($p['events'], static fn(array $event): bool => $event['type']==='red_card'));
+check($p['warnings']===[] && count($redCards)===1, 'Expulsao event recognized');
+check($redCards[0]['player']==='Lucas Moura' && $redCards[0]['team_code']==='COM', 'Expulsao event fields');
 $ranked = <<<'REPORT'
 RANKEADA FINALIZADA - 93' Estádio Riyadh Air Metropolitano Ensolarado Arbitragem: Técnico Locomotiva FC 2x1 SC Internacional
 Man of the Match: Vozinha (LOC) 10 defesas Nota: 9,88 Destaques: defesas.

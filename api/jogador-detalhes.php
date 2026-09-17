@@ -42,7 +42,7 @@ try {
     $stmt = $pdo->prepare("SELECT s.dados_json,'pontos' origem,p.id,COALESCE(p.data_partida,s.criado_em) data_partida,c.nome campeonato,CONCAT('Rodada ',p.rodada) etapa,m.time_nome time_a,v.time_nome time_b,p.gols_mandante gols_a,p.gols_visitante gols_b FROM sumulas_dreamteam s JOIN partidas p ON s.origem='pontos' AND p.id=s.partida_id JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.mandante_id=? OR p.visitante_id=? UNION ALL SELECT s.dados_json,'mata',j.id,s.criado_em,c.nome,CONCAT(j.fase,' ',j.ordem),a.time_nome,b.time_nome,j.gols_a,j.gols_b FROM sumulas_dreamteam s JOIN jogos_mata_mata j ON s.origem='mata' AND j.id=s.jogo_mata_mata_id JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.time_a_id=? OR j.time_b_id=?");
     $stmt->execute([$participantId, $participantId, $participantId, $participantId]);
     $games = [];
-    $totals = ['goals_in_summaries' => 0, 'assists' => 0, 'yellow_cards' => 0, 'red_cards' => 0, 'var' => 0, 'man_of_match' => 0];
+    $totals = ['goals_in_summaries' => 0, 'assists' => 0, 'yellow_cards' => 0, 'red_cards' => 0, 'penalty_saves' => 0, 'var' => 0, 'man_of_match' => 0];
     foreach ($stmt->fetchAll() as $row) {
         $summary = json_decode((string)$row['dados_json'], true);
         if (!is_array($summary)) continue;
@@ -50,7 +50,7 @@ try {
         if ($participantCode === null) continue;
         $events = [];
         foreach (($summary['events'] ?? []) as $event) {
-            if ((string)($event['team_code'] ?? '') !== $participantCode) continue;
+            if (strcasecmp((string)($event['team_code'] ?? ''), $participantCode) !== 0) continue;
             $type = (string)($event['type'] ?? '');
             $isPlayer = same_player((string)($event['player'] ?? ''), $player);
             $isAssist = $type === 'goal' && empty($event['cancelled']) && same_player((string)($event['assist'] ?? ''), $player);
@@ -61,6 +61,7 @@ try {
             if ($isAssist) $totals['assists']++;
             if ($type === 'yellow_card' && $isPlayer) $totals['yellow_cards']++;
             if ($type === 'red_card' && $isPlayer) $totals['red_cards']++;
+            if ($type === 'penalty_saved' && $isPlayer) $totals['penalty_saves']++;
             if (str_starts_with($type, 'var_') && $isPlayer) $totals['var']++;
         }
         $motm = (string)($summary['man_of_match_team_code'] ?? '') === $participantCode

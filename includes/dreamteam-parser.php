@@ -106,14 +106,14 @@ function dreamteam_parse_compact_summary(string $raw): ?array
             $events[] = ['type'=>'substitution','minute'=>$row[1],'player_out'=>rtrim(trim($m[1]), ','),'player_in'=>trim($m[2]),'team_code'=>$m[3]];
             continue;
         }
-        if (!preg_match('/^(Gol(?:\s+anulado|\s+de\s+p[êe]nalti)?|Cartão amarelo|Cartão vermelho|Lesão|P[êe]nalti (?:cancelado|defendido))\s*-\s*(.+?)\s*[\[(]([A-Z0-9]+)[\])](.*)$/ui', $body, $m)) {
+        if (!preg_match('/^(Gol(?:\s+anulado|\s+de\s+p[êe]nalti)?|Cartão amarelo|Cartão vermelho|Expulsão|Lesão|P[êe]nalti (?:cancelado|defendido))\s*-\s*(.+?)\s*[\[(]([A-Z0-9]+)[\])](.*)$/ui', $body, $m)) {
             $warnings[] = 'Lance não reconhecido aos '.$row[1].' minutos: '.$body;
             continue;
         }
         $type = match (mb_strtolower($m[1])) {
             'gol', 'gol de pênalti', 'gol de penalti'=>'goal', 'gol anulado'=>'var_goal_cancelled', 'cartão amarelo'=>'yellow_card',
             'pênalti defendido', 'penalti defendido'=>'penalty_saved',
-            'cartão vermelho'=>'red_card', 'lesão'=>'injury', default=>'var_penalty_cancelled',
+            'cartão vermelho', 'expulsão'=>'red_card', 'lesão'=>'injury', default=>'var_penalty_cancelled',
         };
         $event = ['type'=>$type,'minute'=>$row[1],'player'=>trim($m[2]),'team_code'=>$m[3],'description'=>trim($m[4], " \t-·")];
         if ($type === 'goal') {
