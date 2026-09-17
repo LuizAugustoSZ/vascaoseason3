@@ -886,3 +886,4 @@ footer {
 .club-stats .stat-icon .lucide { width:20px; height:20px }
 .statistics-global .stat-icon .lucide { width:20px; height:20px }
 .round-summary-grid .stat-icon .lucide { width:20px; height:20px }
+.market-summary>div:has(.stat-icon){display:grid;grid-template-columns:38px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;column-gap:10px}.market-summary>div>.stat-icon{grid-column:1;grid-row:2;margin:0}.market-summary>div>small{grid-column:1/3;grid-row:1;margin-bottom:5px}.market-summary>div>strong{grid-column:2;grid-row:2}
