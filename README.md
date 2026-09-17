@@ -117,3 +117,5 @@ Alterações gerais em navbar, sidebar, perfil, cabeçalhos, responsividade e es
 - Mensagens de commit devem ser escritas em português. As faixas alternadas de seção são exclusivas da landing page; páginas internas usam o fundo global contínuo.
 
 - Na index, somente Notícias (`#noticias`), Jogadores (`#artilharia`) e Títulos (`#titulos`) recebem faixa de fundo. Usar IDs explícitos, nunca alternância por posição ou `nth-child`.
+
+- Todos os cards e modais, públicos e administrativos, usam `--surface-background: #101216` (cor do card Escalação atual de time.php), definida em `assets/css/surfaces.css`. Novos componentes devem usar essa variável e manter fundos sem gradientes; cores de estado ficam nos textos, bordas e controles.
