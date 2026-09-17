@@ -52,8 +52,8 @@ if (!$article) {
                                                                             ) ?>" alt="">
             <div class="article-content" data-article-reader>
                 <button class="article-theme-toggle" type="button" data-article-theme-toggle aria-label="Ativar modo escuro na leitura" aria-pressed="false" title="Ativar modo escuro">
-                    <span class="article-theme-icon article-theme-icon-moon" aria-hidden="true">☾</span>
-                    <span class="article-theme-icon article-theme-icon-sun" aria-hidden="true">☀</span>
+                    <span class="article-theme-icon article-theme-icon-moon" aria-hidden="true"><i data-lucide="moon"></i></span>
+                    <span class="article-theme-icon article-theme-icon-sun" aria-hidden="true"><i data-lucide="sun"></i></span>
                 </button>
                 <?= $article["conteudo"] ?>
             </div>

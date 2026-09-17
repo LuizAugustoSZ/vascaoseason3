@@ -860,3 +860,29 @@ footer {
     height: 48px;
     color: #6b7280;
 }
+/* Switch Moderno Global (padrão Notificações) */
+.vs-switch { position:relative; display:inline-block; width:50px; height:28px; flex:0 0 50px; cursor:pointer; margin:0 }
+.vs-switch input { opacity:0; width:0; height:0; position:absolute }
+.vs-switch .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#242c35; border:1px solid #343f4c; transition:background-color .25s ease,border-color .25s ease; border-radius:28px }
+.vs-switch .slider:before { content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background-color:#fff; border-radius:50%; box-shadow:0 2px 4px rgba(0,0,0,.35); transition:transform .25s cubic-bezier(.4,0,.2,1) }
+.vs-switch input:checked+.slider { background-color:#ff2339; border-color:#ff2339 }
+.vs-switch input:checked+.slider:before { transform:translateX(22px) }
+.vs-switch input:focus-visible+.slider { outline:2px solid #ff555b; outline-offset:2px }
+.vs-switch-row { display:flex; align-items:center; gap:12px; cursor:pointer }
+.vs-switch-row.is-card { align-items:flex-start; padding:1rem; border:1px solid #343941; border-radius:.375rem }
+.vs-switch-row .vs-switch-copy { min-width:0; flex:1 }
+.vs-switch-row .vs-switch-copy strong,.vs-switch-row .vs-switch-copy small { display:block }
+.vs-switch-row .vs-switch-copy small { margin-top:.25rem; color:#8f98a6 }
+/* O mesmo componente também cobre formulários legados e campos criados via JS. */
+.form-check-input[type="checkbox"]:not([hidden]) { position:relative; float:none; width:50px; height:28px; margin:0 10px 0 0!important; border:1px solid #343f4c; border-radius:28px!important; background:#242c35!important; box-shadow:none; cursor:pointer; appearance:none; vertical-align:middle; transition:background-color .25s ease,border-color .25s ease }
+.form-check-input[type="checkbox"]:not([hidden])::before { content:''; position:absolute; width:20px; height:20px; left:3px; top:3px; border-radius:50%; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.35); transition:transform .25s cubic-bezier(.4,0,.2,1) }
+.form-check-input[type="checkbox"]:not([hidden]):checked { border-color:#ff2339!important; background:#ff2339!important }
+.form-check-input[type="checkbox"]:not([hidden]):checked::before { transform:translateX(22px) }
+.form-check-input[type="checkbox"]:not([hidden]):focus-visible { outline:2px solid #ff555b; outline-offset:2px }
+.form-check:has(.form-check-input[type="checkbox"]) { display:flex; align-items:center }
+/* Ícones em cards de estatísticas */
+.stat-icon { display:flex; align-items:center; justify-content:center; width:34px; height:34px; margin-bottom:8px; border:1px solid rgba(255,35,57,.3); border-radius:8px; background:rgba(255,35,57,.08); color:#ff5363 }
+.stat-icon .lucide { width:18px; height:18px }
+.club-stats .stat-icon .lucide { width:20px; height:20px }
+.statistics-global .stat-icon .lucide { width:22px; height:22px }
+.round-summary-grid .stat-icon .lucide { width:20px; height:20px }

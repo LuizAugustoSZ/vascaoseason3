@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['23.7','Ícones Lucide padronizados nos cards de estatísticas, clube e gestão; checkboxes ganharam o mesmo switch das notificações. O importador agora também aceita confrontos ranqueados copiados como texto corrido sem perder compatibilidade com as súmulas anteriores.','Ícones, switches e súmulas ranqueadas'],
 ['23.6','Abas com fundo escuro, borda inferior sempre vermelha e contorno vermelho na seleção. Jogadores ganhou espaçamento entre Artilheiros e Assistências e a logo do campeonato ao lado do seletor.','Abas e identidade dos campeonatos'],
 ['23.5','Escudos inteiros e dimensionados sem recortes na classificação, jogos e pódio. O resumo da rodada ganhou ícones e acesso aos detalhes da partida com maior diferença de gols.','Escudos e destaque da rodada'],
 ['23.4','Fundos de cards e modais padronizados em #101216, incluindo o admin. Na index, faixas somente em Notícias, Jogadores e Títulos; removida a divisória entre a identificação do clube e suas estatísticas.','Superfícies e faixas padronizadas'],
