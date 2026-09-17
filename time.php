@@ -325,7 +325,7 @@ $stats = [
 ];
 $clubStatIcons = [
     "Jogos" => "calendar-days", "Vitórias" => "trophy", "Empates" => "equal",
-    "Derrotas" => "circle-x", "Gols pró" => "goal", "Gols contra" => "shield-alert", "Saldo" => "circle-plus",
+    "Derrotas" => "circle-x", "Gols pró" => "goal", "Gols contra" => "shield-alert", "Saldo" => "circle-plus", "Títulos" => "medal",
 ];
 $opponents = [];
 foreach ($jogadas as $j) {

@@ -637,6 +637,8 @@ body.site-has-sidebar.site-nav-collapsed{padding-left:68px}
     padding-left: 1rem
 }
 
+.search-icon-button{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;padding:0;border:0;background:transparent;color:#9aa6b6;cursor:pointer;transition:color .15s ease}.search-icon-button .lucide{display:block;width:20px;height:20px}.search-icon-button:hover,.search-icon-button:focus-visible,.search-icon-button:has(+input:focus){color:#ff2339}.search-icon-button:focus-visible{outline:2px solid #ff2339;outline-offset:-2px}
+
 .command-search input {
     width: 100%;
     background: transparent;

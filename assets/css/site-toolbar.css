@@ -16,12 +16,11 @@
 }
 .site-search-icon {
     position: absolute;
-    left: 13px;
-    width: 18px;
-    height: 18px;
+    z-index: 1;
+    left: 0;
+    width: 40px;
+    height: 40px;
     color: #6b7280;
-    pointer-events: none;
-    stroke-width: 2;
 }
 .site-search input {
     width: 100%;

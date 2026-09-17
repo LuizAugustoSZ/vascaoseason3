@@ -4,6 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const results = document.querySelector('[data-search-results]');
     let timer, controller;
 
+    document.addEventListener('click', event => {
+        const button = event.target.closest('[data-search-focus]');
+        if (!button) return;
+        document.querySelector(button.dataset.searchFocus)?.focus();
+    });
+
     const searchLink = (item) => {
         const a = document.createElement('a');
         a.href = new URL(item.url, siteRoot).href;

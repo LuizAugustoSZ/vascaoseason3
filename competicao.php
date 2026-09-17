@@ -52,7 +52,7 @@
                                         </select>
                                         <button type="button" id="round-next" class="round-arrow" aria-label="Próxima rodada" title="Próxima rodada" disabled>›</button>
                                         </div>
-                                        <div class="command-search game-search mt-2"><span>⌕</span><input id="game-search" type="search" placeholder="Buscar técnico ou time..." autocomplete="off"></div>
+                                        <div class="command-search game-search mt-2"><button class="search-icon-button" type="button" data-search-focus="#game-search" aria-label="Focar pesquisa de jogos"><i data-lucide="search" aria-hidden="true"></i></button><input id="game-search" type="search" placeholder="Buscar técnico ou time..." autocomplete="off"></div>
                                     </div>
                                     <div id="league-games" class="game-list"></div>
                                     <div id="league-pagination" class="game-pagination"></div>

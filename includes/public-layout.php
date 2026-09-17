@@ -45,6 +45,8 @@ function public_nav_icon(string $name): string
         'gestao' => 'settings',
         'admin' => 'shield-check',
         'notificacoes' => 'bell',
+        'midia' => 'youtube',
+        'logout' => 'log-out',
     ];
     $icon = $icons[$name] ?? 'circle';
     return '<i data-lucide="' . $icon . '" class="lucide"></i>';
@@ -130,7 +132,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false, bool $a
     <nav class="navbar fixed-top navbar-dark site-topbar" data-site-root="<?= $root ?>">
         <div class="container">
             <a class="navbar-brand site-mobile-brand align-items-center gap-2" href="<?= $root . ($onLandingPage ? '#inicio' : 'index.php') ?>"><img class="brand-mark" src="<?= $root ?>assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
-            <div class="site-search"><div class="site-search-wrapper"><i data-lucide="search" class="site-search-icon"></i><input type="search" data-site-search placeholder="Buscar no Vascão…" aria-label="Buscar telas, clubes, jogadores e notícias" autocomplete="off"></div><div class="site-search-results" data-search-results hidden aria-live="polite"></div></div>
+            <div class="site-search"><div class="site-search-wrapper"><button class="search-icon-button site-search-icon" type="button" data-search-focus="[data-site-search]" aria-label="Focar pesquisa"><i data-lucide="search" aria-hidden="true"></i></button><input type="search" data-site-search placeholder="Buscar no Vascão…" aria-label="Buscar telas, clubes, jogadores e notícias" autocomplete="off"></div><div class="site-search-results" data-search-results hidden aria-live="polite"></div></div>
             <?php if(account_logged_in()): ?>
             <div class="site-notifications">
                 <button class="site-notification-toggle" data-notification-toggle data-csrf="<?=e(csrf_token())?>" aria-label="Notificações" aria-expanded="false" title="Notificações">
@@ -174,7 +176,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false, bool $a
     <?php endif; ?>
     <?php if (account_logged_in()): ?><aside id="site-account-popover" class="site-account-popover" aria-label="Conta e time" aria-hidden="true">
         <div class="site-account-popover-profile"><div class="site-account-popover-shield"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="Escudo do <?= e($teamNavLabel) ?>"><?php else: ?><span><?= e($participantId > 0 ? $teamInitials : 'S3') ?></span><?php endif; ?></div><div><small><?= account_is_admin() ? 'ADMINISTRAÇÃO' : 'CONTA CONECTADA' ?></small><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><span><?= e($participantId > 0 ? $teamNavLabel : 'Sem time associado') ?></span></div></div>
-        <nav><?php if ($adminLayout): ?><a href="../index.php"><i><?= public_nav_icon('noticias') ?></i><span>Abrir site</span></a><?php endif; ?><?php if ($participantId > 0): ?><a href="<?= $root ?>time.php?id=<?= $participantId ?>"><i><?= public_nav_icon('time') ?></i><span>Página do clube</span></a><?php endif; ?><a href="<?= $root ?>trocar-senha.php"><i><?= public_nav_icon('gestao') ?></i><span>Segurança da conta</span></a><a href="<?= $root ?>notificacoes.php"><i><?= public_nav_icon('notificacoes') ?></i><span>Notificações e e-mails</span></a><?php if (account_is_admin()): ?><a href="<?= $root ?>admin/"><i><?= public_nav_icon('admin') ?></i><span>Painel administrativo</span></a><?php endif; ?><a class="site-account-logout" href="<?= $root ?>logout.php"><i><?= public_nav_icon('transferencias') ?></i><span>Sair da conta</span></a></nav>
+        <nav><?php if ($adminLayout): ?><a href="../index.php"><i><?= public_nav_icon('noticias') ?></i><span>Abrir site</span></a><?php endif; ?><?php if ($participantId > 0): ?><a href="<?= $root ?>time.php?id=<?= $participantId ?>"><i><?= public_nav_icon('time') ?></i><span>Página do clube</span></a><?php endif; ?><a href="<?= $root ?>trocar-senha.php"><i><?= public_nav_icon('gestao') ?></i><span>Segurança da conta</span></a><a href="<?= $root ?>notificacoes.php"><i><?= public_nav_icon('notificacoes') ?></i><span>Notificações e e-mails</span></a><?php if (account_is_admin()): ?><a href="<?= $root ?>admin/"><i><?= public_nav_icon('admin') ?></i><span>Painel administrativo</span></a><?php endif; ?><a class="site-account-logout" href="<?= $root ?>logout.php"><i><?= public_nav_icon('logout') ?></i><span>Sair da conta</span></a></nav>
     </aside><?php endif; ?>
 <?php
 }
