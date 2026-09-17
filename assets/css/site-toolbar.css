@@ -41,7 +41,6 @@
 .site-search input::placeholder {
     color: #6b7280;
 }
-
 .site-search-results {
     position: absolute;
     top: calc(100% + 8px);
