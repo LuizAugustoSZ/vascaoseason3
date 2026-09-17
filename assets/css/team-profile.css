@@ -186,6 +186,34 @@
     border: 1px solid var(--line)
 }
 
+.club-stats>div:has(.stat-icon) {
+    grid-template-columns:34px auto;
+    grid-template-rows:auto auto;
+    align-content:center;
+    justify-content:center;
+    column-gap:8px;
+}
+
+.club-stats>div>.stat-icon {
+    grid-column:1;
+    grid-row:2;
+    align-self:center;
+    margin:0;
+}
+
+.club-stats>div>small {
+    grid-column:1/3;
+    grid-row:1;
+    margin-bottom:5px;
+}
+
+.club-stats>div>strong {
+    grid-column:2;
+    grid-row:2;
+    align-self:center;
+    text-align:left;
+}
+
 .club-stats small {
     color: var(--muted);
     font-size: .62rem;
