@@ -71,11 +71,26 @@
     const accountToggles = [...document.querySelectorAll('[data-account-popover-toggle]')];
     const accountPopover = document.getElementById('site-account-popover');
     if (accountToggles.length && accountPopover) {
+        let accountAnchor = accountToggles[0];
+        const positionAccount = () => {
+            if (!accountPopover.classList.contains('from-topbar')) return;
+            const rect = accountAnchor.getBoundingClientRect();
+            const width = accountPopover.offsetWidth;
+            const left = Math.max(12, Math.min(rect.right - width, document.documentElement.clientWidth - width - 12));
+            accountPopover.style.left = `${left}px`;
+            accountPopover.style.right = 'auto';
+            accountPopover.style.top = `${rect.bottom + 8}px`;
+        };
+        addEventListener('resize', positionAccount);
+        addEventListener('scroll', positionAccount, true);
+        window.visualViewport?.addEventListener('resize', positionAccount);
+        new ResizeObserver(positionAccount).observe(document.querySelector('.site-topbar'));
         let accountPinned = false;
         let accountCloseTimer = 0;
         const setAccountOpen = (open, source = null) => {
             document.body.classList.toggle('site-account-open', open);
-            if (source) accountPopover.classList.toggle('from-topbar', source.dataset.accountPopoverOrigin === 'top');
+            if (source) { accountAnchor = source; accountPopover.classList.toggle('from-topbar', source.dataset.accountPopoverOrigin === 'top'); }
+            if (open) positionAccount();
             accountToggles.forEach(toggle => toggle.setAttribute('aria-expanded', String(open)));
             accountPopover.setAttribute('aria-hidden', String(!open));
         };
