@@ -19,7 +19,7 @@
     padding: 26px 0 18px;
     overflow: hidden;
     background: radial-gradient(circle at 88% 40%, rgba(215, 25, 32, .2), transparent 35%), #0b0d10;
-    border-bottom: 1px solid var(--line)
+    border-bottom: 0
 }
 
 .club-hero-grid {
@@ -184,6 +184,35 @@
     padding: 8px;
     background: var(--panel);
     border: 1px solid var(--line)
+}
+
+.club-stats>div:has(.stat-icon) {
+    grid-template-columns:38px minmax(0,auto);
+    grid-template-rows:auto auto;
+    align-content:center;
+    justify-content:center;
+    column-gap:10px;
+}
+
+.club-stats>div>.stat-icon {
+    grid-column:1;
+    grid-row:2;
+    align-self:center;
+    margin:0;
+}
+
+.club-stats>div>small {
+    grid-column:1/3;
+    grid-row:1;
+    margin:0 0 5px;
+    text-align:left;
+}
+
+.club-stats>div>strong {
+    grid-column:2;
+    grid-row:2;
+    align-self:center;
+    text-align:left;
 }
 
 .club-stats small {

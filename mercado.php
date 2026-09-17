@@ -382,13 +382,69 @@ if ($clube) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/market.css">
+
+    <style>
+        /* Estilos exclusivos do conteúdo de Gestão da Competição. */
+        .competition-roster .registration-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+        .competition-roster .registration-heading h2{margin:5px 0 10px}
+        .competition-roster .registration-legend{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 12px;padding:0;list-style:none}
+        .competition-roster [data-state="starter"]{--state-color:#ed2338;--state-tint:rgba(237,35,56,.13)}
+        .competition-roster [data-state="reserve"]{--state-color:#087ff5;--state-tint:rgba(8,127,245,.12)}
+        .competition-roster [data-state="out"]{--state-color:#566570;--state-tint:rgba(86,101,112,.08)}
+        .competition-roster .registration-legend li{display:flex;gap:9px;align-items:flex-start;font-size:.8rem}
+        .competition-roster .registration-legend i{width:13px;height:13px;border-radius:50%;background:var(--state-color);margin-top:3px;flex-shrink:0}
+        .competition-roster .registration-legend small{display:block;color:#a5b0bd;font-size:.7rem}
+        .competition-roster .registration-counts{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;margin:14px 0;color:#c5cfda;font-size:.85rem}
+        .competition-roster .registration-counts strong{color:#fff}
+        .competition-roster .registration-counts small{margin-left:auto;color:#a5b0bd}
+        .competition-roster .registration-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:12px}
+        .competition-roster .registration-card{min-width:0;padding:11px 9px 8px;border:1px solid var(--state-color);border-radius:10px;background:linear-gradient(135deg,var(--state-tint),#101418);display:flex;flex-direction:column;gap:9px;transition:border-color .15s,background .15s}
+        .competition-roster .registration-badge{align-self:flex-start;border-radius:20px;padding:4px 10px;background:var(--state-color);color:#fff;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
+        .competition-roster .registration-name{font-size:.85rem;line-height:1.25;min-height:2.5em;overflow-wrap:anywhere;text-transform:uppercase;color:#fff;padding:0 3px}
+        .competition-roster .registration-rating{display:flex;gap:10px;align-items:center;margin-top:auto;padding:0 3px}
+        .competition-roster .registration-rating strong{font:800 2rem/1 'Barlow Condensed',sans-serif;color:#ef3940}
+        .competition-roster .registration-rating span{font-size:.7rem;color:#a5b0bd}
+        .competition-roster .registration-options{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:2px;border:1px solid #303b45;border-radius:6px;background:#151b21;padding:2px}
+        .competition-roster .registration-options button{min-width:0;padding:7px 2px;min-height:34px;border:0;border-radius:4px;background:transparent;color:#bcc8d4;font-size:.65rem;cursor:pointer;transition:background .15s,color .15s}
+        .competition-roster .registration-options button[aria-pressed="true"]{background:var(--state-color);color:#fff;font-weight:700}
+        .competition-roster .registration-options button:hover{color:#fff;background:#303b45}
+        .competition-roster .registration-options button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+        .market-page #elenco .roster-select-card.is-starter{border-color:#ed2338;background:linear-gradient(135deg,rgba(237,35,56,.13),#101418)}
+        .market-page #elenco .roster-select-card b{overflow-wrap:anywhere;min-width:0}
+        @media(min-width:1400px){.competition-roster .registration-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+        @media(max-width:575px){.competition-roster{padding:16px!important}.competition-roster .registration-legend{gap:10px}.competition-roster .registration-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.competition-roster .registration-counts small{width:100%;margin:0}.competition-roster .registration-options{grid-template-columns:1fr}.competition-roster .registration-options button{min-height:36px}}
+        @media(max-width:359px){.competition-roster .registration-grid{grid-template-columns:minmax(0,1fr)}.competition-roster .registration-options{grid-template-columns:1.2fr 1fr 1fr}}
+        @media(prefers-reduced-motion:reduce){.competition-roster .registration-card,.competition-roster .registration-options button{transition:none}}
+
+        .competition-roster .roster-sector-status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0;color:#b9c6d4;font-size:.75rem}
+        .competition-roster .roster-sector-status span{padding:5px 9px;border:1px solid #36424f;border-radius:6px}
+        .competition-roster .roster-sector-status .is-full{color:#fff;border-color:#668077}
+        .competition-roster .roster-sector-status .is-over{color:#ffadb7;border-color:#ed2338}
+        .competition-roster .roster-sector-status small{flex-basis:100%;color:#aebbc9}
+        .competition-roster .roster-tools{display:grid;grid-template-columns:minmax(140px,1.4fr) minmax(120px,1fr) minmax(170px,1.2fr) auto;gap:10px;align-items:end;margin:16px 0 12px}
+        .competition-roster .roster-tools label{display:grid;gap:5px;color:#aebbc9;font-size:.75rem;min-width:0}
+        .competition-roster .roster-tools .form-control,.competition-roster .roster-tools .form-select{min-width:0;font-size:.8rem;min-height:40px}
+        .competition-roster .roster-tools [data-roster-clear]{width:100%;height:40px;white-space:nowrap}
+        .competition-roster .roster-position-filters{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+        .competition-roster .roster-position-filters button{display:flex;align-items:center;gap:7px;min-height:38px;padding:7px 11px;border:1px solid #36424f;border-radius:7px;color:#c3ccd7;background:#151b21;font-size:.75rem;cursor:pointer}
+        .competition-roster .roster-position-filters button[aria-pressed="true"]{border-color:#ed2338;background:#3a1720;color:#fff}
+        .competition-roster .roster-position-filters button:hover{border-color:#aebbc9}
+        .competition-roster .roster-position-filters small{color:#aebbc9;font-size:.65rem}
+        .competition-roster .roster-position-filters button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+        .competition-roster .roster-filter-summary{margin:0 0 12px;color:#aebbc9;font-size:.75rem}
+        .competition-roster .registration-card[hidden]{display:none!important}
+        .competition-roster .registration-rating span{padding:3px 7px;border:1px solid #35414d;border-radius:4px;color:#d5deea;font-weight:700}
+        .competition-roster .registration-options.lineup-options{grid-template-columns:1fr 1fr}
+        .competition-roster .roster-filter-empty{padding:20px;border:1px dashed #44515e;border-radius:8px;color:#c3ccd7}
+        @media(max-width:767px){.competition-roster .roster-tools{grid-template-columns:1fr 1fr}.competition-roster .roster-tools>label:first-child{grid-column:1/-1}.competition-roster .roster-tools>button{grid-column:1/-1}}
+    </style>
 </head>
 
 <body><?php public_navbar('mercado'); ?><main class="container market-page" data-market-editable="<?= $podeEditarMercado ? '1' : '0' ?>"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
         <h1>GESTÃO DA COMPETIÇÃO</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando inscrição e escalação de <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><?php if ($campeonatos): ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><label class="form-label">Competição que deseja gerenciar</label><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === (int)$c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form><?php else: ?><div class="alert alert-info mb-4">Nenhuma competição de pontos corridos está ativa para gestão.</div><?php endif; ?>
         <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif (!$campeonatos): ?><div class="panel p-4">Este time não está inscrito em nenhuma competição de pontos corridos ativa.</div><?php elseif ($clube && !(bool)($clube['cofre_configurado'] ?? false)): ?><section class="panel p-4 market-treasury-required"><span class="eyebrow">Primeira etapa obrigatória</span><h2>INFORME O SALDO DO COFRE</h2><p>Antes de montar o elenco ou registrar qualquer movimentação, informe o valor atual do cofre. O saldo pode ser zero, mas precisa ser confirmado pelo responsável.</p><a class="btn btn-danger" href="time.php?id=<?= $participantId ?>&editar_perfil=1">Abrir perfil e informar cofre</a></section><?php elseif ($clube): ?><section class="market-summary">
-                <div><small><?= $campeonatoUsaCiclo ? 'Próxima rodada do clube' : 'Formato da competição' ?></small><strong><?= $campeonatoUsaCiclo ? $rodada.'ª' : 'MATA-MATA' ?></strong></div>
-                <div><small><?= $campeonatoUsaCiclo ? 'Ciclo '.$ciclo['ciclo'] : 'Regra de inscrição' ?></small><strong><?= !$campeonatoUsaCiclo || $ciclo['aberto'] ? 'INSCRIÇÃO LIBERADA' : 'INSCRIÇÃO TRAVADA' ?></strong></div>
+                <div><span class="stat-icon" aria-hidden="true"><i data-lucide="calendar-days"></i></span><small><?= $campeonatoUsaCiclo ? 'Próxima rodada do clube' : 'Formato da competição' ?></small><strong><?= $campeonatoUsaCiclo ? $rodada.'ª' : 'MATA-MATA' ?></strong></div>
+                <div><span class="stat-icon" aria-hidden="true"><i data-lucide="<?= !$campeonatoUsaCiclo || $ciclo['aberto'] ? 'lock-open' : 'lock' ?>"></i></span><small><?= $campeonatoUsaCiclo ? 'Ciclo '.$ciclo['ciclo'] : 'Regra de inscrição' ?></small><strong><?= !$campeonatoUsaCiclo || $ciclo['aberto'] ? 'INSCRIÇÃO LIBERADA' : 'INSCRIÇÃO TRAVADA' ?></strong></div>
             </section>
             <?php if ($campeonatoUsaCiclo && !($ciclo['participacao_concluida'] ?? false) && ($ciclo['pre_estreia'] ?? false)): ?><div class="alert alert-success mb-4" role="status">
                 <strong>Inscrição liberada até a estreia.</strong> O ciclo de cinco rodadas travadas começa somente depois da primeira partida disputada pelo clube.
@@ -413,13 +469,60 @@ if ($clube) {
                     </form>
                 </section><?php endif; ?>
             <div id="gestao-competicao" class="market-anchor" aria-hidden="true"></div>
-            <?php if ($podeEditarInscricao): ?><section class="panel p-4 mb-4"><span class="eyebrow"><?= $isMasterManagement && !$podeEditarMercado ? 'Acesso Master · ciclo ignorado' : 'Janela aberta · todos os jogadores disponíveis' ?></span><h2>INSCRIÇÃO NA COMPETIÇÃO</h2><p class="text-secondary">Todos os jogadores ativos do Elenco Geral aparecem abaixo automaticamente. Escolha exatamente 11 titulares e até 15 reservas; quem não for marcado permanece somente no Geral.</p><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_inscricao_geral"><?php if($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><div class="roster-grid"><?php foreach($elencoGeral as $j): $gid=(int)$j['id']; ?><article class="roster-select-card"><label><input type="checkbox" name="inscrito_id[]" value="<?= $gid ?>" <?= isset($inscritosGerais[$gid])?'checked':'' ?>> Inscrito</label><label><input type="checkbox" name="titular_geral_id[]" value="<?= $gid ?>" <?= isset($titularesGerais[$gid])?'checked':'' ?>> Titular</label><b><?= e($j['nome']) ?></b><strong><?= (int)$j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3">Salvar inscrição</button></form></section><?php else: ?><div class="alert alert-warning mb-4"><strong>Inscrição congelada.</strong> Os jogadores contratados agora ficam no Elenco Geral e aparecerão automaticamente aqui quando a próxima janela abrir. A escalação dos já inscritos continua editável abaixo.</div><?php endif; ?>
-            <section class="panel p-4 mb-4" id="elenco">
+            <?php if ($podeEditarInscricao): ?><section class="panel p-4 mb-4 competition-roster">
+                <div class="registration-heading">
+                    <div><span class="eyebrow"><?= $isMasterManagement && !$podeEditarMercado ? 'Acesso Master · ciclo ignorado' : 'Janela aberta · todos os jogadores disponíveis' ?></span><h2>INSCRIÇÃO NA COMPETIÇÃO</h2></div>
+                    <ul class="registration-legend" aria-label="Estados de inscrição">
+                        <li data-state="starter"><i aria-hidden="true"></i><div><b>Titular</b><small>Equipe inicial · máximo de 11</small></div></li>
+                        <li data-state="reserve"><i aria-hidden="true"></i><div><b>Reserva</b><small>Inscrito e disponível no banco</small></div></li>
+                        <li data-state="out"><i aria-hidden="true"></i><div><b>Não inscrito</b><small>Fora desta competição</small></div></li>
+                    </ul>
+                </div>
+                <p class="text-secondary">Escolha exatamente 11 titulares e até 15 reservas do Elenco Geral. As alterações serão aplicadas ao salvar a inscrição.</p>
+                <form method="post" data-registration-form data-roster-form="registration" data-saved-formation="<?= e($clube['formacao']) ?>">
+                    <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_inscricao_geral"><?php if($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?>
+                    <div class="registration-counts" role="status" aria-live="polite"><strong><span data-registration-starters><?= count($titularesGerais) ?></span>/11 titulares selecionados</strong><span><span data-registration-reserves><?= count($inscritosGerais) - count($titularesGerais) ?></span>/15 reservas</span><small data-registration-unsaved>Inscrição atual</small></div>
+                    <noscript><p class="alert alert-warning">Ative o JavaScript para alterar os estados e salvar a inscrição.</p></noscript>
+                    <div class="roster-grid registration-grid">
+                        <?php foreach($elencoGeral as $j): $gid=(int)$j['id']; $estado=isset($titularesGerais[$gid])?'starter':(isset($inscritosGerais[$gid])?'reserve':'out'); ?>
+                        <article class="registration-card" data-state="<?= $estado ?>" data-position="<?= e($j['posicao']) ?>" data-overall="<?= (int)$j['overall'] ?>">
+                            <!-- Campos legados preservados para o backend e o modal de confirmação. -->
+                            <input hidden type="checkbox" name="inscrito_id[]" value="<?= $gid ?>" <?= isset($inscritosGerais[$gid])?'checked':'' ?>>
+                            <input hidden type="checkbox" name="titular_geral_id[]" value="<?= $gid ?>" <?= isset($titularesGerais[$gid])?'checked':'' ?>>
+                            <span class="registration-badge"><?= ['starter'=>'Titular','reserve'=>'Reserva','out'=>'Não inscrito'][$estado] ?></span>
+                            <b class="registration-name" id="registration-player-<?= $gid ?>"><?= e($j['nome']) ?></b>
+                            <div class="registration-rating"><strong><?= (int)$j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></div>
+                            <div class="registration-options" role="group" aria-labelledby="registration-player-<?= $gid ?>">
+                                <?php foreach(['out'=>'Não inscrito','reserve'=>'Reserva','starter'=>'Titular'] as $valor=>$rotulo): ?><button type="button" data-registration-state="<?= $valor ?>" aria-pressed="<?= $estado===$valor?'true':'false' ?>"><?= $rotulo ?></button><?php endforeach; ?>
+                            </div>
+                        </article>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php if (!$elencoGeral): ?><p class="text-secondary">Nenhum jogador ativo no Elenco Geral.</p><?php endif; ?>
+                    <button class="btn btn-danger mt-3" data-registration-save disabled>Salvar inscrição</button>
+                </form>
+            </section><?php else: ?><div class="alert alert-warning mb-4"><strong>Inscrição congelada.</strong> Os jogadores contratados agora ficam no Elenco Geral e aparecerão automaticamente aqui quando a próxima janela abrir. A escalação dos já inscritos continua editável abaixo.</div><?php endif; ?>
+            <section class="panel p-4 mb-4 competition-roster" id="elenco">
                 <div class="d-flex justify-content-between">
                     <h2>ELENCO</h2>
-                </div><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_escalacao"><div class="formation-control mb-3"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">Três números que somem 10; “Custom” será adicionado automaticamente.</small></div>
-                        <div class="lineup-selection-status"><strong><span data-selected-starters>0</span>/11 titulares selecionados</strong><small>Use <code>..time @seu_usuario</code> no Discord para visualizar apenas a imagem do seu time e conferir os titulares. Quem não estiver marcado será banco.</small></div><div class="lineup-limit-warning" role="alert" aria-live="assertive" hidden>Você já selecionou os 11 titulares. Desmarque um jogador antes de escolher outro.</div>
-                        <div class="roster-grid"><?php foreach ($elenco as $j): ?><article class="roster-select-card<?= $j['grupo'] === 'titular' ? ' is-starter' : '' ?>"><input type="hidden" name="jogador_id[]" value="<?= $j['id'] ?>"><label class="starter-toggle"><input type="checkbox" name="titular_id[]" value="<?= $j['id'] ?>" <?= $j['grupo'] === 'titular' ? 'checked' : '' ?>><span>Titular</span></label><b><?= e($j['nome']) ?></b><strong><?= $j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></article><?php endforeach; ?></div><button class="btn btn-danger mt-3" <?= !(bool)$clube['elenco_confirmado'] ? 'name="confirmar_elenco" value="1"' : '' ?>><?= !(bool)$clube['elenco_confirmado'] ? 'Salvar e confirmar 11 titulares' : 'Salvar escalação' ?></button>
+                </div><form method="post" data-roster-form="lineup"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="atualizar_escalacao"><div class="formation-control mb-3"><label class="form-label">Formação</label><select class="form-select" name="formacao"><?php foreach (MERCADO_FORMACOES as $f): ?><option value="<?= e($f) ?>" <?= $clube['formacao'] === $f ? 'selected' : '' ?>><?= e($f) ?></option><?php endforeach; ?><option value="__custom__" <?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) ? 'selected' : '' ?>>Formação customizada</option></select><input class="form-control mt-2" name="formacao_custom" inputmode="numeric" maxlength="14" placeholder="Ex.: 433 ou 4-3-3" value="<?= !in_array($clube['formacao'], MERCADO_FORMACOES, true) && preg_match('/([1-9])-([1-9])-([1-9])/', $clube['formacao'], $formacaoAtual) ? e($formacaoAtual[1] . '-' . $formacaoAtual[2] . '-' . $formacaoAtual[3]) : '' ?>"><small class="text-secondary">Três números que somem 10; “Custom” será adicionado automaticamente.</small></div>
+                        <div class="lineup-selection-status"><strong hidden><span data-selected-starters>0</span>/11 titulares selecionados</strong><small>Use <code>..time @seu_usuario</code> no Discord para visualizar apenas a imagem do seu time e conferir os titulares. Quem não estiver marcado será banco.</small></div><div class="lineup-limit-warning" role="alert" aria-live="assertive" hidden>Você já selecionou os 11 titulares. Desmarque um jogador antes de escolher outro.</div>
+                        <p class="text-secondary">Selecione os 11 titulares. Os demais inscritos ficam na reserva.</p>
+                        <div class="registration-counts" role="status" aria-live="polite"><strong><span data-registration-starters><?= $totalTitularesAtual ?></span>/11 titulares selecionados</strong><span><span data-registration-reserves><?= count($elenco) - $totalTitularesAtual ?></span> reservas</span><small data-registration-unsaved>Escalação atual</small></div>
+                        <div class="roster-grid registration-grid">
+                            <?php foreach ($elenco as $j): $estado=$j['grupo']==='titular'?'starter':'reserve'; ?>
+                            <article class="roster-select-card registration-card<?= $estado==='starter'?' is-starter':'' ?>" data-state="<?= $estado ?>" data-position="<?= e($j['posicao']) ?>" data-overall="<?= (int)$j['overall'] ?>">
+                                <input type="hidden" name="jogador_id[]" value="<?= (int)$j['id'] ?>">
+                                <input hidden type="checkbox" name="titular_id[]" value="<?= (int)$j['id'] ?>" <?= $estado==='starter'?'checked':'' ?>>
+                                <span class="registration-badge"><?= $estado==='starter'?'Titular':'Reserva' ?></span>
+                                <b class="registration-name" id="lineup-player-<?= (int)$j['id'] ?>"><?= e($j['nome']) ?></b>
+                                <div class="registration-rating"><strong><?= (int)$j['overall'] ?></strong><span><?= e($j['posicao']) ?></span></div>
+                                <div class="registration-options lineup-options" role="group" aria-labelledby="lineup-player-<?= (int)$j['id'] ?>">
+                                    <?php foreach(['reserve'=>'Reserva','starter'=>'Titular'] as $valor=>$rotulo): ?><button type="button" data-registration-state="<?= $valor ?>" aria-pressed="<?= $estado===$valor?'true':'false' ?>"><?= $rotulo ?></button><?php endforeach; ?>
+                                </div>
+                            </article>
+                            <?php endforeach; ?>
+                        </div><button class="btn btn-danger mt-3" <?= !(bool)$clube['elenco_confirmado'] ? 'name="confirmar_elenco" value="1"' : '' ?>><?= !(bool)$clube['elenco_confirmado'] ? 'Salvar e confirmar 11 titulares' : 'Salvar escalação' ?></button>
                     </form>
             </section>
             <?php if (false): ?><section class="panel p-4 market-history" data-market-history data-items-per-page="4">
@@ -430,6 +533,189 @@ if ($clube) {
             <div class="modal fade market-movement-modal" id="market-undo-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><small class="eyebrow">Ação definitiva</small><h2 class="modal-title">DESFAZER MOVIMENTAÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><form method="post"><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><input type="hidden" name="action" value="desfazer_movimentacao"><input type="hidden" name="movimentacao_id"><p class="movement-undo-copy"></p><div class="alert alert-warning mb-0 movement-undo-detail"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Voltar</button><button class="btn btn-danger">Sim, desfazer</button></div></form></div></div></div><?php endif; ?>
             <?php endif; ?>
     </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const positions = ['ATA', 'PD', 'PE', 'MEI', 'MC', 'VOL', 'LE', 'LD', 'ZAG', 'GOL'];
+    const positionNames = {ATA:'Atacantes', PD:'Pontas direitas', PE:'Pontas esquerdas', MEI:'Meias ofensivos', MC:'Meias centrais', VOL:'Volantes', LE:'Laterais esquerdos', LD:'Laterais direitos', ZAG:'Zagueiros', GOL:'Goleiros'};
+    const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+    document.querySelectorAll('[data-roster-form]').forEach(form => {
+        const registration = form.dataset.rosterForm === 'registration';
+        const cards = [...form.querySelectorAll('.registration-card')];
+        const grid = form.querySelector('.registration-grid');
+        const labels = {out: 'Não inscrito', reserve: 'Reserva', starter: 'Titular'};
+        const counts = () => ({starters: cards.filter(card => card.dataset.state === 'starter').length, reserves: cards.filter(card => card.dataset.state === 'reserve').length});
+        const snapshot = () => cards.map(card => card.dataset.state).join(',') + '|' + (form.querySelector('[name="formacao"]')?.value || '') + '|' + (form.querySelector('[name="formacao_custom"]')?.value || '');
+        const initial = snapshot();
+        const notify = message => askClubConfirmation(registration ? 'REVISE A INSCRIÇÃO' : 'REVISE A ESCALAÇÃO', message, 'Entendi');
+        const sectorNames = {ataque: 'Ataque', meio: 'Meio', defesa: 'Defesa', goleiro: 'Goleiro'};
+        const sectorOf = card => ({ATA:'ataque', PD:'ataque', PE:'ataque', MEI:'meio', MC:'meio', VOL:'meio', LE:'defesa', LD:'defesa', ZAG:'defesa', GOL:'goleiro'}[card.dataset.position] || 'meio');
+        const formationSelect = form.querySelector('[name="formacao"]');
+        const formationCustom = form.querySelector('[name="formacao_custom"]');
+        function formationLimits() {
+            let value = registration ? form.dataset.savedFormation : formationSelect?.value;
+            if (value === '__custom__') value = formationCustom.value.trim().replace(/^([1-9])([1-9])([1-9])$/, '$1-$2-$3');
+            const match = (value || '').match(/^([1-9](?:-[1-9]){2,3})/);
+            if (!match) return null;
+            const lines = match[1].split('-').map(Number);
+            if (lines.reduce((a, b) => a + b, 0) !== 10) return null;
+            return {ataque:lines[lines.length - 1], meio:lines.slice(1,-1).reduce((a,b) => a+b,0), defesa:lines[0], goleiro:1};
+        }
+        const sectorCounts = () => cards.filter(card => card.dataset.state === 'starter').reduce((total, card) => {total[sectorOf(card)]++; return total;}, {ataque:0, meio:0, defesa:0, goleiro:0});
+        const sectorStatus = document.createElement('div');
+        sectorStatus.className = 'roster-sector-status';
+        sectorStatus.setAttribute('role', 'status');
+        form.querySelector('.registration-counts').after(sectorStatus);
+        function updateSectors() {
+            const limits = formationLimits();
+            const selected = sectorCounts();
+            sectorStatus.replaceChildren();
+            if (!limits) { sectorStatus.textContent = 'Escolha uma formação válida para conferir os limites por setor.'; return; }
+            Object.keys(sectorNames).forEach(sector => {
+                const item = document.createElement('span');
+                item.textContent = sectorNames[sector] + ' ' + selected[sector] + '/' + limits[sector];
+                item.className = selected[sector] > limits[sector] ? 'is-over' : selected[sector] === limits[sector] ? 'is-full' : '';
+                sectorStatus.append(item);
+            });
+            const hint = document.createElement('small');
+            hint.textContent = registration ? 'Limites da formação salva: ' + form.dataset.savedFormation + '. Para mudá-la, salve a formação no elenco abaixo.' : 'Limites por setor da formação selecionada. Os demais inscritos ficam na reserva.';
+            sectorStatus.append(hint);
+        }
+        formationSelect?.addEventListener('change', updateCounts);
+        formationCustom?.addEventListener('input', updateCounts);
+        const tools = document.createElement('div');
+        tools.className = 'roster-tools';
+        tools.innerHTML = '<label>Buscar jogador<input class="form-control" type="search" placeholder="Nome do jogador" data-roster-search></label><label>Estado<select class="form-select" data-roster-status><option value="all">Todos os estados</option><option value="starter">Titulares</option><option value="reserve">Reservas</option>' + (registration ? '<option value="out">Não inscritos</option>' : '') + '</select></label><label>Ordenar dentro da posição<select class="form-select" data-roster-sort><option value="desc">Maior overall</option><option value="asc">Menor overall</option><option value="name">Nome: A → Z</option></select></label><button class="btn btn-outline-light btn-sm" type="button" data-roster-clear>Limpar filtros</button>';
+        const positionFilters = document.createElement('div');
+        positionFilters.className = 'roster-position-filters';
+        positionFilters.setAttribute('role', 'group');
+        positionFilters.setAttribute('aria-label', 'Filtrar por posição, do ataque ao gol');
+        const availablePositions = [...positions, ...new Set(cards.map(card => card.dataset.position).filter(position => !positions.includes(position)))];
+        ['all', ...availablePositions.filter(position => cards.some(card => card.dataset.position === position))].forEach(position => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.dataset.positionFilter = position;
+            button.setAttribute('aria-pressed', String(position === 'all'));
+            const count = position === 'all' ? cards.length : cards.filter(card => card.dataset.position === position).length;
+            button.setAttribute('aria-label', (position === 'all' ? 'Todas as posições' : positionNames[position] || position) + ' (' + count + ')');
+            button.textContent = position === 'all' ? 'Todas' : position;
+            const total = document.createElement('small');
+            total.textContent = count;
+            total.setAttribute('aria-hidden', 'true');
+            button.append(total);
+            positionFilters.append(button);
+        });
+        const summary = document.createElement('p');
+        summary.className = 'roster-filter-summary';
+        summary.setAttribute('role', 'status');
+        const empty = document.createElement('p');
+        empty.className = 'roster-filter-empty';
+        empty.textContent = 'Nenhum jogador encontrado. Limpe os filtros para ver o elenco completo.';
+        empty.hidden = true;
+        grid.before(tools, positionFilters, summary);
+        grid.after(empty);
+        let selectedPosition = 'all';
+        const search = tools.querySelector('[data-roster-search]');
+        const status = tools.querySelector('[data-roster-status]');
+        const sort = tools.querySelector('[data-roster-sort]');
+        function filterAndSort() {
+            const focused = document.activeElement;
+            const query = normalize(search.value.trim());
+            const rank = card => { const index = positions.indexOf(card.dataset.position); return index < 0 ? positions.length : index; };
+            const ordered = [...cards].sort((a, b) => {
+                const position = rank(a) - rank(b) || a.dataset.position.localeCompare(b.dataset.position, 'pt-BR');
+                const overall = sort.value === 'name' ? 0 : (Number(b.dataset.overall) - Number(a.dataset.overall)) * (sort.value === 'asc' ? -1 : 1);
+                return position || overall || a.querySelector('.registration-name').textContent.localeCompare(b.querySelector('.registration-name').textContent, 'pt-BR');
+            });
+            let visible = 0;
+            ordered.forEach(card => {
+                card.hidden = (selectedPosition !== 'all' && card.dataset.position !== selectedPosition) || (status.value !== 'all' && card.dataset.state !== status.value) || !normalize(card.querySelector('.registration-name').textContent).includes(query);
+                if (!card.hidden) visible++;
+                grid.append(card);
+            });
+            summary.textContent = visible + ' de ' + cards.length + ' jogadores · Posição primeiro, do ataque ao gol · Filtros não alteram a seleção';
+            empty.hidden = visible !== 0;
+            if (grid.contains(focused) && !focused.closest('.registration-card').hidden) focused.focus({preventScroll:true});
+        }
+        tools.addEventListener('input', filterAndSort);
+        tools.addEventListener('change', filterAndSort);
+        positionFilters.addEventListener('click', event => {
+            const button = event.target.closest('[data-position-filter]');
+            if (!button) return;
+            selectedPosition = button.dataset.positionFilter;
+            positionFilters.querySelectorAll('button').forEach(option => option.setAttribute('aria-pressed', String(option === button)));
+            filterAndSort();
+        });
+        tools.querySelector('[data-roster-clear]').addEventListener('click', () => {
+            search.value = ''; status.value = 'all'; sort.value = 'desc'; selectedPosition = 'all';
+            positionFilters.querySelectorAll('button').forEach(option => option.setAttribute('aria-pressed', String(option.dataset.positionFilter === 'all')));
+            filterAndSort();
+        });
+        function updateCounts() {
+            updateSectors();
+            const count = counts();
+            form.querySelector('[data-registration-starters]').textContent = count.starters;
+            form.querySelector('[data-registration-reserves]').textContent = count.reserves;
+            form.querySelector('[data-registration-unsaved]').textContent = snapshot() === initial ? (registration ? 'Inscrição atual' : 'Escalação atual') : 'Alterações não salvas';
+        }
+        function setState(card, state) {
+            card.dataset.state = state;
+            const registered = card.querySelector('input[name="inscrito_id[]"]');
+            if (registered) registered.checked = state !== 'out';
+            const starter = card.querySelector(registration ? 'input[name="titular_geral_id[]"]' : 'input[name="titular_id[]"]');
+            starter.checked = state === 'starter';
+            if (!registration) starter.dispatchEvent(new Event('change', {bubbles: true}));
+            card.querySelector('.registration-badge').textContent = labels[state];
+            card.querySelectorAll('[data-registration-state]').forEach(option => option.setAttribute('aria-pressed', String(option.dataset.registrationState === state)));
+            delete form.dataset.confirmedSubmit;
+        }
+        form.addEventListener('click', event => {
+            const button = event.target.closest('[data-registration-state]');
+            if (!button) return;
+            const card = button.closest('.registration-card');
+            const state = button.dataset.registrationState;
+            if (state === card.dataset.state) return;
+            const count = counts();
+            if (state === 'starter' && count.starters >= 11) {
+                notify('Você já selecionou os 11 titulares. Coloque um titular na reserva antes de escolher outro.');
+                return;
+            }
+            if (state === 'starter') {
+                const limits = formationLimits();
+                const sector = sectorOf(card);
+                if (!limits) { notify('Escolha uma formação válida antes de selecionar os titulares.'); return; }
+                if (sectorCounts()[sector] >= limits[sector]) {
+                    notify('Limite máximo de ' + sectorNames[sector].toLocaleLowerCase('pt-BR') + ': ' + limits[sector] + '. Coloque um titular desse setor na reserva antes de escolher outro.');
+                    return;
+                }
+            }
+            if (registration && state === 'reserve' && count.reserves >= 15) {
+                notify('O limite é de 15 reservas. Mude o estado de um reserva antes de escolher outro.');
+                return;
+            }
+            setState(card, state);
+            updateCounts();
+            filterAndSort();
+            if (card.hidden) status.focus();
+        });
+        form.addEventListener('submit', event => {
+            const count = counts();
+            const limits = formationLimits();
+            const sectors = sectorCounts();
+            const validSectors = limits && Object.keys(sectorNames).every(sector => sectors[sector] === limits[sector]);
+            if (count.starters === 11 && (!registration || count.reserves <= 15) && validSectors) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            delete form.dataset.confirmedSubmit;
+            notify(count.starters !== 11 ? 'Selecione exatamente 11 titulares antes de salvar.' : registration && count.reserves > 15 ? 'A inscrição permite no máximo 15 reservas.' : 'Ajuste os titulares aos limites de ataque, meio, defesa e goleiro da formação.');
+        }, true);
+        updateCounts();
+        filterAndSort();
+        const save = form.querySelector('[data-registration-save]');
+        if (save) save.disabled = false;
+    });
+});
+</script>
 </body>
 
 </html>

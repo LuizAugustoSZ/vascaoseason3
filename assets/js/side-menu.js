@@ -68,33 +68,4 @@
         updateLandingActive();
     }
 
-    const accountToggle = document.querySelector('[data-account-popover-toggle]');
-    const accountPopover = document.getElementById('site-account-popover');
-    if (accountToggle && accountPopover) {
-        let accountPinned = false;
-        let accountCloseTimer = 0;
-        const setAccountOpen = open => {
-            document.body.classList.toggle('site-account-open', open);
-            accountToggle.setAttribute('aria-expanded', String(open));
-            accountPopover.setAttribute('aria-hidden', String(!open));
-        };
-        const cancelAccountClose = () => clearTimeout(accountCloseTimer);
-        const scheduleAccountClose = () => {
-            cancelAccountClose();
-            if (!accountPinned) accountCloseTimer = setTimeout(() => setAccountOpen(false), 140);
-        };
-        accountToggle.addEventListener('pointerenter', () => { if (!mobile()) { cancelAccountClose(); setAccountOpen(true); } });
-        accountToggle.addEventListener('pointerleave', () => { if (!mobile()) scheduleAccountClose(); });
-        accountPopover.addEventListener('pointerenter', cancelAccountClose);
-        accountPopover.addEventListener('pointerleave', () => { if (!mobile()) scheduleAccountClose(); });
-        accountToggle.addEventListener('click', event => {
-            event.stopPropagation();
-            accountPinned = !accountPinned;
-            cancelAccountClose();
-            setAccountOpen(accountPinned || mobile() && !document.body.classList.contains('site-account-open'));
-        });
-        accountPopover.addEventListener('click', event => event.stopPropagation());
-        document.addEventListener('click', () => { accountPinned = false; setAccountOpen(false); });
-        document.addEventListener('keydown', event => { if (event.key === 'Escape') { accountPinned = false; setAccountOpen(false); } });
-    }
 })();

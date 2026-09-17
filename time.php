@@ -323,6 +323,10 @@ $stats = [
     "Gols contra" => 0,
     "Saldo" => 0,
 ];
+$clubStatIcons = [
+    "Jogos" => "calendar-days", "Vitórias" => "trophy", "Empates" => "equal",
+    "Derrotas" => "circle-x", "Gols pró" => "goal", "Gols contra" => "shield-alert", "Saldo" => "circle-plus", "Títulos" => "medal",
+];
 $opponents = [];
 foreach ($jogadas as $j) {
     $home = (int) $j["mandante_id"] === $id;
@@ -496,7 +500,7 @@ function match_score(array $j): string
             <section class="club-stats<?= $titulos ? ' club-stats--with-titles' : '' ?>"><?php foreach (
                                             $stats
                                             as $label => $value
-                                        ): ?><div><small><?= e($label) ?></small><strong><?= ($label === "Saldo" &&
+                                        ): ?><div><span class="stat-icon" aria-hidden="true"><i data-lucide="<?= e($clubStatIcons[$label] ?? 'chart-no-axes-column-increasing') ?>"></i></span><small><?= e($label) ?></small><strong><?= ($label === "Saldo" &&
                                                                                                 $value > 0
                                                                                                 ? "+"
                                                                                                 : "") .

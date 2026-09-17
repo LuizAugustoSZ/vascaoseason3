@@ -104,3 +104,21 @@ php tests/proximo-confronto-test.php
 ```
 
 O fluxo de publicação e os cuidados com os bancos estão detalhados em [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Regra de consistência visual: site público e administração
+Alterações gerais em navbar, sidebar, perfil, cabeçalhos, responsividade e estilos compartilhados devem ser aplicadas e verificadas tanto no site público quanto no painel `/admin/`, na mesma entrega. Não considerar concluída uma melhoria global que deixe o admin com o padrão anterior.
+- A navbar e o perfil vêm de `public_navbar()` em `includes/public-layout.php`; o admin usa o argumento `adminLayout`.
+- Pesquisa e notificações usam `assets/js/site-toolbar.js`, com caminhos relativos à raiz informada por `data-site-root`.
+- O perfil usa `assets/js/account-menu.js` em ambos os contextos.
+- Cabeçalhos compartilham `assets/css/page-headings.css`; ajustes específicos do shell administrativo ficam em `assets/css/admin-navigation.css`.
+- Verificar desktop/mobile, menu recolhido/expandido, perfil, links, pesquisa e notificações; preservar permissões de Master/Editor e as abas administrativas.
+- O fundo global tem uma única fonte: `assets/css/site-background.css`, importado por `style.css` em todas as páginas, inclusive login e admin. Manter a mesma base escura, linhas diagonais discretas e brilho vermelho. Não criar fundos de página divergentes; preservar superfícies legíveis para cards, tabelas e formulários.
+- Sidebar, navbar e footer compartilham `--site-chrome-background` em `site-background.css`. Cabeçalhos principais ficam livres de caixas; preservar a tipografia e as cores do título.
+- Mensagens de commit devem ser escritas em português. As faixas alternadas de seção são exclusivas da landing page; páginas internas usam o fundo global contínuo.
+
+- Na index, somente Notícias (`#noticias`), Jogadores (`#artilharia`) e Títulos (`#titulos`) recebem faixa de fundo. Usar IDs explícitos, nunca alternância por posição ou `nth-child`.
+
+- Todos os cards e modais, públicos e administrativos, usam `--surface-background: #101216` (cor do card Escalação atual de time.php), definida em `assets/css/surfaces.css`. Novos componentes devem usar essa variável e manter fundos sem gradientes; cores de estado ficam nos textos, bordas e controles.
+- Abas no site e no admin: fundo #101216 em todos os estados; borda clara inativa e borda vermelha (#ed172b) na selecionada, sem preenchimento vermelho. Regra compartilhada em `assets/css/tabs.css`.
+- Escudos: preservar o tamanho do componente e usar `object-fit: contain`, sem corte. O grid de `.team-badge-image` deve usar trilhas `minmax(0,1fr)` e imagens com `min-width/min-height: 0`, evitando que a proporção original expanda a célula e recorte a parte inferior.
+- Nas abas, a borda inferior e a linha do grupo são sempre vermelhas; a aba ativa recebe também as outras bordas vermelhas. Jogadores e Competição compartilham o padrão visual do seletor com a logo do campeonato.

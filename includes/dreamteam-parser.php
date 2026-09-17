@@ -33,6 +33,12 @@ function dreamteam_compact_text(string $raw): string
     $text = preg_replace('/\[([^\]]+)\]\([^\)]+\)/u', '$1', $text) ?? $text;
     $text = str_replace(['**', '__'], '', $text);
     $text = str_replace('`', ' ', $text);
+    // Preserve the event meaning of the shortcode-only ranked report before
+    // removing the remaining Discord emoji names.
+    $text = preg_replace('/:(?:00boladt):\s*(\d+(?:\+\d+)?\')/ui', '$1 Gol - ', $text) ?? $text;
+    $text = preg_replace('/:(?:00zamarelodt):\s*(\d+(?:\+\d+)?\')/ui', '$1 Cartão amarelo - ', $text) ?? $text;
+    $text = preg_replace('/:(?:00zvermelhodt):\s*(\d+(?:\+\d+)?\')/ui', '$1 Cartão vermelho - ', $text) ?? $text;
+    $text = preg_replace('/:(?:seed2):\s*(\d+(?:\+\d+)?\')/ui', '$1 Substituição - ', $text) ?? $text;
     $text = preg_replace('/(?::[\w-]+:|[🏟🌦⚖⭐🎙️])/u', '', $text) ?? $text;
     $text = preg_replace('/^\s*>\s?/m', '', $text) ?? $text;
     return trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
@@ -43,7 +49,7 @@ function dreamteam_parse_compact_summary(string $raw): ?array
     // The legacy format has an explicit match ID and its own event vocabulary.
     if (preg_match('/\bID:\s*DT-[A-Z0-9-]+/i', $raw)) return null;
     $text = dreamteam_compact_text($raw);
-    if (!preg_match('/(?:RANQUEADA|PARTIDA)\s+FINALIZADA\s*-\s*(\d+)\'/ui', $text, $finished)) return null;
+    if (!preg_match('/(?:RAN(?:K|QU)EADA|PARTIDA)\s+FINALIZADA\s*-\s*(\d+)\'/ui', $text, $finished)) return null;
     if (substr_count($text, 'Man of the Match:') !== 1) throw new RuntimeException('Cole exatamente uma partida completa por vez.');
     if (!str_contains($text, 'Lances da Partida')) throw new RuntimeException('A seção “Lances da Partida” é obrigatória para importar a súmula.');
 
@@ -54,10 +60,15 @@ function dreamteam_parse_compact_summary(string $raw): ?array
     $score = $scores[0][0];
     $awayName = trim(substr($header, $score[1] + strlen($score[0])));
     $left = trim(substr($header, 0, $score[1]));
-    if (!preg_match('/dreamteam\.futbol\s*-\s*Partida entre\s+(.+?)\s+e\s+'.preg_quote($awayName, '/').'(?=\s|$)/ui', $text, $footer)) {
-        throw new RuntimeException('Não foi possível identificar os nomes dos times no rodapé da súmula.');
+    if (preg_match('/dreamteam\.futbol\s*-\s*Partida entre\s+(.+?)\s+e\s+'.preg_quote($awayName, '/').'(?=\s|$)/ui', $text, $footer)) {
+        $homeName = trim($footer[1]);
+    } elseif (preg_match('/Arbitragem:\s*\S+\s+(.+)$/ui', $left, $homeFromHeader)) {
+        // Ranked reports may identify Discord users in the footer instead of
+        // repeating the club names. The score header remains authoritative.
+        $homeName = trim($homeFromHeader[1]);
+    } else {
+        throw new RuntimeException('Não foi possível identificar os nomes dos times no placar.');
     }
-    $homeName = trim($footer[1]);
     if (!str_ends_with($left, $homeName)) throw new RuntimeException('O mandante do rodapé não corresponde ao placar.');
     $venueText = trim(substr($left, strpos($left, $finished[0]) + strlen($finished[0])));
     $venueText = trim(substr($venueText, 0, -strlen($homeName)));
@@ -83,7 +94,7 @@ function dreamteam_parse_compact_summary(string $raw): ?array
     $events = [];
     $warnings = [];
     $eventText = preg_split('/Lances da Partida/ui', $text, 2)[1];
-    $eventText = preg_split('/Notas dos Jogadores|Rota Silver\/Gold/ui', $eventText, 2)[0];
+    $eventText = preg_split('/Notas dos Jogadores|Rota (?:Silver\/Gold|Diamond\/Dream)|Estádio e bilheteria|Classificação/ui', $eventText, 2)[0];
     preg_match_all('/(\d+(?:\+\d+)?)\'\s*(.*?)(?=(?<!\d)\d+(?:\+\d+)?\'|$)/u', $eventText, $rows, PREG_SET_ORDER);
     foreach ($rows as $row) {
         $body = trim($row[2]);
@@ -91,11 +102,11 @@ function dreamteam_parse_compact_summary(string $raw): ?array
             $events[] = ['type'=>'var_review','minute'=>$row[1],'team_code'=>null,'description'=>$body];
             continue;
         }
-        if (preg_match('/^Substituição\s*-\s*Sai\s+(.+?),?\s+entra\s+(.+?)\s*\[([A-Z0-9]+)\]/ui', $body, $m)) {
+        if (preg_match('/^Substituição\s*-\s*Sai\s+(.+?),?\s+entra\s+(.+?)\s*[\[(]([A-Z0-9]+)[\])]/ui', $body, $m)) {
             $events[] = ['type'=>'substitution','minute'=>$row[1],'player_out'=>rtrim(trim($m[1]), ','),'player_in'=>trim($m[2]),'team_code'=>$m[3]];
             continue;
         }
-        if (!preg_match('/^(Gol(?:\s+anulado|\s+de\s+p[êe]nalti)?|Cartão amarelo|Cartão vermelho|Lesão|P[êe]nalti (?:cancelado|defendido))\s*-\s*(.+?)\s*\[([A-Z0-9]+)\](.*)$/ui', $body, $m)) {
+        if (!preg_match('/^(Gol(?:\s+anulado|\s+de\s+p[êe]nalti)?|Cartão amarelo|Cartão vermelho|Lesão|P[êe]nalti (?:cancelado|defendido))\s*-\s*(.+?)\s*[\[(]([A-Z0-9]+)[\])](.*)$/ui', $body, $m)) {
             $warnings[] = 'Lance não reconhecido aos '.$row[1].' minutos: '.$body;
             continue;
         }
@@ -106,7 +117,7 @@ function dreamteam_parse_compact_summary(string $raw): ?array
         };
         $event = ['type'=>$type,'minute'=>$row[1],'player'=>trim($m[2]),'team_code'=>$m[3],'description'=>trim($m[4], " \t-·")];
         if ($type === 'goal') {
-            preg_match('/Assistência de\s+(.+?)\s*\[([A-Z0-9]+)\]/ui', $m[4], $assist);
+            preg_match('/Assistência de\s+(.+?)\s*[\[(]([A-Z0-9]+)[\])]/ui', $m[4], $assist);
             $event += ['goal_type'=>dreamteam_goal_type($m[1].' '.preg_split('/Assistência de/ui', $m[4], 2)[0]),'assist'=>isset($assist[1])?trim($assist[1]):null,'cancelled'=>false];
         }
         if ($type === 'yellow_card') $event['via_var'] = str_contains(mb_strtolower($m[4]), 'var');

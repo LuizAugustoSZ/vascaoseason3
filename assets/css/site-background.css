@@ -1,0 +1,20 @@
+/* Fundo único, estático e leve para o site público, autenticação e admin. */
+:root{--site-background:#08090b;--site-background-art:radial-gradient(ellipse at 88% 15%,rgba(164,20,36,.18),transparent 48%),repeating-linear-gradient(125deg,transparent 0,transparent 89px,rgba(178,193,211,.035) 90px,transparent 91px)}
+html{background-color:var(--site-background)!important}
+body{background-color:var(--site-background)!important;background-image:var(--site-background-art)!important;background-attachment:fixed!important;background-size:cover!important;min-height:100vh}
+body>main,body>.hero,body>.club-hero,main>.section-pad,main>.bg-panel,main>.container>.bg-panel{background:transparent!important}
+.hero-lines{display:none!important}
+@media(prefers-reduced-motion:reduce){body{background-attachment:scroll!important}}
+/* Superfícies de navegação usam a mesma base da sidebar. */
+:root{--site-chrome-background:#0a0b0e}
+body .site-side-menu,body .admin-navigation,body .site-topbar,body>footer{background:var(--site-chrome-background)!important;backdrop-filter:none}
+
+/* Faixas são exclusivas da landing, para separar suas várias seções. */
+body.landing-page main>section.section-pad{background:transparent!important;border-top:0}
+body.landing-page main>section:is(#noticias,#artilharia,#titulos){background:var(--site-background-art),#111318!important}
+/* Rodapé no fim da janela quando o conteúdo fica curto ao reduzir o zoom. */
+body:has(>footer){display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+body:has(>footer)>main{flex:1 0 auto}
+body:has(>footer)>header,body:has(>footer)>footer{flex-shrink:0}
+body>footer{margin-top:auto;width:100%}
+body>footer .container>*{min-width:0;overflow-wrap:anywhere}

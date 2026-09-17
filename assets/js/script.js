@@ -13,7 +13,7 @@ let leagueGames = [];
 let leaguePage = 1;
 let currentChampionship = null;
 let allChampionships = [];
-const gamesPerPage = 5;
+const gamesPerPage = document.body.classList.contains('competition-page') ? 100 : 5;
 let scorers = [];
 let assists = [];
 let playerRanking = 'goals';
@@ -140,9 +140,9 @@ function renderSite(data) {
   $('#videos-grid').html(data.videos.length ? data.videos.map(v=>{const id=(v.youtube_url.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/)||[])[1];return id?`<div class="col-lg-6"><article class="video-card"><iframe src="https://www.youtube-nocookie.com/embed/${id}" title="${esc(v.titulo)}" loading="lazy" allowfullscreen></iframe><h3>${esc(v.titulo)}</h3></article></div>`:''}).join(''): publicEmpty('Novos vídeos da comunidade aparecerão aqui.'));
   // Se um escudo estiver inválido, volta automaticamente para a sigla do time.
   document.querySelectorAll('.team-badge-image img').forEach(image=>image.addEventListener('error',()=>{image.classList.add('d-none');image.nextElementSibling.classList.add('d-grid');}));
-  if(data.campeonato?.tipo==='supercopa')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#supercopa"]')).show();
-  else if(data.campeonato?.tipo==='mata_mata')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#mata-mata"]')).show();
-  else if(data.campeonato?.tipo==='pontos_corridos')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#pontos-corridos"]')).show();
+  if(document.querySelector('[data-bs-target=\"#supercopa\"]') && data.campeonato?.tipo==='supercopa')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#supercopa"]')).show();
+  else if(document.getElementById('mata-mata') && data.campeonato?.tipo==='mata_mata')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#mata-mata"]')).show();
+  else if(document.getElementById('pontos-corridos') && data.campeonato?.tipo==='pontos_corridos')bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#pontos-corridos"]')).show();
 }
 
 function loadChampionship(id=''){$.getJSON('api/data.php',id?{campeonato_id:id}:{}).done(res=>{if(res.ok)renderSite(res)});}
@@ -188,7 +188,7 @@ $(function(){
   $('.player-ranking-tabs').on('click','[data-ranking]',function(){playerRanking=this.dataset.ranking;scorersPage=1;$('.player-ranking-tabs [data-ranking]').removeClass('active').attr('aria-selected','false');$(this).addClass('active').attr('aria-selected','true');renderScorers()});
   $('#scorers-download').on('click',downloadScorers);
   $('#standings-body').on('click','.standings-team-row',function(){location.href=this.dataset.teamHref}).on('keydown','.standings-team-row',function(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();location.href=this.dataset.teamHref}});
-  $('#scorers-championship-select').on('change',function(){$.getJSON('api/data.php',{campeonato_id:this.value}).done(res=>{if(!res.ok)return;scorers=res.artilharia||[];assists=res.assistencias||[];scorersPage=1;$('#scorers-championship-title').text(res.campeonato?.nome||'');renderScorers();});});
+  $('#scorers-championship-select').on('change',function(){$.getJSON('api/data.php',{campeonato_id:this.value}).done(res=>{if(!res.ok)return;scorers=res.artilharia||[];assists=res.assistencias||[];scorersPage=1;$('#scorers-championship-title').text(res.campeonato?.nome||'');const logo=$('#scorers-championship-identity');if(res.campeonato?.logo_url)logo.attr('src',res.campeonato.logo_url).attr('alt',`Logo ${res.campeonato.nome}`).removeClass('d-none');else logo.addClass('d-none');renderScorers();});});
   // Monta a tabela de classificação.
   $('#championship-select').on('change',function(){loadChampionship(this.value)});$('.competition-download').on('click',function(){downloadCompetition(this.dataset.export)});
   $('[data-bs-target="#pontos-corridos"]').on('shown.bs.tab',()=>openCompetitionType('pontos_corridos'));

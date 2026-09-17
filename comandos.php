@@ -43,7 +43,7 @@ require __DIR__ . "/includes/public-layout.php"; ?>
                 </div>
             </div>
             <p class="commands-intro mb-4">Encontre rapidamente o comando necessário para gerenciar seu clube, elenco, mercado e partidas.</p>
-            <div class="command-search mb-2"><span>/</span><input id="command-search" type="search" placeholder="Busque por /time, mercado, carreira..." autocomplete="off" autofocus></div>
+            <div class="command-search mb-2"><button class="search-icon-button" type="button" data-search-focus="#command-search" aria-label="Focar pesquisa de comandos"><i data-lucide="search" aria-hidden="true"></i></button><input id="command-search" type="search" placeholder="Busque por /time, mercado, carreira..." autocomplete="off" autofocus></div>
             <p id="commands-count" class="commands-count mb-4"></p>
             <div class="row g-3" id="commands-grid"></div>
             <div id="commands-empty" class="public-empty d-none"><img class="empty-season-logo" src="assets/img/logo-season3.webp?v=5" alt="">

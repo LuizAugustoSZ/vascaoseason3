@@ -85,7 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                                                                             csrf_token(),
                                                                                         ) ?>">
                 <div class="mb-3"><label class="form-label">E-mail</label><input class="form-control" type="email" name="email" autocomplete="email" required autofocus></div>
-                <div class="mb-3"><label class="form-label">Senha</label><input class="form-control" type="password" name="senha" autocomplete="current-password" required></div><div class="form-check mb-4"><input class="form-check-input" type="checkbox" name="manter_conectado" value="1" id="manter-conectado" checked><label class="form-check-label" for="manter-conectado">Manter conectado neste dispositivo por 30 dias</label></div><button class="btn btn-danger w-100">Entrar</button>
+                <div class="mb-3"><label class="form-label">Senha</label><input class="form-control" type="password" name="senha" autocomplete="current-password" required></div><label class="vs-switch-row mb-4" for="manter-conectado"><span class="vs-switch"><input type="checkbox" name="manter_conectado" value="1" id="manter-conectado" checked><span class="slider" aria-hidden="true"></span></span><span class="vs-switch-copy">Manter conectado neste dispositivo por 30 dias</span></label><button class="btn btn-danger w-100">Entrar</button>
             </form><small class="text-secondary d-block mt-3">Ainda não possui acesso? <a href="cadastro.php">Criar conta</a></small>
         </div>
     </main>

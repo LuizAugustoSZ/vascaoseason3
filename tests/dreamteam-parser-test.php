@@ -91,4 +91,17 @@ foreach ([$penalties, str_replace('pênalti', 'penalti', str_replace('Pênalti',
 }
 $p=dreamteam_parse_summary(str_replace('Gol de pênalti', 'Lance desconhecido', $penalties));
 check(count($p['warnings'])>=2, 'Unknown events and score mismatch still require review');
+$ranked = <<<'REPORT'
+RANKEADA FINALIZADA - 93' Estádio Riyadh Air Metropolitano Ensolarado Arbitragem: Técnico Locomotiva FC 2x1 SC Internacional
+Man of the Match: Vozinha (LOC) 10 defesas Nota: 9,88 Destaques: defesas.
+Locomotiva FC Finalizações: 10 No gol: 8 Defesas: 4 Escanteios: 3 Posse: 50% Faltas Sofridas: 5 Amarelos: 1 Vermelhos: 0 Marcadores: :00boladt: Cantona: 1 gol :00boladt: Vozinha: 1 gol
+SC Internacional Finalizações: 8 No gol: 5 Defesas: 6 Escanteios: 2 Posse: 50% Faltas Sofridas: 4 Amarelos: 0 Vermelhos: 0 Marcadores: :00boladt: Hristo Stoichkov: 1 gol
+dreamteam.futbol - Partida entre 368389096776794113 e 1388757851748569239 - Rota Diamond/Dream
+Lances da Partida :00zamarelodt: 8' Gerard Bedoya (LOC) :00boladt: 30' Cantona (LOC) Assistência de Gabigol (LOC) :seed2: 60' Sai Cantona entra Caça Rato (LOC) :00boladt: 85' Vozinha (LOC) - Gol de pênalti :00boladt: 86' Hristo Stoichkov (INT) Assistência de Puerta (INT) Rota Diamond/Dream
+REPORT;
+$p=dreamteam_bind_team_codes(dreamteam_parse_summary($ranked), [['sigla'=>'LOC'],['sigla'=>'INT']]);
+check($p['home_name']==='Locomotiva FC' && $p['away_name']==='SC Internacional', 'Ranked team names');
+check(count($p['goals'])===3 && count($p['events'])===5, 'Ranked shorthand events');
+check($p['goals'][1]['goal_type']==='penalti', 'Ranked penalty description');
+check($p['goals'][0]['assist']==='Gabigol' && $p['goals'][2]['assist']==='Puerta', 'Ranked assists');
 echo "DreamTeam parser tests passed.\n";
