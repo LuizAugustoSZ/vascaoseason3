@@ -791,3 +791,72 @@ footer {
 .standings-legend{flex-wrap:wrap}
 .site-account-popover.from-topbar,.site-nav-collapsed .site-account-popover.from-topbar{left:auto;right:24px;bottom:auto}
 @media(max-width:767.98px){.site-topbar,.site-nav-collapsed .site-topbar{left:0}.site-topbar-profile{display:grid;min-width:0;margin-left:auto;margin-right:8px;grid-template-columns:34px 12px;padding:4px 6px}.site-topbar-profile>span:nth-child(2){display:none}.site-account-popover.from-topbar,.site-nav-collapsed .site-account-popover.from-topbar{top:68px;right:12px;left:auto;bottom:auto;width:min(318px,calc(100vw - 24px))}}
+
+/* ==================================================
+   PADRÃO GLOBAL LUCIDE ICONS & UTILITÁRIOS
+   ================================================== */
+.lucide {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+    vertical-align: middle;
+    display: inline-block;
+    color: inherit;
+}
+.lucide-xs { width: 14px; height: 14px; stroke-width: 2; }
+.lucide-sm { width: 16px; height: 16px; stroke-width: 2; }
+.lucide-md { width: 20px; height: 20px; stroke-width: 2; }
+.lucide-lg { width: 24px; height: 24px; stroke-width: 2; }
+.lucide-xl { width: 32px; height: 32px; stroke-width: 2; }
+
+.text-icon-white { color: #ffffff !important; }
+.text-icon-muted { color: #aab2bd !important; }
+.text-icon-red { color: #ff2339 !important; }
+.text-icon-success { color: #22c55e !important; }
+.text-icon-warning { color: #f59e0b !important; }
+.text-icon-danger { color: #ef4444 !important; }
+.text-icon-info { color: #3b82f6 !important; }
+
+.icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+.icon-box-danger, .icon-box-red {
+    background: rgba(255, 35, 57, 0.12);
+    border: 1px solid rgba(255, 35, 57, 0.28);
+    color: #ff2339;
+}
+.icon-box-success {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    color: #22c55e;
+}
+.icon-box-info {
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: #3b82f6;
+}
+.action-icon {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+    vertical-align: middle;
+}
+.card-header-icon {
+    width: 22px;
+    height: 22px;
+    color: #ff2339;
+}
+.empty-state-icon {
+    width: 48px;
+    height: 48px;
+    color: #6b7280;
+}

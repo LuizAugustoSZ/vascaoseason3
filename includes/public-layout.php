@@ -30,22 +30,24 @@ function public_site_config(): array
 
 function public_nav_icon(string $name): string
 {
-    $paths = [
-        'noticias' => '<path d="M4 5.5h16v13H4zM7 9h4v3H7zm7 0h3M14 12h3M7 15h10"/>',
-        'competicao' => '<path d="M8 4h8v4a4 4 0 0 1-8 0V4Zm0 2H5v1a4 4 0 0 0 4 4m7-5h3v1a4 4 0 0 1-4 4m-3 1v4m-4 3h8"/>',
-        'artilharia' => '<circle cx="12" cy="8" r="3.5"/><path d="M5.5 19c.7-4 3-6 6.5-6s5.8 2 6.5 6"/>',
-        'participantes' => '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.5 19c.5-4 2.4-6 5.5-6s5 2 5.5 6m0-5c3.2 0 5 1.7 5.5 5"/>',
-        'titulos' => '<circle cx="12" cy="14" r="5"/><path d="m9 9-3-5h4l2 4 2-4h4l-3 5m-5 5 1.4 1.1L13 13"/>',
-        'estatisticas' => '<path d="M4 20V10h4v10m4 0V4h4v16m4 0v-7h-4M3 20h18"/>',
-        'transferencias' => '<path d="M4 8h13m-3-3 3 3-3 3m6 5H7m3-3-3 3 3 3"/>',
-        'comandos' => '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="m7 10 3 2-3 2m5 1h5"/>',
-        'regulamento' => '<path d="M6 3.5h9l3 3V20H6zM15 3.5V7h3M9 11h6M9 14h6M9 17h4"/>',
-        'time' => '<path d="M12 3 19 6v5c0 4.4-2.3 7.5-7 10-4.7-2.5-7-5.6-7-10V6l7-3Z"/>',
-        'elenco' => '<circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M2.5 19c.5-3.5 2.4-5.5 5.5-5.5m13.5 5.5c-.5-3.5-2.4-5.5-5.5-5.5M8 19c.5-3.5 1.8-5.5 4-5.5s3.5 2 4 5.5"/>',
-        'gestao' => '<circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/>',
-        'admin' => '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+    $icons = [
+        'noticias' => 'newspaper',
+        'competicao' => 'trophy',
+        'artilharia' => 'users',
+        'participantes' => 'user-round',
+        'titulos' => 'medal',
+        'estatisticas' => 'chart-column',
+        'transferencias' => 'trending-up',
+        'comandos' => 'terminal',
+        'regulamento' => 'file-text',
+        'time' => 'shield',
+        'elenco' => 'users',
+        'gestao' => 'settings',
+        'admin' => 'shield-check',
+        'notificacoes' => 'bell',
     ];
-    return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' . ($paths[$name] ?? $paths['admin']) . '</svg>';
+    $icon = $icons[$name] ?? 'circle';
+    return '<i data-lucide="' . $icon . '" class="lucide"></i>';
 }
 
 function public_navbar(string $active = "", bool $onLandingPage = false, bool $adminLayout = false): void
@@ -115,6 +117,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false, bool $a
     <link rel="stylesheet" href="<?= $root ?>assets/css/site-toolbar.css?v=<?=filemtime(__DIR__.'/../assets/css/site-toolbar.css')?>">
     <link rel="stylesheet" href="<?= $root ?>assets/css/page-headings.css?v=<?=filemtime(__DIR__.'/../assets/css/page-headings.css')?>">
     <link rel="stylesheet" href="<?= $root ?>assets/css/navigation-v22.css?v=<?=filemtime(__DIR__.'/../assets/css/navigation-v22.css')?>">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script defer src="<?= $root ?>assets/js/account-menu.js?v=<?=filemtime(__DIR__.'/../assets/js/account-menu.js')?>"></script>
     <script defer src="<?= $root ?>assets/js/site-toolbar.js?v=<?=filemtime(__DIR__.'/../assets/js/site-toolbar.js')?>"></script>
     <?php if (!$adminLayout): ?><script>document.body.classList.add('site-has-sidebar');if(innerWidth>=768){document.body.classList.add('site-nav-collapsed');try{if(sessionStorage.getItem('site-sidebar-state')==='expanded')document.body.classList.remove('site-nav-collapsed')}catch(error){}}</script>
@@ -127,8 +130,29 @@ function public_navbar(string $active = "", bool $onLandingPage = false, bool $a
     <nav class="navbar fixed-top navbar-dark site-topbar" data-site-root="<?= $root ?>">
         <div class="container">
             <a class="navbar-brand site-mobile-brand align-items-center gap-2" href="<?= $root . ($onLandingPage ? '#inicio' : 'index.php') ?>"><img class="brand-mark" src="<?= $root ?>assets/img/logo-season3.webp?v=5" alt="Vascão Season 3"><span>VASCÃO <b>S3</b></span></a>
-            <div class="site-search"><input type="search" data-site-search placeholder="Buscar no Vascão…" aria-label="Buscar telas, clubes, jogadores e notícias" autocomplete="off"><div class="site-search-results" data-search-results hidden aria-live="polite"></div></div>
-            <?php if(account_logged_in()): ?><div class="site-notifications"><button class="site-notification-toggle" data-notification-toggle data-csrf="<?=e(csrf_token())?>" aria-label="Notificações" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M9 21h6"/></svg><b data-notification-count hidden></b></button><div class="site-notification-panel" data-notification-panel hidden><button data-notification-read>Marcar como lidas</button><div data-notification-list></div><a href="<?= $root ?>notificacoes.php">Histórico e preferências</a></div></div><?php endif; ?>
+            <div class="site-search"><div class="site-search-wrapper"><i data-lucide="search" class="site-search-icon"></i><input type="search" data-site-search placeholder="Buscar no Vascão…" aria-label="Buscar telas, clubes, jogadores e notícias" autocomplete="off"></div><div class="site-search-results" data-search-results hidden aria-live="polite"></div></div>
+            <?php if(account_logged_in()): ?>
+            <div class="site-notifications">
+                <button class="site-notification-toggle" data-notification-toggle data-csrf="<?=e(csrf_token())?>" aria-label="Notificações" aria-expanded="false" title="Notificações">
+                    <i data-lucide="bell"></i>
+                    <span class="site-notification-badge" data-notification-count hidden></span>
+                </button>
+                <div class="site-notification-panel" data-notification-panel hidden>
+                    <div class="site-notification-panel-header">
+                        <h4>Notificações</h4>
+                        <button type="button" class="site-notification-read-btn" data-notification-read>Marcar como lidas</button>
+                    </div>
+                    <div class="site-notification-panel-body" data-notification-list></div>
+                    <a class="site-notification-panel-footer" href="<?= $root ?>notificacoes.php">
+                        <span class="site-notification-panel-footer-left">
+                            <i data-lucide="settings"></i>
+                            <span>Ver todas e preferências</span>
+                        </span>
+                        <i data-lucide="arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
             <?php if (account_logged_in()): ?><button class="site-topbar-profile" type="button" data-account-popover-toggle data-account-popover-origin="top" aria-expanded="false" aria-controls="site-account-popover"><span class="site-topbar-avatar"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><b hidden><?= e($teamInitials) ?></b><?php else: ?><b><?= e($participantId > 0 ? $teamInitials : 'S3') ?></b><?php endif; ?></span><span><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><small><i></i><?= e($participantId > 0 ? $teamNavLabel : (account_is_admin() ? 'Administração' : 'Online')) ?></small></span><em>⌄</em></button><?php endif; ?>
             <?php if (!account_logged_in()): ?><a class="btn btn-outline-light ms-auto me-2" href="<?= $root ?>login.php">Entrar</a><?php endif; ?>
             <button class="<?= $adminLayout ? 'admin-menu-toggle' : 'site-mobile-menu-trigger' ?>" type="button" aria-controls="<?= $adminLayout ? 'admin-side-menu' : 'site-side-menu' ?>" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span><span></span></button>
@@ -150,7 +174,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false, bool $a
     <?php endif; ?>
     <?php if (account_logged_in()): ?><aside id="site-account-popover" class="site-account-popover" aria-label="Conta e time" aria-hidden="true">
         <div class="site-account-popover-profile"><div class="site-account-popover-shield"><?php if ($teamShield !== ''): ?><img src="<?= e($teamShield) ?>" alt="Escudo do <?= e($teamNavLabel) ?>"><?php else: ?><span><?= e($participantId > 0 ? $teamInitials : 'S3') ?></span><?php endif; ?></div><div><small><?= account_is_admin() ? 'ADMINISTRAÇÃO' : 'CONTA CONECTADA' ?></small><strong><?= e((string)($_SESSION['conta_nome'] ?? 'Usuário')) ?></strong><span><?= e($participantId > 0 ? $teamNavLabel : 'Sem time associado') ?></span></div></div>
-        <nav><?php if ($adminLayout): ?><a href="../index.php"><i><?= public_nav_icon('noticias') ?></i><span>Abrir site</span></a><?php endif; ?><?php if ($participantId > 0): ?><a href="<?= $root ?>time.php?id=<?= $participantId ?>"><i><?= public_nav_icon('time') ?></i><span>Página do clube</span></a><?php endif; ?><a href="<?= $root ?>trocar-senha.php"><i><?= public_nav_icon('gestao') ?></i><span>Segurança da conta</span></a><a href="<?= $root ?>notificacoes.php"><i><?= public_nav_icon('noticias') ?></i><span>Notificações e e-mails</span></a><?php if (account_is_admin()): ?><a href="<?= $root ?>admin/"><i><?= public_nav_icon('admin') ?></i><span>Painel administrativo</span></a><?php endif; ?><a class="site-account-logout" href="<?= $root ?>logout.php"><i><?= public_nav_icon('transferencias') ?></i><span>Sair da conta</span></a></nav>
+        <nav><?php if ($adminLayout): ?><a href="../index.php"><i><?= public_nav_icon('noticias') ?></i><span>Abrir site</span></a><?php endif; ?><?php if ($participantId > 0): ?><a href="<?= $root ?>time.php?id=<?= $participantId ?>"><i><?= public_nav_icon('time') ?></i><span>Página do clube</span></a><?php endif; ?><a href="<?= $root ?>trocar-senha.php"><i><?= public_nav_icon('gestao') ?></i><span>Segurança da conta</span></a><a href="<?= $root ?>notificacoes.php"><i><?= public_nav_icon('notificacoes') ?></i><span>Notificações e e-mails</span></a><?php if (account_is_admin()): ?><a href="<?= $root ?>admin/"><i><?= public_nav_icon('admin') ?></i><span>Painel administrativo</span></a><?php endif; ?><a class="site-account-logout" href="<?= $root ?>logout.php"><i><?= public_nav_icon('transferencias') ?></i><span>Sair da conta</span></a></nav>
     </aside><?php endif; ?>
 <?php
 }
@@ -190,5 +214,17 @@ function public_footer(): void
     <script defer src="assets/js/market.js?v=<?= filemtime(__DIR__ . '/../assets/js/market.js') ?>"></script>
     <script defer src="assets/js/site-loader.js?v=<?= filemtime(__DIR__ . '/../assets/js/site-loader.js') ?>"></script>
     <script defer src="assets/js/side-menu.js?v=<?= filemtime(__DIR__ . '/../assets/js/side-menu.js') ?>"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        });
+        document.addEventListener('shown.bs.modal', function() {
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        });
+    </script>
 <?php
 }

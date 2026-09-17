@@ -31,7 +31,7 @@
         <label class="form-label">Título</label><input class="form-control" name="titulo" maxlength="180" required>
         <label class="form-label mt-3">Resumo</label><textarea class="form-control" name="resumo" rows="3" maxlength="500" required></textarea>
         <label class="form-label mt-3">Imagem de capa</label><input id="cover-file" class="form-control" type="file" accept="image/jpeg,image/png,image/webp"><img id="cover-preview" class="news-cover-preview d-none mt-3" alt="Prévia da capa">
-        <div class="d-flex flex-wrap align-items-center gap-3 mt-3 mb-2"><label class="form-label mb-0">Conteúdo da matéria</label><button id="news-submit" type="submit" class="btn btn-danger">Publicar notícia</button></div>
+        <div class="d-flex flex-wrap align-items-center gap-3 mt-3 mb-2"><label class="form-label mb-0">Conteúdo da matéria</label><button id="news-submit" type="submit" class="btn btn-danger d-inline-flex align-items-center gap-1"><i data-lucide="plus" class="action-icon"></i> Publicar notícia</button></div>
         <div class="editor-toolbar"><button type="button" data-command="bold"><strong>N</strong></button><button type="button" data-command="italic"><em>I</em></button><button type="button" data-block="h2">Título</button><button type="button" data-block="p">Texto</button><button type="button" id="insert-image">Inserir imagem</button><input id="body-image" class="d-none" type="file" accept="image/jpeg,image/png,image/webp"></div>
         <div id="news-editor" class="news-editor" contenteditable="true" data-placeholder="Escreva ou cole a matéria e encaixe imagens onde quiser." role="textbox" aria-multiline="true" aria-label="Conteúdo da matéria"></div>
         <p class="small text-secondary mt-2">As imagens são reduzidas e convertidas para WebP antes de serem salvas.</p>
@@ -46,13 +46,13 @@
     format_datetime_br($item["publicado_em"]),
 ) ?> • <?= e(
      $item["autor"],
- ) ?></small><div class="d-flex flex-wrap gap-2 mt-2"><a class="btn btn-sm btn-outline-info" href="../noticia.php?id=<?= (int)$item['id'] ?>" target="_blank" rel="noopener">Ver notícia</a><button type="button" class="btn btn-sm btn-outline-light editar-noticia" data-id="<?= $item[
+ ) ?></small><div class="d-flex flex-wrap gap-2 mt-2"><a class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" href="../noticia.php?id=<?= (int)$item['id'] ?>" target="_blank" rel="noopener"><i data-lucide="eye" class="action-icon"></i> Ver notícia</a><button type="button" class="btn btn-sm btn-outline-light editar-noticia d-inline-flex align-items-center gap-1" data-id="<?= $item[
     "id"
-] ?>">Editar</button><form method="post"><input type="hidden" name="csrf" value="<?= e(
+] ?>"><i data-lucide="pencil" class="action-icon"></i> Editar</button><form method="post"><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="desativar_noticia"><input type="hidden" name="noticia_id" value="<?= $item[
     "id"
-] ?>"><button class="btn btn-sm btn-outline-danger">Apagar</button></form></div></article><?php endforeach; ?>
+] ?>"><button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1"><i data-lucide="trash-2" class="action-icon"></i> Apagar</button></form></div></article><?php endforeach; ?>
       <?php if (
           !$newsAdmin
       ): ?><div class="empty-state">Nenhuma notícia publicada.</div><?php endif; ?>
