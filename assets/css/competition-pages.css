@@ -19,3 +19,5 @@
 .round-highlight-game b{font-size:18px}.round-highlight-game small{color:#aab9cb}.round-highlight-game:hover,.round-highlight-game:focus-visible{border-color:#ed172b}
 
 .players-page .player-ranking-tabs{gap:8px;flex:1;min-width:0}.players-page .panel-head:has(.player-ranking-tabs){gap:18px}.players-page .competition-identity-panel{grid-template-columns:100px minmax(0,1fr)}.players-page #scorers-championship-identity{width:100px;height:100px;object-fit:contain}
+
+.round-highlight-team{display:flex;align-items:center;gap:8px}.round-highlight-team .team-badge{width:34px;height:34px;flex:0 0 34px}.round-highlight-game{border:0;padding:4px 0;background:transparent}.round-highlight-game:focus-visible{outline:2px solid #ed172b;outline-offset:4px}
