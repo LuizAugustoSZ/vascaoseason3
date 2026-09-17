@@ -113,3 +113,4 @@ Alterações gerais em navbar, sidebar, perfil, cabeçalhos, responsividade e es
 - Cabeçalhos compartilham `assets/css/page-headings.css`; ajustes específicos do shell administrativo ficam em `assets/css/admin-navigation.css`.
 - Verificar desktop/mobile, menu recolhido/expandido, perfil, links, pesquisa e notificações; preservar permissões de Master/Editor e as abas administrativas.
 - O fundo global tem uma única fonte: `assets/css/site-background.css`, importado por `style.css` em todas as páginas, inclusive login e admin. Manter a mesma base escura, linhas diagonais discretas e brilho vermelho. Não criar fundos de página divergentes; preservar superfícies legíveis para cards, tabelas e formulários.
+- Sidebar, navbar e footer compartilham `--site-chrome-background` em `site-background.css`. Cabeçalhos principais ficam livres de caixas; preservar a tipografia e as cores do título.

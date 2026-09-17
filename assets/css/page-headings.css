@@ -37,3 +37,6 @@ main .statistics-hero { grid-template-columns:1fr;min-height:0;padding-block:28p
 main .section-title.mt-4 { margin-top:0!important; }
 
 .hero .eyebrow,.hero h1+p,.admin-heading .eyebrow{display:none!important}
+/* O título mantém sua tipografia e cores, sem painel ao redor. */
+main .statistics-hero{border:0!important;background:transparent!important;box-shadow:none!important;padding:20px 0 28px!important;min-height:0!important}
+main .statistics-hero::before{display:none!important}

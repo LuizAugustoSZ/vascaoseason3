@@ -5,3 +5,6 @@ body{background-color:var(--site-background)!important;background-image:var(--si
 body>main,body>.hero,body>.club-hero,main>.section-pad,main>.bg-panel,main>.container>.bg-panel{background:transparent!important}
 .hero-lines{display:none!important}
 @media(prefers-reduced-motion:reduce){body{background-attachment:scroll!important}}
+/* Superfícies de navegação usam a mesma base da sidebar. */
+:root{--site-chrome-background:#0a0b0e}
+body .site-side-menu,body .admin-navigation,body .site-topbar,body>footer{background:var(--site-chrome-background)!important;backdrop-filter:none}
