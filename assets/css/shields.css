@@ -87,4 +87,6 @@
   font-size: .65rem;
   text-align: center;
   border-top: 1px dashed var(--line);
-}
+}/* Evita que a proporção intrínseca da imagem aumente a célula do grid. */
+body .team-badge-image{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);overflow:visible;flex-shrink:0}
+body .team-badge-image img{min-width:0;min-height:0;object-fit:contain;object-position:center;align-self:center;justify-self:center}

@@ -120,3 +120,4 @@ Alterações gerais em navbar, sidebar, perfil, cabeçalhos, responsividade e es
 
 - Todos os cards e modais, públicos e administrativos, usam `--surface-background: #101216` (cor do card Escalação atual de time.php), definida em `assets/css/surfaces.css`. Novos componentes devem usar essa variável e manter fundos sem gradientes; cores de estado ficam nos textos, bordas e controles.
 - Abas no site e no admin: fundo #101216 em todos os estados; borda clara inativa e borda vermelha (#ed172b) na selecionada, sem preenchimento vermelho. Regra compartilhada em `assets/css/tabs.css`.
+- Escudos: preservar o tamanho do componente e usar `object-fit: contain`, sem corte. O grid de `.team-badge-image` deve usar trilhas `minmax(0,1fr)` e imagens com `min-width/min-height: 0`, evitando que a proporção original expanda a célula e recorte a parte inferior.

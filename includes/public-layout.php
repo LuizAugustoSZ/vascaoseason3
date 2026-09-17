@@ -111,6 +111,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false, bool $a
     }
 ?>
     <link rel="stylesheet" href="<?= $root ?>assets/css/style.css?v=<?= filemtime(__DIR__ . '/../assets/css/style.css') ?>">
+    <link rel="stylesheet" href="<?= $root ?>assets/css/shields.css?v=<?=filemtime(__DIR__.'/../assets/css/shields.css')?>">
     <link rel="stylesheet" href="<?= $root ?>assets/css/site-toolbar.css?v=<?=filemtime(__DIR__.'/../assets/css/site-toolbar.css')?>">
     <link rel="stylesheet" href="<?= $root ?>assets/css/page-headings.css?v=<?=filemtime(__DIR__.'/../assets/css/page-headings.css')?>">
     <link rel="stylesheet" href="<?= $root ?>assets/css/navigation-v22.css?v=<?=filemtime(__DIR__.'/../assets/css/navigation-v22.css')?>">
