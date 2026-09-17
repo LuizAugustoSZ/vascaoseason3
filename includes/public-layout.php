@@ -32,12 +32,12 @@ function public_nav_icon(string $name): string
 {
     $icons = [
         'noticias' => 'newspaper',
-        'competicao' => 'trophy',
+        'competicao' => 'table-2',
         'artilharia' => 'users',
         'participantes' => 'user-round',
-        'titulos' => 'medal',
+        'titulos' => 'trophy',
         'estatisticas' => 'chart-column',
-        'transferencias' => 'trending-up',
+        'transferencias' => 'circle-dollar-sign',
         'comandos' => 'terminal',
         'regulamento' => 'file-text',
         'time' => 'shield',

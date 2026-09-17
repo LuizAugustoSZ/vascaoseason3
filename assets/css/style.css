@@ -881,8 +881,8 @@ footer {
 .form-check-input[type="checkbox"]:not([hidden]):focus-visible { outline:2px solid #ff555b; outline-offset:2px }
 .form-check:has(.form-check-input[type="checkbox"]) { display:flex; align-items:center }
 /* Ícones em cards de estatísticas */
-.stat-icon { display:flex; align-items:center; justify-content:center; width:38px; height:38px; margin-bottom:8px; border:1px solid rgba(255,35,57,.25); border-radius:10px; background:rgba(255,35,57,.1); color:#ff2339 }
-.stat-icon .lucide { width:20px; height:20px }
+.stat-icon { display:grid!important; place-items:center; flex:0 0 38px; width:38px; height:38px; min-width:38px; min-height:38px; margin-bottom:8px; padding:0!important; border:1px solid rgba(255,35,57,.25); border-radius:10px; background:rgba(255,35,57,.1); color:#ff2339; line-height:0; box-sizing:border-box }
+.stat-icon .lucide { display:block; width:20px; height:20px; margin:0; padding:0 }
 .club-stats .stat-icon .lucide { width:20px; height:20px }
 .statistics-global .stat-icon .lucide { width:20px; height:20px }
 .round-summary-grid .stat-icon .lucide { width:20px; height:20px }

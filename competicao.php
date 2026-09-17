@@ -13,7 +13,7 @@
                             <div class="col-xl-8">
                                 <div class="panel">
                                     <div class="panel-head">
-                                        <h3>Classificação</h3><span>Atualização automática</span>
+                                        <h3><i data-lucide="table-2" aria-hidden="true"></i>Classificação</h3><span>Atualização automática</span>
                                     </div>
                                     <div class="table-responsive">
                                         <table class="table ranking-table mb-0">
@@ -42,7 +42,7 @@
                             <div class="col-xl-4">
                                 <div class="panel h-100">
                                     <div class="panel-head">
-                                        <h3>Jogos</h3><span id="round-status">Selecione a rodada</span>
+                                        <h3><i data-lucide="swords" aria-hidden="true"></i>Jogos</h3><span id="round-status">Selecione a rodada</span>
                                     </div>
                                     <div class="game-tools"><label class="form-label" for="round-select">Rodada</label>
                                         <div class="round-navigation">
@@ -63,14 +63,14 @@
                     <div class="tab-pane fade" id="mata-mata">
                         <div class="panel">
                             <div class="panel-head">
-                                <h3>Chaveamento</h3><span>Da primeira fase até a final</span>
+                                <h3><i data-lucide="git-fork" aria-hidden="true"></i>Chaveamento</h3><span>Da primeira fase até a final</span>
                             </div>
                             <div id="bracket" class="bracket"></div>
                         </div>
                     </div>
                     <div class="tab-pane fade" id="supercopa">
                         <div class="panel">
-                            <div class="panel-head"><h3>Decisão dos campeões</h3><span>Vagas automáticas</span></div>
+                            <div class="panel-head"><h3><i data-lucide="trophy" aria-hidden="true"></i>Decisão dos campeões</h3><span>Vagas automáticas</span></div>
                             <div id="supercup-bracket" class="bracket"></div>
                         </div>
                     </div>

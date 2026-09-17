@@ -1,6 +1,8 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['24.4','O componente compartilhado dos ícones agora força centralização perfeita do SVG nos dois eixos, mantendo caixas quadradas idênticas inclusive nos cards dinâmicos de Títulos.','Centralização dos ícones'],
+['24.3','Ícones semânticos foram ampliados para os títulos dos cards: tabela em Competição e Classificação, troféu em Títulos, cifrão em Mercado e identificadores próprios em Jogos, Chaveamento e Resumo da rodada.','Ícones semânticos nos cards'],
 ['24.2','Todos os cards estatísticos seguem a grade aprovada em Competição: rótulo no topo, ícone abaixo à esquerda e valor calculado imediatamente à direita.','Grade única para cards estatísticos'],
 ['24.1','Estatísticas e perfil de clube agora reutilizam exatamente o componente de ícone aprovado em Competição e Notificações, sem tamanhos ou contornos adicionais.','Componente de ícone unificado'],
 ['24.0','Ícones dos cards agora ficam sempre na mesma linha e imediatamente à esquerda do valor calculado, com o nome da métrica acima, nas telas de clube, competição e estatísticas.','Ícones alinhados aos valores'],
