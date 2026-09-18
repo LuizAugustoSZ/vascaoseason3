@@ -11,13 +11,37 @@ function system_email_send(string $to, string $subject, string $text, string $id
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) return false;
 
     $resendKey = getenv('RESEND_API_KEY') ?: '';
+    $brevoKey = getenv('BREVO_API_KEY') ?: '';
     $smtpPassword = getenv('SMTP_PASSWORD') ?: '';
     $smtpUser = getenv('SMTP_USERNAME') ?: 'dreambotjornal@gmail.com';
     $from = getenv('NOTIFICATION_FROM') ?: '';
     if ($smtpPassword !== '' && $from === '') $from = $smtpUser;
-    if ($from === '' || ($smtpPassword === '' && $resendKey === '')) {
+    if ($from === '' || ($smtpPassword === '' && $resendKey === '' && $brevoKey === '')) {
         error_log('Transactional email is not configured.');
         return false;
+    }
+
+    // A API HTTPS da Brevo funciona no Railway mesmo quando o plano bloqueia
+    // conexoes SMTP e permite usar um remetente individual verificado.
+    if ($brevoKey !== '') {
+        $payload = json_encode([
+            'sender' => ['name' => 'Jornal do Vascao', 'email' => $from],
+            'to' => [['email' => $to]],
+            'subject' => $subject,
+            'textContent' => $text,
+            'headers' => ['X-Mailin-custom' => 'idempotency:' . $idempotencyKey],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $context = stream_context_create(['http' => [
+            'method' => 'POST',
+            'header' => "api-key: {$brevoKey}\r\nAccept: application/json\r\nContent-Type: application/json\r\n",
+            'content' => $payload,
+            'timeout' => 15,
+            'ignore_errors' => true,
+        ]]);
+        $response = @file_get_contents('https://api.brevo.com/v3/smtp/email', false, $context);
+        $result = json_decode($response ?: '{}', true);
+        if (!empty($result['messageId'])) return true;
+        error_log('Transactional Brevo delivery failed: ' . json_encode($result, JSON_UNESCAPED_UNICODE));
     }
 
     // Railway bloqueia SMTP nos planos sem suporte a esse transporte.
