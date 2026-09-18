@@ -15,7 +15,10 @@ function system_email_send(string $to, string $subject, string $text, string $id
     $smtpUser = getenv('SMTP_USERNAME') ?: 'dreambotjornal@gmail.com';
     $from = getenv('NOTIFICATION_FROM') ?: '';
     if ($smtpPassword !== '' && $from === '') $from = $smtpUser;
-    if ($from === '' || ($smtpPassword === '' && $resendKey === '')) return false;
+    if ($from === '' || ($smtpPassword === '' && $resendKey === '')) {
+        error_log('Transactional email is not configured.');
+        return false;
+    }
 
     if ($smtpPassword !== '') {
         require_once __DIR__ . '/../vendor/phpmailer/Exception.php';
@@ -40,10 +43,13 @@ function system_email_send(string $to, string $subject, string $text, string $id
             return true;
         } catch (Throwable $error) {
             error_log('Transactional SMTP delivery failed: ' . $error->getMessage());
-            return false;
+            // Se os dois transportes estiverem configurados, o Resend assume
+            // automaticamente quando o SMTP estiver indisponivel.
+            if ($resendKey === '') return false;
         }
     }
 
+    if ($resendKey === '') return false;
     $payload = json_encode([
         'from' => $from,
         'to' => [$to],
@@ -59,5 +65,7 @@ function system_email_send(string $to, string $subject, string $text, string $id
     ]]);
     $response = @file_get_contents('https://api.resend.com/emails', false, $context);
     $result = json_decode($response ?: '{}', true);
-    return !empty($result['id']);
+    $sent = !empty($result['id']);
+    if (!$sent) error_log('Transactional Resend delivery failed: ' . json_encode($result, JSON_UNESCAPED_UNICODE));
+    return $sent;
 }

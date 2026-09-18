@@ -12,8 +12,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Informe um e-mail válido.';
     } else {
         try {
-            password_reset_request($email);
-            audit_event('recuperacao_solicitada', 'autenticacao', 'Recuperacao de senha solicitada.', ['email_hash' => hash('sha256', $email)]);
+            $deliveryStatus = password_reset_request($email);
+            audit_event('recuperacao_solicitada', 'autenticacao', 'Recuperação de senha solicitada.', [
+                'email_hash' => hash('sha256', $email),
+                'resultado_envio' => $deliveryStatus,
+            ]);
             $sent = true;
         } catch (Throwable $exception) {
             error_log('Password reset request failed: ' . $exception->getMessage());

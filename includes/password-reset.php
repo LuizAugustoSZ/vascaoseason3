@@ -19,7 +19,7 @@ function password_reset_ensure_schema(PDO $pdo): void
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 }
 
-function password_reset_request(string $email): void
+function password_reset_request(string $email): string
 {
     global $config;
     $pdo = db();
@@ -29,16 +29,16 @@ function password_reset_request(string $email): void
     $stmt = $pdo->prepare("SELECT id,nome,email FROM contas WHERE email=? AND ativo=1 LIMIT 1");
     $stmt->execute([mb_strtolower(trim($email))]);
     $account = $stmt->fetch();
-    if (!$account) return;
+    if (!$account) return 'conta_nao_encontrada';
 
     $recent = $pdo->prepare("SELECT 1 FROM recuperacoes_senha WHERE conta_id=? AND criado_em>DATE_SUB(NOW(),INTERVAL 2 MINUTE) LIMIT 1");
     $recent->execute([(int)$account['id']]);
-    if ($recent->fetchColumn()) return;
+    if ($recent->fetchColumn()) return 'limite_temporario';
 
     $baseUrl = rtrim((string)($config['app']['base_url'] ?? ''), '/');
     if (!filter_var($baseUrl, FILTER_VALIDATE_URL)) {
         error_log('Password reset not sent: APP_URL is not configured.');
-        return;
+        return 'url_nao_configurada';
     }
 
     $token = bin2hex(random_bytes(32));
@@ -51,9 +51,12 @@ function password_reset_request(string $email): void
     if (!system_email_send((string)$account['email'], 'Redefinição de senha | Vascão S3', $body, 'password-reset-' . $tokenHash)) {
         $pdo->prepare("UPDATE recuperacoes_senha SET usado_em=NOW() WHERE token_hash=?")->execute([$tokenHash]);
         error_log('Password reset email could not be delivered for account ' . (int)$account['id']);
+        $hasTransport = (getenv('SMTP_PASSWORD') ?: '') !== '' || (getenv('RESEND_API_KEY') ?: '') !== '';
+        return $hasTransport ? 'falha_no_envio' : 'transporte_nao_configurado';
     } else {
         $pdo->prepare("UPDATE recuperacoes_senha SET usado_em=NOW() WHERE conta_id=? AND token_hash<>? AND usado_em IS NULL")
             ->execute([(int)$account['id'], $tokenHash]);
+        return 'enviado';
     }
 }
 
