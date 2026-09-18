@@ -20,6 +20,29 @@ function system_email_send(string $to, string $subject, string $text, string $id
         return false;
     }
 
+    // Railway bloqueia SMTP nos planos sem suporte a esse transporte.
+    // Quando a API HTTPS da Resend estiver configurada, ela deve ser a
+    // primeira opcao para evitar timeout antes do fallback.
+    if ($resendKey !== '') {
+        $payload = json_encode([
+            'from' => $from,
+            'to' => [$to],
+            'subject' => $subject,
+            'text' => $text,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $context = stream_context_create(['http' => [
+            'method' => 'POST',
+            'header' => "Authorization: Bearer {$resendKey}\r\nContent-Type: application/json\r\nIdempotency-Key: {$idempotencyKey}\r\n",
+            'content' => $payload,
+            'timeout' => 15,
+            'ignore_errors' => true,
+        ]]);
+        $response = @file_get_contents('https://api.resend.com/emails', false, $context);
+        $result = json_decode($response ?: '{}', true);
+        if (!empty($result['id'])) return true;
+        error_log('Transactional Resend delivery failed: ' . json_encode($result, JSON_UNESCAPED_UNICODE));
+    }
+
     if ($smtpPassword !== '') {
         require_once __DIR__ . '/../vendor/phpmailer/Exception.php';
         require_once __DIR__ . '/../vendor/phpmailer/SMTP.php';
@@ -43,29 +66,8 @@ function system_email_send(string $to, string $subject, string $text, string $id
             return true;
         } catch (Throwable $error) {
             error_log('Transactional SMTP delivery failed: ' . $error->getMessage());
-            // Se os dois transportes estiverem configurados, o Resend assume
-            // automaticamente quando o SMTP estiver indisponivel.
-            if ($resendKey === '') return false;
+            return false;
         }
     }
-
-    if ($resendKey === '') return false;
-    $payload = json_encode([
-        'from' => $from,
-        'to' => [$to],
-        'subject' => $subject,
-        'text' => $text,
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    $context = stream_context_create(['http' => [
-        'method' => 'POST',
-        'header' => "Authorization: Bearer {$resendKey}\r\nContent-Type: application/json\r\nIdempotency-Key: {$idempotencyKey}\r\n",
-        'content' => $payload,
-        'timeout' => 15,
-        'ignore_errors' => true,
-    ]]);
-    $response = @file_get_contents('https://api.resend.com/emails', false, $context);
-    $result = json_decode($response ?: '{}', true);
-    $sent = !empty($result['id']);
-    if (!$sent) error_log('Transactional Resend delivery failed: ' . json_encode($result, JSON_UNESCAPED_UNICODE));
-    return $sent;
+    return false;
 }
