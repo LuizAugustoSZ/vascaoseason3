@@ -3,6 +3,7 @@ let dedicatedTeams=[];
 const originalRenderSite=renderSite;
 renderSite=function(data){
  dedicatedTeams=data.participantes||[];originalRenderSite(data);
+ if(typeof dedicatedSignature==='function')dedicatedDataSignature=dedicatedSignature(data);
  const championshipLogo=$('#scorers-championship-identity');if(data.campeonato?.logo_url){championshipLogo.attr('src',data.campeonato.logo_url).attr('alt',`Logo ${data.campeonato.nome}`).removeClass('d-none')}else championshipLogo.addClass('d-none');
  if(!document.body.classList.contains('competition-page'))return;
  const games=data.partidas||[],finished=games.filter(g=>['finalizada','wo','penalidade'].includes(g.status));
@@ -33,3 +34,56 @@ renderScorers=function(){
  $('#scorers-list').html(rows.length?remaining.slice((scorersPage-1)*5,scorersPage*5).map((p,i)=>`<button type="button" class="scorer player-open" data-player-name="${esc(p.jogador)}" data-player-team="${Number(p.participante_id)}"><span>${String(4+(scorersPage-1)*5+i).padStart(2,'0')}</span><strong>${esc(p.jogador)}</strong><span class="ranking-club">${avatar(p)}${esc(p.participante)}</span><b>${value(p)} <small>${label}</small></b></button>`).join(''):publicEmpty('O ranking começa com o primeiro registro.'));
  $('#scorers-pagination').html(pages>1?`<button class="page-scorer" data-page="${scorersPage-1}" ${scorersPage===1?'disabled':''} aria-label="Página anterior">‹</button><span>${scorersPage} / ${pages}</span><button class="page-scorer" data-page="${scorersPage+1}" ${scorersPage===pages?'disabled':''} aria-label="Próxima página">›</button>`:'');$('#scorers-download').toggleClass('d-none',!rows.length).prop('disabled',!rows.length);
 };
+
+// Mantém as telas dedicadas sincronizadas sem recarregar a página inteira.
+// A consulta para quando a aba não está visível e o DOM só é redesenhado se a API mudou.
+const dedicatedRefreshInterval=45000;
+let dedicatedRefreshTimer=null,dedicatedRefreshRequest=null,dedicatedLastCheck=Date.now(),dedicatedDataSignature='';
+const dedicatedDataId=()=>document.body.classList.contains('players-page')
+ ? ($('#scorers-championship-select').val() || currentChampionship?.id || '')
+ : ($('#championship-select').val() || currentChampionship?.id || '');
+const dedicatedSignature=data=>JSON.stringify({
+ campeonato:data.campeonato,
+ classificacao:data.classificacao,
+ partidas:data.partidas,
+ mata_mata:data.mata_mata,
+ artilharia:data.artilharia,
+ assistencias:data.assistencias,
+ resumo:data.resumo,
+ titulo_liga:data.titulo_liga
+});
+function refreshDedicatedPage(){
+ if(document.hidden||dedicatedRefreshRequest)return;
+ const championshipId=String(dedicatedDataId()),state={
+  round:$('#round-select').val(),search:$('#game-search').val(),leaguePage,
+  scorerPage:scorersPage,ranking:playerRanking
+ };
+ dedicatedLastCheck=Date.now();
+ dedicatedRefreshRequest=$.ajax({url:'api/data.php',data:championshipId?{campeonato_id:championshipId}:{},dataType:'json',cache:false})
+  .done(data=>{
+   if(!data.ok||String(dedicatedDataId())!==championshipId)return;
+   const signature=dedicatedSignature(data);
+   if(signature===dedicatedDataSignature)return;
+   dedicatedDataSignature=signature;
+   renderSite(data);
+   if(document.body.classList.contains('competition-page')){
+    $('#game-search').val(state.search);
+    if(state.round&&$('#round-select option').filter((_,option)=>option.value===state.round).length)$('#round-select').val(state.round);
+    leaguePage=state.leaguePage;renderLeagueGames();
+   }else{
+    playerRanking=state.ranking;scorersPage=state.scorerPage;
+    $('.player-ranking-tabs [data-ranking]').removeClass('active').attr('aria-selected','false');
+    $(`.player-ranking-tabs [data-ranking="${playerRanking}"]`).addClass('active').attr('aria-selected','true');
+    renderScorers();
+   }
+  })
+  .always(()=>{dedicatedRefreshRequest=null});
+}
+$(function(){
+ if(!document.body.classList.contains('competition-page')&&!document.body.classList.contains('players-page'))return;
+ dedicatedRefreshTimer=setInterval(refreshDedicatedPage,dedicatedRefreshInterval);
+ document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&Date.now()-dedicatedLastCheck>=dedicatedRefreshInterval)refreshDedicatedPage();
+ });
+ window.addEventListener('pageshow',event=>{if(event.persisted)refreshDedicatedPage()});
+});

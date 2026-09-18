@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['24.8','Competição e Jogadores agora verificam novos resultados e súmulas automaticamente a cada 45 segundos. A sincronização preserva campeonato, rodada, busca e paginação, pausa em abas ocultas e só redesenha a tela quando os dados mudam.','Atualização automática de competição e jogadores'],
 ['24.7','A tela de login agora permite solicitar por e-mail um link seguro, temporário e de uso único para criar uma nova senha. O importador reconhece expulsões, e pênaltis defendidos entram automaticamente no histórico e nas estatísticas do goleiro.','Segurança e novas estatísticas de súmula'],
 ['24.6','O item Vídeos da navegação agora usa um ícone de play compatível e visível em todas as páginas.','Ícone de Vídeos corrigido'],
 ['24.5','Ícones corrigidos para medalha em Títulos, saída clássica no logout e YouTube em Vídeos. Pesquisas usam o mesmo botão Lucide clicável e os cards de Notificações compartilham a superfície padrão da Classificação.','Ícones, pesquisa e superfícies'],
