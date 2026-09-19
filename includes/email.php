@@ -10,11 +10,17 @@ function system_email_send(string $to, string $subject, string $text, string $id
 {
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) return false;
 
-    $resendKey = getenv('RESEND_API_KEY') ?: '';
-    $brevoKey = getenv('BREVO_API_KEY') ?: '';
-    $smtpPassword = getenv('SMTP_PASSWORD') ?: '';
-    $smtpUser = getenv('SMTP_USERNAME') ?: 'dreambotjornal@gmail.com';
-    $from = getenv('NOTIFICATION_FROM') ?: '';
+    $readEnvironment = static function (string $name, string $default = ''): string {
+        $value = getenv($name);
+        if ($value === false || $value === '') $value = $_SERVER[$name] ?? $_ENV[$name] ?? $default;
+        return trim((string)$value);
+    };
+
+    $resendKey = $readEnvironment('RESEND_API_KEY');
+    $brevoKey = $readEnvironment('BREVO_API_KEY');
+    $smtpPassword = $readEnvironment('SMTP_PASSWORD');
+    $smtpUser = $readEnvironment('SMTP_USERNAME', 'dreambotjornal@gmail.com');
+    $from = $readEnvironment('NOTIFICATION_FROM');
     if ($smtpPassword !== '' && $from === '') $from = $smtpUser;
     if ($from === '' || ($smtpPassword === '' && $resendKey === '' && $brevoKey === '')) {
         error_log('Transactional email is not configured.');
