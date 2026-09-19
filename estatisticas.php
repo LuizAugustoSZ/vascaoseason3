@@ -18,9 +18,9 @@ $pairs=statistics_head_to_head($matches);
 $titleWhere=[];$titleParams=[];
 if($championshipId){$titleWhere[]='t.campeonato_id=?';$titleParams[]=$championshipId;}
 if($clubId){$titleWhere[]='t.participante_id=?';$titleParams[]=$clubId;}
-$titleStmt=$pdo->prepare("SELECT COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,p.id club_id,p.sigla,p.escudo_url,COUNT(*) titles FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):'')." GROUP BY COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico'),p.id,p.sigla,p.escudo_url ORDER BY titles DESC,name");
+$titleStmt=$pdo->prepare("SELECT COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,p.id club_id,p.sigla,p.escudo_url,COUNT(DISTINCT t.titulo) titles FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):'')." GROUP BY COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico'),p.id,p.sigla,p.escudo_url ORDER BY titles DESC,name");
 $titleStmt->execute($titleParams);$titleRanking=$titleStmt->fetchAll();
-$titleRecordsStmt=$pdo->prepare("SELECT t.titulo,COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,t.participante_id FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):''));
+$titleRecordsStmt=$pdo->prepare("SELECT DISTINCT t.titulo,COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,t.participante_id FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):''));
 $titleRecordsStmt->execute($titleParams);
 $competitionTitles=[];
 foreach($pdo->query('SELECT chave,nome FROM competicao_identidades ORDER BY ordem_exibicao IS NULL,ordem_exibicao,nome')->fetchAll() as $identity){$competitionTitles[$identity['chave']]=['name'=>$identity['nome'],'clubs'=>[]];}
