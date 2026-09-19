@@ -6,12 +6,17 @@ require __DIR__.'/includes/trophy-order.php';
 $identities=[];$titles=[];$canOrder=false;
 try {
     $pdo=db(); competition_identities_seed($pdo);
+    // Repara de forma idempotente competições encerradas antes da entrega do
+    // título automático (inclusive os modelos novos Libertadores G4 e Sula G8).
+    foreach ($pdo->query("SELECT id FROM campeonatos WHERE ativo=1 AND status='finalizado'")->fetchAll(PDO::FETCH_COLUMN) as $finishedChampionshipId) {
+        competition_sync_champion_title($pdo, (int)$finishedChampionshipId);
+    }
     $canOrder=trophy_order_allowed($pdo);
     $identities=$pdo->query("SELECT i.id,i.chave,i.nome,COALESCE(i.logo_base64,'')<>'' tem_logo,COALESCE(i.trofeu_base64,'')<>'' tem_trofeu FROM competicao_identidades i ORDER BY i.ordem_exibicao IS NULL,i.ordem_exibicao,i.nome,i.id")->fetchAll();
-    $titles=$pdo->query("SELECT t.id,t.titulo,t.temporada,t.conquistado_em,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) clube,p.escudo_url,p.id participante_id,COALESCE(p.ativo,0) participante_ativo FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id ORDER BY t.id")->fetchAll();
+    $titles=$pdo->query("SELECT t.id,t.titulo,t.temporada,t.conquistado_em,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) clube,p.escudo_url,p.id participante_id,COALESCE(p.ativo,0) participante_ativo,i.chave identidade_chave FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id LEFT JOIN campeonatos c ON c.id=t.campeonato_id LEFT JOIN competicao_identidades i ON i.id=c.identidade_id ORDER BY t.id")->fetchAll();
 } catch(Throwable $ignored) {}
 $grouped=[];
-foreach($titles as $title){$key=competition_identity_match((string)$title['titulo']);if($key)$grouped[$key][]=$title;}
+foreach($titles as $title){$key=$title['identidade_chave']?:competition_identity_match((string)$title['titulo']);if($key)$grouped[$key][]=$title;}
 function title_edition_number(string $title): int {
     if (!preg_match('/\b([IVXLCDM]+)$/i',trim($title),$match)) return 1;
     $roman=strtoupper($match[1]);$values=['I'=>1,'V'=>5,'X'=>10,'L'=>50,'C'=>100,'D'=>500,'M'=>1000];$number=0;$previous=0;
