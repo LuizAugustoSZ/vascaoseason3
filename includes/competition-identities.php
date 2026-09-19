@@ -69,7 +69,9 @@ function competition_identity_match(string $name): ?string
     if (str_starts_with($compact, 'eventocarnavalesco')) return 'evento carnavalesco';
     if (str_starts_with($compact, 'eventopascualino')) return 'evento pascualino';
     if (str_starts_with($compact, 'championsleague') || str_starts_with($compact, 'champiosleague')) return 'champions league';
-    if (str_contains($compact, 'libertadores') && str_contains($compact, 'g4')) return 'libertadores g4';
+    // Libertadores e Sul-Americana são os nomes públicos das edições criadas
+    // pelos modelos G4/G8. Não exija o sufixo técnico no nome da edição/título.
+    if (str_contains($compact, 'libertadores')) return 'libertadores g4';
     if (str_contains($compact, 'sulamericana')) return 'sul americana g8';
     return null;
 }
