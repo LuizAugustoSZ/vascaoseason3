@@ -52,29 +52,16 @@ function notifications_collect(PDO $pdo):void {
 }
 
 function notifications_deliver(PDO $pdo):void {
-    $key=getenv('RESEND_API_KEY')?:'';$from=getenv('NOTIFICATION_FROM')?:'';$base=rtrim(getenv('APP_URL')?:'','/');
-    $smtpPassword=getenv('SMTP_PASSWORD')?:'';$smtpUser=getenv('SMTP_USERNAME')?:'dreambotjornal@gmail.com';
-    if($smtpPassword&&!$from)$from=$smtpUser;
-    if((!$key&&!$smtpPassword)||!$from||!filter_var($base,FILTER_VALIDATE_URL))return;
+    require_once __DIR__.'/email.php';
+    $base=rtrim((string)(getenv('APP_URL')?:($_SERVER['APP_URL']??$_ENV['APP_URL']??'')),'/');
+    if(!filter_var($base,FILTER_VALIDATE_URL))return;
     if(!(int)$pdo->query("SELECT GET_LOCK('vascao_email_delivery',0)")->fetchColumn())return;
     try{
         $rows=$pdo->query("SELECT n.*,c.email,p.news_email,p.market_email FROM notifications n JOIN contas c ON c.id=n.account_id AND c.ativo=1 LEFT JOIN notification_preferences p ON p.account_id=c.id WHERE n.email_status='pending' AND n.attempts<5 AND n.created_at>DATE_SUB(NOW(),INTERVAL 23 HOUR) AND (n.next_attempt IS NULL OR n.next_attempt<=NOW()) ORDER BY n.id LIMIT 20")->fetchAll();
         foreach($rows as $row){
             if(!(int)($row[$row['kind']==='news'?'news_email':'market_email']??0)||!filter_var($row['email'],FILTER_VALIDATE_EMAIL)){$pdo->prepare("UPDATE notifications SET email_status='disabled' WHERE id=?")->execute([$row['id']]);continue;}
-            if($smtpPassword){
-                require_once __DIR__.'/../vendor/phpmailer/Exception.php';require_once __DIR__.'/../vendor/phpmailer/SMTP.php';require_once __DIR__.'/../vendor/phpmailer/PHPMailer.php';
-                // Mark before SMTP: a lost acknowledgement must not resend the same notice.
-                $pdo->prepare("UPDATE notifications SET email_status='uncertain',attempts=attempts+1 WHERE id=?")->execute([$row['id']]);
-                try{
-                    $mail=new \PHPMailer\PHPMailer\PHPMailer(true);$mail->isSMTP();$mail->Host='smtp.gmail.com';$mail->Port=587;$mail->SMTPAuth=true;$mail->Username=$smtpUser;$mail->Password=$smtpPassword;$mail->SMTPSecure=\PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;$mail->Timeout=15;$mail->CharSet='UTF-8';
-                    $mail->setFrom($from,'Jornal do Vascão');$mail->addAddress($row['email']);$mail->Subject=$row['title'];$mail->Body=$row['body']."\n\n".$base.'/'.$row['url']."\n\nPreferências: ".$base.'/notificacoes.php';$mail->send();
-                    $pdo->prepare("UPDATE notifications SET email_status='sent' WHERE id=?")->execute([$row['id']]);
-                }catch(Throwable $error){error_log('Notification SMTP delivery uncertain: '.$row['id']);}
-                continue;
-            }
-            $payload=json_encode(['from'=>$from,'to'=>[$row['email']],'subject'=>$row['title'],'text'=>$row['body']."\n\n".$base.'/'.$row['url']."\n\nPreferências de e-mail: ".$base.'/notificacoes.php'],JSON_UNESCAPED_UNICODE);
-            $context=stream_context_create(['http'=>['method'=>'POST','header'=>"Authorization: Bearer $key\r\nContent-Type: application/json\r\nIdempotency-Key: vascao-".hash('sha256',$base).'-'.$row['id']."\r\n",'content'=>$payload,'timeout'=>15,'ignore_errors'=>true]]);
-            $response=@file_get_contents('https://api.resend.com/emails',false,$context);$result=json_decode($response?:'{}',true);$success=!empty($result['id']);
+            $message=$row['body']."\n\nAcesse: ".$base.'/'.$row['url']."\n\nPreferências de e-mail: ".$base.'/notificacoes.php';
+            $success=system_email_send((string)$row['email'],(string)$row['title'],$message,'notification-'.$row['id']);
             $pdo->prepare("UPDATE notifications SET email_status=?,attempts=attempts+1,next_attempt=DATE_ADD(NOW(),INTERVAL 10 MINUTE) WHERE id=?")->execute([$success?'sent':((int)$row['attempts']>=4?'failed':'pending'),$row['id']]);
         }
         $pdo->exec("UPDATE notifications SET email_status='expired' WHERE email_status='pending' AND created_at<=DATE_SUB(NOW(),INTERVAL 23 HOUR)");
