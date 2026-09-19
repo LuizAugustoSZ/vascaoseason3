@@ -1559,7 +1559,7 @@ function admin_nav_icon(string $name): string
 ) ?>"><div><strong>Homologação desatualizada</strong><div class="database-sync-status small">A produção possui dados mais recentes.</div></div><button type="button" class="btn btn-warning fw-bold">Sincronizar agora</button></div><?php endif; ?>
 <aside id="admin-side-menu" class="admin-navigation" aria-label="Navegação administrativa">
     <div class="admin-side-head"><a class="admin-side-brand" href="index.php"><img src="../assets/img/logo-season3.webp?v=5" alt=""><span>PAINEL <b>SEASON 3</b></span></a><button type="button" class="admin-sidebar-collapse" aria-label="Recolher menu" title="Expandir ou recolher">‹</button></div>
-    <nav class="admin-side-nav" role="tablist" aria-label="Áreas do painel">
+    <nav class="admin-side-nav" aria-label="Áreas do painel">
         <?php if (account_is_master()): ?><section class="admin-nav-group"><span class="admin-side-label">VISÃO GERAL</span><ul><li><button class="nav-link" data-bs-target="#tab-dashboard" title="Dashboard"><i><?= admin_nav_icon('dashboard') ?></i><span>Dashboard</span><b>›</b></button></li><li><button class="nav-link" data-bs-target="#tab-notificacoes" title="Adesão às notificações"><i><?= admin_nav_icon('notificacoes') ?></i><span>Notificações</span><b>›</b></button></li></ul></section><?php endif; ?>
         <section class="admin-nav-group"><span class="admin-side-label">COMPETIÇÃO</span><ul>
             <li><button class="nav-link active" data-bs-target="#tab-jogos" title="Pontos corridos"><i><?= admin_nav_icon('jogos') ?></i><span>Pontos corridos</span><b>›</b></button></li>
