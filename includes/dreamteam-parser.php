@@ -136,8 +136,9 @@ function dreamteam_parse_compact_summary(string $raw): ?array
         };
         $event = ['type'=>$type,'minute'=>$row[1],'player'=>trim($m[2]),'team_code'=>$m[3],'description'=>trim($m[4], " \t-·")];
         if ($type === 'goal') {
-            preg_match('/Assistência de\s+(.+?)\s*[\[(]([A-Z0-9]+)[\])]/ui', $m[4], $assist);
-            $event += ['goal_type'=>dreamteam_goal_type($m[1].' '.preg_split('/Assistência de/ui', $m[4], 2)[0]),'assist'=>isset($assist[1])?trim($assist[1]):null,'cancelled'=>false];
+            preg_match('/Assistência de\s+(.+)$/ui', $m[4], $assist);
+            $assistName = isset($assist[1]) ? trim(preg_replace('/\s*[\[(][A-Z0-9]+[\])]\s*$/u', '', $assist[1]) ?? $assist[1]) : '';
+            $event += ['goal_type'=>dreamteam_goal_type($m[1].' '.preg_split('/Assistência de/ui', $m[4], 2)[0]),'assist'=>$assistName !== '' ? $assistName : null,'cancelled'=>false];
         }
         if ($type === 'attempt') $event['attempt_type'] = dreamteam_attempt_type($m[1]);
         if ($type === 'yellow_card') $event['via_var'] = str_contains(mb_strtolower($m[4]), 'var');
