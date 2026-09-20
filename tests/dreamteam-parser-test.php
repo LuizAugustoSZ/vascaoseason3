@@ -89,6 +89,15 @@ foreach ([$penalties, str_replace('pênalti', 'penalti', str_replace('Pênalti',
     check($p['events'][0]['type']==='var_review' && $p['events'][5]['type']==='var_review', 'Standalone VAR reviews');
     check(array_column($p['teams'],'code')===['COM','LOR'], 'Penalty report team codes');
 }
+$newAttempts = ['tesoura', 'primeira', 'chute colocado', 'chute direto', 'calcanhar', 'voleio', 'bike'];
+foreach ($newAttempts as $attemptType) {
+    $report = str_replace("41' Gol -", "20' Tentativa de {$attemptType} - :UFC: Roy Keane [COM]\n41' Gol de primeira -", $penalties);
+    $p = dreamteam_bind_team_codes(dreamteam_parse_summary($report), [['sigla'=>'COM'],['sigla'=>'LOR']]);
+    check($p['warnings']===[], 'New attempt warning: '.implode(' ', $p['warnings']));
+    $attempts = array_values(array_filter($p['events'], static fn(array $event): bool => $event['type']==='attempt'));
+    check(count($attempts)===1 && $attempts[0]['attempt_type']===$attemptType, 'Attempt type: '.$attemptType);
+    check($p['goals'][1]['goal_type']==='primeira', 'First-time goal type');
+}
 $p=dreamteam_parse_summary(str_replace('Gol de pênalti', 'Lance desconhecido', $penalties));
 check(count($p['warnings'])>=2, 'Unknown events and score mismatch still require review');
 $dismissal = str_replace(
