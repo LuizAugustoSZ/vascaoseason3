@@ -89,7 +89,7 @@ foreach ([$penalties, str_replace('pênalti', 'penalti', str_replace('Pênalti',
     check($p['events'][0]['type']==='var_review' && $p['events'][5]['type']==='var_review', 'Standalone VAR reviews');
     check(array_column($p['teams'],'code')===['COM','LOR'], 'Penalty report team codes');
 }
-$newAttempts = ['tesoura', 'primeira', 'chute colocado', 'chute direto', 'calcanhar', 'voleio', 'bike'];
+$newAttempts = ['tesoura', 'primeira', 'chute colocado', 'chute direto', 'calcanhar', 'voleio', 'bike', 'meio-bicicleta do meio-campo'];
 foreach ($newAttempts as $attemptType) {
     $report = str_replace("41' Gol -", "20' Tentativa de {$attemptType} - :UFC: Roy Keane [COM]\n41' Gol de primeira -", $penalties);
     $p = dreamteam_bind_team_codes(dreamteam_parse_summary($report), [['sigla'=>'COM'],['sigla'=>'LOR']]);
@@ -98,6 +98,18 @@ foreach ($newAttempts as $attemptType) {
     check(count($attempts)===1 && $attempts[0]['attempt_type']===$attemptType, 'Attempt type: '.$attemptType);
     check($p['goals'][1]['goal_type']==='primeira', 'First-time goal type');
 }
+$newTimeline = str_replace(
+    "41' Gol - :CopaSudamericana: Marcos Antônio [LOR]",
+    "14' Pênalti para fora - :AniversarioDreamTeam: Kylian Mbappé [COM]\n20' Tentativa de bicicleta - :UFC: Roy Keane [COM]\n21' Tentativa de primeira - :UFC: Roy Keane [COM]\n22' Tentativa de peixinho - :UFC: Roy Keane [COM]\n41' Gol de peixinho - :CopaSudamericana: Marcos Antônio [LOR]",
+    $penalties,
+);
+$p=dreamteam_bind_team_codes(dreamteam_parse_summary($newTimeline), [['sigla'=>'COM'],['sigla'=>'LOR']]);
+check($p['warnings']===[], 'New timeline warning: '.implode(' ', $p['warnings']));
+$missed=array_values(array_filter($p['events'], static fn(array $event): bool => $event['type']==='penalty_missed'));
+$attempts=array_values(array_filter($p['events'], static fn(array $event): bool => $event['type']==='attempt'));
+check(count($missed)===1 && $missed[0]['player']==='Kylian Mbappé', 'Missed penalty event');
+check(array_column($attempts, 'attempt_type')===['bicicleta','primeira','peixinho'], 'Mixed attempt types');
+check($p['goals'][1]['goal_type']==='peixinho', 'Diving-header goal type');
 $p=dreamteam_parse_summary(str_replace('Gol de pênalti', 'Lance desconhecido', $penalties));
 check(count($p['warnings'])>=2, 'Unknown events and score mismatch still require review');
 $dismissal = str_replace(
