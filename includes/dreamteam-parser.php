@@ -17,8 +17,21 @@ function dreamteam_goal_type(string $description): string
         str_contains($description, 'olímpico'), str_contains($description, 'olimpico') => 'olimpico',
         str_contains($description, 'contra') => 'contra',
         str_contains($description, 'cabeça'), str_contains($description, 'cabeca') => 'cabeca',
+        str_contains($description, 'de primeira') => 'primeira',
+        str_contains($description, 'chute colocado') => 'chute colocado',
+        str_contains($description, 'chute direto') => 'chute direto',
+        str_contains($description, 'tesoura') => 'tesoura',
+        str_contains($description, 'calcanhar') => 'calcanhar',
+        str_contains($description, 'voleio') => 'voleio',
+        str_contains($description, 'bicicleta'), str_contains($description, 'bike') => 'bicicleta',
         default => 'normal',
     };
+}
+
+function dreamteam_attempt_type(string $label): string
+{
+    $label = trim(preg_replace('/^Tentativa\s+(?:de\s+)?/ui', '', $label) ?? $label);
+    return mb_strtolower($label, 'UTF-8');
 }
 
 function dreamteam_player_key(string $name): string
@@ -106,20 +119,27 @@ function dreamteam_parse_compact_summary(string $raw): ?array
             $events[] = ['type'=>'substitution','minute'=>$row[1],'player_out'=>rtrim(trim($m[1]), ','),'player_in'=>trim($m[2]),'team_code'=>$m[3]];
             continue;
         }
-        if (!preg_match('/^(Gol(?:\s+anulado|\s+de\s+p[êe]nalti)?|Cartão amarelo|Cartão vermelho|Expulsão|Lesão|P[êe]nalti (?:cancelado|defendido))\s*-\s*(.+?)\s*[\[(]([A-Z0-9]+)[\])](.*)$/ui', $body, $m)) {
+        if (!preg_match('/^(Gol(?:\s+anulado|\s+de\s+[^-]+)?|Tentativa\s+(?:de\s+)?[^-]+|Cartão amarelo|Cartão vermelho|Expulsão|Lesão|P[êe]nalti (?:cancelado|defendido))\s*-\s*(.+?)\s*[\[(]([A-Z0-9]+)[\])](.*)$/ui', $body, $m)) {
             $warnings[] = 'Lance não reconhecido aos '.$row[1].' minutos: '.$body;
             continue;
         }
-        $type = match (mb_strtolower($m[1])) {
-            'gol', 'gol de pênalti', 'gol de penalti'=>'goal', 'gol anulado'=>'var_goal_cancelled', 'cartão amarelo'=>'yellow_card',
-            'pênalti defendido', 'penalti defendido'=>'penalty_saved',
-            'cartão vermelho', 'expulsão'=>'red_card', 'lesão'=>'injury', default=>'var_penalty_cancelled',
+        $eventLabel = mb_strtolower(trim($m[1]), 'UTF-8');
+        $type = match (true) {
+            $eventLabel === 'gol anulado'=>'var_goal_cancelled',
+            str_starts_with($eventLabel, 'gol')=>'goal',
+            str_starts_with($eventLabel, 'tentativa')=>'attempt',
+            $eventLabel === 'cartão amarelo'=>'yellow_card',
+            $eventLabel === 'pênalti defendido', $eventLabel === 'penalti defendido'=>'penalty_saved',
+            $eventLabel === 'cartão vermelho', $eventLabel === 'expulsão'=>'red_card',
+            $eventLabel === 'lesão'=>'injury',
+            default=>'var_penalty_cancelled',
         };
         $event = ['type'=>$type,'minute'=>$row[1],'player'=>trim($m[2]),'team_code'=>$m[3],'description'=>trim($m[4], " \t-·")];
         if ($type === 'goal') {
             preg_match('/Assistência de\s+(.+?)\s*[\[(]([A-Z0-9]+)[\])]/ui', $m[4], $assist);
             $event += ['goal_type'=>dreamteam_goal_type($m[1].' '.preg_split('/Assistência de/ui', $m[4], 2)[0]),'assist'=>isset($assist[1])?trim($assist[1]):null,'cancelled'=>false];
         }
+        if ($type === 'attempt') $event['attempt_type'] = dreamteam_attempt_type($m[1]);
         if ($type === 'yellow_card') $event['via_var'] = str_contains(mb_strtolower($m[4]), 'var');
         if ($type === 'var_goal_cancelled') {
             for ($j=count($events)-1; $j>=0; $j--) {
