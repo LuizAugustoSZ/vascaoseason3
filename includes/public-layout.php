@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/app-version.php';
+
 function public_site_config(): array
 {
     static $config = null;
@@ -122,6 +124,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false, bool $a
     <script src="https://unpkg.com/lucide@latest"></script>
     <script defer src="<?= $root ?>assets/js/account-menu.js?v=<?=filemtime(__DIR__.'/../assets/js/account-menu.js')?>"></script>
     <script defer src="<?= $root ?>assets/js/site-toolbar.js?v=<?=filemtime(__DIR__.'/../assets/js/site-toolbar.js')?>"></script>
+    <script defer src="<?= $root ?>assets/js/deployment-refresh.js?v=<?=filemtime(__DIR__.'/../assets/js/deployment-refresh.js')?>" data-release="<?=e(app_release_id())?>" data-root="<?=e($root)?>"></script>
     <?php if (!$adminLayout): ?><script>document.body.classList.add('site-has-sidebar');if(innerWidth>=768){document.body.classList.add('site-nav-collapsed');try{if(sessionStorage.getItem('site-sidebar-state')==='expanded')document.body.classList.remove('site-nav-collapsed')}catch(error){}}</script>
     <div class="site-loading-screen" role="status" aria-live="polite" aria-label="Carregando página">
         <img src="<?= $root ?>assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true">
