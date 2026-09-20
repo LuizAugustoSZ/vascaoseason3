@@ -122,4 +122,7 @@ check($p['home_name']==='Locomotiva FC' && $p['away_name']==='SC Internacional',
 check(count($p['goals'])===3 && count($p['events'])===5, 'Ranked shorthand events');
 check($p['goals'][1]['goal_type']==='penalti', 'Ranked penalty description');
 check($p['goals'][0]['assist']==='Gabigol' && $p['goals'][2]['assist']==='Puerta', 'Ranked assists');
+$rankedAssistsWithoutCode = str_replace(['Assistência de Gabigol (LOC)', 'Assistência de Puerta (INT)'], ['Assistência de Gabigol', 'Assistência de Puerta'], $ranked);
+$p=dreamteam_bind_team_codes(dreamteam_parse_summary($rankedAssistsWithoutCode), [['sigla'=>'LOC'],['sigla'=>'INT']]);
+check($p['goals'][0]['assist']==='Gabigol' && $p['goals'][2]['assist']==='Puerta', 'Ranked assists without team code');
 echo "DreamTeam parser tests passed.\n";
