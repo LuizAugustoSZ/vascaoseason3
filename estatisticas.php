@@ -84,10 +84,11 @@ $add('Jogadores','assists','Maior assistente',$playerRank('assists'),'name','ass
 $add('Jogadores','contributions','Participações em gols',$playerRank('contributions'),'name','contributions',' participações');
 $add('Disciplina','yellow','Mais cartões amarelos',$playerRank('yellow'),'name','yellow',' amarelos');
 $add('Disciplina','red','Mais cartões vermelhos',$playerRank('red'),'name','red',' vermelhos');
-$add('Gols','penalties','Mais gols de pênalti',$playerRank('penalties'),'name','penalties',' gols');
+$goalTypeLabels=['penalti'=>'pênalti','falta'=>'falta','olimpico'=>'olímpico','bicicleta'=>'bicicleta','primeira'=>'primeira'];
+$goalTypes=[];foreach($players as $player)foreach(($player['goal_types']??[])as $type=>$count)if($count>0)$goalTypes[$type]=true;
+foreach(array_keys($goalTypes)as $type){$rows=[];foreach($players as $player){$count=(int)($player['goal_types'][$type]??0);if($count>0){$player['goal_type_count']=$count;$rows[]=$player;}}$label=$goalTypeLabels[$type]??$type;$slug=preg_replace('/[^a-z0-9]+/','-',iconv('UTF-8','ASCII//TRANSLIT//IGNORE',$type)?:$type);$add('Gols','goal-type-'.trim((string)$slug,'-'),'Mais gols de '.$label,statistics_sort($rows,'goal_type_count'),'name','goal_type_count',' gols');}
 $penaltySavers=array_values(array_filter($playerRank('penalty_saves'),static fn($player)=>(int)$player['penalty_saves']>0));
 $add('Gols','penalty-saves','Mais pênaltis defendidos',$penaltySavers,'name','penalty_saves',' defesas');
-$add('Gols','free-kicks','Mais gols de falta',$playerRank('free_kicks'),'name','free_kicks',' gols');
 $add('Partidas','biggest-win','Maior goleada',$byMargin,'name','margin',' gols de diferença');
 $add('Partidas','most-goals','Jogo com mais gols',$byTotal,'name','total',' gols');
 $add('Partidas','draw-goals','Empate com mais gols',$draws,'name','total',' gols');

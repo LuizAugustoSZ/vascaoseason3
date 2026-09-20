@@ -10,23 +10,17 @@ function dreamteam_clean_line(string $line): string
 
 function dreamteam_goal_type(string $description): string
 {
-    $description = mb_strtolower($description);
-    return match (true) {
-        str_contains($description, 'pênalti'), str_contains($description, 'penalti') => 'penalti',
-        str_contains($description, 'falta') => 'falta',
-        str_contains($description, 'olímpico'), str_contains($description, 'olimpico') => 'olimpico',
-        str_contains($description, 'contra') => 'contra',
-        str_contains($description, 'cabeça'), str_contains($description, 'cabeca') => 'cabeca',
-        str_contains($description, 'de primeira') => 'primeira',
-        str_contains($description, 'chute colocado') => 'chute colocado',
-        str_contains($description, 'chute direto') => 'chute direto',
-        str_contains($description, 'tesoura') => 'tesoura',
-        str_contains($description, 'calcanhar') => 'calcanhar',
-        str_contains($description, 'voleio') => 'voleio',
-        str_contains($description, 'bicicleta'), str_contains($description, 'bike') => 'bicicleta',
-        str_contains($description, 'peixinho') => 'peixinho',
-        default => 'normal',
-    };
+    $description = mb_strtolower($description, 'UTF-8');
+    if (str_contains($description, 'gol contra')) return 'contra';
+    if (!preg_match('/\bgol\s+de\s+(.+?)(?:\s+assistência\b|$)/ui', $description, $match)) return 'normal';
+    $type = trim(preg_replace('/\s+/u', ' ', $match[1]) ?? $match[1], " \t\n\r\0\x0B-·");
+    if ($type === '') return 'normal';
+    if (str_contains($type, 'pênalti') || str_contains($type, 'penalti')) return 'penalti';
+    if (str_contains($type, 'falta')) return 'falta';
+    if (in_array($type, ['olímpico','olimpico'], true)) return 'olimpico';
+    if (in_array($type, ['cabeça','cabeca'], true)) return 'cabeca';
+    if (in_array($type, ['bicicleta','bike'], true)) return 'bicicleta';
+    return $type;
 }
 
 function dreamteam_attempt_type(string $label): string

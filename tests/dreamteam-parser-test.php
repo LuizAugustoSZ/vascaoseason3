@@ -110,6 +110,9 @@ $attempts=array_values(array_filter($p['events'], static fn(array $event): bool 
 check(count($missed)===1 && $missed[0]['player']==='Kylian Mbappé', 'Missed penalty event');
 check(array_column($attempts, 'attempt_type')===['bicicleta','primeira','peixinho'], 'Mixed attempt types');
 check($p['goals'][1]['goal_type']==='peixinho', 'Diving-header goal type');
+$freeGoalType=str_replace('Gol de peixinho', 'Gol de meio-voleio acrobático', $newTimeline);
+$p=dreamteam_bind_team_codes(dreamteam_parse_summary($freeGoalType), [['sigla'=>'COM'],['sigla'=>'LOR']]);
+check($p['warnings']===[] && $p['goals'][1]['goal_type']==='meio-voleio acrobático', 'Dynamic goal type');
 $p=dreamteam_parse_summary(str_replace('Gol de pênalti', 'Lance desconhecido', $penalties));
 check(count($p['warnings'])>=2, 'Unknown events and score mismatch still require review');
 $dismissal = str_replace(
