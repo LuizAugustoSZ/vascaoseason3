@@ -19,9 +19,9 @@ $placements=statistics_competition_placements($pdo,$championshipId,$clubId);
 $titleWhere=[];$titleParams=[];
 if($championshipId){$titleWhere[]='t.campeonato_id=?';$titleParams[]=$championshipId;}
 if($clubId){$titleWhere[]='t.participante_id=?';$titleParams[]=$clubId;}
-$titleStmt=$pdo->prepare("SELECT COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,p.id club_id,p.sigla,p.escudo_url,COUNT(DISTINCT t.titulo) titles FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):'')." GROUP BY COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico'),p.id,p.sigla,p.escudo_url ORDER BY titles DESC,name");
+$titleStmt=$pdo->prepare("SELECT COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,p.id club_id,p.sigla,p.escudo_url,COUNT(DISTINCT t.titulo) titles,MIN(COALESCE(t.conquistado_em,'9999-12-31')) first_won,MIN(t.id) first_id FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):'')." GROUP BY COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico'),p.id,p.sigla,p.escudo_url ORDER BY titles DESC,first_won,first_id,name");
 $titleStmt->execute($titleParams);$titleRanking=$titleStmt->fetchAll();
-$titleRecordsStmt=$pdo->prepare("SELECT DISTINCT t.titulo,COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,t.participante_id FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):''));
+$titleRecordsStmt=$pdo->prepare("SELECT t.id,t.titulo,t.conquistado_em,COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,t.participante_id,p.escudo_url FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):'')." ORDER BY COALESCE(t.conquistado_em,'9999-12-31'),t.id");
 $titleRecordsStmt->execute($titleParams);
 $competitionTitles=[];
 foreach($pdo->query('SELECT chave,nome FROM competicao_identidades ORDER BY ordem_exibicao IS NULL,ordem_exibicao,nome')->fetchAll() as $identity){$competitionTitles[$identity['chave']]=['name'=>$identity['nome'],'clubs'=>[]];}
@@ -29,7 +29,7 @@ foreach($titleRecordsStmt->fetchAll() as $record){
     $key=competition_identity_match((string)$record['titulo'])?:'other-'.md5((string)$record['titulo']);
     if(!isset($competitionTitles[$key]))$competitionTitles[$key]=['name'=>$record['titulo'],'clubs'=>[]];
     $owner=$record['participante_id']?'club-'.$record['participante_id']:'name-'.$record['name'];
-    if(!isset($competitionTitles[$key]['clubs'][$owner]))$competitionTitles[$key]['clubs'][$owner]=['name'=>$record['name'],'titles'=>0];
+    if(!isset($competitionTitles[$key]['clubs'][$owner]))$competitionTitles[$key]['clubs'][$owner]=['name'=>$record['name'],'club_id'=>(int)($record['participante_id']??0),'shield'=>$record['escudo_url']??'','titles'=>0,'first_won'=>$record['conquistado_em']?:'9999-12-31','first_id'=>(int)$record['id']];
     $competitionTitles[$key]['clubs'][$owner]['titles']++;
 }
 
@@ -63,7 +63,7 @@ $add=function(string $section,string $key,string $label,array $rows,string $name
     $format=$valueFormat??static fn($v)=>(string)$v;
     $shield=$first['shield']??$first['escudo_url']??$shieldsById[(int)($first['club_id']??$first['participante_id']??0)]??$shieldsByName[$first['club']??$first['clube']??$first['name']??'']??'';
     $cards[$section][]=compact('key','label','note','shield')+['name'=>(string)($first[$nameField]??'Sem dados'),'value'=>$format($first[$valueField]??0).$suffix];
-    $details[$key]=['title'=>$label,'note'=>$note,'rows'=>array_map(static fn($row)=>['name'=>(string)($row[$nameField]??'Sem dados'),'context'=>(string)($row['club']??$row['campeonato']??$row['etapa']??''),'value'=>$format($row[$valueField]??0).$suffix],$rows)];
+    $details[$key]=['title'=>$label,'note'=>$note,'rows'=>array_map(static fn($row)=>['name'=>(string)($row[$nameField]??'Sem dados'),'context'=>(string)($row['club']??$row['clube']??$row['campeonato']??$row['etapa']??''),'value'=>$format($row[$valueField]??0).$suffix],$rows)];
 };
 $add('Clubes','team-wins','Mais vitórias',$teamRank('wins'),'name','wins',' vitórias');
 $add('Clubes','team-games','Mais jogos',$teamRank('games'),'name','games',' jogos');
@@ -74,13 +74,12 @@ $eligiblePct=array_values(array_filter($teams,static fn($t)=>$t['games']>=3));
 $add('Clubes','team-pct','Maior percentual de vitórias',statistics_sort($eligiblePct,'win_pct'),'name','win_pct','%',null,'Mínimo de 3 jogos para evitar recordes enganosos.');
 $add('Títulos','titles','Maior campeão',$titleRanking,'name','titles',' títulos');
 foreach($competitionTitles as $key=>$competition){
-    $ranking=statistics_sort(array_values($competition['clubs']),'titles');
+    $ranking=array_values($competition['clubs']);
+    usort($ranking,static fn(array $a,array $b):int=>((int)$b['titles']<=>(int)$a['titles'])?:strcmp((string)$a['first_won'],(string)$b['first_won'])?:((int)$a['first_id']<=>(int)$b['first_id'])?:strcasecmp((string)$a['name'],(string)$b['name']));
     $cardKey='titles-'.$key;
     if($ranking){
         $add('Títulos',$cardKey,$competition['name'],$ranking,'name','titles',' títulos');
-        $leaders=array_filter($ranking,static fn($row)=>(int)$row['titles']===(int)$ranking[0]['titles']);
-        $cards['Títulos'][array_key_last($cards['Títulos'])]['name']=implode(' • ',array_column($leaders,'name'));
-        if(count($leaders)>1)$cards['Títulos'][array_key_last($cards['Títulos'])]['shield']='';
+        $cards['Títulos'][array_key_last($cards['Títulos'])]['name']=$ranking[0]['name'];
     }else{
         $cards['Títulos'][]=['key'=>$cardKey,'label'=>$competition['name'],'name'=>'Nenhum campeão neste recorte','value'=>'0 títulos','note'=>'Ver ranking'];
         $details[$cardKey]=['title'=>$competition['name'],'note'=>'Ainda não há títulos registrados para os filtros selecionados.','rows'=>[]];
