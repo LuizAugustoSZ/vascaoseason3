@@ -11,6 +11,7 @@ $teams=statistics_team_aggregates($matches);$a=array_values(array_filter($teams,
 $pairs=statistics_head_to_head($matches);if($pairs[0]['games']!==2||$pairs[0]['total_goals']!==8)throw new RuntimeException('Retrospecto incorreto.');
 $players=statistics_players($pdo);$scorer=array_values(array_filter($players,fn($p)=>$p['name']==='Atacante'))[0];if($scorer['goals']!==2||$scorer['penalties']!==1||($scorer['goal_types']['penalti']??0)!==1||($scorer['goal_types']['tesoura']??0)!==1)throw new RuntimeException('Ranking de jogadores incorreto.');
 $finance=statistics_finance($pdo);if(count($finance['moves'])!==1||(float)$finance['clubs'][0]['spent']!==500.0)throw new RuntimeException('Financeiro incorreto.');
+if(($finance['moves'][0]['clube']??'')!=='Clube A')throw new RuntimeException('Transferência sem contexto do clube.');
 $pdo->exec("INSERT INTO campeonatos VALUES(2,'Copa','2026-02-01','mata_mata','finalizado',1);INSERT INTO participantes VALUES(3,'Técnico C','Clube C','C','',1),(4,'Técnico D','Clube D','D','',1);INSERT INTO jogos_mata_mata VALUES(1,2,'Final',1,1,1,2,1,0,NULL,NULL,1,'finalizado',1,'2026-02-10'),(2,2,'Terceiro lugar',1,1,3,4,2,1,NULL,NULL,3,'finalizado',1,'2026-02-09')");
 $placements=statistics_competition_placements($pdo);$byClub=[];foreach($placements as $placement)$byClub[$placement['club_id']]=$placement;
 if($byClub[2]['runner_ups']!==2||$byClub[1]['finals']!==1||$byClub[3]['thirds']!==1||$byClub[4]['fourths']!==1)throw new RuntimeException('Pódios e finais incorretos.');
