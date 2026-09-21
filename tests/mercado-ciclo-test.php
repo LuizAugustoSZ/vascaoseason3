@@ -33,6 +33,14 @@ $state = check_window($pdo, false, 'Participacao concluida');
 if (!$state['participacao_concluida'] || $state['proxima_partida'] !== null || $state['ultima_rodada'] !== 33) {
     throw new RuntimeException('Encerramento da participacao incorreto: '.json_encode($state));
 }
+if (mercado_venda_bloqueada($state)) {
+    throw new RuntimeException('Participacao concluida nao deve bloquear venda: '.json_encode($state));
+}
+$pdo->exec("UPDATE partidas SET status='agendada' WHERE id=33");
+$state = check_window($pdo, false, 'Ciclo em andamento fechado');
+if (!mercado_venda_bloqueada($state)) {
+    throw new RuntimeException('Ciclo em andamento fechado deve bloquear venda: '.json_encode($state));
+}
 $pdo->exec("UPDATE partidas SET status='agendada'");
 $pdo->exec('DELETE FROM partidas WHERE rodada<4');
 check_window($pdo, true, 'Folgas antes da estreia');
