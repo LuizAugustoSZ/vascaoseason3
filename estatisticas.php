@@ -15,6 +15,7 @@ $players=statistics_players($pdo,$championshipId,$clubId);
 $finance=statistics_finance($pdo,$clubId,$championshipId);
 $sequences=statistics_sequences($matches);
 $pairs=statistics_head_to_head($matches);
+$placements=statistics_competition_placements($pdo,$championshipId,$clubId);
 $titleWhere=[];$titleParams=[];
 if($championshipId){$titleWhere[]='t.campeonato_id=?';$titleParams[]=$championshipId;}
 if($clubId){$titleWhere[]='t.participante_id=?';$titleParams[]=$clubId;}
@@ -39,6 +40,12 @@ $formatMoney=static fn(mixed $v):string=>'R$ '.number_format((float)$v,0,',','.'
 $teamRank=static fn(string $field,bool $asc=false):array=>statistics_sort($teams,$field,$asc);
 $playerRank=static fn(string $field):array=>statistics_sort($players,$field);
 $financeRank=static fn(string $field):array=>statistics_sort($finance['clubs'],$field);
+$placementRank=static function(string $field)use($placements):array{
+    $rows=array_values(array_filter($placements,static fn(array $row):bool=>(int)($row[$field]??0)>0));
+    foreach($rows as &$row)$row['campeonato']=$row[$field.'_context']??'';
+    unset($row);
+    return statistics_sort($rows,$field);
+};
 $matchRows=[];foreach($matches as $m){$m['margin']=abs((int)$m['gols_a']-(int)$m['gols_b']);$m['total']=(int)$m['gols_a']+(int)$m['gols_b'];$m['name']=$m['time_a'].' '.(int)$m['gols_a'].' x '.(int)$m['gols_b'].' '.$m['time_b'];$matchRows[]=$m;}
 $byMargin=statistics_sort($matchRows,'margin');$byTotal=statistics_sort($matchRows,'total');$draws=statistics_sort(array_values(array_filter($matchRows,static fn($m)=>(int)$m['gols_a']===(int)$m['gols_b'])),'total');
 foreach($pairs as &$pair){$pair['name']=$pair['a'].' x '.$pair['b'];$pair['dominance_name']=$pair['leader'].' sobre '.($pair['leader']===$pair['a']?$pair['b']:$pair['a']);}unset($pair);
@@ -94,6 +101,10 @@ $add('Partidas','most-goals','Jogo com mais gols',$byTotal,'name','total',' gols
 $add('Partidas','draw-goals','Empate com mais gols',$draws,'name','total',' gols');
 $add('Retrospectos','most-played','Confronto mais disputado',$mostPlayed,'name','games',' jogos');
 $add('Retrospectos','dominance','Maior freguesia histórica',$dominance,'dominance_name','wins_gap',' vitórias de vantagem',null,'Ordenado pela diferença de vitórias, com mínimo de 2 confrontos.');
+$add('Retrospectos','runner-ups','Mais vices',$placementRank('runner_ups'),'name','runner_ups',' vices',null,'Considera a classificação final de competições encerradas.');
+$add('Retrospectos','third-places','Mais terceiros lugares',$placementRank('thirds'),'name','thirds',' terceiros lugares',null,'Considera a classificação final e as disputas de 3º lugar encerradas.');
+$add('Retrospectos','finals-reached','Mais finais alcançadas',$placementRank('finals'),'name','finals',' finais',null,'Conta uma participação por decisão de mata-mata encerrada.');
+$add('Retrospectos','fourth-places','Mais quase pódios (4º lugar)',$placementRank('fourths'),'name','fourths',' quartos lugares',null,'Considera a classificação final e as disputas de 3º lugar encerradas.');
 $add('Financeiro','wealth','Maior cofre atual',$richest,'name','saldo','',$formatMoney);
 $add('Financeiro','spent','Mais gastos em compras',$financeRank('spent'),'name','spent','',$formatMoney);
 $add('Financeiro','revenue','Maior receita com vendas',$financeRank('revenue'),'name','revenue','',$formatMoney);
@@ -104,7 +115,7 @@ foreach($sequences as $type=>$rows)$add('Sequências','sequence-'.$type,$rows[0]
 $cardByKey=[];foreach($cards as $sectionCards)foreach($sectionCards as $card)$cardByKey[$card['key']]=$card;
 $featured=array_values(array_filter(array_map(static fn($key)=>$cardByKey[$key]??null,['titles','goals','assists'])));
 $sectionIds=['Clubes'=>'clubes','Títulos'=>'titulos','Jogadores'=>'jogadores','Disciplina'=>'disciplina','Gols'=>'gols','Partidas'=>'partidas','Retrospectos'=>'retrospectos','Financeiro'=>'financeiro','Mercado'=>'mercado','Sequências'=>'sequencias'];
-$statIcons=['team-wins'=>'trophy','team-games'=>'calendar-days','team-goals'=>'goal','team-defense'=>'shield-check','team-gd'=>'circle-plus','team-pct'=>'percent','titles'=>'trophy','goals'=>'goal','assists'=>'handshake','contributions'=>'badge-plus','yellow'=>'square','red'=>'square','penalties'=>'circle-dot','penalty-saves'=>'shield-check','free-kicks'=>'crosshair','biggest-win'=>'medal','most-goals'=>'chart-no-axes-column-increasing','draw-goals'=>'equal','most-played'=>'swords','dominance'=>'shield','wealth'=>'landmark','spent'=>'shopping-cart','revenue'=>'badge-dollar-sign','activity'=>'circle-dollar-sign','purchase'=>'badge-dollar-sign','sale'=>'circle-dollar-sign'];
+$statIcons=['team-wins'=>'trophy','team-games'=>'calendar-days','team-goals'=>'goal','team-defense'=>'shield-check','team-gd'=>'circle-plus','team-pct'=>'percent','titles'=>'trophy','goals'=>'goal','assists'=>'handshake','contributions'=>'badge-plus','yellow'=>'square','red'=>'square','penalties'=>'circle-dot','penalty-saves'=>'shield-check','free-kicks'=>'crosshair','biggest-win'=>'medal','most-goals'=>'chart-no-axes-column-increasing','draw-goals'=>'equal','most-played'=>'swords','dominance'=>'shield','runner-ups'=>'medal','third-places'=>'medal','finals-reached'=>'trophy','fourth-places'=>'award','wealth'=>'landmark','spent'=>'shopping-cart','revenue'=>'badge-dollar-sign','activity'=>'circle-dollar-sign','purchase'=>'badge-dollar-sign','sale'=>'circle-dollar-sign'];
 $iconFor=static function(string $key)use($statIcons):string{if(isset($statIcons[$key]))return $statIcons[$key];if(str_starts_with($key,'titles-'))return 'trophy';if(str_starts_with($key,'sequence-'))return 'flame';return 'chart-no-axes-column-increasing';};
 
 $pairJson=[];foreach($pairs as $pair){$compact=['a_id'=>$pair['a_id'],'b_id'=>$pair['b_id'],'a'=>$pair['a'],'b'=>$pair['b'],'games'=>$pair['games'],'a_wins'=>$pair['a_wins'],'b_wins'=>$pair['b_wins'],'draws'=>$pair['draws'],'a_goals'=>$pair['a_goals'],'b_goals'=>$pair['b_goals']];$pairJson[$pair['a_id'].':'.$pair['b_id']]=$compact;$pairJson[$pair['b_id'].':'.$pair['a_id']]=['a_id'=>$pair['b_id'],'b_id'=>$pair['a_id'],'a'=>$pair['b'],'b'=>$pair['a'],'games'=>$pair['games'],'a_wins'=>$pair['b_wins'],'b_wins'=>$pair['a_wins'],'draws'=>$pair['draws'],'a_goals'=>$pair['b_goals'],'b_goals'=>$pair['a_goals']];}
