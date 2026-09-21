@@ -287,7 +287,7 @@ function mercado_progresso_clube(PDO $pdo, int $campeonatoId, int $participanteI
     }
 
     if (!$porRodada) {
-        return ['proxima_rodada' => 1, 'etapas_concluidas' => 0, 'partidas_concluidas' => 0, 'folgas' => 0];
+        return ['proxima_rodada' => 1, 'ultima_rodada' => null, 'etapas_concluidas' => 0, 'partidas_concluidas' => 0, 'folgas' => 0];
     }
 
     $ultimaAgendada = max(array_keys($porRodada));
@@ -309,6 +309,7 @@ function mercado_progresso_clube(PDO $pdo, int $campeonatoId, int $participanteI
         if (count($concluidas) !== count($porRodada[$rodada])) {
             return [
                 'proxima_rodada' => $rodada,
+                'ultima_rodada' => $ultimaAgendada,
                 'etapas_concluidas' => $etapas,
                 'partidas_concluidas' => $partidas,
                 'folgas' => $folgas,
@@ -321,6 +322,7 @@ function mercado_progresso_clube(PDO $pdo, int $campeonatoId, int $participanteI
 
     return [
         'proxima_rodada' => $ultimaAgendada + 1,
+        'ultima_rodada' => $ultimaAgendada,
         'etapas_concluidas' => $etapas,
         'partidas_concluidas' => $partidas,
         'folgas' => $folgas,
@@ -344,7 +346,7 @@ function mercado_descricao_janela(array $estado): string
 {
     $progresso = 'Este clube cumpriu '.$estado['etapas_concluidas'].' rodada(s), incluindo '.$estado['folgas'].' folga(s). ';
     if ($estado['participacao_concluida']) {
-        return $progresso.'Participação concluída: a inscrição está liberada.';
+        return $progresso.'Participação concluída. Não há próxima rodada nem alterações disponíveis nesta competição.';
     }
     if ($estado['excecao_nona_rodada'] ?? false) {
         return $progresso.'Excepcionalmente no Brasileirão III, a inscrição fica liberada até este clube concluir sua partida da 9ª rodada. Ao concluir esse jogo, a inscrição trava novamente.';
@@ -409,14 +411,15 @@ function mercado_estado_clube(PDO $pdo, int $campeonatoId, int $participanteId):
         }
     }
     if ($participacaoConcluida) {
-        $estado['aberto'] = true;
+        $estado['aberto'] = false;
         $estado['restantes'] = 0;
     }
     return $estado + [
         'partidas_concluidas' => $progresso['partidas_concluidas'],
         'etapas_concluidas' => $progresso['etapas_concluidas'],
         'folgas' => $progresso['folgas'],
-        'proxima_partida' => $progresso['proxima_rodada'],
+        'proxima_partida' => $participacaoConcluida ? null : $progresso['proxima_rodada'],
+        'ultima_rodada' => $progresso['ultima_rodada'],
         'participacao_concluida' => $participacaoConcluida,
         'partidas_pendentes' => (int)$agenda['partidas_pendentes'],
     ];
@@ -438,11 +441,11 @@ function mercado_clube(PDO $pdo, int $campeonatoId, int $participanteId, bool $l
     return $stmt->fetch();
 }
 
-function mercado_pode_editar(array $clube, int $rodada, ?array $estado = null): bool
+function mercado_pode_editar(array $clube, ?int $rodada, ?array $estado = null): bool
 {
     if ($estado !== null) {
-        return (bool)($estado['aberto'] ?? false)
-            || (bool)($estado['participacao_concluida'] ?? false);
+        return !(bool)($estado['participacao_concluida'] ?? false)
+            && (bool)($estado['aberto'] ?? false);
     }
     return (!(bool)$clube['elenco_confirmado'] && $rodada === 1)
         || mercado_aberto_na_rodada($rodada);

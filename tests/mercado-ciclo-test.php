@@ -29,7 +29,10 @@ for ($completed = 1; $completed <= 32; $completed++) {
     }
 }
 $pdo->exec("UPDATE partidas SET status='wo' WHERE id=33");
-check_window($pdo, true, 'Participacao concluida');
+$state = check_window($pdo, false, 'Participacao concluida');
+if (!$state['participacao_concluida'] || $state['proxima_partida'] !== null || $state['ultima_rodada'] !== 33) {
+    throw new RuntimeException('Encerramento da participacao incorreto: '.json_encode($state));
+}
 $pdo->exec("UPDATE partidas SET status='agendada'");
 $pdo->exec('DELETE FROM partidas WHERE rodada<4');
 check_window($pdo, true, 'Folgas antes da estreia');

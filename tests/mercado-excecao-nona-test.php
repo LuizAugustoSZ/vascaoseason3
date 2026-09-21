@@ -38,5 +38,5 @@ foreach (['finalizada', 'wo', 'penalidade'] as $status) {
 $pdo->exec('UPDATE partidas SET ativo=0 WHERE campeonato_id=8 AND mandante_id=1 AND rodada=9');
 check_nona($pdo, 8, 1, true, 'Partida inativa não encerra a exceção');
 $pdo->exec("UPDATE campeonatos SET status='finalizado' WHERE id=8");
-check_nona($pdo, 8, 1, true, 'Campeonato finalizado libera a inscrição');
+check_nona($pdo, 8, 1, false, 'Campeonato finalizado encerra a inscrição');
 echo "OK: exceção individual da nona, isolamento da edição e ciclos seguintes.\n";
