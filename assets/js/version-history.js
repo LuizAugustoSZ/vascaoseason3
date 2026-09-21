@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['24.9','Retrospectos ganhou novos rankings de vices, terceiros lugares, finais alcançadas e quartos lugares, calculados automaticamente a partir das competições encerradas.','Pódios e finais nos Retrospectos'],
 ['24.8','Competição e Jogadores agora verificam novos resultados e súmulas automaticamente a cada 45 segundos. A sincronização preserva campeonato, rodada, busca e paginação, pausa em abas ocultas e só redesenha a tela quando os dados mudam.','Atualização automática de competição e jogadores'],
 ['24.7','A tela de login agora permite solicitar por e-mail um link seguro, temporário e de uso único para criar uma nova senha. O importador reconhece expulsões, e pênaltis defendidos entram automaticamente no histórico e nas estatísticas do goleiro.','Segurança e novas estatísticas de súmula'],
 ['24.6','O item Vídeos da navegação agora usa um ícone de play compatível e visível em todas as páginas.','Ícone de Vídeos corrigido'],

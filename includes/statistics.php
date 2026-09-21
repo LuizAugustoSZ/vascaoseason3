@@ -80,6 +80,72 @@ function statistics_head_to_head(array $matches): array
     unset($p);return array_values($pairs);
 }
 
+function statistics_competition_placements(PDO $pdo, int $championshipId = 0, int $clubId = 0): array
+{
+    $sql = "SELECT id,nome,tipo FROM campeonatos WHERE ativo=1 AND status='finalizado'";
+    $params = [];
+    if ($championshipId > 0) {
+        $sql .= ' AND id=?';
+        $params[] = $championshipId;
+    }
+    $sql .= ' ORDER BY COALESCE(data_inicio,\'1970-01-01\'),id';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    $clubs = [];
+    $register = static function (int $id, string $metric, string $competition) use (&$clubs, $clubId): void {
+        if ($id <= 0 || ($clubId > 0 && $id !== $clubId)) return;
+        $clubs[$id] ??= ['club_id'=>$id,'runner_ups'=>0,'thirds'=>0,'finals'=>0,'fourths'=>0,'contexts'=>[]];
+        $clubs[$id][$metric]++;
+        $clubs[$id]['contexts'][$metric][] = $competition;
+    };
+
+    foreach ($stmt->fetchAll() as $competition) {
+        $id = (int)$competition['id'];
+        $name = (string)$competition['nome'];
+        if ($competition['tipo'] === 'pontos_corridos') {
+            $ranking = standings($pdo, $id);
+            if (isset($ranking[1])) $register((int)$ranking[1]['id'], 'runner_ups', $name);
+            if (isset($ranking[2])) $register((int)$ranking[2]['id'], 'thirds', $name);
+            if (isset($ranking[3])) $register((int)$ranking[3]['id'], 'fourths', $name);
+            continue;
+        }
+
+        $phaseStmt = $pdo->prepare("SELECT fase,time_a_id,time_b_id,vencedor_id,status,jogo,id FROM jogos_mata_mata WHERE campeonato_id=? AND ativo=1 AND fase IN ('Final','Terceiro lugar') ORDER BY fase,ordem,jogo,id");
+        $phaseStmt->execute([$id]);
+        $phases = [];
+        foreach ($phaseStmt->fetchAll() as $game) $phases[$game['fase']][] = $game;
+
+        foreach (['Final'=>['winner'=>null,'loser'=>'runner_ups'], 'Terceiro lugar'=>['winner'=>'thirds','loser'=>'fourths']] as $phase=>$metrics) {
+            $games = $phases[$phase] ?? [];
+            if (!$games || count(array_filter($games, static fn(array $game): bool => in_array($game['status'], ['finalizado','wo'], true))) !== count($games)) continue;
+            $last = $games[array_key_last($games)];
+            $winner = (int)($last['vencedor_id'] ?? 0);
+            $participants = [];
+            foreach ($games as $game) foreach (['time_a_id','time_b_id'] as $field) if ((int)$game[$field] > 0) $participants[(int)$game[$field]] = true;
+            if ($phase === 'Final') foreach (array_keys($participants) as $finalist) $register($finalist, 'finals', $name);
+            if ($winner <= 0 || count($participants) !== 2) continue;
+            if ($metrics['winner']) $register($winner, $metrics['winner'], $name);
+            foreach (array_keys($participants) as $participant) if ($participant !== $winner) $register($participant, $metrics['loser'], $name);
+        }
+    }
+
+    if (!$clubs) return [];
+    $ids = array_keys($clubs);
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $clubStmt = $pdo->prepare("SELECT id,time_nome name,sigla,escudo_url shield FROM participantes WHERE id IN ($placeholders)");
+    $clubStmt->execute($ids);
+    foreach ($clubStmt->fetchAll() as $club) {
+        $id = (int)$club['id'];
+        $clubs[$id] += $club;
+        foreach (['runner_ups','thirds','finals','fourths'] as $metric) {
+            $clubs[$id][$metric.'_context'] = implode(' • ', array_unique($clubs[$id]['contexts'][$metric] ?? []));
+        }
+        unset($clubs[$id]['contexts']);
+    }
+    return array_values(array_filter($clubs, static fn(array $club): bool => isset($club['name'])));
+}
+
 function statistics_players(PDO $pdo, int $championshipId = 0, int $clubId = 0): array
 {
     $whereP=$championshipId?' AND p2.campeonato_id='.(int)$championshipId:'';$whereM=$championshipId?' AND j.campeonato_id='.(int)$championshipId:'';
