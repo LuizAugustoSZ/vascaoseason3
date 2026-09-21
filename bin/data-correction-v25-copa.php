@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/../includes/bootstrap.php';
 
-$correctionId = 'v25.1-copa-do-brasil-duplicate-v2';
+$correctionId = 'v25.1-copa-do-brasil-duplicate-v3';
 $pdo = db();
 $pdo->exec("CREATE TABLE IF NOT EXISTS data_corrections (
     id VARCHAR(100) PRIMARY KEY,
@@ -32,6 +32,17 @@ try {
         $original = json_decode((string)$backupRow['payload'], true);
         if (!is_array($original) || ($original['temporada']??'') !== 'Season 2' || mb_strtolower(trim((string)($original['titulo']??'')), 'UTF-8') !== 'copa do brasil') continue;
         $restore->execute([$original['participante_id']??null,$original['tecnico_nome']??null,$original['time_nome']??null,(int)$backupRow['row_id']]);
+    }
+
+    // Garante a reversão mesmo se o backup da primeira revisão tiver sido
+    // gravado depois da alteração incorreta.
+    $gariIdStmt = $pdo->query("SELECT id FROM participantes WHERE nome='Bay' AND time_nome='Gari Saint German' ORDER BY id LIMIT 1");
+    $gariId = $gariIdStmt->fetchColumn();
+    if ($gariId !== false) {
+        $restoreGari = $pdo->prepare("UPDATE titulos SET participante_id=?,tecnico_nome=NULL,time_nome=NULL WHERE temporada='Season 2' AND LOWER(TRIM(titulo))='copa do brasil' AND (time_nome='Paris Saint-Germain' OR participante_id IS NULL)");
+        $restoreGari->execute([(int)$gariId]);
+    } else {
+        $pdo->exec("UPDATE titulos SET participante_id=NULL,tecnico_nome='Bay',time_nome='Gari Saint German' WHERE temporada='Season 2' AND LOWER(TRIM(titulo))='copa do brasil' AND time_nome='Paris Saint-Germain'");
     }
 
     $alreadyApplied = $pdo->prepare('SELECT 1 FROM data_corrections WHERE id=?');
