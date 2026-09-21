@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['25.1','O histórico da Copa do Brasil foi corrigido: Paris Saint-Germain e Locomotiva FC têm uma conquista cada, e cadastros duplicados da mesma edição não inflam mais os rankings.','Histórico da Copa do Brasil corrigido'],
 ['25.0','Os rankings agora identificam o clube de cada jogador e transferência, eliminando ambiguidades entre nomes repetidos. Em títulos empatados, o primeiro campeão permanece em destaque com seu escudo até outro clube abrir vantagem.','Rankings completos e desempate histórico'],
 ['24.9','Retrospectos ganhou novos rankings de vices, terceiros lugares, finais alcançadas e quartos lugares, calculados automaticamente a partir das competições encerradas.','Pódios e finais nos Retrospectos'],
 ['24.8','Competição e Jogadores agora verificam novos resultados e súmulas automaticamente a cada 45 segundos. A sincronização preserva campeonato, rodada, busca e paginação, pausa em abas ocultas e só redesenha a tela quando os dados mudam.','Atualização automática de competição e jogadores'],

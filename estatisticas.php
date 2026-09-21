@@ -25,10 +25,14 @@ $titleRecordsStmt=$pdo->prepare("SELECT t.id,t.titulo,t.conquistado_em,COALESCE(
 $titleRecordsStmt->execute($titleParams);
 $competitionTitles=[];
 foreach($pdo->query('SELECT chave,nome FROM competicao_identidades ORDER BY ordem_exibicao IS NULL,ordem_exibicao,nome')->fetchAll() as $identity){$competitionTitles[$identity['chave']]=['name'=>$identity['nome'],'clubs'=>[]];}
+$seenTitleRecords=[];
 foreach($titleRecordsStmt->fetchAll() as $record){
     $key=competition_identity_match((string)$record['titulo'])?:'other-'.md5((string)$record['titulo']);
     if(!isset($competitionTitles[$key]))$competitionTitles[$key]=['name'=>$record['titulo'],'clubs'=>[]];
     $owner=$record['participante_id']?'club-'.$record['participante_id']:'name-'.$record['name'];
+    $recordKey=$owner.'|'.competition_identity_key((string)$record['titulo']);
+    if(isset($seenTitleRecords[$recordKey]))continue;
+    $seenTitleRecords[$recordKey]=true;
     if(!isset($competitionTitles[$key]['clubs'][$owner]))$competitionTitles[$key]['clubs'][$owner]=['name'=>$record['name'],'club_id'=>(int)($record['participante_id']??0),'shield'=>$record['escudo_url']??'','titles'=>0,'first_won'=>$record['conquistado_em']?:'9999-12-31','first_id'=>(int)$record['id']];
     $competitionTitles[$key]['clubs'][$owner]['titles']++;
 }
