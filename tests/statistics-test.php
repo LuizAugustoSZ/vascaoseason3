@@ -15,4 +15,7 @@ if(($finance['moves'][0]['clube']??'')!=='Clube A')throw new RuntimeException('T
 $pdo->exec("INSERT INTO campeonatos VALUES(2,'Copa','2026-02-01','mata_mata','finalizado',1);INSERT INTO participantes VALUES(3,'Técnico C','Clube C','C','',1),(4,'Técnico D','Clube D','D','',1);INSERT INTO jogos_mata_mata VALUES(1,2,'Final',1,1,1,2,1,0,NULL,NULL,1,'finalizado',1,'2026-02-10'),(2,2,'Terceiro lugar',1,1,3,4,2,1,NULL,NULL,3,'finalizado',1,'2026-02-09')");
 $placements=statistics_competition_placements($pdo);$byClub=[];foreach($placements as $placement)$byClub[$placement['club_id']]=$placement;
 if($byClub[2]['runner_ups']!==2||$byClub[1]['finals']!==1||$byClub[3]['thirds']!==1||$byClub[4]['fourths']!==1)throw new RuntimeException('Pódios e finais incorretos.');
+$titleRows=[['name'=>'Sem escudo','titles'=>1,'first_season'=>1,'first_won'=>'2020-01-01','first_id'=>1,'shield'=>''],['name'=>'Com escudo','titles'=>1,'first_season'=>2,'first_won'=>'2021-01-01','first_id'=>2,'shield'=>'escudo.webp']];
+$titleRows=statistics_sort_title_rankings($titleRows);if($titleRows[0]['name']!=='Sem escudo')throw new RuntimeException('Ordem histórica de títulos incorreta.');
+if(statistics_title_featured_leader($titleRows)['name']!=='Com escudo')throw new RuntimeException('Destaque de título não priorizou líder com escudo.');
 echo "OK: partidas, clubes, retrospectos, jogadores e financeiro.\n";

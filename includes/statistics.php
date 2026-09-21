@@ -176,3 +176,26 @@ function statistics_sort(array $rows, string $field, bool $asc = false): array
     usort($rows,static fn($a,$b):int=>($asc?1:-1)*(($a[$field]??0)<=>($b[$field]??0))?:strcasecmp((string)($a['name']??''),(string)($b['name']??'')));
     return $rows;
 }
+
+function statistics_sort_title_rankings(array $rows): array
+{
+    usort($rows, static fn(array $a,array $b): int =>
+        ((int)$b['titles'] <=> (int)$a['titles'])
+        ?: ((int)($a['first_season']??99) <=> (int)($b['first_season']??99))
+        ?: strcmp((string)($a['first_won']??'9999-12-31'), (string)($b['first_won']??'9999-12-31'))
+        ?: ((int)($a['first_id']??PHP_INT_MAX) <=> (int)($b['first_id']??PHP_INT_MAX))
+        ?: strcasecmp((string)($a['name']??''), (string)($b['name']??''))
+    );
+    return $rows;
+}
+
+function statistics_title_featured_leader(array $ranking): ?array
+{
+    if (!$ranking) return null;
+    $top = (int)$ranking[0]['titles'];
+    foreach ($ranking as $row) {
+        if ((int)$row['titles'] !== $top) break;
+        if (!empty($row['shield'])) return $row;
+    }
+    return $ranking[0];
+}
