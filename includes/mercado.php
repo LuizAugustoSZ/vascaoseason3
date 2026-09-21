@@ -425,6 +425,12 @@ function mercado_estado_clube(PDO $pdo, int $campeonatoId, int $participanteId):
     ];
 }
 
+function mercado_venda_bloqueada(array $estado): bool
+{
+    return !(bool)($estado['participacao_concluida'] ?? false)
+        && !(bool)($estado['aberto'] ?? false);
+}
+
 function mercado_clube(PDO $pdo, int $campeonatoId, int $participanteId, bool $lock = false): array
 {
     $saldoAnterior = $pdo->prepare("SELECT saldo,cofre_configurado FROM clubes_campeonato WHERE participante_id=? AND cofre_configurado=1 ORDER BY atualizado_em DESC,id DESC LIMIT 1");
