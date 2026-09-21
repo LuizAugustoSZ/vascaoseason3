@@ -66,6 +66,10 @@ try {
         }
         $montagemInicial = !(bool)$clube['elenco_confirmado'] && $rodada === 1;
         $action = (string)($_POST['action'] ?? '');
+        if (($estadoClube['participacao_concluida'] ?? false)
+            && in_array($action, ['atualizar_inscricao_geral', 'configurar_inicial', 'confirmar_elenco', 'atualizar_escalacao'], true)) {
+            throw new RuntimeException('Sua participação nesta competição já terminou. Aguarde a próxima competição de pontos corridos.');
+        }
         if ($action === 'atualizar_inscricao_geral') {
             if (!$isMasterManagement && $campeonatoUsaCiclo && !mercado_pode_editar($clube, $rodada, $estadoClube)) throw new RuntimeException('A inscrição desta competição está congelada neste ciclo.');
             $inscritos = array_values(array_unique(array_map('intval', (array)($_POST['inscrito_id'] ?? []))));
@@ -345,7 +349,7 @@ $campeonatosComElenco = [];
 $elencoGeral = [];
 $inscritosGerais = $titularesGerais = [];
 $podeEditarMercado = $clube ? (!$campeonatoUsaCiclo || mercado_pode_editar($clube, $rodada, $ciclo)) : false;
-$podeEditarInscricao = $clube ? ($isMasterManagement || $podeEditarMercado) : false;
+$podeEditarInscricao = $clube ? (!($ciclo['participacao_concluida'] ?? false) && ($isMasterManagement || $podeEditarMercado)) : false;
 $montagemInicial = $clube ? (!(bool)$clube['elenco_confirmado'] && $rodada === 1) : false;
 if ($clube) {
     $s = $pdo->prepare("SELECT * FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
@@ -443,24 +447,25 @@ if ($clube) {
 <body><?php public_navbar('mercado'); ?><main class="container market-page" data-market-editable="<?= $podeEditarMercado ? '1' : '0' ?>"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
         <h1>GESTÃO DA COMPETIÇÃO</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando inscrição e escalação de <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?><?php if ($campeonatos): ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><label class="form-label">Competição que deseja gerenciar</label><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === (int)$c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form><?php else: ?><div class="alert alert-info mb-4">Nenhuma competição de pontos corridos está ativa para gestão.</div><?php endif; ?>
         <?php if (!$participantId): ?><div class="panel p-4">A conta precisa estar associada a um time.</div><?php elseif (!$campeonatos): ?><div class="panel p-4">Este time não está inscrito em nenhuma competição de pontos corridos ativa.</div><?php elseif ($clube && !(bool)($clube['cofre_configurado'] ?? false)): ?><section class="panel p-4 market-treasury-required"><span class="eyebrow">Primeira etapa obrigatória</span><h2>INFORME O SALDO DO COFRE</h2><p>Antes de montar o elenco ou registrar qualquer movimentação, informe o valor atual do cofre. O saldo pode ser zero, mas precisa ser confirmado pelo responsável.</p><a class="btn btn-danger" href="time.php?id=<?= $participantId ?>&editar_perfil=1">Abrir perfil e informar cofre</a></section><?php elseif ($clube): ?><section class="market-summary">
-                <div><span class="stat-icon" aria-hidden="true"><i data-lucide="calendar-days"></i></span><small><?= $campeonatoUsaCiclo ? 'Próxima rodada do clube' : 'Formato da competição' ?></small><strong><?= $campeonatoUsaCiclo ? $rodada.'ª' : 'MATA-MATA' ?></strong></div>
-                <div><span class="stat-icon" aria-hidden="true"><i data-lucide="<?= !$campeonatoUsaCiclo || $ciclo['aberto'] ? 'lock-open' : 'lock' ?>"></i></span><small><?= $campeonatoUsaCiclo ? 'Ciclo '.$ciclo['ciclo'] : 'Regra de inscrição' ?></small><strong><?= !$campeonatoUsaCiclo || $ciclo['aberto'] ? 'INSCRIÇÃO LIBERADA' : 'INSCRIÇÃO TRAVADA' ?></strong></div>
+                <div><span class="stat-icon" aria-hidden="true"><i data-lucide="calendar-days"></i></span><small><?= ($ciclo['participacao_concluida'] ?? false) ? 'Última rodada do clube' : ($campeonatoUsaCiclo ? 'Próxima rodada do clube' : 'Formato da competição') ?></small><strong><?= ($ciclo['participacao_concluida'] ?? false) ? (int)$ciclo['ultima_rodada'].'ª · FINAL' : ($campeonatoUsaCiclo ? $rodada.'ª' : 'MATA-MATA') ?></strong></div>
+                <div><span class="stat-icon" aria-hidden="true"><i data-lucide="<?= ($ciclo['participacao_concluida'] ?? false) ? 'circle-check-big' : (!$campeonatoUsaCiclo || $ciclo['aberto'] ? 'lock-open' : 'lock') ?>"></i></span><small><?= ($ciclo['participacao_concluida'] ?? false) ? 'Situação' : ($campeonatoUsaCiclo ? 'Ciclo '.$ciclo['ciclo'] : 'Regra de inscrição') ?></small><strong><?= ($ciclo['participacao_concluida'] ?? false) ? 'PARTICIPAÇÃO ENCERRADA' : (!$campeonatoUsaCiclo || $ciclo['aberto'] ? 'INSCRIÇÃO LIBERADA' : 'INSCRIÇÃO TRAVADA') ?></strong></div>
             </section>
             <?php if ($campeonatoUsaCiclo && !($ciclo['participacao_concluida'] ?? false) && ($ciclo['pre_estreia'] ?? false)): ?><div class="alert alert-success mb-4" role="status">
                 <strong>Inscrição liberada até a estreia.</strong> O ciclo de cinco rodadas travadas começa somente depois da primeira partida disputada pelo clube.
             </div><?php elseif ($campeonatoUsaCiclo && !($ciclo['participacao_concluida'] ?? false) && !$ciclo['aberto'] && $ciclo['ciclo'] > 1): ?><div class="alert alert-warning mb-4" role="status">
                 <strong>Inscrição travada neste ciclo.</strong> Novos jogadores podem continuar entrando no Elenco Geral, mas só poderão ser inscritos quando a janela reabrir. Formação, titulares e banco dos já inscritos continuam editáveis. Folgas após a estreia contam normalmente como rodada cumprida.
             </div><?php elseif ($campeonatoUsaCiclo && ($ciclo['participacao_concluida'] ?? false)): ?><div class="alert alert-success mb-4" role="status">
-                <strong>Participação concluída.</strong> O clube já cumpriu todas as partidas desta competição; vendas, edições e alterações de inscrição estão liberadas, mesmo que os demais times ainda tenham jogos pendentes.
+                <strong>Você já jogou sua última partida.</strong> Não há próxima rodada nem alterações disponíveis nesta competição. Agora é só aguardar o início da próxima competição de pontos corridos.
             </div><?php elseif ($campeonatoUsaCiclo && $ciclo['aberto']): ?><div class="alert alert-success mb-4" role="status">
                 <strong>Janela de inscrição liberada.</strong> Todos os jogadores ativos do Elenco Geral já aparecem como opções para montar a nova lista da competição.
             </div><?php endif; ?>
-            <section class="market-help-grid" aria-label="Ajuda para gestão do elenco">
+            <?php if (!($ciclo['participacao_concluida'] ?? false)): ?><section class="market-help-grid" aria-label="Ajuda para gestão do elenco">
                 <article><div><strong><?= $campeonatoUsaCiclo ? 'Janela de inscrição' : 'Mata-mata sem ciclo' ?></strong><p><?= $campeonatoUsaCiclo ? e(mercado_descricao_janela($ciclo)) : 'Esta competição não usa janela por rodadas. Os jogadores do Elenco Geral permanecem disponíveis para montar a inscrição.' ?></p></div></article>
                 <article><div><strong>Titulares automáticos</strong><p>Marque somente os 11 titulares. Ao salvar, todos os jogadores não selecionados serão definidos automaticamente como banco.</p></div></article>
                 <article><div><strong>Formação e ordem automáticas</strong><p>Os titulares precisam respeitar os setores da formação. O sistema ordena ataque, meio, defesa e deixa o goleiro sempre por último.</p></div></article>
                 <article><div><strong>Inscrição e escalação</strong><p>A janela controla quais jogadores fazem parte da competição. Formação, titulares e banco podem ser reorganizados a qualquer momento entre os jogadores inscritos.</p></div></article>
-            </section>
+            </section><?php endif; ?>
+            <?php if (!($ciclo['participacao_concluida'] ?? false)): ?>
             <?php if ($montagemInicial): ?><section class="panel p-4 mb-4 market-config-panel">
                     <h2>CONFIGURAÇÃO INICIAL</h2>
                     <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><input type="hidden" name="action" value="configurar_inicial">
@@ -525,6 +530,7 @@ if ($clube) {
                         </div><button class="btn btn-danger mt-3" <?= !(bool)$clube['elenco_confirmado'] ? 'name="confirmar_elenco" value="1"' : '' ?>><?= !(bool)$clube['elenco_confirmado'] ? 'Salvar e confirmar 11 titulares' : 'Salvar escalação' ?></button>
                     </form>
             </section>
+            <?php endif; ?>
             <?php if (false): ?><section class="panel p-4 market-history" data-market-history data-items-per-page="4">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2"><h2>HISTÓRICO</h2><div class="history-filters" role="group" aria-label="Filtrar histórico"><button class="active" type="button" data-history-filter="todas">Todas</button><button type="button" data-history-filter="compra">Compras</button><button type="button" data-history-filter="venda">Vendas</button></div></div>
                 <div class="history-items"><?php foreach ($historico as $m): ?><?php $packMovimento = ''; foreach (MERCADO_PACKS as $packId => $packDados) { if (($m['origem_detalhe'] ?? '') === $packDados['nome']) { $packMovimento = $packId; break; } } ?><article data-history-type="<?= e($m['tipo']) ?>"><span class="history-kind <?= $m['tipo'] === 'compra' ? 'is-purchase' : 'is-sale' ?>"><?= e(mercado_rotulo_origem($m)) ?></span><div><strong><?= e($m['jogador_nome']) ?></strong><small><?= (int)$m['jogador_overall'] ?> · <?= e($m['jogador_posicao']) ?> · rodada <?= $m['rodada'] ?><?= !empty($m['origem_detalhe']) ? ' · ' . e($m['origem_detalhe']) : '' ?> · <?= e(format_datetime_br((string)$m['criado_em'])) ?></small></div><b><?= e(mercado_valor_movimento($m)) ?></b><div class="history-actions"><button type="button" class="btn btn-sm btn-outline-light" data-edit-movement data-movement-id="<?= (int)$m['id'] ?>" data-movement-type="<?= e($m['tipo']) ?>" data-player-name="<?= e($m['jogador_nome']) ?>" data-player-overall="<?= (int)$m['jogador_overall'] ?>" data-player-position="<?= e($m['jogador_posicao']) ?>" data-movement-origin="<?= e($m['origem']) ?>" data-movement-pack="<?= e($packMovimento) ?>" data-movement-value="<?= (float)$m['valor'] ?>">Editar</button><button type="button" class="btn btn-sm btn-outline-danger" data-undo-movement data-movement-id="<?= (int)$m['id'] ?>" data-movement-type="<?= e($m['tipo']) ?>" data-player-name="<?= e($m['jogador_nome']) ?>">Desfazer</button></div></article><?php endforeach; ?><?php if (!$historico): ?><p class="text-secondary">Nenhuma movimentação.</p><?php endif; ?></div><nav class="history-pages card-pages"></nav>
