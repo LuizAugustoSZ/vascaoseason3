@@ -69,6 +69,53 @@ function mercado_pack_preco(array $pack): string
     return number_format(mercado_pack_valor($pack), 0, ',', '.') . ' ' . mercado_pack_moeda($pack);
 }
 
+function mercado_packs_atuais(PDO $pdo): array
+{
+    try {
+        $stmt = $pdo->prepare("SELECT valor FROM configuracoes_site WHERE chave='mercado_packs' LIMIT 1");
+        $stmt->execute();
+        $packs = json_decode((string)($stmt->fetchColumn() ?: ''), true);
+        if (is_array($packs) && $packs) return $packs;
+    } catch (Throwable $ignored) {
+    }
+    return MERCADO_PACKS;
+}
+
+function mercado_validar_packs_importados(array $nomes, array $minimos, array $maximos, array $precos): array
+{
+    if (!$nomes || count($nomes) !== count($minimos) || count($nomes) !== count($maximos) || count($nomes) !== count($precos)) {
+        throw new RuntimeException('Revise os packs identificados antes de salvar.');
+    }
+    $packs = [];
+    foreach ($nomes as $indice => $nomeInformado) {
+        $nome = trim((string)$nomeInformado);
+        if (!preg_match('/^Pack\s+/iu', $nome)) $nome = 'Pack ' . $nome;
+        $min = (int)$minimos[$indice];
+        $max = (int)$maximos[$indice];
+        $preco = (int)preg_replace('/\D/', '', (string)$precos[$indice]);
+        if (mb_strlen($nome) < 6 || mb_strlen($nome) > 80 || $min < 1 || $max < $min || $max > 99 || $preco < 1) {
+            throw new RuntimeException('Há um pack com nome, faixa de OVR ou preço inválido.');
+        }
+        $base = preg_replace('/^Pack\s+/iu', '', $nome) ?? $nome;
+        $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $base) ?: $base;
+        $id = trim((string)preg_replace('/[^a-z0-9]+/', '_', strtolower($ascii)), '_');
+        if ($id === '' || isset($packs[$id])) throw new RuntimeException('Há packs duplicados ou sem identificador válido.');
+        $packs[$id] = ['nome' => $nome, 'min' => $min, 'max' => $max, 'dream_points' => $preco];
+    }
+    return $packs;
+}
+
+function mercado_packs_texto(array $packs): string
+{
+    $linhas = ['**Itens Disponíveis**'];
+    foreach ($packs as $pack) {
+        $faixa = (int)$pack['min'] === (int)$pack['max'] ? (string)(int)$pack['min'] : (int)$pack['min'] . '~' . (int)$pack['max'];
+        $extra = str_contains(mb_strtolower((string)$pack['nome']), 'posicional') ? ' | escolha a posição' : '';
+        $linhas[] = '**' . $pack['nome'] . '** `' . $faixa . ' OVR`' . $extra . ' = `' . number_format(mercado_pack_valor($pack), 0, ',', '.') . '`';
+    }
+    return implode("\n", $linhas);
+}
+
 /**
  * Retorna somente as competicoes de pontos corridos em que o clube realmente
  * participa. A agenda e a classificacao usam as mesmas partidas como fonte de
