@@ -70,7 +70,24 @@ try {
             && in_array($action, ['atualizar_inscricao_geral', 'configurar_inicial', 'confirmar_elenco', 'atualizar_escalacao'], true)) {
             throw new RuntimeException('Sua participação nesta competição já terminou. Aguarde a próxima competição de pontos corridos.');
         }
-        if ($action === 'atualizar_inscricao_geral') {
+        if ($action === 'editar_jogador_rapido') {
+            $jogadorGeralId = (int)($_POST['jogador_geral_id'] ?? 0);
+            $nome = trim((string)($_POST['nome'] ?? ''));
+            $overall = (int)($_POST['overall'] ?? 0);
+            $posicao = (string)($_POST['posicao'] ?? '');
+            if ($nome === '' || mb_strlen($nome) > 150 || $overall < 1 || $overall > 99 || !in_array($posicao, MERCADO_POSICOES, true)) {
+                throw new RuntimeException('Informe nome, overall e posição válidos.');
+            }
+            $pdo->beginTransaction();
+            $validar = $pdo->prepare('SELECT id FROM jogadores_gerais WHERE id=? AND participante_id=? AND ativo=1 FOR UPDATE');
+            $validar->execute([$jogadorGeralId, $participantId]);
+            if (!$validar->fetchColumn()) throw new RuntimeException('Jogador não encontrado no Elenco Geral.');
+            $pdo->prepare('UPDATE jogadores_gerais SET nome=?,overall=?,posicao=? WHERE id=? AND participante_id=?')->execute([$nome, $overall, $posicao, $jogadorGeralId, $participantId]);
+            $pdo->prepare('UPDATE jogadores_elenco SET nome=?,overall=?,posicao=? WHERE jogador_geral_id=? AND participante_id=? AND ativo=1')->execute([$nome, $overall, $posicao, $jogadorGeralId, $participantId]);
+            $pdo->prepare('UPDATE movimentacoes_elenco_geral SET jogador_nome=?,jogador_overall=?,jogador_posicao=?,conta_id=? WHERE jogador_geral_id=? AND participante_id=?')->execute([$nome, $overall, $posicao, (int)$_SESSION['conta_id'], $jogadorGeralId, $participantId]);
+            $pdo->commit();
+            $message = 'Jogador atualizado em todo o clube: ' . $nome . ' (' . $overall . ' OVR · ' . $posicao . ').';
+        } elseif ($action === 'atualizar_inscricao_geral') {
             if (!$isMasterManagement && $campeonatoUsaCiclo && !mercado_pode_editar($clube, $rodada, $estadoClube)) throw new RuntimeException('A inscrição desta competição está congelada neste ciclo.');
             $inscritos = array_values(array_unique(array_map('intval', (array)($_POST['inscrito_id'] ?? []))));
             $titulares = array_values(array_unique(array_map('intval', (array)($_POST['titular_geral_id'] ?? []))));
@@ -402,7 +419,8 @@ if ($clube) {
         .competition-roster .registration-counts strong{color:#fff}
         .competition-roster .registration-counts small{margin-left:auto;color:#a5b0bd}
         .competition-roster .registration-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:12px}
-        .competition-roster .registration-card{min-width:0;padding:11px 9px 8px;border:1px solid var(--state-color);border-radius:10px;background:linear-gradient(135deg,var(--state-tint),#101418);display:flex;flex-direction:column;gap:9px;transition:border-color .15s,background .15s}
+        .competition-roster .registration-card{position:relative;min-width:0;padding:11px 9px 8px;border:1px solid var(--state-color);border-radius:10px;background:linear-gradient(135deg,var(--state-tint),#101418);display:flex;flex-direction:column;gap:9px;transition:border-color .15s,background .15s}
+        .competition-roster .registration-edit-player{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid #596674;border-radius:6px;background:#11161b;color:#fff;z-index:2}.competition-roster .registration-edit-player:hover{border-color:#ed2338;color:#ed2338}.competition-roster .registration-edit-player svg{width:15px;height:15px}.market-player-edit-modal .modal-content{border:1px solid #343941;background:#0b0d10;color:#fff}.market-player-edit-modal .modal-header,.market-player-edit-modal .modal-footer{border-color:#2f343d}.market-player-edit-modal .modal-title{font:800 2rem/1 'Barlow Condensed',sans-serif}.market-player-edit-modal .form-control,.market-player-edit-modal .form-select{border-color:#343941;background:#15181d;color:#fff}.market-player-edit-modal .alert-warning{border-color:#7b6423;background:#211c0e;color:#ffe7a0}
         .competition-roster .registration-badge{align-self:flex-start;border-radius:20px;padding:4px 10px;background:var(--state-color);color:#fff;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
         .competition-roster .registration-name{font-size:.85rem;line-height:1.25;min-height:2.5em;overflow-wrap:anywhere;text-transform:uppercase;color:#fff;padding:0 3px}
         .competition-roster .registration-rating{display:flex;gap:10px;align-items:center;margin-top:auto;padding:0 3px}
@@ -490,7 +508,7 @@ if ($clube) {
                     <noscript><p class="alert alert-warning">Ative o JavaScript para alterar os estados e salvar a inscrição.</p></noscript>
                     <div class="roster-grid registration-grid">
                         <?php foreach($elencoGeral as $j): $gid=(int)$j['id']; $estado=isset($titularesGerais[$gid])?'starter':(isset($inscritosGerais[$gid])?'reserve':'out'); ?>
-                        <article class="registration-card" data-state="<?= $estado ?>" data-position="<?= e($j['posicao']) ?>" data-overall="<?= (int)$j['overall'] ?>">
+                        <article class="registration-card" data-state="<?= $estado ?>" data-position="<?= e($j['posicao']) ?>" data-overall="<?= (int)$j['overall'] ?>" data-player-id="<?= $gid ?>" data-player-name="<?= e($j['nome']) ?>">
                             <!-- Campos legados preservados para o backend e o modal de confirmação. -->
                             <input hidden type="checkbox" name="inscrito_id[]" value="<?= $gid ?>" <?= isset($inscritosGerais[$gid])?'checked':'' ?>>
                             <input hidden type="checkbox" name="titular_geral_id[]" value="<?= $gid ?>" <?= isset($titularesGerais[$gid])?'checked':'' ?>>
@@ -516,7 +534,7 @@ if ($clube) {
                         <div class="registration-counts" role="status" aria-live="polite"><strong><span data-registration-starters><?= $totalTitularesAtual ?></span>/11 titulares selecionados</strong><span><span data-registration-reserves><?= count($elenco) - $totalTitularesAtual ?></span> reservas</span><small data-registration-unsaved>Escalação atual</small></div>
                         <div class="roster-grid registration-grid">
                             <?php foreach ($elenco as $j): $estado=$j['grupo']==='titular'?'starter':'reserve'; ?>
-                            <article class="roster-select-card registration-card<?= $estado==='starter'?' is-starter':'' ?>" data-state="<?= $estado ?>" data-position="<?= e($j['posicao']) ?>" data-overall="<?= (int)$j['overall'] ?>">
+                            <article class="roster-select-card registration-card<?= $estado==='starter'?' is-starter':'' ?>" data-state="<?= $estado ?>" data-position="<?= e($j['posicao']) ?>" data-overall="<?= (int)$j['overall'] ?>" data-player-id="<?= (int)($j['jogador_geral_id'] ?? 0) ?>" data-player-name="<?= e($j['nome']) ?>">
                                 <input type="hidden" name="jogador_id[]" value="<?= (int)$j['id'] ?>">
                                 <input hidden type="checkbox" name="titular_id[]" value="<?= (int)$j['id'] ?>" <?= $estado==='starter'?'checked':'' ?>>
                                 <span class="registration-badge"><?= $estado==='starter'?'Titular':'Reserva' ?></span>
@@ -538,7 +556,7 @@ if ($clube) {
             <div class="modal fade market-movement-modal" id="market-movement-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><div><small class="eyebrow">Corrigir histórico</small><h2 class="modal-title">EDITAR MOVIMENTAÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><form method="post"><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><input type="hidden" name="action" value="editar_movimentacao"><input type="hidden" name="movimentacao_id"><div class="row g-3"><div class="col-12"><label class="form-label">Jogador</label><input class="form-control" name="nome" required></div><div class="col-6"><label class="form-label">Overall</label><input class="form-control" type="number" min="1" max="99" name="overall" required></div><div class="col-6"><label class="form-label">Posição</label><select class="form-select" name="posicao"><?php foreach (MERCADO_POSICOES as $p): ?><option value="<?= e($p) ?>"><?= e($p) ?></option><?php endforeach; ?></select></div><div class="col-12 movement-origin-field"><label class="form-label">Origem da contratação</label><select class="form-select" name="origem"><option value="compra_direta">Compra direta</option><option value="pack">Recebido em pack</option><option value="passe">Recebido no passe</option><option value="sorteio">Ganho em sorteio</option><option value="prancheta">Recebido pela prancheta</option></select></div><div class="col-12 movement-pack-field" hidden><label class="form-label">Pack recebido</label><select class="form-select" name="pack"><option value="">Selecione o pack</option><?php foreach (MERCADO_PACKS as $packId => $pack): ?><option value="<?= e($packId) ?>"><?= e($pack['nome']) ?> · <?= e(mercado_pack_preco($pack)) ?></option><?php endforeach; ?></select></div><div class="col-12 movement-value-field"><label class="form-label">Valor em reais</label><input class="form-control" type="number" min="0" step="1" name="valor"></div><div class="col-12"><div class="alert alert-info mb-0 movement-edit-note"></div></div></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar correção</button></div></form></div></div></div>
             <div class="modal fade market-movement-modal" id="market-undo-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><small class="eyebrow">Ação definitiva</small><h2 class="modal-title">DESFAZER MOVIMENTAÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><form method="post"><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="campeonato_id" value="<?= $campeonatoId ?>"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><input type="hidden" name="action" value="desfazer_movimentacao"><input type="hidden" name="movimentacao_id"><p class="movement-undo-copy"></p><div class="alert alert-warning mb-0 movement-undo-detail"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Voltar</button><button class="btn btn-danger">Sim, desfazer</button></div></form></div></div></div><?php endif; ?>
             <?php endif; ?>
-    </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    </main><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="assets/js/market-quick-edit.js?v=<?= filemtime(__DIR__ . '/assets/js/market-quick-edit.js') ?>"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
