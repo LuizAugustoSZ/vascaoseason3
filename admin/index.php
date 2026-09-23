@@ -5,6 +5,7 @@ require __DIR__ . "/../includes/public-layout.php";
 require __DIR__ . "/../includes/sync.php";
 require __DIR__ . "/../includes/knockout.php";
 require_once __DIR__ . "/../includes/g4-knockout.php";
+require_once __DIR__ . "/../includes/mercado.php";
 admin_required();
 $pdo = db();
 participant_future_entries_ensure_schema($pdo);
@@ -1301,6 +1302,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "configuracoes",
             );
         }
+        if ($action === 'mercado_packs') {
+            master_required();
+            $packs = mercado_validar_packs_importados(
+                (array)($_POST['pack_nome'] ?? []),
+                (array)($_POST['pack_min'] ?? []),
+                (array)($_POST['pack_max'] ?? []),
+                (array)($_POST['pack_preco'] ?? []),
+            );
+            $pdo->prepare("INSERT INTO configuracoes_site(chave,valor) VALUES('mercado_packs',?) ON DUPLICATE KEY UPDATE valor=VALUES(valor)")
+                ->execute([json_encode($packs, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)]);
+            redirect_notice(count($packs) . ' packs atualizados e publicados no mercado.', 'mercado');
+        }
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
@@ -1391,6 +1404,7 @@ $marketChampionshipsAdmin = array_values(array_filter(
     fn(array $championship): bool => $championship["tipo"] === "pontos_corridos",
 ));
 $marketDefaultChampionshipId = (int)($marketChampionshipsAdmin[0]["id"] ?? 0);
+$marketPacksAdmin = mercado_packs_atuais($pdo);
 $scorersAdmin = $pdo
     ->query(
         "SELECT a.id,a.campeonato_id,a.jogador,a.participante_id,a.gols,c.nome campeonato,p.nome tecnico,p.time_nome FROM artilharia a JOIN campeonatos c ON c.id=a.campeonato_id JOIN participantes p ON p.id=a.participante_id ORDER BY c.status='ativo' DESC,c.criado_em DESC,a.gols DESC,a.jogador",
@@ -1833,4 +1847,4 @@ document.addEventListener('shown.bs.modal', function() {
         lucide.createIcons();
     }
 });
-</script></body></html>
+</script><?php if (account_is_master()): ?><script>window.adminMarketPacks=<?= json_encode(array_values($marketPacksAdmin), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;window.adminCsrf=<?= json_encode(csrf_token(), JSON_HEX_TAG) ?>;</script><script src="../assets/js/admin-pack-import.js?v=<?= filemtime(__DIR__ . '/../assets/js/admin-pack-import.js') ?>"></script><?php endif; ?></body></html>

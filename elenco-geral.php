@@ -7,7 +7,7 @@ require __DIR__.'/includes/elenco-geral.php';
 if(!account_logged_in()){header('Location: login.php');exit;} if(account_must_change_password()){header('Location: trocar-senha.php');exit;}
 $sessionParticipantId=(int)(account_participant_id()??0);$requested=(int)($_REQUEST['participante_id']??0);$participantId=account_is_master()&&$requested>0?$requested:$sessionParticipantId;
 if($participantId<1){http_response_code(403);exit('Sua conta precisa estar vinculada a um time.');}
-$pdo=db();$message=(string)($_SESSION['elenco_geral_mensagem']??'');unset($_SESSION['elenco_geral_mensagem']);$error='';
+$pdo=db();$packsAtuais=mercado_packs_atuais($pdo);$message=(string)($_SESSION['elenco_geral_mensagem']??'');unset($_SESSION['elenco_geral_mensagem']);$error='';
 try{
  elenco_geral_garantir_estrutura($pdo);$s=$pdo->prepare('SELECT time_nome,nome FROM participantes WHERE id=? AND ativo=1');$s->execute([$participantId]);$time=$s->fetch();if(!$time)throw new RuntimeException('Clube não encontrado.');
  if($_SERVER['REQUEST_METHOD']==='POST'){
@@ -17,11 +17,11 @@ try{
    $saldo=mercado_parse_valor((string)($_POST['saldo']??'0'));if($saldo<0)throw new RuntimeException('O saldo do cofre não pode ser negativo.');
    $pdo->prepare('UPDATE clubes_gerais SET saldo=?,cofre_configurado=1 WHERE id=?')->execute([$saldo,$clube['id']]);$pdo->prepare('UPDATE clubes_campeonato SET saldo=?,cofre_configurado=1 WHERE participante_id=?')->execute([$saldo,$participantId]);$message='Saldo do cofre atualizado.';
   }elseif($action==='editar_jogador_geral'){
-   $jogadorId=(int)($_POST['jogador_id']??0);$nome=trim((string)($_POST['nome']??''));$overall=(int)($_POST['overall']??0);
+   $jogadorId=(int)($_POST['jogador_id']??0);$nome=trim((string)($_POST['nome']??''));$overall=(int)($_POST['overall']??0);$posicao=(string)($_POST['posicao']??'');
    if($nome===''||mb_strlen($nome)>150)throw new RuntimeException('Informe o nome exato do jogador, com até 150 caracteres.');
-   if($overall<1||$overall>99)throw new RuntimeException('Informe um OVR entre 1 e 99.');
+   if($overall<1||$overall>99||!in_array($posicao,MERCADO_POSICOES,true))throw new RuntimeException('Informe um OVR e uma posição válidos.');
    $s=$pdo->prepare('SELECT * FROM jogadores_gerais WHERE id=? AND participante_id=? AND ativo=1 FOR UPDATE');$s->execute([$jogadorId,$participantId]);$j=$s->fetch();if(!$j)throw new RuntimeException('Jogador não encontrado.');
-   $pdo->prepare('UPDATE jogadores_gerais SET nome=?,overall=? WHERE id=?')->execute([$nome,$overall,$jogadorId]);$pdo->prepare('UPDATE jogadores_elenco SET nome=?,overall=? WHERE jogador_geral_id=? AND participante_id=? AND ativo=1')->execute([$nome,$overall,$jogadorId,$participantId]);$pdo->prepare('UPDATE movimentacoes_elenco_geral SET jogador_nome=?,jogador_overall=?,conta_id=? WHERE jogador_geral_id=? AND participante_id=?')->execute([$nome,$overall,(int)$_SESSION['conta_id'],$jogadorId,$participantId]);$message='Jogador atualizado em todo o elenco: '.$nome.' ('.$overall.' OVR).';
+   $pdo->prepare('UPDATE jogadores_gerais SET nome=?,overall=?,posicao=? WHERE id=?')->execute([$nome,$overall,$posicao,$jogadorId]);$pdo->prepare('UPDATE jogadores_elenco SET nome=?,overall=?,posicao=? WHERE jogador_geral_id=? AND participante_id=? AND ativo=1')->execute([$nome,$overall,$posicao,$jogadorId,$participantId]);$pdo->prepare('UPDATE movimentacoes_elenco_geral SET jogador_nome=?,jogador_overall=?,jogador_posicao=?,conta_id=? WHERE jogador_geral_id=? AND participante_id=?')->execute([$nome,$overall,$posicao,(int)$_SESSION['conta_id'],$jogadorId,$participantId]);$message='Jogador atualizado em todo o elenco: '.$nome.' ('.$overall.' OVR · '.$posicao.').';
   }elseif(in_array($action,['editar_movimentacao_geral','desfazer_movimentacao_geral'],true)){
    $movimentoId=(int)($_POST['movimentacao_id']??0);$s=$pdo->prepare('SELECT * FROM movimentacoes_elenco_geral WHERE id=? AND participante_id=? FOR UPDATE');$s->execute([$movimentoId,$participantId]);$m=$s->fetch();if(!$m)throw new RuntimeException('Movimentação não encontrada.');$s=$pdo->prepare('SELECT * FROM jogadores_gerais WHERE id=? AND participante_id=? FOR UPDATE');$s->execute([(int)$m['jogador_geral_id'],$participantId]);$j=$s->fetch();if(!$j)throw new RuntimeException('Jogador da movimentação não encontrado.');$s=$pdo->prepare('SELECT COUNT(*) FROM movimentacoes_elenco_geral WHERE jogador_geral_id=? AND id>?');$s->execute([(int)$m['jogador_geral_id'],$movimentoId]);if((int)$s->fetchColumn()>0)throw new RuntimeException('Edite ou desfaça primeiro as movimentações mais recentes deste jogador.');
    if($action==='desfazer_movimentacao_geral'){
@@ -36,7 +36,7 @@ try{
    $nome=trim((string)($_POST['nome']??''));$overall=(int)($_POST['overall']??0);$posicao=(string)($_POST['posicao']??'');$origem=(string)($_POST['origem']??'compra_direta');
    if($nome===''||$overall<1||$overall>99||!in_array($posicao,MERCADO_POSICOES,true))throw new RuntimeException('Preencha corretamente os dados do jogador.');if(!in_array($origem,['compra_direta','pack','passe','sorteio','prancheta','obter'],true))throw new RuntimeException('Origem inválida.');
    $valor=$origem==='compra_direta'?mercado_parse_valor((string)($_POST['valor']??'')):0.0;if($valor>$antes)throw new RuntimeException('Saldo insuficiente.');$detalhe=null;$valorOrigem=null;$moeda=null;
-   if($origem==='pack'){$packId=(string)($_POST['pack']??'');if(!isset(MERCADO_PACKS[$packId]))throw new RuntimeException('Selecione o pack.');$pack=MERCADO_PACKS[$packId];if($overall<$pack['min']||$overall>$pack['max'])throw new RuntimeException('OVR fora da faixa do pack.');$detalhe=$pack['nome'];$valorOrigem=mercado_pack_valor($pack);$moeda=mercado_pack_moeda($pack);}
+   if($origem==='pack'){$packId=(string)($_POST['pack']??'');if(!isset($packsAtuais[$packId]))throw new RuntimeException('Selecione o pack.');$pack=$packsAtuais[$packId];if($overall<$pack['min']||$overall>$pack['max'])throw new RuntimeException('OVR fora da faixa do pack.');$detalhe=$pack['nome'];$valorOrigem=mercado_pack_valor($pack);$moeda=mercado_pack_moeda($pack);}
    $s=$pdo->prepare('SELECT id,ativo FROM jogadores_gerais WHERE participante_id=? AND nome=? AND overall=? AND posicao=? FOR UPDATE');$s->execute([$participantId,$nome,$overall,$posicao]);$jogadorExistente=$s->fetch();
    if($jogadorExistente){
     if((bool)$jogadorExistente['ativo'])throw new RuntimeException('Este jogador já está no Elenco Geral.');

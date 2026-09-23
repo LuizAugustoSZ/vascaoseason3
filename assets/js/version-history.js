@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['25.3','O Admin ganhou importação revisável de packs por texto bruto do Discord. A edição rápida por lápis agora corrige nome, OVR e posição da carta em todo o clube, com atalho separado para ajustes financeiros.','Importação de packs e edição rápida'],
 ['25.2','Os rankings de títulos agora detalham todas as competições e edições vencidas por cada clube. Empates respeitam a ordem histórica das seasons, enquanto o card prioriza entre os líderes um clube que possua escudo.','Edições conquistadas nos rankings'],
 ['25.1','O histórico da Copa do Brasil foi corrigido: Gari Saint-Germain e Locomotiva FC têm uma conquista cada, e cadastros duplicados da mesma edição não inflam mais os rankings.','Histórico da Copa do Brasil corrigido'],
 ['25.0','Os rankings agora identificam o clube de cada jogador e transferência, eliminando ambiguidades entre nomes repetidos. Em títulos empatados, o primeiro campeão permanece em destaque com seu escudo até outro clube abrir vantagem.','Rankings completos e desempate histórico'],
