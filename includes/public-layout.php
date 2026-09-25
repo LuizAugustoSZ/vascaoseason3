@@ -57,6 +57,8 @@ function public_nav_icon(string $name): string
 function public_navbar(string $active = "", bool $onLandingPage = false, bool $adminLayout = false): void
 {
     $root = $adminLayout ? '../' : '';
+    $sessionRefreshMessage = (string)($_SESSION['global_flash_error'] ?? '');
+    unset($_SESSION['global_flash_error']);
     $home = $onLandingPage ? "" : "index.php";
     $sectionLinks = [
         "noticias" => ["noticias.php", "Notícias"],
@@ -125,6 +127,7 @@ function public_navbar(string $active = "", bool $onLandingPage = false, bool $a
     <script defer src="<?= $root ?>assets/js/account-menu.js?v=<?=filemtime(__DIR__.'/../assets/js/account-menu.js')?>"></script>
     <script defer src="<?= $root ?>assets/js/site-toolbar.js?v=<?=filemtime(__DIR__.'/../assets/js/site-toolbar.js')?>"></script>
     <script defer src="<?= $root ?>assets/js/deployment-refresh.js?v=<?=filemtime(__DIR__.'/../assets/js/deployment-refresh.js')?>" data-release="<?=e(app_release_id())?>" data-root="<?=e($root)?>"></script>
+    <?php if ($sessionRefreshMessage !== ''): ?><div class="alert alert-warning shadow" role="alert" style="position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:20000;max-width:min(680px,calc(100vw - 32px));width:max-content"><?=e($sessionRefreshMessage)?></div><?php endif; ?>
     <?php if (!$adminLayout): ?><script>document.body.classList.add('site-has-sidebar');if(innerWidth>=768){document.body.classList.add('site-nav-collapsed');try{if(sessionStorage.getItem('site-sidebar-state')==='expanded')document.body.classList.remove('site-nav-collapsed')}catch(error){}}</script>
     <div class="site-loading-screen" role="status" aria-live="polite" aria-label="Carregando página">
         <img src="<?= $root ?>assets/img/logo-season3.webp?v=5" alt="" aria-hidden="true">
