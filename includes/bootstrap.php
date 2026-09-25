@@ -240,7 +240,12 @@ function verify_csrf(): void
             echo json_encode(["ok" => false, "message" => "Sessão expirada. Atualize a página e tente novamente."], JSON_UNESCAPED_UNICODE);
             exit();
         }
-        exit("Sessão expirada. Atualize a página e tente novamente.");
+        $_SESSION["csrf"] = bin2hex(random_bytes(32));
+        $_SESSION["global_flash_error"] = "A página estava desatualizada e foi recarregada com segurança. Revise os dados antes de tentar novamente.";
+        $requestUri = str_replace(["\r", "\n"], "", (string)($_SERVER["REQUEST_URI"] ?? "/"));
+        if ($requestUri === "" || !str_starts_with($requestUri, "/")) $requestUri = "/";
+        header("Location: " . $requestUri, true, 303);
+        exit();
     }
 }
 
