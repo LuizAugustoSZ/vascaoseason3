@@ -35,6 +35,11 @@ function elenco_geral_garantir_estrutura(PDO $pdo): void
     foreach (preg_split('/;\s*(?:\r?\n|$)/', $migration, -1, PREG_SPLIT_NO_EMPTY) as $statement) {
         $pdo->exec(trim($statement));
     }
+    $moneyColumn = $pdo->query("SHOW COLUMNS FROM clubes_gerais LIKE 'saldo'")->fetch();
+    if ($moneyColumn && strtolower((string)$moneyColumn['Type']) !== 'decimal(18,2)') {
+        $pdo->exec("ALTER TABLE clubes_gerais MODIFY saldo DECIMAL(18,2) NOT NULL DEFAULT 0");
+        $pdo->exec("ALTER TABLE movimentacoes_elenco_geral MODIFY valor_origem DECIMAL(18,2) NULL, MODIFY valor DECIMAL(18,2) NOT NULL DEFAULT 0, MODIFY saldo_anterior DECIMAL(18,2) NOT NULL, MODIFY saldo_posterior DECIMAL(18,2) NOT NULL");
+    }
     $columns = $pdo->query("SHOW COLUMNS FROM jogadores_elenco")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('jogador_geral_id', $columns, true)) {
         $pdo->exec("ALTER TABLE jogadores_elenco ADD jogador_geral_id INT UNSIGNED NULL AFTER participante_id, ADD KEY idx_elenco_jogador_geral (jogador_geral_id), ADD CONSTRAINT fk_elenco_jogador_geral FOREIGN KEY (jogador_geral_id) REFERENCES jogadores_gerais(id)");
