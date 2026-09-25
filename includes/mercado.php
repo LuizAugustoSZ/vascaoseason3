@@ -275,6 +275,11 @@ function mercado_garantir_estrutura(PDO $pdo): void
     foreach (preg_split('/;\s*(?:\r?\n|$)/', $migration, -1, PREG_SPLIT_NO_EMPTY) as $statement) {
         $pdo->exec(trim($statement));
     }
+    $moneyColumn = $pdo->query("SHOW COLUMNS FROM clubes_campeonato LIKE 'saldo'")->fetch();
+    if ($moneyColumn && strtolower((string)$moneyColumn['Type']) !== 'decimal(18,2)') {
+        $pdo->exec("ALTER TABLE clubes_campeonato MODIFY saldo DECIMAL(18,2) NOT NULL DEFAULT 0");
+        $pdo->exec("ALTER TABLE movimentacoes_elenco MODIFY valor_origem DECIMAL(18,2) NULL, MODIFY valor DECIMAL(18,2) NOT NULL, MODIFY saldo_anterior DECIMAL(18,2) NOT NULL, MODIFY saldo_posterior DECIMAL(18,2) NOT NULL");
+    }
     $descriptionColumn = $pdo->query("SHOW COLUMNS FROM participantes LIKE 'descricao'")->fetch();
     if ($descriptionColumn && !preg_match('/^(?:tiny|medium|long)?text$/i', (string)$descriptionColumn['Type'])) {
         $pdo->exec("ALTER TABLE participantes MODIFY descricao TEXT NULL");
@@ -298,7 +303,7 @@ function mercado_garantir_estrutura(PDO $pdo): void
         $pdo->exec("ALTER TABLE movimentacoes_elenco ADD origem_detalhe VARCHAR(120) NULL AFTER origem");
     }
     if (!in_array('valor_origem', $movementColumns, true)) {
-        $pdo->exec("ALTER TABLE movimentacoes_elenco ADD valor_origem DECIMAL(12,2) NULL AFTER origem_detalhe");
+        $pdo->exec("ALTER TABLE movimentacoes_elenco ADD valor_origem DECIMAL(18,2) NULL AFTER origem_detalhe");
     }
     if (!in_array('moeda_origem', $movementColumns, true)) {
         $pdo->exec("ALTER TABLE movimentacoes_elenco ADD moeda_origem VARCHAR(20) NULL AFTER valor_origem");

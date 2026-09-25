@@ -1,13 +1,3 @@
-function formatBRLInput(input) {
-  const digits = input.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
-  if (!digits) {
-    input.value = '';
-    return;
-  }
-  const integer = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  input.value = input.dataset.externalCurrencyPrefix === '1' ? integer : `R$ ${integer}`;
-}
-
 // Centraliza confirmações de ações que alteram o clube.
 const clubConfirmationCopy = {
   comprar: ['CONFIRMAR CONTRATAÇÃO', 'Você realmente quer contratar este jogador?', 'Confirmar contratação'],
@@ -93,22 +83,6 @@ document.querySelectorAll('form[method="post"]').forEach(form => {
     form.dataset.confirmedSubmit = '1';
     form.requestSubmit(event.submitter || undefined);
   });
-});
-
-document.querySelectorAll('input[name="saldo"], input[name="valor"]').forEach(input => {
-  const prefix = input.closest('.input-group')?.querySelector('.input-group-text');
-  if (prefix?.textContent.trim() === 'R$') input.dataset.externalCurrencyPrefix = '1';
-  input.type = 'text';
-  input.inputMode = 'decimal';
-  input.placeholder = input.dataset.externalCurrencyPrefix === '1' ? '0' : 'R$ 0';
-  if (input.value) {
-    const value = Number(input.value.replace(',', '.'));
-    if (Number.isFinite(value)) {
-      const formatted = Math.round(value).toLocaleString('pt-BR', {maximumFractionDigits: 0});
-      input.value = input.dataset.externalCurrencyPrefix === '1' ? formatted : `R$ ${formatted}`;
-    }
-  }
-  input.addEventListener('input', () => formatBRLInput(input));
 });
 
 const starterInputs = [...document.querySelectorAll('input[name="titular_id[]"]')];

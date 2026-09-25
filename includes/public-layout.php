@@ -216,6 +216,7 @@ function public_footer(): void
     <script defer src="assets/js/stats-modal-navigation.js?v=<?= filemtime(__DIR__ . '/../assets/js/stats-modal-navigation.js') ?>"></script>
     <script defer src="assets/js/match-details.js?v=<?= filemtime(__DIR__ . '/../assets/js/match-details.js') ?>"></script>
     <script defer src="assets/js/player-details.js?v=<?= filemtime(__DIR__ . '/../assets/js/player-details.js') ?>"></script>
+    <script defer src="assets/js/money-input.js?v=<?= filemtime(__DIR__ . '/../assets/js/money-input.js') ?>"></script>
     <script defer src="assets/js/market.js?v=<?= filemtime(__DIR__ . '/../assets/js/market.js') ?>"></script>
     <script defer src="assets/js/site-loader.js?v=<?= filemtime(__DIR__ . '/../assets/js/site-loader.js') ?>"></script>
     <script defer src="assets/js/side-menu.js?v=<?= filemtime(__DIR__ . '/../assets/js/side-menu.js') ?>"></script>
