@@ -20,9 +20,9 @@ $items = $pdo
         "SELECT c.*,(SELECT COUNT(*) FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1)+(SELECT COUNT(*) FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1) jogos FROM campeonatos c WHERE c.ativo=1 ORDER BY c.criado_em DESC,c.id DESC",
     )
     ->fetchAll();
-?><!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Campeonatos | S3</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../assets/css/style.css"></head><body><main class="container py-5"><div class="d-flex justify-content-between mb-4"><div><span class="eyebrow">Histórico</span><h1>CAMPEONATOS</h1></div><div><a class="btn btn-outline-light" href="sorteador.php">Sorteador</a> <a class="btn btn-danger" href="index.php">Admin</a></div></div><?php if (
+?><!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Campeonatos | S3</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/feedback-toast.css?v=<?=filemtime(__DIR__.'/../assets/css/feedback-toast.css')?>"><script defer src="../assets/js/feedback-toast.js?v=<?=filemtime(__DIR__.'/../assets/js/feedback-toast.js')?>"></script></head><body><main class="container py-5"><div class="d-flex justify-content-between mb-4"><div><span class="eyebrow">Histórico</span><h1>CAMPEONATOS</h1></div><div><a class="btn btn-outline-light" href="sorteador.php">Sorteador</a> <a class="btn btn-danger" href="index.php">Admin</a></div></div><?php if (
     $notice
-): ?><div class="alert alert-info"><?= e(
+): ?><div class="alert alert-success" data-flash-toast><?= e(
     $notice,
 ) ?></div><?php endif; ?><div class="panel table-responsive"><table class="table mb-0"><thead><tr><th>Nome</th><th>Modalidade</th><th>Formato</th><th>Jogos</th><th>Status</th><th>Ação</th></tr></thead><tbody><?php foreach (
     $items

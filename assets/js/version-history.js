@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['25.7','Mensagens de sucesso e erro após alterações agora aparecem como notificações flutuantes padronizadas em todo o site e no Admin. Elas podem ser fechadas pelo X e desaparecem automaticamente após cinco segundos, sem ocultar avisos permanentes de contexto.','Avisos rápidos e padronizados'],
 ['25.6','Abas abertas durante uma publicação agora avançam por uma navegação GET segura, sem reenviar o último formulário. O Elenco Geral também usa redirecionamento após salvar, e páginas com sessão renovada se recuperam automaticamente de tokens antigos.','Atualização segura de abas e sessão'],
 ['25.5','Cofres e movimentações agora aceitam valores acima de R$ 10 bilhões. Todos os campos em reais exibem a máscara monetária brasileira durante a digitação e edição.','Ajustes monetários e de máscara'],
 ['25.4','A Gestão da Competição ganhou edição rápida por lápis em cada carta. Nome, OVR e posição ficam alinhados no mesmo modal, e a alteração de valor abre diretamente a movimentação mais recente do jogador.','Edição rápida na Gestão da Competição'],

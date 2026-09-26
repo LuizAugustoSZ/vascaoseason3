@@ -67,6 +67,8 @@ $obrigatoria = account_must_change_password();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/branding.css?v=5">
+    <link rel="stylesheet" href="assets/css/feedback-toast.css?v=<?= filemtime(__DIR__ . '/assets/css/feedback-toast.css') ?>">
+    <script defer src="assets/js/feedback-toast.js?v=<?= filemtime(__DIR__ . '/assets/js/feedback-toast.js') ?>"></script>
     <script defer src="assets/js/password-toggle.js?v=<?= filemtime(
                                                             __DIR__ . "/assets/js/password-toggle.js",
                                                         ) ?>"></script>
@@ -84,7 +86,7 @@ $obrigatoria = account_must_change_password();
                                             ? "Para proteger sua conta, substitua a senha temporária por uma senha que somente você conheça."
                                             : "Informe sua senha atual e escolha uma nova senha." ?></p><?php if (
                                                                     $error
-                                                                ): ?><div class="alert alert-danger"><?= e(
+                                                                ): ?><div class="alert alert-danger" data-flash-toast><?= e(
                                                                         $error,
                                                                     ) ?></div><?php endif; ?><form method="post"><input type="hidden" name="csrf" value="<?= e(
                                                                                             csrf_token(),

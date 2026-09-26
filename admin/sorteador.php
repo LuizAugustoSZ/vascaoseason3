@@ -398,7 +398,7 @@ function checks(array $teams): string
 <?php if (!$embedded): ?><?php public_navbar('admin',false,true); ?><style>.site-topbar{left:0!important}.site-topbar .admin-menu-toggle{display:none}</style><?php endif; ?>
 <main class="admin-shell"><div class="<?= $embedded ? 'container-fluid px-0': 'container' ?>"><span class="eyebrow">Sorteio automático</span><h1 class="display-4 fw-bold mb-4">CRIAR COMPETIÇÕES</h1><?php if (
     $notice
-): ?><div class="alert alert-info"><?= e(
+): ?><div class="alert alert-<?= str_starts_with($notice, 'Erro:') ? 'danger' : 'success' ?>" data-flash-toast><?= e(
     $notice,
 ) ?></div><?php endif; ?><div class="row g-4">
 <div class="col-xl-6"><form class="panel sorteio-form sorteio-pontos" method="post" onsubmit="return confirm('Sortear e gravar todos os jogos?')"><input type="hidden" name="csrf" value="<?= e(

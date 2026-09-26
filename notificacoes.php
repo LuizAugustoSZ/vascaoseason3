@@ -50,7 +50,7 @@ $preferences = $q->fetch() ?: [];
             <p>Escolha quais avisos deseja receber por e-mail. Os avisos continuam disponíveis no sino.</p>
         </div>
 
-        <div id="preferences-status" <?= $notice ? 'class="alert alert-success d-flex align-items-center gap-2 mb-4"' : 'class="d-none"' ?>>
+        <div id="preferences-status" <?= $notice ? 'class="alert alert-success d-flex align-items-center gap-2 mb-4" data-flash-toast' : 'class="d-none"' ?>>
             <?php if ($notice): ?><i data-lucide="circle-check"></i> <?= e($notice) ?><?php endif; ?>
         </div>
 

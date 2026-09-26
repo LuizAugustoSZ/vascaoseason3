@@ -256,18 +256,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: new FormData(event.target)
             });
             if (!response.ok) throw Error();
-            if (status) {
-                status.className = 'alert alert-success d-flex align-items-center gap-2 mt-3';
-                status.innerHTML = '<i data-lucide="circle-check"></i> Preferências salvas com sucesso!';
-                if (window.lucide) window.lucide.createIcons();
-                setTimeout(() => { status.className = 'd-none'; status.innerHTML = ''; }, 4000);
-            }
+            if (status) { status.className = 'd-none'; status.innerHTML = ''; }
+            window.siteToast?.('Preferências salvas com sucesso!', 'success');
         } catch {
-            if (status) {
-                status.className = 'alert alert-danger d-flex align-items-center gap-2 mt-3';
-                status.innerHTML = '<i data-lucide="circle-x"></i> Não foi possível salvar. Tente novamente.';
-                if (window.lucide) window.lucide.createIcons();
-            }
+            if (status) { status.className = 'd-none'; status.innerHTML = ''; }
+            window.siteToast?.('Não foi possível salvar. Tente novamente.', 'danger');
         } finally {
             if (submitBtn) submitBtn.disabled = false;
         }

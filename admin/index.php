@@ -1563,7 +1563,7 @@ function admin_nav_icon(string $name): string
 <main class="admin-shell"><div class="container"><div class="admin-heading d-flex justify-content-between align-items-end mb-4"><div><span class="eyebrow">Central de atualização</span><h1 class="display-4 fw-bold"><?= account_is_master()
     ? "ADMINISTRAÇÃO"
    : "EDITOR DA COMPETIÇÃO" ?></h1></div></div>
-<?php if ($notice): ?><div class="alert alert-info"><?= e(
+<?php if ($notice): ?><div class="alert alert-<?= str_starts_with($notice, 'Erro:') ? 'danger' : 'success' ?>" data-flash-toast><?= e(
     $notice,
 ) ?></div><?php endif; ?>
 <?php if (

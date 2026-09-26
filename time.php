@@ -495,8 +495,8 @@ function match_score(array $j): string
             </div>
         </header>
         <main class="wide-container club-page">
-            <?php if ($profileNotice): ?><div class="alert alert-success club-profile-notice"><?= e($profileNotice) ?></div><?php endif; ?>
-            <?php if ($lineupImageError): ?><div class="alert alert-danger club-profile-notice" role="alert"><?= e($lineupImageError) ?></div><?php endif; ?>
+            <?php if ($profileNotice): ?><div class="alert alert-success club-profile-notice" data-flash-toast><?= e($profileNotice) ?></div><?php endif; ?>
+            <?php if ($lineupImageError): ?><div class="alert alert-danger club-profile-notice" role="alert" data-flash-toast><?= e($lineupImageError) ?></div><?php endif; ?>
             <section class="club-stats<?= $titulos ? ' club-stats--with-titles' : '' ?>"><?php foreach (
                                             $stats
                                             as $label => $value
