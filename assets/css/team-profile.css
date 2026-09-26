@@ -778,11 +778,11 @@ footer {
 .club-stats>div { position:relative; min-height:82px; overflow:hidden; padding:12px; background:linear-gradient(145deg,#11161b,#0b0f13); border:1px solid #222c34; border-radius:7px }
 .club-stats>div::before { content:""; position:absolute; inset:0 auto auto 10px; width:48px; height:1px; background:linear-gradient(90deg,#d4a928,transparent) }
 .club-stats>div:nth-child(4n)::before { background:linear-gradient(90deg,var(--red),transparent) }
-.club-stats>div:has(.stat-icon) { grid-template-columns:48px minmax(0,auto) auto; grid-template-rows:auto auto; align-content:center; justify-content:stretch; column-gap:12px }
-.club-stats>div>.stat-icon { grid-column:1; grid-row:1/3; align-self:center; width:48px; height:48px; margin:0; border-color:rgba(237,23,43,.14); border-radius:10px; background:rgba(237,23,43,.13); color:#ff1735 }
-.club-stats>div>small { grid-column:2/4; grid-row:1; align-self:end; margin:0 0 2px; text-align:left }
+.club-stats>div:has(.stat-icon) { grid-template-columns:48px minmax(0,1fr); grid-template-rows:auto auto auto; align-content:center; justify-content:stretch; column-gap:12px }
+.club-stats>div>.stat-icon { grid-column:1; grid-row:1/4; align-self:center; width:48px; height:48px; margin:0; border-color:rgba(237,23,43,.14); border-radius:10px; background:rgba(237,23,43,.13); color:#ff1735 }
+.club-stats>div>small { grid-column:2; grid-row:1; align-self:end; margin:0 0 1px; text-align:left }
 .club-stats>div>strong { grid-column:2; grid-row:2; align-self:center; font-size:2rem; text-align:left }
-.club-stats .stat-detail { grid-column:3; grid-row:2; align-self:end; max-width:60px; padding-bottom:3px; color:#8996a4; font-size:.61rem; line-height:1.15 }
+.club-stats .stat-detail { grid-column:2; grid-row:3; color:#8996a4; font-size:.56rem; line-height:1.05; white-space:nowrap }
 
 .overview-grid { grid-template-columns:1.12fr 1.22fr 1.12fr .9fr; align-items:stretch }
 .overview-card { min-height:390px; padding:14px; border-radius:7px; box-shadow:inset 0 1px rgba(255,255,255,.015) }
@@ -793,7 +793,8 @@ footer {
 
 .recent-card { min-height:390px }
 .recent-competition { border-color:#26323a }
-.recent-games-more { flex:0 0 auto; width:auto; margin:0; padding:8px 11px; font-size:.61rem; letter-spacing:.035em; white-space:nowrap }
+.recent-card .overview-card-head h3 { white-space:nowrap; font-size:.78rem }
+.recent-games-more { flex:0 0 auto; width:auto; margin:0; padding:7px 9px; font-size:.56rem; letter-spacing:.02em; white-space:nowrap }
 .recent-games-more span { margin-left:5px; font-size:1rem; line-height:0 }
 
 .next-card { position:relative; overflow:hidden; background:radial-gradient(circle at 85% 50%,rgba(157,12,29,.13),transparent 44%),linear-gradient(145deg,#11161b,#0b0f13) }
@@ -915,7 +916,7 @@ footer {
     }
 
     .club-stats>div { min-height:78px; padding:10px }
-    .club-stats>div:has(.stat-icon) { grid-template-columns:42px minmax(0,auto) auto; column-gap:9px }
+    .club-stats>div:has(.stat-icon) { grid-template-columns:42px minmax(0,1fr); column-gap:9px }
     .club-stats>div>.stat-icon { width:42px; height:42px }
     .club-stats>div>strong { font-size:1.7rem }
     .club-stats .stat-detail { font-size:.55rem }

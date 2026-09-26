@@ -596,7 +596,7 @@ function render_recent_matches(array $games): void
                                                         $proximas
                                                         as $j
                                                     ): ?><div class="next-item match-open" tabindex="0" role="button" data-match-type="<?= $j["origem"] === "mata" ? "mata" : "pontos" ?>" data-match-id="<?= (int) $j["id"] ?>">
-                                <div class="next-competition"><?php if (!empty($j['competicao_identidade_id'])): ?><img src="<?= e(competition_image_url((int)$j['campeonato_id'], 'logo')) ?>" alt="Logo da <?= e($j['campeonato']) ?>"><?php endif; ?><strong><?= e($j['campeonato']) ?></strong><span>•</span><span><?= e($j['origem'] === 'pontos' ? 'Rodada ' . $j['etapa'] : (string)$j['etapa']) ?></span></div>
+                                <div class="next-competition"><?php if (!empty($j['competicao_identidade_id'])): ?><img src="<?= e(competition_image_url((int)$j['campeonato_id'], 'logo')) ?>" alt="" onerror="this.remove()" aria-hidden="true"><?php endif; ?><strong><?= e($j['campeonato']) ?></strong><span>•</span><span><?= e($j['origem'] === 'pontos' ? 'Rodada ' . $j['etapa'] : (string)$j['etapa']) ?></span></div>
                                 <div class="versus"><?= match_team(
                                                             $j,
                                                             "home",
