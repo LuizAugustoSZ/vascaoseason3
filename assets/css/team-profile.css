@@ -256,6 +256,39 @@
     flex: 1
 }
 
+.recent-card { min-height: 0 }
+.recent-games-preview,.recent-games-modal .modal-body { display: grid; gap: 12px }
+.recent-competition { overflow: hidden; border: 1px solid var(--line); border-radius: 7px; background: rgba(255,255,255,.018) }
+.recent-competition-head { display: flex; align-items: center; gap: 9px; min-height: 42px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.025) }
+.recent-competition-head img { flex: 0 0 27px; width: 27px; height: 27px; object-fit: contain }
+.recent-competition-head strong { min-width: 0; overflow: hidden; color: #f4f6f8; font: 700 .76rem "Inter"; text-overflow: ellipsis; white-space: nowrap }
+.recent-match { display: grid; grid-template-columns: 68px minmax(0,1fr); gap: 10px; padding: 10px; border-bottom: 1px solid var(--line); cursor: pointer }
+.recent-match:last-child { border-bottom: 0 }
+.recent-match:hover,.recent-match:focus-visible { background: rgba(255,255,255,.035) }
+.recent-match:focus-visible { outline: 1px solid var(--red); outline-offset: -1px }
+.recent-match-date { display: flex; flex-direction: column; justify-content: center; color: var(--muted); font-size: .64rem; line-height: 1.35 }
+.recent-match-date time { white-space: nowrap }
+.recent-match-date small { margin-top: 3px; color: #69717c; font-size: .56rem; letter-spacing: .06em }
+.recent-match-teams { min-width: 0 }
+.recent-match-teams>div { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; min-height: 30px }
+.recent-match-team { display: flex; align-items: center; gap: 7px; min-width: 0; color: #fff; font-size: .7rem; font-weight: 600; text-decoration: none }
+.recent-match-team>span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.recent-match-team[href]:hover { color: var(--red) }
+.recent-match-team .match-shield { flex-basis: 24px; width: 24px; height: 24px }
+.recent-match-teams b { min-width: 18px; color: #fff; font: 800 1rem "Barlow Condensed"; text-align: right }
+.recent-match-teams b small { margin-left: 2px; color: var(--muted); font-size: .62rem }
+.recent-games-more { width: 100%; margin-top: 12px; padding: 9px 12px; border: 1px solid var(--red); border-radius: 5px; background: transparent; color: #fff; font: 700 .67rem "Inter"; letter-spacing: .06em; text-transform: uppercase }
+.recent-games-more:hover,.recent-games-more:focus-visible { background: var(--red) }
+.recent-games-modal .modal-dialog { max-width: 620px }
+.recent-games-modal .modal-content { max-height: min(86vh,780px); border: 1px solid var(--line); background: var(--panel) }
+.recent-games-modal .modal-header { border-color: var(--line) }
+.recent-games-modal .modal-header small { color: var(--red); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase }
+.recent-games-modal .modal-title { margin: 2px 0 0; font: 800 1.55rem "Barlow Condensed"; text-transform: uppercase }
+.recent-games-modal .modal-body { overflow-y: auto; overscroll-behavior: contain }
+.recent-games-modal .recent-competition-head strong { font-size: .82rem }
+.recent-games-modal .recent-match { grid-template-columns: 82px minmax(0,1fr) }
+.recent-games-modal .recent-match-team { font-size: .78rem }
+
 .rivalry-card {
     text-align: center
 }
@@ -821,6 +854,12 @@ footer {
     .overview-card {
         min-height: auto
     }
+
+    .recent-games-modal .modal-dialog { width: calc(100% - 20px); margin: 10px auto }
+    .recent-games-modal .modal-content { max-height: calc(100dvh - 20px) }
+    .recent-games-modal .modal-body { padding: 12px }
+    .recent-games-modal .recent-match,.recent-match { grid-template-columns: 68px minmax(0,1fr); gap: 8px; padding: 9px 8px }
+    .recent-games-modal .recent-match-team { font-size: .72rem }
 
     .future-grid .lineup-placeholder {
         grid-column: auto
