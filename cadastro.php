@@ -78,6 +78,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/branding.css?v=5">
+    <link rel="stylesheet" href="assets/css/feedback-toast.css?v=<?= filemtime(__DIR__ . '/assets/css/feedback-toast.css') ?>">
+    <script defer src="assets/js/feedback-toast.js?v=<?= filemtime(__DIR__ . '/assets/js/feedback-toast.js') ?>"></script>
     <script defer src="assets/js/password-toggle.js?v=<?= filemtime(
                                                             __DIR__ . "/assets/js/password-toggle.js",
                                                         ) ?>"></script>
@@ -89,7 +91,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <h1 class="font-condensed mt-3">CRIAR CONTA</h1>
             <p class="text-secondary">Crie seu acesso. A associação ao seu time será feita pela administração depois da conferência.</p><?php if (
                                                                                                                                             $error
-                                                                                                                                        ): ?><div class="alert alert-danger"><?= e(
+                                                                                                                                        ): ?><div class="alert alert-danger" data-flash-toast><?= e(
                                                                                                                                                 $error,
                                                                                                                                             ) ?></div><?php endif; ?><form method="post"><input type="hidden" name="csrf" value="<?= e(
                                                                                             csrf_token(),

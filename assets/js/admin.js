@@ -548,6 +548,6 @@ document.addEventListener('submit',async event=>{
   }catch(error){hideAdminListLoading(currentPane);form.dataset.ajaxBusy='0';if(button){button.disabled=false;button.textContent=oldText;}showAdminToast(error.message,'danger');}
 });
 }
-function showAdminToast(message,type){const toast=document.createElement('div');toast.className=`alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3 shadow`;toast.style.zIndex='2000';toast.textContent=message;document.body.append(toast);setTimeout(()=>toast.remove(),type==='success'?3200:5000);}
+function showAdminToast(message,type){if(window.siteToast)return window.siteToast(message,type);const toast=document.createElement('div');toast.className=`alert alert-${type}`;toast.dataset.flashToast='';toast.textContent=message;document.body.append(toast);}
 })();
 const passwordToggleScript=document.createElement('script');passwordToggleScript.src='../assets/js/password-toggle.js';document.head.append(passwordToggleScript);
