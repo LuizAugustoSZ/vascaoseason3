@@ -774,6 +774,82 @@ footer {
     padding: 20px 0
 }
 
+/* Dashboard esportiva do perfil do clube */
+.club-stats>div { position:relative; min-height:82px; overflow:hidden; padding:12px; background:linear-gradient(145deg,#11161b,#0b0f13); border:1px solid #222c34; border-radius:7px }
+.club-stats>div::before { content:""; position:absolute; inset:0 auto auto 10px; width:48px; height:1px; background:linear-gradient(90deg,#d4a928,transparent) }
+.club-stats>div:nth-child(4n)::before { background:linear-gradient(90deg,var(--red),transparent) }
+.club-stats>div:has(.stat-icon) { grid-template-columns:48px minmax(0,auto) auto; grid-template-rows:auto auto; align-content:center; justify-content:stretch; column-gap:12px }
+.club-stats>div>.stat-icon { grid-column:1; grid-row:1/3; align-self:center; width:48px; height:48px; margin:0; border-color:rgba(237,23,43,.14); border-radius:10px; background:rgba(237,23,43,.13); color:#ff1735 }
+.club-stats>div>small { grid-column:2/4; grid-row:1; align-self:end; margin:0 0 2px; text-align:left }
+.club-stats>div>strong { grid-column:2; grid-row:2; align-self:center; font-size:2rem; text-align:left }
+.club-stats .stat-detail { grid-column:3; grid-row:2; align-self:end; max-width:60px; padding-bottom:3px; color:#8996a4; font-size:.61rem; line-height:1.15 }
+
+.overview-grid { grid-template-columns:1.12fr 1.22fr 1.12fr .9fr; align-items:stretch }
+.overview-card { min-height:390px; padding:14px; border-radius:7px; box-shadow:inset 0 1px rgba(255,255,255,.015) }
+.overview-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:38px; margin:-4px 0 10px; padding-bottom:9px; border-bottom:1px solid rgba(255,255,255,.055) }
+.overview-card-head h3 { margin:0 }
+.overview-head-icon { display:grid; place-items:center; width:32px; height:32px; border:1px solid var(--line); border-radius:6px; color:#9babba }
+.overview-head-icon svg { width:17px; height:17px }
+
+.recent-card { min-height:390px }
+.recent-competition { border-color:#26323a }
+.recent-games-more { flex:0 0 auto; width:auto; margin:0; padding:8px 11px; font-size:.61rem; letter-spacing:.035em; white-space:nowrap }
+.recent-games-more span { margin-left:5px; font-size:1rem; line-height:0 }
+
+.next-card { position:relative; overflow:hidden; background:radial-gradient(circle at 85% 50%,rgba(157,12,29,.13),transparent 44%),linear-gradient(145deg,#11161b,#0b0f13) }
+.next-card::after { content:""; position:absolute; right:-55px; bottom:-80px; width:220px; height:220px; border:1px solid rgba(237,23,43,.08); transform:rotate(-28deg); pointer-events:none }
+.next-card .card-page-items { position:relative; z-index:1 }
+.next-item { display:flex; height:100%; min-height:308px; flex-direction:column; align-items:stretch }
+.next-competition { display:flex; align-items:center; justify-content:center; gap:7px; min-height:32px; color:#9caaba; font-size:.69rem }
+.next-competition img { width:28px; height:28px; object-fit:contain }
+.next-competition strong { color:#dfe6ed; font-size:.73rem }
+.next-card .versus { grid-template-columns:1fr auto 1fr; grid-template-rows:82px auto; margin:auto 0 14px; gap:4px 14px }
+.next-card .versus>.match-team:nth-child(1) { grid-column:1; grid-row:1 }
+.next-card .versus>b { grid-column:2; grid-row:1; align-self:center }
+.next-card .versus>.match-team:nth-child(3) { grid-column:3; grid-row:1 }
+.next-card .versus>strong { overflow:hidden; color:#f3f5f7; font:700 .74rem "Barlow Condensed"; text-align:center; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap }
+.next-card .versus>strong:nth-of-type(1) { grid-column:1; grid-row:2 }
+.next-card .versus>i { display:none }
+.next-card .versus>strong:nth-of-type(2) { grid-column:3; grid-row:2 }
+.next-card .versus .match-shield { width:74px; height:74px }
+.next-item>p { display:flex; align-items:center; justify-content:center; gap:7px; margin:0 0 14px; color:#a6b1bd; font-size:.7rem }
+.next-item>p svg { width:15px; height:15px; color:var(--red) }
+.next-details-action { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; margin-top:auto; padding:12px; border-radius:5px; background:linear-gradient(90deg,#ef0527,#d90e25); color:#fff; font:800 .68rem "Inter"; text-transform:uppercase }
+.next-details-action b { font-size:1.15rem; line-height:0 }
+.next-item:hover .next-details-action { filter:brightness(1.12) }
+
+.rivalry-card { text-align:center; background:linear-gradient(145deg,#10151a,#0b0f13) }
+.rivalry-card .versus { grid-template-columns:1fr auto 1fr; grid-template-rows:92px auto; margin:10px 0 13px; gap:4px 12px }
+.rivalry-card .versus>.match-team:first-child { grid-column:1; grid-row:1 }
+.rivalry-card .versus>b { grid-column:2; grid-row:1; align-self:center }
+.rivalry-card .versus>.match-team:nth-child(3) { grid-column:3; grid-row:1 }
+.rivalry-card .versus>strong { grid-column:1; grid-row:2; overflow:hidden; font:700 .75rem "Barlow Condensed"; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap }
+.rivalry-card .versus>i { display:none }
+.rivalry-card .versus>.rival-team-link { grid-column:3; grid-row:2; overflow:hidden; font:700 .75rem "Barlow Condensed"; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap }
+.rivalry-card .versus .match-shield { width:82px; height:82px }
+.rivalry-summary { display:grid; grid-template-columns:repeat(4,1fr); margin:0 -2px 14px; border-top:1px solid var(--line); border-bottom:1px solid var(--line) }
+.rivalry-summary>div { display:grid; padding:10px 4px; border-right:1px solid var(--line) }
+.rivalry-summary>div:last-child { border-right:0 }
+.rivalry-summary b { color:#f06c7d; font:800 1.35rem "Barlow Condensed" }
+.rivalry-summary span { color:#83909d; font-size:.55rem; text-transform:uppercase }
+.rivalry-bar { display:flex; width:100%; height:10px; overflow:hidden; margin-bottom:12px; border-radius:999px; background:#20272e }
+.rivalry-bar span { display:block; min-width:0 }
+.rivalry-bar .wins { background:#ec1232 }
+.rivalry-bar .draws { background:#727d88 }
+.rivalry-bar .losses { background:#d9dde1 }
+
+.ranking-tabs button { position:relative; padding:12px 3px; border-radius:5px; color:#bdc5cd }
+.ranking-tabs button.active { color:#fff; border-color:var(--red); background:linear-gradient(180deg,rgba(198,16,39,.22),rgba(198,16,39,.06)) }
+.ranking-tabs button.active::after { content:""; position:absolute; right:14px; bottom:-2px; left:14px; height:3px; background:var(--red); border-radius:3px }
+.ranking-player { grid-template-columns:34px minmax(0,1fr) auto; align-items:center; min-height:58px; padding:10px 4px }
+.ranking-player b { font:800 1rem "Barlow Condensed" }
+.ranking-player span { overflow:hidden; font-weight:700; text-overflow:ellipsis; white-space:nowrap }
+.ranking-player strong { min-width:24px; font:800 1.15rem "Barlow Condensed"; text-align:right }
+
+.titles-strip { min-height:96px; border-radius:7px; background:linear-gradient(90deg,#10151a,#0b0f13) }
+.titles-item { min-width:205px }
+.titles-item>img { width:58px; height:68px }
+
 @media(max-width:1100px) {
     .club-hero-grid {
         grid-template-columns: 120px 1fr
@@ -786,6 +862,8 @@ footer {
     .overview-grid {
         grid-template-columns: 1fr 1fr
     }
+
+    .overview-card { min-height:390px }
 
     .club-stats {
         grid-template-columns: repeat(4, 1fr)
@@ -836,6 +914,12 @@ footer {
         grid-template-columns: repeat(2, 1fr)
     }
 
+    .club-stats>div { min-height:78px; padding:10px }
+    .club-stats>div:has(.stat-icon) { grid-template-columns:42px minmax(0,auto) auto; column-gap:9px }
+    .club-stats>div>.stat-icon { width:42px; height:42px }
+    .club-stats>div>strong { font-size:1.7rem }
+    .club-stats .stat-detail { font-size:.55rem }
+
     .overview-grid,
     .games-detail-grid,
     .future-grid {
@@ -854,6 +938,13 @@ footer {
     .overview-card {
         min-height: auto
     }
+
+    .recent-card,.next-card,.rivalry-card,.scorers-card { min-height:390px }
+    .overview-card-head { min-height:36px }
+    .recent-games-more { padding:7px 8px; font-size:.55rem }
+    .next-item { min-height:305px }
+    .rivalry-card .versus .match-shield { width:72px; height:72px }
+    .titles-strip { min-height:0 }
 
     .recent-games-modal .modal-dialog { width: calc(100% - 20px); margin: 10px auto }
     .recent-games-modal .modal-content { max-height: calc(100dvh - 20px) }

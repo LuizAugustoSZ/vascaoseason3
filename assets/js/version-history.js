@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['25.9','A página dos clubes ganhou uma dashboard esportiva mais compacta: indicadores com percentuais e médias, próximo jogo em destaque, confronto direto proporcional, rankings alinhados e faixa de títulos refinada.','Dashboard esportiva dos clubes'],
 ['25.8','Últimos jogos agora agrupa as três partidas mais recentes por competição, com logos, datas, horários, escudos e placares. O histórico completo abre em um modal responsivo, sem paginação na página do clube.','Histórico de jogos reorganizado'],
 ['25.7','Mensagens de sucesso e erro após alterações agora aparecem como notificações flutuantes padronizadas em todo o site e no Admin. Elas podem ser fechadas pelo X e desaparecem automaticamente após cinco segundos, sem ocultar avisos permanentes de contexto.','Avisos rápidos e padronizados'],
 ['25.6','Abas abertas durante uma publicação agora avançam por uma navegação GET segura, sem reenviar o último formulário. O Elenco Geral também usa redirecionamento após salvar, e páginas com sessão renovada se recuperam automaticamente de tokens antigos.','Atualização segura de abas e sessão'],
