@@ -257,7 +257,7 @@
 }
 
 .recent-card { min-height: 0 }
-.recent-games-preview,.recent-games-modal .modal-body { display: grid; gap: 12px }
+.recent-games-preview,.recent-games-modal .modal-body { display: grid; grid-auto-rows: max-content; align-content: start; gap: 12px }
 .recent-competition { overflow: hidden; border: 1px solid var(--line); border-radius: 7px; background: rgba(255,255,255,.018) }
 .recent-competition-head { display: flex; align-items: center; gap: 9px; min-height: 42px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.025) }
 .recent-competition-head img { flex: 0 0 27px; width: 27px; height: 27px; object-fit: contain }
