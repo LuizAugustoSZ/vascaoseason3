@@ -328,10 +328,11 @@ document.querySelectorAll('[data-player-ranking]').forEach(module => {
 
   function render() {
     const rows = aggregate(ranking === 'goals' ? scorers : assists);
-    const totalPages = Math.max(1, Math.ceil(rows.length / 3));
+    const itemsPerPage = 5;
+    const totalPages = Math.max(1, Math.ceil(rows.length / itemsPerPage));
     page = Math.min(page, totalPages);
-    list.innerHTML = rows.length ? rows.slice((page - 1) * 3, page * 3).map((row, index) => `<button class="ranking-player player-open" type="button" data-player-name="${escapeHtml(row.jogador)}" data-player-team="${Number(module.dataset.teamId)}"><b>${String((page - 1) * 3 + index + 1).padStart(2, '0')}</b><span>${escapeHtml(row.jogador)}</span><strong>${row.value}</strong></button>`).join('') : `<p class="empty-copy">Nenhum dado registrado.</p>`;
-    pages.innerHTML = rows.length > 3 ? `<button type="button" data-go="-1" ${page === 1 ? 'disabled' : ''}>‹</button><span>${page} / ${totalPages}</span><button type="button" data-go="1" ${page === totalPages ? 'disabled' : ''}>›</button>` : '';
+    list.innerHTML = rows.length ? rows.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((row, index) => `<button class="ranking-player player-open" type="button" data-player-name="${escapeHtml(row.jogador)}" data-player-team="${Number(module.dataset.teamId)}"><b>${String((page - 1) * itemsPerPage + index + 1).padStart(2, '0')}</b><span>${escapeHtml(row.jogador)}</span><strong>${row.value}</strong></button>`).join('') : `<p class="empty-copy">Nenhum dado registrado.</p>`;
+    pages.innerHTML = rows.length > itemsPerPage ? `<button type="button" data-go="-1" ${page === 1 ? 'disabled' : ''}>‹</button><span>${page} / ${totalPages}</span><button type="button" data-go="1" ${page === totalPages ? 'disabled' : ''}>›</button>` : '';
   }
   tabs.forEach(tab => tab.addEventListener('click', () => { ranking = tab.dataset.ranking; page = 1; tabs.forEach(item => item.classList.toggle('active', item === tab)); render(); }));
   filter.addEventListener('change', () => { page = 1; render(); });

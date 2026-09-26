@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['26.0','A dashboard dos clubes aproveita melhor cada card: partidas e confronto direto foram redistribuídos verticalmente, a linha principal ficou mais compacta e os rankings agora exibem até cinco jogadores por página.','Densidade refinada na dashboard dos clubes'],
 ['25.9','A página dos clubes ganhou uma dashboard esportiva mais compacta: indicadores com percentuais e médias, próximo jogo em destaque, confronto direto proporcional, rankings alinhados e faixa de títulos refinada.','Dashboard esportiva dos clubes'],
 ['25.8','Últimos jogos agora agrupa as três partidas mais recentes por competição, com logos, datas, horários, escudos e placares. O histórico completo abre em um modal responsivo, sem paginação na página do clube.','Histórico de jogos reorganizado'],
 ['25.7','Mensagens de sucesso e erro após alterações agora aparecem como notificações flutuantes padronizadas em todo o site e no Admin. Elas podem ser fechadas pelo X e desaparecem automaticamente após cinco segundos, sem ocultar avisos permanentes de contexto.','Avisos rápidos e padronizados'],
