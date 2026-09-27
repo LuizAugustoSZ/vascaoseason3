@@ -983,6 +983,7 @@ footer {
 .recent-match { grid-template-columns:96px minmax(0,1fr); align-items:center }
 .recent-match-date { position:relative; gap:1px; font-size:.66rem }
 .recent-match-date em { display:inline-flex; width:max-content; margin-bottom:4px; padding:3px 6px; border-radius:3px; background:rgba(237,23,43,.14); color:#ff3650; font:700 .48rem "Inter"; font-style:normal; letter-spacing:.05em; text-transform:uppercase }
+.recent-match-leg { color:#d5af46; font-size:.52rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase }
 .recent-match-date small { color:#8d98a3 }
 .recent-match-teams>div { min-height:31px }
 .recent-match-team { font-size:.74rem }

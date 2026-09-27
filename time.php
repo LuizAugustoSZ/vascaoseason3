@@ -169,10 +169,22 @@ try {
             // A página continua disponível antes da instalação do módulo de súmulas.
         }
         $stmt = $pdo->prepare(
-            "SELECT * FROM (SELECT p.id,p.campeonato_id,c.identidade_id competicao_identidade_id,c.nome campeonato,p.data_partida data_jogo,p.rodada etapa,p.status,m.id mandante_id,m.time_nome mandante,m.sigla mandante_sigla,m.escudo_url mandante_escudo,v.id visitante_id,v.time_nome visitante,v.sigla visitante_sigla,v.escudo_url visitante_escudo,p.gols_mandante gols_a,p.gols_visitante gols_b,NULL penaltis_a,NULL penaltis_b,'pontos' origem FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND(p.mandante_id=? OR p.visitante_id=?) UNION ALL SELECT j.id,j.campeonato_id,c.identidade_id,c.nome,s.criado_em,j.fase,j.status,a.id,a.time_nome,a.sigla,a.escudo_url,b.id,b.time_nome,b.sigla,b.escudo_url,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,'mata' FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id LEFT JOIN sumulas_dreamteam s ON s.origem='mata' AND s.jogo_mata_mata_id=j.id WHERE j.ativo=1 AND(j.time_a_id=? OR j.time_b_id=?)) jogos",
+            "SELECT * FROM (SELECT p.id,p.campeonato_id,c.identidade_id competicao_identidade_id,c.nome campeonato,p.data_partida data_jogo,p.rodada etapa,NULL confronto_ordem,NULL jogo_numero,p.status,m.id mandante_id,m.time_nome mandante,m.sigla mandante_sigla,m.escudo_url mandante_escudo,v.id visitante_id,v.time_nome visitante,v.sigla visitante_sigla,v.escudo_url visitante_escudo,p.gols_mandante gols_a,p.gols_visitante gols_b,NULL penaltis_a,NULL penaltis_b,'pontos' origem FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND(p.mandante_id=? OR p.visitante_id=?) UNION ALL SELECT j.id,j.campeonato_id,c.identidade_id,c.nome,s.criado_em,j.fase,j.ordem,j.jogo,j.status,a.id,a.time_nome,a.sigla,a.escudo_url,b.id,b.time_nome,b.sigla,b.escudo_url,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,'mata' FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id LEFT JOIN sumulas_dreamteam s ON s.origem='mata' AND s.jogo_mata_mata_id=j.id WHERE j.ativo=1 AND(j.time_a_id=? OR j.time_b_id=?)) jogos",
         );
         $stmt->execute([$id, $id, $id, $id]);
-        foreach ($stmt->fetchAll() as $jogo) {
+        $teamGames = $stmt->fetchAll();
+        $knockoutLegs = [];
+        foreach ($teamGames as $game) {
+            if ($game['origem'] !== 'mata') continue;
+            $legKey = (int)$game['campeonato_id'] . '|' . (string)$game['etapa'] . '|' . (int)$game['confronto_ordem'];
+            $knockoutLegs[$legKey] = ($knockoutLegs[$legKey] ?? 0) + 1;
+        }
+        foreach ($teamGames as $jogo) {
+            $jogo['leg_label'] = '';
+            if ($jogo['origem'] === 'mata') {
+                $legKey = (int)$jogo['campeonato_id'] . '|' . (string)$jogo['etapa'] . '|' . (int)$jogo['confronto_ordem'];
+                if (($knockoutLegs[$legKey] ?? 0) > 1) $jogo['leg_label'] = (int)$jogo['jogo_numero'] === 1 ? 'Jogo de ida' : 'Jogo de volta';
+            }
             if (
                 in_array(
                     $jogo["status"],
@@ -202,7 +214,8 @@ try {
         $proximas = ordenar_proximos_confrontos($proximas, $jogadas);
         if ($proximas) $timelineNextKey = (string)$proximas[0]['origem'] . '-' . (int)$proximas[0]['id'];
         $timelineGames = array_merge(array_reverse($proximas), $jogadas);
-        $timelinePreview = array_merge(array_reverse(array_slice($proximas, 0, 3)), array_slice($jogadas, 0, 3));
+        $previewUpcoming = array_slice($proximas, 0, 5);
+        $timelinePreview = array_merge(array_reverse($previewUpcoming), array_slice($jogadas, 0, 5 - count($previewUpcoming)));
         $stmt = $pdo->prepare(
             "SELECT id,titulo,temporada,conquistado_em,CASE WHEN imagem_base64 IS NOT NULL AND imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem
              FROM titulos
@@ -509,7 +522,7 @@ function render_recent_matches(array $games, string $nextKey = ''): void
             <div class="recent-competition-games">
                 <?php foreach ($group['games'] as $game): [$matchDate, $matchTime] = recent_match_date($game); $isFinished = in_array($game['status'], ['finalizada', 'finalizado', 'wo', 'penalidade'], true); $gameKey = (string)$game['origem'] . '-' . (int)$game['id']; ?>
                     <article class="recent-match match-open<?= $gameKey === $nextKey ? ' recent-match--next' : '' ?>" tabindex="0" role="button" data-match-type="<?= $game['origem'] === 'mata' ? 'mata' : 'pontos' ?>" data-match-id="<?= (int)$game['id'] ?>">
-                        <div class="recent-match-date"><?php if ($gameKey === $nextKey): ?><em>Próximo jogo</em><?php endif; ?><time datetime="<?= e((string)($game['data_jogo'] ?? '')) ?>"><?= e($matchDate) ?></time><?php if ($matchTime !== ''): ?><span><?= e($matchTime) ?></span><?php endif; ?><small><?= e($isFinished ? 'FT' : mb_strtoupper((string)$game['status'])) ?></small></div>
+                        <div class="recent-match-date"><?php if ($gameKey === $nextKey): ?><em>Próximo jogo</em><?php endif; ?><?php if (!empty($game['leg_label'])): ?><span class="recent-match-leg"><?= e($game['leg_label']) ?></span><?php endif; ?><time datetime="<?= e((string)($game['data_jogo'] ?? '')) ?>"><?= e($matchDate) ?></time><?php if ($matchTime !== ''): ?><span><?= e($matchTime) ?></span><?php endif; ?><small><?= e($isFinished ? 'FT' : mb_strtoupper((string)$game['status'])) ?></small></div>
                         <div class="recent-match-teams">
                             <div><?= recent_match_team($game, 'home') ?><?php if ($isFinished): ?><b><?= recent_match_score($game, 'home') ?></b><?php endif; ?></div>
                             <div><?= recent_match_team($game, 'away') ?><?php if ($isFinished): ?><b><?= recent_match_score($game, 'away') ?></b><?php endif; ?></div>
