@@ -469,10 +469,8 @@ function recent_match_team(array $game, string $side): string
     $teamId = (int)$game[$prefix . 'id'];
     $name = (string)$game[$side === 'home' ? 'mandante' : 'visitante'];
     $content = shield($game, $prefix) . '<span>' . e($name) . '</span>';
-    if ($teamId === $id) {
-        return '<span class="recent-match-team match-team--current" data-current-team aria-current="page">' . $content . '</span>';
-    }
-    return '<a class="recent-match-team" href="time.php?id=' . $teamId . '" aria-label="' . e($name) . '" title="' . e($name) . '">' . $content . '</a>';
+    $current = $teamId === $id ? ' match-team--current' : '';
+    return '<span class="recent-match-team' . $current . '"' . ($teamId === $id ? ' aria-current="page"' : '') . '>' . $content . '</span>';
 }
 
 function recent_match_score(array $game, string $side): string

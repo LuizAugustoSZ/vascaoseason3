@@ -9,12 +9,12 @@ class Element extends EventTarget{
   closest(){return this.source?.visible?this.source:null}
   focus(){this.focused=true}
 }
-const modals=['match-details-modal','player-stats-modal'].map(id=>{
+const modals=['match-details-modal','player-stats-modal','recent-games-modal'].map(id=>{
   const modal=new Element(id),body=new Element(),title=new Element(),header=new Element();
   header.prepend=button=>modal.parts['.stats-modal-back']=button;
   modal.parts={'.modal-body':body,'.modal-title':title,'.modal-header':header};return modal;
 });
-const [match,player]=modals;
+const [match,player,recent]=modals;
 const bootstrap={Modal:{getOrCreateInstance:modal=>({
   show(){modal.visible=true;queueMicrotask(()=>modal.dispatchEvent(new Event('shown.bs.modal')))},
   hide(){if(!modal.dispatchEvent(new Event('hide.bs.modal',{cancelable:true})))return;modal.visible=false;queueMicrotask(()=>modal.dispatchEvent(new Event('hidden.bs.modal')))}
@@ -39,6 +39,9 @@ const close=async modal=>{bootstrap.Modal.getOrCreateInstance(modal).hide();awai
   await open(match,null,'Partida direta');assert.equal(back(match).hidden,true);
   await close(match);assert.ok(modals.every(m=>!m.visible));
   await open(match,null,'Partida direta');await open(player,match,'Jogador C');await close(player);assert.equal(match.visible,true);await close(match);assert.ok(modals.every(m=>!m.visible));
+  await open(recent,null,'Todos os jogos');body(recent).scrollTop=520;const originalRecent=body(recent).childNodes[0];
+  await open(match,recent,'Partida do histórico');assert.equal(back(match)['aria-label'],'Voltar a todos os jogos');
+  await close(match);assert.equal(recent.visible,true);assert.equal(body(recent).childNodes[0],originalRecent);assert.equal(body(recent).scrollTop,520);await close(recent);
   let release;const pending=window.statsModalNavigation.open(player,trigger(null),()=>new Promise(resolve=>{release=()=>resolve(()=>body(player).replaceChildren({label:'Único'}))}));
   await open(match,null,'Clique duplicado');release();await pending;assert.equal(player.visible,true);assert.equal(match.visible,false);await close(player);
   console.log('OK: nested histories, back arrow, scroll/content restoration, direct entry and duplicate clicks');

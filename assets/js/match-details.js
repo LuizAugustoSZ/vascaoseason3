@@ -1,7 +1,8 @@
 (()=>{
 const modalElement=document.getElementById('match-details-modal'),body=document.getElementById('match-details-body');if(!modalElement||!body)return;
 const escape=value=>String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
-const team=(id,url,name)=>`<a class="match-details-team" href="time.php?id=${Number(id)}">${url?`<img src="${escape(url)}" alt="Escudo de ${escape(name)}">`:'<span>?</span>'}<span>${escape(name)}</span></a>`;
+const currentClubId=/\/time\.php$/i.test(location.pathname)?Number(new URLSearchParams(location.search).get('id')):0;
+const team=(id,url,name)=>{const content=`${url?`<img src="${escape(url)}" alt="Escudo de ${escape(name)}">`:'<span>?</span>'}<span>${escape(name)}</span>`,teamId=Number(id);return teamId===currentClubId?`<span class="match-details-team match-details-team--current" aria-current="page">${content}</span>`:`<a class="match-details-team" href="time.php?id=${teamId}">${content}</a>`};
 const labels={shots:'Finalizações',shots_on_target:'No gol',saves:'Defesas',corners:'Escanteios',possession:'Posse de bola',fouls_suffered:'Faltas sofridas',yellow_cards:'Cartões amarelos',red_cards:'Cartões vermelhos',xg:'Gols esperados (xG)'};
 const statValue=(value,key)=>{if(value===null||value===undefined)return '-';if(key==='possession')return `${value}%`;if(key==='xg'){const number=Number(value);return Number.isFinite(number)?number.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):escape(value)}return escape(value)};
 const playerLink=(name,teamId)=>name&&Number(teamId)>0?`<button type="button" class="player-open match-player-open" data-player-name="${escape(name)}" data-player-team="${Number(teamId)}">${escape(name)}</button>`:escape(name);
@@ -25,7 +26,6 @@ const renderGame=(m,s,title='',h=null)=>{
 const render=(data,selectedId=null)=>{const legs=Array.isArray(data.matches)&&data.matches.length>1?data.matches:null;if(legs){const selectedIndex=Math.max(0,legs.findIndex(item=>String(item.match.id)===String(selectedId)));const tabs=legs.map((item,index)=>`<li class="nav-item" role="presentation"><button class="nav-link${index===selectedIndex?' active':''}" id="match-leg-tab-${index}" data-bs-toggle="tab" data-bs-target="#match-leg-pane-${index}" type="button" role="tab">${Number(item.match.jogo)===1?'Jogo de ida':'Jogo de volta'}</button></li>`).join('');const panes=legs.map((item,index)=>`<div class="tab-pane fade${index===selectedIndex?' show active':''}" id="match-leg-pane-${index}" role="tabpanel">${renderGame(item.match,item.summary,'',data.head_to_head)}</div>`).join('');body.innerHTML=`<ul class="nav nav-tabs match-leg-tabs" role="tablist">${tabs}</ul><div class="tab-content match-leg-content">${panes}</div>`;return}body.innerHTML=renderGame(data.match,data.summary,'',data.head_to_head)};
 document.addEventListener('click',event=>{
   const target=event.target.closest('[data-match-id]');if(!target)return;
-  if(event.target.closest('[data-current-team]'))return;
   const control=event.target.closest('a,button');if(control&&control!==target)return;
   event.preventDefault();
   window.statsModalNavigation.open(modalElement,target,async()=>{

@@ -848,6 +848,7 @@ footer {
 .ranking-tabs button { position:relative; padding:12px 3px; border-radius:5px; color:#bdc5cd }
 .ranking-tabs button.active { color:#fff; border-color:var(--red); background:linear-gradient(180deg,rgba(198,16,39,.22),rgba(198,16,39,.06)) }
 .ranking-tabs button.active::after { content:""; position:absolute; right:14px; bottom:-2px; left:14px; height:3px; background:var(--red); border-radius:3px }
+.ranking-tabs button.active::after { display:none }
 .scorers-card { display:flex; flex-direction:column }
 .scorers-card .ranking-items { flex:1 }
 .ranking-player { grid-template-columns:34px minmax(0,1fr) auto; align-items:center; min-height:47px; padding:7px 4px }

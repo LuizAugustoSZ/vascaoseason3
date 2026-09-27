@@ -1,6 +1,6 @@
 // Keep each visit separate, including repeated visits to the same modal.
 (()=>{
-const modals=['match-details-modal','player-stats-modal'].map(id=>document.getElementById(id)).filter(Boolean);
+const modals=['match-details-modal','player-stats-modal','recent-games-modal'].map(id=>document.getElementById(id)).filter(Boolean);
 const history=[];let busy=false,switching=false;
 const transition=(modal,action)=>new Promise(resolve=>{
   modal.addEventListener(action==='show'?'shown.bs.modal':'hidden.bs.modal',resolve,{once:true});
@@ -9,7 +9,7 @@ const transition=(modal,action)=>new Promise(resolve=>{
 const updateBack=modal=>{
   const button=modal.querySelector('.stats-modal-back'),previous=history.at(-1);
   button.hidden=!previous;
-  if(previous){const label=previous.modal.id==='player-stats-modal'?'Voltar ao histórico individual':'Voltar aos detalhes da partida';button.title=label;button.setAttribute('aria-label',label)}
+  if(previous){const label=previous.modal.id==='player-stats-modal'?'Voltar ao histórico individual':previous.modal.id==='recent-games-modal'?'Voltar a todos os jogos':'Voltar aos detalhes da partida';button.title=label;button.setAttribute('aria-label',label)}
 };
 for(const modal of modals){
   const button=document.createElement('button');button.type='button';button.className='stats-modal-back';button.textContent='←';button.hidden=true;
