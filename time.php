@@ -25,6 +25,9 @@ $assistentes = [];
 $campeonatosRanking = [];
 $jogadas = [];
 $proximas = [];
+$timelineGames = [];
+$timelinePreview = [];
+$timelineNextKey = '';
 $titulos = [];
 $responsavel = null;
 $elencoPublico = [];
@@ -166,7 +169,7 @@ try {
             // A página continua disponível antes da instalação do módulo de súmulas.
         }
         $stmt = $pdo->prepare(
-            "SELECT * FROM (SELECT p.id,p.campeonato_id,c.identidade_id competicao_identidade_id,c.nome campeonato,COALESCE(p.data_partida,s.criado_em) data_jogo,p.rodada etapa,p.status,m.id mandante_id,m.time_nome mandante,m.sigla mandante_sigla,m.escudo_url mandante_escudo,v.id visitante_id,v.time_nome visitante,v.sigla visitante_sigla,v.escudo_url visitante_escudo,p.gols_mandante gols_a,p.gols_visitante gols_b,NULL penaltis_a,NULL penaltis_b,'pontos' origem FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id LEFT JOIN sumulas_dreamteam s ON s.origem='pontos' AND s.partida_id=p.id WHERE p.ativo=1 AND(p.mandante_id=? OR p.visitante_id=?) UNION ALL SELECT j.id,j.campeonato_id,c.identidade_id,c.nome,COALESCE(c.data_inicio,s.criado_em),j.fase,j.status,a.id,a.time_nome,a.sigla,a.escudo_url,b.id,b.time_nome,b.sigla,b.escudo_url,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,'mata' FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id LEFT JOIN sumulas_dreamteam s ON s.origem='mata' AND s.jogo_mata_mata_id=j.id WHERE j.ativo=1 AND(j.time_a_id=? OR j.time_b_id=?)) jogos",
+            "SELECT * FROM (SELECT p.id,p.campeonato_id,c.identidade_id competicao_identidade_id,c.nome campeonato,p.data_partida data_jogo,p.rodada etapa,p.status,m.id mandante_id,m.time_nome mandante,m.sigla mandante_sigla,m.escudo_url mandante_escudo,v.id visitante_id,v.time_nome visitante,v.sigla visitante_sigla,v.escudo_url visitante_escudo,p.gols_mandante gols_a,p.gols_visitante gols_b,NULL penaltis_a,NULL penaltis_b,'pontos' origem FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 AND(p.mandante_id=? OR p.visitante_id=?) UNION ALL SELECT j.id,j.campeonato_id,c.identidade_id,c.nome,s.criado_em,j.fase,j.status,a.id,a.time_nome,a.sigla,a.escudo_url,b.id,b.time_nome,b.sigla,b.escudo_url,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,'mata' FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id LEFT JOIN sumulas_dreamteam s ON s.origem='mata' AND s.jogo_mata_mata_id=j.id WHERE j.ativo=1 AND(j.time_a_id=? OR j.time_b_id=?)) jogos",
         );
         $stmt->execute([$id, $id, $id, $id]);
         foreach ($stmt->fetchAll() as $jogo) {
@@ -197,6 +200,9 @@ try {
             return (int) $b["id"] <=> (int) $a["id"];
         });
         $proximas = ordenar_proximos_confrontos($proximas, $jogadas);
+        if ($proximas) $timelineNextKey = (string)$proximas[0]['origem'] . '-' . (int)$proximas[0]['id'];
+        $timelineGames = array_merge(array_reverse($proximas), $jogadas);
+        $timelinePreview = array_merge(array_reverse(array_slice($proximas, 0, 3)), array_slice($jogadas, 0, 3));
         $stmt = $pdo->prepare(
             "SELECT id,titulo,temporada,conquistado_em,CASE WHEN imagem_base64 IS NOT NULL AND imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem
              FROM titulos
@@ -467,9 +473,9 @@ function recent_match_date(array $game): array
 {
     $raw = trim((string)($game['data_jogo'] ?? ''));
     $timestamp = $raw !== '' ? strtotime($raw) : false;
-    if ($timestamp === false) return ['Data não informada', ''];
+    if ($timestamp === false) return ['A definir', ''];
     $time = date('H:i', $timestamp);
-    return [date('d/m/Y', $timestamp), $time !== '00:00' ? $time : ''];
+    return [date('d/m/Y', $timestamp), str_starts_with($time, '00:') ? '' : $time];
 }
 
 function recent_match_groups(array $games): array
@@ -492,7 +498,7 @@ function recent_match_groups(array $games): array
     return $groups;
 }
 
-function render_recent_matches(array $games): void
+function render_recent_matches(array $games, string $nextKey = ''): void
 {
     foreach (recent_match_groups($games) as $group): ?>
         <section class="recent-competition">
@@ -501,12 +507,12 @@ function render_recent_matches(array $games): void
                 <strong><?= e($group['competition']) ?></strong>
             </header>
             <div class="recent-competition-games">
-                <?php foreach ($group['games'] as $game): [$matchDate, $matchTime] = recent_match_date($game); ?>
-                    <article class="recent-match match-open" tabindex="0" role="button" data-match-type="<?= $game['origem'] === 'mata' ? 'mata' : 'pontos' ?>" data-match-id="<?= (int)$game['id'] ?>">
-                        <div class="recent-match-date"><time datetime="<?= e((string)($game['data_jogo'] ?? '')) ?>"><?= e($matchDate) ?></time><?php if ($matchTime !== ''): ?><span><?= e($matchTime) ?></span><?php endif; ?><small><?= e(in_array($game['status'], ['finalizada', 'finalizado'], true) ? 'FT' : mb_strtoupper((string)$game['status'])) ?></small></div>
+                <?php foreach ($group['games'] as $game): [$matchDate, $matchTime] = recent_match_date($game); $isFinished = in_array($game['status'], ['finalizada', 'finalizado', 'wo', 'penalidade'], true); $gameKey = (string)$game['origem'] . '-' . (int)$game['id']; ?>
+                    <article class="recent-match match-open<?= $gameKey === $nextKey ? ' recent-match--next' : '' ?>" tabindex="0" role="button" data-match-type="<?= $game['origem'] === 'mata' ? 'mata' : 'pontos' ?>" data-match-id="<?= (int)$game['id'] ?>">
+                        <div class="recent-match-date"><?php if ($gameKey === $nextKey): ?><em>Próximo jogo</em><?php endif; ?><time datetime="<?= e((string)($game['data_jogo'] ?? '')) ?>"><?= e($matchDate) ?></time><?php if ($matchTime !== ''): ?><span><?= e($matchTime) ?></span><?php endif; ?><small><?= e($isFinished ? 'FT' : mb_strtoupper((string)$game['status'])) ?></small></div>
                         <div class="recent-match-teams">
-                            <div><?= recent_match_team($game, 'home') ?><b><?= recent_match_score($game, 'home') ?></b></div>
-                            <div><?= recent_match_team($game, 'away') ?><b><?= recent_match_score($game, 'away') ?></b></div>
+                            <div><?= recent_match_team($game, 'home') ?><?php if ($isFinished): ?><b><?= recent_match_score($game, 'home') ?></b><?php endif; ?></div>
+                            <div><?= recent_match_team($game, 'away') ?><?php if ($isFinished): ?><b><?= recent_match_score($game, 'away') ?></b><?php endif; ?></div>
                         </div>
                     </article>
                 <?php endforeach; ?>
@@ -587,33 +593,8 @@ function render_recent_matches(array $games): void
                                                                                                 $value ?></strong><?php if (!empty($statDetails[$label])): ?><span class="stat-detail"><?= e($statDetails[$label]) ?></span><?php endif; ?></div><?php endforeach; ?></section><small class="auto-label">Atualizado automaticamente pelas competições</small>
             <section class="overview-grid">
                 <article class="overview-card recent-card">
-                    <div class="overview-card-head"><h3>Últimos jogos</h3><?php if (count($jogadas) > 3): ?><button class="recent-games-more" type="button" data-bs-toggle="modal" data-bs-target="#recent-games-modal">Ver todos os jogos <span aria-hidden="true">›</span></button><?php endif; ?></div>
-                    <div class="recent-games-preview"><?php render_recent_matches(array_slice($jogadas, 0, 3)); ?></div><?php if (!$jogadas): ?><p class="empty-copy">Nenhum resultado.</p><?php endif; ?>
-                </article>
-                <article class="overview-card next-card" data-card-pages="1">
-                    <div class="overview-card-head"><h3>Próximo confronto</h3><span class="overview-head-icon" aria-hidden="true"><i data-lucide="calendar-days"></i></span></div>
-                    <div class="card-page-items"><?php foreach (
-                                                        $proximas
-                                                        as $j
-                                                    ): ?><div class="next-item match-open" tabindex="0" role="button" data-match-type="<?= $j["origem"] === "mata" ? "mata" : "pontos" ?>" data-match-id="<?= (int) $j["id"] ?>">
-                                <div class="next-competition"><?php if (!empty($j['competicao_identidade_id'])): ?><img src="<?= e(competition_image_url((int)$j['campeonato_id'], 'logo')) ?>" alt="" onerror="this.remove()" aria-hidden="true"><?php endif; ?><strong><?= e($j['campeonato']) ?></strong><span>•</span><span><?= e($j['origem'] === 'pontos' ? 'Rodada ' . $j['etapa'] : (string)$j['etapa']) ?></span></div>
-                                <div class="versus"><?= match_team(
-                                                            $j,
-                                                            "home",
-                                                            false,
-                                                        ) ?><b>VS</b><?= match_team($j, "away", false) ?><strong><?= e($j['mandante']) ?></strong><i></i><strong><?= e($j['visitante']) ?></strong></div>
-                                <p><i data-lucide="calendar-days" aria-hidden="true"></i><?= $j["data_jogo"] ? e(date("d/m/Y", strtotime($j["data_jogo"]))) : "Data a definir" ?><span>•</span><i data-lucide="clock-3" aria-hidden="true"></i><?= $j["data_jogo"] ? e(date("H:i", strtotime($j["data_jogo"]))) : "--:--" ?></p>
-                                <span class="next-details-action">Ver detalhes do jogo <b aria-hidden="true">›</b></span>
-                            </div><?php endforeach; ?></div><?php if (
-                                                                 !$proximas
-                                                             ): ?><p class="empty-copy">Nenhum confronto agendado.</p><?php endif; ?><nav class="card-pages"></nav>
-                </article>
-                <article class="overview-card rivalry-card<?= $rival ? ' rivalry-open' : '' ?>" <?= $rival ? 'tabindex="0" role="button" data-bs-toggle="modal" data-bs-target="#rivalry-history-modal"' : '' ?>>
-                    <div class="overview-card-head"><h3>Confronto direto</h3><span class="overview-head-icon" aria-hidden="true"><i data-lucide="chart-no-axes-column-increasing"></i></span></div><?php if (
-                                                    $rival
-                                                ): ?><div class="versus"><span class="match-team match-team--shield-only match-team--current" aria-current="page"><?= shield($time) ?></span><b>VS</b><a class="match-team match-team--shield-only" href="time.php?id=<?= (int)$rival['id'] ?>" aria-label="<?= e($rival['nome']) ?>" title="<?= e($rival['nome']) ?>"><?= shield($rival) ?></a><strong><?= e($time['time_nome']) ?></strong><i></i><a class="rival-team-link" href="time.php?id=<?= (int)$rival['id'] ?>"><?= e($rival["nome"]) ?></a></div>
-                        <div class="rivalry-summary"><div><b><?= $rival['jogos'] ?></b><span>Jogos</span></div><div><b><?= $rival['v'] ?></b><span>Vitórias</span></div><div><b><?= $rival['e'] ?></b><span>Empates</span></div><div><b><?= $rival['d'] ?></b><span>Derrotas</span></div></div><?php $rivalTotal = max(1, (int)$rival['jogos']); ?><div class="rivalry-bar" aria-label="<?= (int)$rival['v'] ?> vitórias, <?= (int)$rival['e'] ?> empates e <?= (int)$rival['d'] ?> derrotas"><span class="wins" style="width:<?= round(((int)$rival['v'] / $rivalTotal) * 100, 2) ?>%"></span><span class="draws" style="width:<?= round(((int)$rival['e'] / $rivalTotal) * 100, 2) ?>%"></span><span class="losses" style="width:<?= round(((int)$rival['d'] / $rivalTotal) * 100, 2) ?>%"></span></div>
-                        <p><?= $rival["jogos"] ?> jogos • <?= $rival["v"] ?> vitórias • <?= $rival["e"] ?> <?= (int)$rival['e'] === 1 ? 'empate' : 'empates' ?> • <?= $rival["d"] ?> <?= (int)$rival['d'] === 1 ? 'derrota' : 'derrotas' ?></p><?php else: ?><p class="empty-copy">Sem histórico disponível.</p><?php endif; ?>
+                    <div class="overview-card-head"><h3>Jogos</h3><?php if ($timelineGames): ?><button class="recent-games-more" type="button" data-bs-toggle="modal" data-bs-target="#recent-games-modal">Ver todos os jogos <span aria-hidden="true">›</span></button><?php endif; ?></div>
+                    <div class="recent-games-preview"><?php render_recent_matches($timelinePreview, $timelineNextKey); ?></div><?php if (!$timelineGames): ?><p class="empty-copy">Nenhuma partida cadastrada.</p><?php endif; ?>
                 </article>
                 <article class="overview-card scorers-card" data-player-ranking data-team-id="<?= $id ?>" data-scorers="<?= e(json_encode($artilheiros, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>" data-assists="<?= e(json_encode($assistentes, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>">
                     <div class="ranking-tabs" role="tablist"><button class="active" type="button" data-ranking="goals">Artilheiros</button><button type="button" data-ranking="assists">Assistências</button></div>
@@ -622,7 +603,6 @@ function render_recent_matches(array $games): void
                     <nav class="card-pages"></nav>
                 </article>
             </section>
-            <?php if ($rival): ?><div class="modal fade compact-stats-modal" id="rivalry-history-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><small>Confronto direto</small><h2 class="modal-title"><?= e($time['time_nome']) ?> × <?= e($rival['nome']) ?></h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body rivalry-history-list"><?php $rivalGames = array_values(array_filter($jogadas, static fn($game) => in_array((int)$rival['id'], [(int)$game['mandante_id'], (int)$game['visitante_id']], true))); foreach ($rivalGames as $game): ?><div class="rivalry-history-game match-open" tabindex="0" role="button" data-match-type="<?= $game['origem'] === 'mata' ? 'mata' : 'pontos' ?>" data-match-id="<?= (int)$game['id'] ?>"><small><?= e(($game['origem'] === 'pontos' ? 'Rodada ' . $game['etapa'] : $game['etapa']) . ' - ' . $game['campeonato']) ?></small><div><?= match_team($game, 'home') ?><b><?= match_score($game) ?></b><?= match_team($game, 'away') ?></div></div><?php endforeach; ?><?php if (!$rivalGames): ?><p class="empty-copy">Nenhum confronto finalizado entre os times.</p><?php endif; ?></div></div></div></div><?php endif; ?>
             <?php if ($titulos): ?>
                 <section class="titles-strip">
                     <h3>Títulos e campanhas</h3>
@@ -708,15 +688,15 @@ function render_recent_matches(array $games): void
                 <div class="modal fade club-card-modal" id="club-hero-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title">EDITAR HERÓI DO TIME</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_heroi_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><label class="form-label" for="club-hero-only">Herói do time</label><select class="form-select" id="club-hero-only" name="jogador_favorito_id"><option value="">Nenhum jogador</option><?php foreach ($elencoPublico as $jogador): ?><option value="<?= (int)$jogador['id'] ?>" <?= (int)$jogador['id'] === (int)($clubePublico['jogador_favorito_id'] ?? 0) ? 'selected' : '' ?>><?= e($jogador['nome']) ?> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></option><?php endforeach; ?></select></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar herói</button></div></form></div></div></div>
             <?php endif; ?>
         </main>
-        <?php if (count($jogadas) > 3): ?>
+        <?php if ($timelineGames): ?>
             <div class="modal fade recent-games-modal" id="recent-games-modal" tabindex="-1" aria-labelledby="recent-games-title" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <div><small>Histórico do clube</small><h2 class="modal-title" id="recent-games-title">Últimos jogos</h2></div>
+                            <div><small>Calendário do clube</small><h2 class="modal-title" id="recent-games-title">Todos os jogos</h2></div>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
                         </div>
-                        <div class="modal-body"><?php render_recent_matches($jogadas); ?></div>
+                        <div class="modal-body"><?php render_recent_matches($timelineGames, $timelineNextKey); ?></div>
                     </div>
                 </div>
             </div>
