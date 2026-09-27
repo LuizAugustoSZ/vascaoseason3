@@ -40,4 +40,8 @@ $goals = $pdo->prepare(
     "SELECT participante_id,jogador,minuto,tipo FROM gols_mata_mata WHERE jogo_mata_mata_id=? ORDER BY id",
 );
 $goals->execute([(int) $game["id"]]);
-json_response(["ok" => true, "jogo" => $game, "gols" => $goals->fetchAll()]);
+$summary = $pdo->prepare(
+    "SELECT id,texto_original FROM sumulas_dreamteam WHERE origem='mata' AND jogo_mata_mata_id=? LIMIT 1",
+);
+$summary->execute([(int) $game["id"]]);
+json_response(["ok" => true, "jogo" => $game, "gols" => $goals->fetchAll(), "sumula" => $summary->fetch() ?: null]);

@@ -85,17 +85,18 @@ document.querySelectorAll('.editar-partida').forEach(botao => botao.addEventList
 // Preenche o formulário do mata-mata com o confronto escolhido na tabela.
 document.querySelectorAll('.editar-mata').forEach(botao => botao.addEventListener('click', async () => {
   const form=document.getElementById('form-mata');
+  const game=(window.adminMataGames||[]).find(item=>Number(item.id)===Number(botao.dataset.id));
   form.jogo_mata_id.value=botao.dataset.id;
-  form.fase.value=botao.dataset.fase;
-  form.ordem.value=botao.dataset.ordem;
+  form.fase.value=game?.fase||botao.dataset.fase;
+  form.ordem.value=game?.ordem||botao.dataset.ordem;
   // Mantém o confronto sorteado visível, mas impede a troca dos times na edição.
-  selecionarTime(form.time_a_id,botao.dataset.timeA);
-  selecionarTime(form.time_b_id,botao.dataset.timeB);
+  form.time_a_id.value=String(game?.time_a_id||'');
+  form.time_b_id.value=String(game?.time_b_id||'');
   form.time_a_id.disabled=true;
   form.time_b_id.disabled=true;
-  if(form.campeonato_id)form.campeonato_id.disabled=true;
-  form.gols_a.value=botao.dataset.golsA;
-  form.gols_b.value=botao.dataset.golsB;
+  if(form.campeonato_id){form.campeonato_id.value=String(game?.campeonato_id||'');form.campeonato_id.disabled=true;}
+  form.gols_a.value=game?.gols_a??botao.dataset.golsA;
+  form.gols_b.value=game?.gols_b??botao.dataset.golsB;
   const response=await fetch(`mata-dados.php?id=${encodeURIComponent(botao.dataset.id)}`);
   const data=await response.json();
   renderMataGoalEditor(data.gols||[]);
@@ -106,12 +107,40 @@ document.querySelectorAll('.editar-mata').forEach(botao => botao.addEventListene
   form.status.value=botao.dataset.status;
   form.status.dispatchEvent(new Event('change'));
   updateMataSuggestion(form);
+  if(game?.vencedor_id && form.status.value==='wo')form.vencedor_id.value=String(game.vencedor_id);
   const aviso=document.getElementById('mata-edicao');
-  aviso.querySelector('span').textContent=`Editando: ${botao.dataset.timeA} x ${botao.dataset.timeB}`;
+  aviso.querySelector('span').textContent=`Editando: ${game?.campeonato||''} · ${game?.fase||botao.dataset.fase} · ${game?.time_a||botao.dataset.timeA} x ${game?.time_b||botao.dataset.timeB}`;
   aviso.classList.remove('d-none');
   aviso.classList.add('d-flex');
+  if(Number(window.__pendingWoMata)===Number(botao.dataset.id)){
+    window.__pendingWoMata=0;
+    form.status.value='wo';
+    form.status.dispatchEvent(new Event('change'));
+    form.vencedor_id.focus();
+  }
   form.scrollIntoView({behavior:'smooth'});
 }));
+
+document.addEventListener('click',async event=>{
+  const wo=event.target.closest('.wo-mata');
+  if(wo){
+    const edit=document.querySelector(`.editar-mata[data-id="${CSS.escape(wo.dataset.id)}"]`);
+    if(!edit)return;
+    window.__pendingWoMata=wo.dataset.id;
+    edit.click();
+    return;
+  }
+  const summary=event.target.closest('.editar-sumula-mata');
+  if(!summary)return;
+  try{
+    const response=await fetch(`mata-dados.php?id=${encodeURIComponent(summary.dataset.id)}`,{cache:'no-store'});
+    const data=await response.json();
+    if(!response.ok||!data.sumula)throw new Error('Súmula não encontrada.');
+    document.getElementById('dreamteam-summary-text').value=data.sumula.texto_original||'';
+    document.querySelector('[data-bs-target="#tab-sumula"]')?.click();
+    document.getElementById('dreamteam-summary-text').focus();
+  }catch(error){alert(error.message||'Não foi possível abrir a súmula.');}
+});
 
 // Sugere o vencedor pelo placar e atualiza automaticamente o status do confronto.
 function updateMataSuggestion(form){
@@ -330,6 +359,7 @@ if(new URLSearchParams(location.search).get('tab')==='usuarios') document.queryS
 if(new URLSearchParams(location.search).get('tab')==='campeonatos') document.querySelector('[data-bs-target="#tab-campeonatos"]')?.click();
 if(new URLSearchParams(location.search).get('tab')==='extra') document.querySelector('[data-bs-target="#tab-extra"]')?.click();
 if(new URLSearchParams(location.search).get('tab')==='mercado') document.querySelector('[data-bs-target="#tab-mercado"]')?.click();
+if(!new URLSearchParams(location.search).has('tab')) document.querySelector('[data-bs-target="#tab-sumula"]')?.click();
 
 // Filtra os artilheiros pelo campeonato e numera o ranking pela quantidade de gols.
 const scorerFilter=document.getElementById('artilheiros-admin-filter');

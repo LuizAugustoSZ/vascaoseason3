@@ -1449,7 +1449,7 @@ $games = $pdo
 // Busca os confrontos existentes para permitir editar os jogos sorteados.
 $mataGames = $pdo
     ->query(
-        "SELECT j.id,j.fase,j.ordem,j.jogo,j.time_a_id,j.time_b_id,a.time_nome time_a,b.time_nome time_b,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,j.status FROM jogos_mata_mata j JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id WHERE j.ativo=1 AND j.time_a_id IS NOT NULL AND j.time_b_id IS NOT NULL ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id",
+        "SELECT j.id,j.campeonato_id,c.nome campeonato,j.fase,j.ordem,j.jogo,j.time_a_id,j.time_b_id,a.time_nome time_a,b.time_nome time_b,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,j.vencedor_id,j.status,s.id sumula_id FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id LEFT JOIN sumulas_dreamteam s ON s.origem='mata' AND s.jogo_mata_mata_id=j.id WHERE j.ativo=1 AND j.time_a_id IS NOT NULL AND j.time_b_id IS NOT NULL ORDER BY c.id DESC,FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id",
     )
     ->fetchAll();
 // Monta as opções dos selects de técnicos e times.
@@ -1830,7 +1830,7 @@ function admin_nav_icon(string $name): string
     __DIR__ . "/../assets/js/sumula-importer.js",
 ) ?>"></script><script src="../assets/js/admin.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/admin.js",
-) ?>"></script><script src="../assets/js/admin-lists.js?v=<?= filemtime(
+) ?>"></script><script>window.adminMataGames=<?= json_encode($mataGames, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script><script src="../assets/js/admin-lists.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/admin-lists.js",
 ) ?>"></script><?php if (
     sync_user_allowed()
