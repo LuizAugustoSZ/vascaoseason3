@@ -778,11 +778,12 @@ footer {
 .club-stats>div { position:relative; min-height:82px; overflow:hidden; padding:12px; background:linear-gradient(145deg,#11161b,#0b0f13); border:1px solid #222c34; border-radius:7px }
 .club-stats>div::before { content:""; position:absolute; inset:0 auto auto 10px; width:48px; height:1px; background:linear-gradient(90deg,#d4a928,transparent) }
 .club-stats>div:nth-child(4n)::before { background:linear-gradient(90deg,var(--red),transparent) }
+.club-stats>div::before { display:none }
 .club-stats>div:has(.stat-icon) { grid-template-columns:48px minmax(0,1fr); grid-template-rows:auto auto auto; align-content:center; justify-content:stretch; column-gap:12px }
 .club-stats>div>.stat-icon { grid-column:1; grid-row:1/4; align-self:center; width:48px; height:48px; margin:0; border-color:rgba(237,23,43,.14); border-radius:10px; background:rgba(237,23,43,.13); color:#ff1735 }
 .club-stats>div>small { grid-column:2; grid-row:1; align-self:end; margin:0 0 1px; text-align:left }
 .club-stats>div>strong { grid-column:2; grid-row:2; align-self:center; font-size:2rem; text-align:left }
-.club-stats .stat-detail { grid-column:2; grid-row:3; color:#8996a4; font-size:.56rem; line-height:1.05; white-space:nowrap }
+.club-stats .stat-detail { grid-column:2; grid-row:3; margin-top:2px; color:#9aa7b5; font-size:.56rem; font-weight:600; line-height:1.15; text-align:left; white-space:nowrap }
 
 .overview-grid { grid-template-columns:1.12fr 1.22fr 1.12fr .9fr; align-items:stretch }
 .overview-card { min-height:370px; padding:14px; border-radius:7px; box-shadow:inset 0 1px rgba(255,255,255,.015) }

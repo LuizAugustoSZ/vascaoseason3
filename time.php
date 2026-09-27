@@ -390,10 +390,10 @@ if ($titulos) {
 $statDetails = [];
 if ($stats['Jogos'] > 0) {
     foreach (['Vitórias', 'Empates', 'Derrotas'] as $resultLabel) {
-        $statDetails[$resultLabel] = number_format(($stats[$resultLabel] / $stats['Jogos']) * 100, 1, ',', '.') . '%';
+        $statDetails[$resultLabel] = number_format(($stats[$resultLabel] / $stats['Jogos']) * 100, 1, ',', '.') . '% dos jogos';
     }
-    $statDetails['Gols pró'] = number_format($stats['Gols pró'] / $stats['Jogos'], 1, ',', '.') . ' por jogo';
-    $statDetails['Gols contra'] = number_format($stats['Gols contra'] / $stats['Jogos'], 1, ',', '.') . ' por jogo';
+    $statDetails['Gols pró'] = 'Média de ' . number_format($stats['Gols pró'] / $stats['Jogos'], 1, ',', '.') . ' por jogo';
+    $statDetails['Gols contra'] = 'Média de ' . number_format($stats['Gols contra'] / $stats['Jogos'], 1, ',', '.') . ' por jogo';
 }
 $rival = null;
 if ($proximas) {
