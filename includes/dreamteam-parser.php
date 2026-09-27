@@ -110,8 +110,12 @@ function dreamteam_parse_compact_summary(string $raw): ?array
             $events[] = ['type'=>'var_review','minute'=>$row[1],'team_code'=>null,'description'=>$body];
             continue;
         }
-        if (preg_match('/^Substituição\s*-\s*Sai\s+(.+?),?\s+entra\s+(.+?)\s*[\[(]([A-Z0-9]+)[\])]/ui', $body, $m)) {
+        if (preg_match('/^Substituição\s*-\s*Sai\s+(.+?),?\s+entra\s+(.+?)\s*[\[(]([A-Z0-9]+)(?:[\])]|$)/ui', $body, $m)) {
             $events[] = ['type'=>'substitution','minute'=>$row[1],'player_out'=>rtrim(trim($m[1]), ','),'player_in'=>trim($m[2]),'team_code'=>$m[3]];
+            continue;
+        }
+        if (preg_match('/^Gol contra(?:\s+(.+?))?\s*[\[(]([A-Z0-9]+)(?:[\])]|$)/ui', $body, $m)) {
+            $events[] = ['type'=>'goal','minute'=>$row[1],'player'=>'Jogador indisponível','team_code'=>$m[2],'description'=>trim((string)($m[1] ?? '')),'goal_type'=>'contra','assist'=>null,'cancelled'=>false];
             continue;
         }
         if (!preg_match('/^(Gol(?:\s+anulado|\s+de\s+.+?)?|Tentativa\s+(?:de\s+)?.+?|Cartão amarelo|Cartão vermelho|Expulsão|Lesão|P[êe]nalti (?:cancelado|defendido|para fora|pra fora))\s+-\s+(.+?)\s*[\[(]([A-Z0-9]+)[\])](.*)$/ui', $body, $m)) {

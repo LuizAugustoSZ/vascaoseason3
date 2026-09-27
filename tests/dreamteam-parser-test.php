@@ -115,6 +115,27 @@ $p=dreamteam_bind_team_codes(dreamteam_parse_summary($freeGoalType), [['sigla'=>
 check($p['warnings']===[] && $p['goals'][1]['goal_type']==='meio-voleio acrobático', 'Dynamic goal type');
 $p=dreamteam_parse_summary(str_replace('Gol de pênalti', 'Lance desconhecido', $penalties));
 check(count($p['warnings'])>=2, 'Unknown events and score mismatch still require review');
+$ownGoal = str_replace(
+    [
+        'COMPARSAS FC 2x3 Lords FC',
+        ':00boladt: :CDB: Ramón Sosa: 1 gol',
+        "86' Gol - :CDB: Ramón Sosa [LOR]",
+        "62' Substituição - Sai :CopaLibertadores: Pedro, entra :CopaSudamericana: Gabigol [LOR]",
+    ],
+    [
+        'COMPARSAS FC 2x3 Lords FC',
+        ':00boladt: Jogador indisponível: 1 gol',
+        "86' Gol contra incomum [LOR]",
+        "62' Substituição - Sai :CopaLibertadores: Pedro, entra :CopaSudamericana: Gabigol [LOR",
+    ],
+    $penalties,
+);
+$p=dreamteam_bind_team_codes(dreamteam_parse_summary($ownGoal), [['sigla'=>'COM'],['sigla'=>'LOR']]);
+$ownGoals=array_values(array_filter($p['goals'], static fn(array $goal): bool => $goal['goal_type']==='contra'));
+$substitutions=array_values(array_filter($p['events'], static fn(array $event): bool => $event['type']==='substitution'));
+check($p['warnings']===[], 'Own goal report warning: '.implode(' ', $p['warnings']));
+check(count($ownGoals)===1 && $ownGoals[0]['player']==='Jogador indisponível' && $ownGoals[0]['team_code']==='LOR', 'Unusual own goal');
+check(count($substitutions)===5 && $substitutions[3]['team_code']==='LOR', 'Substitution without closing bracket');
 $dismissal = str_replace(
     "69' Gol - :UFC: Diego Costa [COM]",
     "68' Expulsão - :SaoPaulo: Lucas Moura [COM] · entrada temerária\n69' Gol - :UFC: Diego Costa [COM]",

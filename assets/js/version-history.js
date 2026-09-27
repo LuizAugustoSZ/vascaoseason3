@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['26.2','O importador de súmulas agora reconhece gols contra sem jogador identificado e aceita substituições cujo código do clube venha com o colchete final truncado.','Novos lances reconhecidos nas súmulas'],
 ['26.1','A página dos clubes ganhou uma timeline única de partidas: próximos jogos aparecem acima dos resultados, o compromisso mais próximo recebe destaque e horários padrão deixam de ser exibidos como reais.','Timeline completa de jogos nos clubes'],
 ['26.0','A dashboard dos clubes aproveita melhor cada card: partidas e confronto direto foram redistribuídos verticalmente, a linha principal ficou mais compacta e os rankings agora exibem até cinco jogadores por página.','Densidade refinada na dashboard dos clubes'],
 ['25.9','A página dos clubes ganhou uma dashboard esportiva mais compacta: indicadores com percentuais e médias, próximo jogo em destaque, confronto direto proporcional, rankings alinhados e faixa de títulos refinada.','Dashboard esportiva dos clubes'],
