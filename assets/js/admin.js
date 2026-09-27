@@ -59,28 +59,51 @@ if(leagueForm){
 // Preenche o formulário dos pontos corridos e recupera os gols detalhados da partida.
 document.querySelectorAll('.editar-partida').forEach(botao => botao.addEventListener('click', async () => {
   const form=document.getElementById('form-partida');
+  const game=(window.adminLeagueGames||[]).find(item=>Number(item.id)===Number(botao.dataset.id));
   form.partida_id.value=botao.dataset.id;
-  form.rodada.value=botao.dataset.rodada;
+  form.rodada.value=game?.rodada||botao.dataset.rodada;
   // Mantém os times sorteados visíveis, mas bloqueados durante a edição do resultado.
-  form.mandante_id.value=botao.dataset.mandanteId;
-  form.visitante_id.value=botao.dataset.visitanteId;
+  form.mandante_id.value=String(game?.mandante_id||botao.dataset.mandanteId);
+  form.visitante_id.value=String(game?.visitante_id||botao.dataset.visitanteId);
   form.mandante_id.disabled=true;
   form.visitante_id.disabled=true;
-  if(form.campeonato_id)form.campeonato_id.disabled=true;
-  form.gols_mandante.value=botao.dataset.golsMandante;
-  form.gols_visitante.value=botao.dataset.golsVisitante;
-  form.status.value=botao.dataset.status;
+  if(form.campeonato_id){form.campeonato_id.value=String(game?.campeonato_id||'');form.campeonato_id.disabled=true;}
+  form.data_partida.value=game?.data_partida?String(game.data_partida).replace(' ','T').slice(0,16):'';
+  form.comprovacao_url.value=game?.comprovacao_url||'';
+  form.gols_mandante.value=game?.gols_mandante??botao.dataset.golsMandante;
+  form.gols_visitante.value=game?.gols_visitante??botao.dataset.golsVisitante;
+  form.status.value=game?.status||botao.dataset.status;
   updateLeagueWo(form);
   if(form.status.value==='wo')form.vencedor_wo_id.value=Number(botao.dataset.golsMandante)>Number(botao.dataset.golsVisitante)?botao.dataset.mandanteId:botao.dataset.visitanteId;
   if(form.status.value==='penalidade')form.penalizado_id.value=Number(botao.dataset.golsMandante)<Number(botao.dataset.golsVisitante)?botao.dataset.mandanteId:botao.dataset.visitanteId;
   let goals=[];try{const response=await fetch(`partida-dados.php?id=${encodeURIComponent(botao.dataset.id)}`,{cache:'no-store'});const data=await response.json();if(response.ok&&data.ok)goals=data.gols||[];}catch(error){}
   renderMatchGoalEditor(goals);
   const aviso=document.getElementById('partida-edicao');
-  aviso.querySelector('span').textContent=`Editando: ${botao.dataset.mandante} x ${botao.dataset.visitante}`;
+  aviso.querySelector('span').textContent=`Editando: ${game?.campeonato||''} · Rodada ${game?.rodada||botao.dataset.rodada} · ${game?.mandante||botao.dataset.mandante} x ${game?.visitante||botao.dataset.visitante}`;
   aviso.classList.remove('d-none');
   aviso.classList.add('d-flex');
+  if(Number(window.__pendingWoLeague)===Number(botao.dataset.id)){
+    window.__pendingWoLeague=0;
+    form.status.value='wo';
+    updateLeagueWo(form);
+    form.vencedor_wo_id.focus();
+  }
   form.scrollIntoView({behavior:'smooth'});
 }));
+
+document.addEventListener('click',async event=>{
+  const wo=event.target.closest('.wo-partida');
+  if(wo){const edit=document.querySelector(`.editar-partida[data-id="${CSS.escape(wo.dataset.id)}"]`);if(!edit)return;window.__pendingWoLeague=wo.dataset.id;edit.click();return;}
+  const summary=event.target.closest('.editar-sumula-partida');
+  if(!summary)return;
+  try{
+    const response=await fetch(`partida-dados.php?id=${encodeURIComponent(summary.dataset.id)}`,{cache:'no-store'}),data=await response.json();
+    if(!response.ok||!data.sumula)throw new Error('Súmula não encontrada.');
+    document.getElementById('dreamteam-summary-text').value=data.sumula.texto_original||'';
+    document.querySelector('[data-bs-target="#tab-sumula"]')?.click();
+    document.getElementById('dreamteam-summary-text').focus();
+  }catch(error){alert(error.message||'Não foi possível abrir a súmula.');}
+});
 
 // Preenche o formulário do mata-mata com o confronto escolhido na tabela.
 document.querySelectorAll('.editar-mata').forEach(botao => botao.addEventListener('click', async () => {

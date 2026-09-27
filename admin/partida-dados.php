@@ -12,7 +12,11 @@ try {
         "SELECT g.id,g.participante_id,g.jogador,g.minuto,g.tipo FROM gols_partida g JOIN partidas p ON p.id=g.partida_id WHERE g.partida_id=? AND p.ativo=1 ORDER BY g.id",
     );
     $stmt->execute([$id]);
-    json_response(["ok" => true, "gols" => $stmt->fetchAll()] + $match);
+    $summary = db()->prepare(
+        "SELECT id,texto_original FROM sumulas_dreamteam WHERE origem='pontos' AND partida_id=? LIMIT 1",
+    );
+    $summary->execute([$id]);
+    json_response(["ok" => true, "gols" => $stmt->fetchAll(), "sumula" => $summary->fetch() ?: null] + $match);
 } catch (Throwable $error) {
     json_response(
         [

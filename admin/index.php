@@ -1443,7 +1443,7 @@ try {
 }
 $games = $pdo
     ->query(
-        "SELECT p.id,p.rodada,p.mandante_id,p.visitante_id,m.time_nome mandante,v.time_nome visitante,p.gols_mandante,p.gols_visitante,p.status FROM partidas p JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id WHERE p.ativo=1 ORDER BY p.id DESC",
+        "SELECT p.id,p.campeonato_id,c.nome campeonato,p.rodada,p.data_partida,p.mandante_id,p.visitante_id,m.time_nome mandante,v.time_nome visitante,p.gols_mandante,p.gols_visitante,p.status,p.comprovacao_url,s.id sumula_id FROM partidas p JOIN campeonatos c ON c.id=p.campeonato_id JOIN participantes m ON m.id=p.mandante_id JOIN participantes v ON v.id=p.visitante_id LEFT JOIN sumulas_dreamteam s ON s.origem='pontos' AND s.partida_id=p.id WHERE p.ativo=1 ORDER BY p.id DESC",
     )
     ->fetchAll();
 // Busca os confrontos existentes para permitir editar os jogos sorteados.
@@ -1830,7 +1830,7 @@ function admin_nav_icon(string $name): string
     __DIR__ . "/../assets/js/sumula-importer.js",
 ) ?>"></script><script src="../assets/js/admin.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/admin.js",
-) ?>"></script><script>window.adminMataGames=<?= json_encode($mataGames, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script><script src="../assets/js/admin-lists.js?v=<?= filemtime(
+) ?>"></script><script>window.adminLeagueGames=<?= json_encode($games, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;window.adminMataGames=<?= json_encode($mataGames, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script><script src="../assets/js/admin-lists.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/admin-lists.js",
 ) ?>"></script><?php if (
     sync_user_allowed()
