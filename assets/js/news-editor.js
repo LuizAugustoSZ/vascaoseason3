@@ -128,7 +128,7 @@
     const response = await fetch(`index.php?tab=noticias&_refresh=${Date.now()}`, {cache: 'no-store', credentials: 'same-origin'}); const html = await response.text(); const fresh = new DOMParser().parseFromString(html, 'text/html').getElementById('tab-noticias');
     if (!response.ok || !fresh) throw new Error('A notícia foi salva, mas não foi possível atualizar a listagem.');
     fresh.classList.add('show', 'active'); document.getElementById('tab-noticias').replaceWith(fresh); history.replaceState(null, '', 'index.php?tab=noticias');
-    for (const file of ['news-editor.js', 'news-round-prompt.js']) { const script = document.createElement('script'); script.src = `../assets/js/${file}?v=${Date.now()}`; document.body.append(script); }
+    for (const file of ['news-editor.js', 'news-round-prompt.js', 'admin-sharing-schedule.js']) { const script = document.createElement('script'); script.src = `../assets/js/${file}?v=${Date.now()}`; document.body.append(script); }
     showToast(message, 'success');
   }
   function showToast(message, type) { if (window.siteToast) return window.siteToast(message, type); const toast = document.createElement('div'); toast.className = `alert alert-${type}`; toast.dataset.flashToast = ''; toast.textContent = message; document.body.append(toast); }

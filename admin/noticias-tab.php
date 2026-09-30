@@ -1,4 +1,13 @@
 <section id="tab-noticias" class="tab-pane fade">
+  <div id="discord-prompt-panel" class="panel mb-4 <?= empty($_SESSION['discord_noticia_id']) ? 'd-none' : '' ?>">
+    <h3>DIVULGAÇÃO NO DISCORD</h3>
+    <p class="text-secondary">Copie este prompt para gerar a divulgação no modelo do servidor, com o ID e link reais da notícia. Ao postar o link, o Discord pode buscar a capa automaticamente.</p>
+    <select id="discord-news-id" class="form-select mb-3"><option value="">Selecione uma notícia publicada</option><?php foreach ($newsAdmin as $discordNews): ?><option value="<?= (int)$discordNews['id'] ?>" <?= (int)($_SESSION['discord_noticia_id'] ?? 0) === (int)$discordNews['id'] ? 'selected' : '' ?>>#<?= (int)$discordNews['id'] ?> — <?= e($discordNews['titulo']) ?></option><?php endforeach; ?></select>
+    <textarea id="discord-prompt-output" class="form-control" rows="12" readonly aria-label="Prompt de divulgação no Discord"></textarea>
+    <button id="copy-discord-prompt" type="button" class="btn btn-outline-light mt-3">COPIAR PROMPT DO DISCORD</button>
+    <script id="discord-prompts-data" type="application/json"><?= json_encode(array_column(array_map(static fn(array $article): array => ['id'=>(int)$article['id'], 'prompt'=>news_discord_prompt($article)], $newsAdmin), 'prompt', 'id'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?></script>
+  </div>
+  <button id="show-discord-prompt" class="btn btn-outline-info mb-3" type="button">Gerar divulgação de notícia publicada para Discord</button>
   <div class="panel news-prompt-generator mb-4">
     <div class="panel-head">
       <div><small>ASSISTENTE DE NOTÍCIAS</small><h3>GERAR PROMPT DA COMPETIÇÃO</h3></div>
@@ -8,7 +17,7 @@
     <div class="row g-3 align-items-end">
       <div class="col-lg-7"><label class="form-label" for="round-prompt-championship">Campeonato</label><select id="round-prompt-championship" class="form-select">
         <option value="">Selecione</option>
-        <?php foreach ($championshipsAdmin as $championship): ?><option value="<?= (int) $championship['id'] ?>" <?= ($championship['status'] ?? '') === 'ativo' ? 'selected' : '' ?>><?= e($championship['nome']) ?></option><?php endforeach; ?>
+        <?php foreach ($championshipsAdmin as $championship): ?><option value="<?= (int) $championship['id'] ?>" <?= (int)$championship['id'] === (int)($championshipsAdmin[0]['id'] ?? 0) ? 'selected' : '' ?>><?= e($championship['nome']) ?></option><?php endforeach; ?>
       </select></div>
       <div class="col-lg-2"><label id="round-prompt-stage-label" class="form-label" for="round-prompt-round">Rodada</label><select id="round-prompt-round" class="form-select" disabled><option>Carregando...</option></select></div>
       <div class="col-lg-3"><button id="generate-round-prompt" type="button" class="btn btn-danger w-100" disabled>GERAR DADOS E PROMPT</button></div>

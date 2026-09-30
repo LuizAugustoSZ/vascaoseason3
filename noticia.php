@@ -3,6 +3,7 @@
 require __DIR__ . "/includes/bootstrap.php";
 require __DIR__ . "/includes/public-layout.php";
 $pdo = db();
+require_once __DIR__ . "/includes/news-sharing.php";
 $id = (int) ($_GET["id"] ?? 0);
 $stmt = $pdo->prepare("SELECT * FROM noticias WHERE id=? AND ativo=1");
 $stmt->execute([$id]);
@@ -18,6 +19,18 @@ if (!$article) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="canonical" href="<?= e(news_public_base_url() . '/noticia.php?id=' . $id) ?>">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Vascão dos Gigantes — Season 3">
+    <meta property="og:title" content="<?= e($article['titulo']) ?>">
+    <meta property="og:description" content="<?= e($article['resumo'] ?: $article['titulo']) ?>">
+    <meta property="og:url" content="<?= e(news_public_base_url() . '/noticia.php?id=' . $id) ?>">
+    <meta property="og:image" content="<?= e(news_public_base_url() . '/api/noticia-imagem.php?id=' . $id . '&v=' . strtotime($article['atualizado_em'] ?: $article['publicado_em'])) ?>">
+    <meta property="og:image:alt" content="<?= e($article['titulo']) ?>">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?= e($article['titulo']) ?>">
+    <meta name="twitter:description" content="<?= e($article['resumo'] ?: $article['titulo']) ?>">
+    <meta name="twitter:image" content="<?= e(news_public_base_url() . '/api/noticia-imagem.php?id=' . $id . '&v=' . strtotime($article['atualizado_em'] ?: $article['publicado_em'])) ?>">
     <meta name="description" content="<?= e(
                                             $article["resumo"] ?: $article["titulo"],
                                         ) ?>">

@@ -33,7 +33,7 @@ function knockout_prompt_response(PDO $pdo, int $championshipId, string $champio
 
     $isComplete = $phase === 'Campeonato completo';
     $phaseFilter = $isComplete ? '': ' AND j.fase=?';
-    $stmt = $pdo->prepare("SELECT j.fase,j.ordem,j.jogo,j.status,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,a.time_nome time_a,a.nome tecnico_a,b.time_nome time_b,b.nome tecnico_b,w.id vencedor_id,w.time_nome vencedor,s.estadio,s.clima,s.duracao,s.craque,s.craque_nota,s.dados_json,s.texto_original FROM jogos_mata_mata j JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id LEFT JOIN participantes w ON w.id=j.vencedor_id LEFT JOIN sumulas_dreamteam s ON s.origem='mata' AND s.jogo_mata_mata_id=j.id WHERE j.campeonato_id=?{$phaseFilter} AND j.ativo=1 ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id");
+    $stmt = $pdo->prepare("SELECT j.data_partida,j.fase,j.ordem,j.jogo,j.status,j.gols_a,j.gols_b,j.penaltis_a,j.penaltis_b,a.time_nome time_a,a.nome tecnico_a,b.time_nome time_b,b.nome tecnico_b,w.id vencedor_id,w.time_nome vencedor,s.estadio,s.clima,s.duracao,s.craque,s.craque_nota,s.dados_json,s.texto_original FROM jogos_mata_mata j JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id LEFT JOIN participantes w ON w.id=j.vencedor_id LEFT JOIN sumulas_dreamteam s ON s.origem='mata' AND s.jogo_mata_mata_id=j.id WHERE j.campeonato_id=?{$phaseFilter} AND j.ativo=1 ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id");
     $stmt->execute($isComplete ? [$championshipId]: [$championshipId,$phase]);
     $matches = $stmt->fetchAll();
     if (!$matches) throw new RuntimeException('Nenhuma partida cadastrada nesta fase.');
@@ -44,9 +44,11 @@ function knockout_prompt_response(PDO $pdo, int $championshipId, string $champio
         if ($match['status']==='finalizado') $finished++;
         if ($match['fase']==='Final' && $match['vencedor']) { $champion=(string)$match['vencedor']; $championId=(int)$match['vencedor_id']; }
         if ($match['gols_a']!==null && $match['gols_b']!==null) $totals['gols']+=(int)$match['gols_a']+(int)$match['gols_b'];
+
         if ($match['penaltis_a']!==null && $match['penaltis_b']!==null) { $totals['disputas_penaltis']++; $totals['penaltis_convertidos']+=(int)$match['penaltis_a']+(int)$match['penaltis_b']; }
         $score=$match['gols_a']===null || $match['gols_b']===null ? 'placar ainda não informado': (int)$match['gols_a'].' x '.(int)$match['gols_b'];
         $lines=[sprintf('%s, confronto %d, jogo %d: %s (técnico: %s) %s %s (técnico: %s). Status: %s',$match['fase'],(int)$match['ordem'],(int)$match['jogo'],$match['time_a'],$match['tecnico_a'],$score,$match['time_b'],$match['tecnico_b'],$match['status'])];
+        $lines[] = 'Data do jogo: ' . ($match['data_partida'] ? date('d/m/Y H:i', strtotime($match['data_partida'])) : 'não informada');
         if ($match['penaltis_a']!==null && $match['penaltis_b']!==null) $lines[]='Disputa de pênaltis: '.(int)$match['penaltis_a'].' x '.(int)$match['penaltis_b'];
         if ($match['vencedor']) $lines[]='Vencedor do confronto: '.$match['vencedor'];
         foreach (['estadio'=>'Estádio','clima'=>'Clima'] as $key=>$label) if ($match[$key]) $lines[]=$label.': '.$match[$key];

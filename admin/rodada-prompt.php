@@ -3,11 +3,19 @@
 declare(strict_types=1);
 require __DIR__ . '/../includes/bootstrap.php';
 require __DIR__ . '/mata-prompt.php';
+require_once __DIR__ . '/../includes/news-sharing.php';
 admin_required();
 
 header('Content-Type: application/json; charset=utf-8');
 function prompt_json(array $data, int $status = 200): never
 {
+    if (isset($data['prompt'])) {
+        $stmt = db()->prepare('SELECT data_inicio FROM campeonatos WHERE id=? AND ativo=1');
+        $stmt->execute([(int)($_GET['campeonato_id'] ?? 0)]);
+        $date = $stmt->fetchColumn();
+        $data['prompt'] .= "\n\nDATA DE INÍCIO DA COMPETIÇÃO: " . ($date ? date('d/m/Y', strtotime($date)) : 'não informada') . "\nInclua as datas oficiais dos jogos na matéria. Não invente horários nem use a data da súmula como data do jogo.";
+        $data['prompt'] .= news_discord_instructions('[LINK_REAL_DA_NOTÍCIA]') . "\nA notícia ainda não foi cadastrada; mantenha o marcador [LINK_REAL_DA_NOTÍCIA]. Após salvar, o painel gera o prompt do Discord com o ID e link reais; nunca estime o próximo ID.";
+    }
     http_response_code($status);
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
@@ -124,14 +132,14 @@ function upcoming_competition_prompt(PDO $pdo, int $championshipId, array $champ
         $typeLabel = 'pontos corridos';
         $drawLabel = 'RODADAS E CONFRONTOS SORTEADOS';
     } else {
-        $stmt = $pdo->prepare("SELECT j.fase,j.ordem,j.jogo,a.time_nome time_a,a.nome tecnico_a,b.time_nome time_b,b.nome tecnico_b,j.origem_a_fase,j.origem_a_ordem,j.origem_b_fase,j.origem_b_ordem FROM jogos_mata_mata j LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id WHERE j.campeonato_id=? AND j.ativo=1 ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id");
+        $stmt = $pdo->prepare("SELECT j.data_partida,j.fase,j.ordem,j.jogo,a.time_nome time_a,a.nome tecnico_a,b.time_nome time_b,b.nome tecnico_b,j.origem_a_fase,j.origem_a_ordem,j.origem_b_fase,j.origem_b_ordem FROM jogos_mata_mata j LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id WHERE j.campeonato_id=? AND j.ativo=1 ORDER BY FIELD(j.fase,'Preliminar','Oitavas','Quartas','Semifinal','Terceiro lugar','Final'),j.ordem,j.jogo,j.id");
         $stmt->execute([$championshipId]);
         foreach ($stmt->fetchAll() as $match) {
             if ($match['time_a']) $participants[$match['time_a']] = $match['tecnico_a'];
             if ($match['time_b']) $participants[$match['time_b']] = $match['tecnico_b'];
             $teamA = $match['time_a'] ?: 'vencedor de ' . ($match['origem_a_fase'] ?: 'fase anterior') . ' ' . (int)$match['origem_a_ordem'];
             $teamB = $match['time_b'] ?: 'vencedor de ' . ($match['origem_b_fase'] ?: 'fase anterior') . ' ' . (int)$match['origem_b_ordem'];
-            $matches[] = sprintf('%s, confronto %d, jogo %d: %s x %s', $match['fase'], (int)$match['ordem'], (int)$match['jogo'], $teamA, $teamB);
+            $matches[] = sprintf('%s, confronto %d, jogo %d: %s x %s', $match['fase'], (int)$match['ordem'], (int)$match['jogo'], $teamA, $teamB) . ' · Data: ' . ($match['data_partida'] ? date('d/m/Y H:i', strtotime($match['data_partida'])) : 'não informada');
         }
         $typeLabel = $type === 'supercopa' ? 'Supercopa' : 'mata-mata';
         $drawLabel = 'CHAVEAMENTO E CONFRONTOS SORTEADOS';
@@ -148,6 +156,7 @@ function upcoming_competition_prompt(PDO $pdo, int $championshipId, array $champ
 
 try {
     $pdo = db();
+    competition_schedule_ensure_schema($pdo);
     $campeonatoId = (int)($_GET['campeonato_id'] ?? 0);
     $rodada = (int)($_GET['rodada'] ?? 0);
     $fase = trim((string)($_GET['fase'] ?? ''));
