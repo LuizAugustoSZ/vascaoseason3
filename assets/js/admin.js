@@ -195,9 +195,10 @@ if(mataForm){
 }
 
 // Permite escolher a qual campeonato pertence um cadastro manual.
-fetch('campeonatos-dados.php').then(response=>response.json()).then(data=>{
+window.adminLoading.track(fetch('campeonatos-dados.php').then(response=>response.json()).then(data=>{
+  if(!data.ok)throw new Error('Não foi possível carregar os campeonatos.');
   [['form-partida',['pontos_corridos']],['form-mata',['mata_mata','supercopa']]].forEach(([id,types])=>{const form=document.getElementById(id);if(!form)return;const options=(data.campeonatos||[]).filter(item=>types.includes(item.tipo)).map(item=>`<option value="${item.id}">${item.nome}: ${Number(item.prioridade)===2?'Finalizado':Number(item.prioridade)===0?'Em andamento':'Vai iniciar'}</option>`).join('');form.insertAdjacentHTML('afterbegin',`<div class="mb-3"><label class="form-label">Campeonato</label><select class="form-select" name="campeonato_id" required><option value="">Selecione</option>${options}</select></div>`);});
-});
+})).catch(window.adminLoading.report);
 
 // Seleciona no formulário o time exibido na linha escolhida.
 function selecionarTime(select,nome){
@@ -532,9 +533,9 @@ function setupUniversalAdminLists(){
 document.querySelectorAll('.editar-campeonato').forEach(button=>button.addEventListener('click',()=>{
   const form=document.getElementById('competition-edit-form');if(!form)return;
   form.campeonato_id.value=button.dataset.id;form.data_inicio.value=button.dataset.date||'';form.nome.value=button.dataset.name;form.status.value=button.dataset.status;
-  form.querySelector('[data-preview="logo"]').src=`../api/competicao-imagem.php?campeonato_id=${button.dataset.id}&tipo=logo&v=${Date.now()}`;
-  form.querySelector('[data-preview="trofeu"]').src=`../api/competicao-imagem.php?campeonato_id=${button.dataset.id}&tipo=trofeu&v=${Date.now()}`;
-  form.logo.value='';form.trofeu.value='';form.logo_base64.value='';form.trofeu_base64.value='';
+  const logoPreview=form.querySelector('[data-preview="logo"]');if(logoPreview)logoPreview.src=`../api/competicao-imagem.php?campeonato_id=${button.dataset.id}&tipo=logo&v=${Date.now()}`;
+  const trophyPreview=form.querySelector('[data-preview="trofeu"]');if(trophyPreview)trophyPreview.src=`../api/competicao-imagem.php?campeonato_id=${button.dataset.id}&tipo=trofeu&v=${Date.now()}`;
+  for(const name of ['logo','trofeu','logo_base64','trofeu_base64'])if(form.elements[name])form.elements[name].value='';
 }));
 const editionEditForm=document.getElementById('competition-edit-form');
 if(editionEditForm){editionEditForm.querySelector('.row.g-3')?.remove();const note=editionEditForm.querySelector('.modal-body>small');if(note)note.outerHTML='<div class="alert alert-info small mb-0">Logo e taça são controladas em <strong>Campeonatos padrões</strong> e atualizam todas as edições juntas.</div>';}
@@ -542,8 +543,8 @@ if(editionEditForm){editionEditForm.querySelector('.row.g-3')?.remove();const no
 // Centraliza os modelos: uma única logo/taça alimenta edições, títulos, perfis e vitrine.
 const championshipTab=document.getElementById('tab-campeonatos');
 if(championshipTab){
-  fetch('identidades-dados.php',{credentials:'same-origin'}).then(response=>response.json()).then(data=>{
-    if(!data.ok)return;
+  window.adminLoading.track(fetch('identidades-dados.php',{credentials:'same-origin'}).then(response=>response.json()).then(data=>{
+    if(!data.ok)throw new Error('Não foi possível carregar os modelos de competição.');
     document.getElementById('identity-edit-modal')?.remove();
     const csrf=document.querySelector('#competition-edit-form input[name="csrf"]')?.value||'',esc=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const shell=document.createElement('section');shell.className='panel mb-4 competition-models-panel';
@@ -551,10 +552,10 @@ if(championshipTab){
     championshipTab.prepend(shell);
     document.body.insertAdjacentHTML('beforeend',`<div class="modal fade" id="identity-edit-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="identity-edit-form" method="post" enctype="multipart/form-data"><div class="modal-header"><div><small class="eyebrow">Fonte única</small><h2 class="modal-title">EDITAR CAMPEONATO PADRÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="${csrf}"><input type="hidden" name="action" value="editar_identidade_competicao"><input type="hidden" name="identidade_id"><label class="form-label">Nome do padrão</label><input class="form-control mb-3" name="nome" maxlength="150" required><div class="row g-3"><div class="col-6"><label class="form-label">Logo única</label><div class="competition-image-preview"><img data-preview="logo" alt=""></div><input type="hidden" name="logo_base64"><input class="form-control form-control-sm competition-art-file" type="file" name="logo" data-art-type="logo" accept="image/png,image/webp,image/jpeg"></div><div class="col-6"><label class="form-label">Taça única</label><div class="competition-image-preview"><img data-preview="trofeu" alt=""></div><input type="hidden" name="trofeu_base64"><input class="form-control form-control-sm competition-art-file" type="file" name="trofeu" data-art-type="trofeu" accept="image/png,image/webp,image/jpeg"></div></div><div class="alert alert-info small mt-3 mb-0">Esta alteração será usada por todas as edições e títulos ligados a este padrão.</div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Atualizar em todo o site</button></div></form></div></div></div>`);
     const modalElement=document.getElementById('identity-edit-modal'),modal=bootstrap.Modal.getOrCreateInstance(modalElement),form=document.getElementById('identity-edit-form');
-    shell.querySelectorAll('.editar-identidade').forEach(button=>button.addEventListener('click',()=>{form.identidade_id.value=button.dataset.id;form.nome.value=button.dataset.name;form.logo_base64.value='';form.trofeu_base64.value='';form.logo.value='';form.trofeu.value='';form.querySelector('[data-preview="logo"]').src=`${button.dataset.logo}&v=${Date.now()}`;form.querySelector('[data-preview="trofeu"]').src=`${button.dataset.trophy}&v=${Date.now()}`;modal.show()}));
+    shell.querySelectorAll('.editar-identidade').forEach(button=>button.addEventListener('click',()=>{form.identidade_id.value=button.dataset.id;form.nome.value=button.dataset.name;form.logo_base64.value='';form.trofeu_base64.value='';form.logo.value='';form.trofeu.value='';const logoPreview=form.querySelector('[data-preview="logo"]');if(logoPreview)logoPreview.src=`${button.dataset.logo}&v=${Date.now()}`;const trophyPreview=form.querySelector('[data-preview="trofeu"]');if(trophyPreview)trophyPreview.src=`${button.dataset.trophy}&v=${Date.now()}`;modal.show()}));
     const supercupForm=document.querySelector('#tab-supercopa form input[name="action"][value="criar_supercopa"]')?.closest('form');
     if(supercupForm){const nameInput=supercupForm.querySelector('input[name="nome"]'),nameLabel=nameInput?.previousElementSibling;nameLabel?.insertAdjacentHTML('beforebegin',`<label class="form-label">Campeonato padrão</label><select class="form-select mb-3" name="identidade_id" required><option value="nova">+ Criar uma nova competição</option>${data.identidades.map(item=>`<option value="${item.id}" data-name="${esc(item.nome)}" data-next="${Math.max(item.edicoes,item.titulos)+1}" ${item.chave==='supercopa r'?'selected':''}>${esc(item.nome)}: criar próxima edição</option>`).join('')}</select>`);const model=supercupForm.identidade_id,romanEdition=n=>{const values=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let value='';for(const [amount,symbol] of values)while(n>=amount){value+=symbol;n-=amount}return value},updateName=()=>{const option=model.selectedOptions[0],isNew=option.value==='nova';nameInput.readOnly=!isNew;nameInput.placeholder=isNew?'Ex.: Recopa dos Gigantes':'';if(isNew){nameInput.value='';nameInput.focus();return}const next=Number(option.dataset.next||1);nameInput.value=option.dataset.name+(next>1?' '+romanEdition(next):'')};model.addEventListener('change',updateName);updateName();}
-  }).catch(()=>{});
+  })).catch(window.adminLoading.report);
   const style=document.createElement('style');style.textContent='.competition-model-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;padding:16px}.competition-model-card{overflow:hidden;border:1px solid #343941;border-radius:12px;background:#0c0e11}.competition-model-card>div:last-child{padding:14px}.competition-model-card h4{margin:0;font:800 1.25rem "Barlow Condensed",sans-serif}.competition-model-card small{color:#8f97a4}.competition-model-visual{display:grid;grid-template-columns:1fr 1fr;align-items:center;height:145px;padding:10px;background:radial-gradient(circle,rgba(237,27,47,.12),transparent 65%)}.competition-model-visual img{width:100%;height:125px;object-fit:contain}';document.head.append(style);
 }
 
@@ -585,20 +586,24 @@ if(titleForm){
   document.querySelectorAll('.editar-titulo').forEach(button=>button.addEventListener('click',()=>{const historical=Number(button.dataset.participant)===0;titleForm.titulo_id.value=button.dataset.id;titleForm.origem_titulo.value=historical?'historico':'atual';titleForm.participante_id.value=historical?'':button.dataset.participant;titleForm.tecnico_historico.value=button.dataset.coach;titleForm.time_historico.value=button.dataset.team;titleForm.titulo.value=button.dataset.title;titleForm.temporada.value=button.dataset.season;titleForm.conquistado_em.value=(button.dataset.date||'').slice(0,10);titleForm.descricao.value=button.dataset.description;titleForm.titulo_imagem_base64.value='';const preview=titleForm.querySelector('[data-title-preview]');if(button.dataset.hasImage==='1'){preview.src=`../api/titulo-imagem.php?titulo_id=${button.dataset.id}&v=${Date.now()}`;preview.classList.remove('d-none')}else{preview.removeAttribute('src');preview.classList.add('d-none')}toggleTitleOrigin();titleForm.scrollIntoView({behavior:'smooth',block:'start'})}));
 }
 
-// Salva qualquer ação administrativa sem recarregar a página inteira. A delegação
-// mantém um único listener mesmo quando o conteúdo das abas é substituído.
+// Salva uma única vez e abre o painel atualizado com todos os componentes.
 if(!window.__adminAjaxSubmitBound){
 window.__adminAjaxSubmitBound=true;
 document.addEventListener('submit',async event=>{
-  const form=event.target.closest('main form[method="post"]');if(!form||event.defaultPrevented)return;event.preventDefault();if(form.dataset.ajaxBusy==='1')return;form.dataset.ajaxBusy='1';
-  const currentPane=form.closest('.tab-pane')||document.querySelector('.tab-content>.tab-pane.active');captureAdminListState(currentPane);showAdminListLoading(currentPane);
-  const button=event.submitter||form.querySelector('button[type="submit"],button:not([type])');const oldText=button?.textContent;if(button){button.disabled=true;button.textContent='Salvando...';}
+  const form=event.target.closest('form[method="post"]');if(!form||(!form.closest('main')&&!form.closest('.modal'))||event.defaultPrevented)return;
+  event.preventDefault();if(form.dataset.ajaxBusy==='1')return;form.dataset.ajaxBusy='1';
+  const pane=form.closest('.tab-pane')||document.querySelector('.tab-content>.tab-pane.active');captureAdminListState(pane);
+  const finish=window.adminLoading.begin('SALVANDO ALTERAÇÕES');
+  const button=event.submitter||form.querySelector('button[type="submit"],button:not([type])');const old=button?.textContent;
+  if(button){button.disabled=true;button.textContent='Salvando...';}
   try{
-    const payload=new FormData(form);payload.set('_ajax','1');const response=await fetch('index.php',{method:'POST',body:payload,headers:{'Accept':'application/json'},credentials:'same-origin'});const data=await response.json().catch(()=>({ok:false,message:'Resposta inválida do servidor.'}));if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível salvar.');
-    const active=data.tab||document.querySelector('.admin-side-nav .nav-link.active')?.dataset.bsTarget?.replace('#tab-','')||'';const top=window.scrollY;const url=new URL(location.href);if(active)url.searchParams.set('tab',active);
-    try{url.searchParams.set('_refresh',Date.now());const html=await fetch(url,{cache:'no-store',credentials:'same-origin'}).then(result=>{if(!result.ok)throw new Error('Não foi possível atualizar a lista.');return result.text()});url.searchParams.delete('_refresh');const parsed=new DOMParser().parseFromString(html,'text/html');const fresh=parsed.querySelector('.tab-content');if(!fresh)throw new Error('A lista atualizada não foi encontrada.');document.querySelector('.tab-content').replaceWith(fresh);const activePane=document.getElementById(`tab-${active}`);if(activePane){document.querySelectorAll('.tab-content>.tab-pane').forEach(pane=>pane.classList.remove('show','active'));activePane.classList.add('show','active');document.querySelectorAll('.admin-side-nav [data-bs-target]').forEach(item=>{const selected=item.dataset.bsTarget===`#tab-${active}`;item.classList.toggle('active',selected);item.setAttribute('aria-selected',String(selected))})}history.replaceState(null,'',url);for(const file of ['news-editor.js','news-round-prompt.js','sumula-importer.js','admin.js','admin-lists.js','admin-sharing-schedule.js']){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=`../assets/js/${file}?v=${Date.now()}`;script.onload=resolve;script.onerror=reject;document.body.append(script)})}window.scrollTo({top,behavior:'instant'});}catch(refreshError){hideAdminListLoading(currentPane);form.dataset.ajaxBusy='0';if(button){button.disabled=false;button.textContent=oldText;}showAdminToast(`${data.message} Porém, ${refreshError.message.toLocaleLowerCase('pt-BR')}`,'warning');return;}
-    showAdminToast(data.message,'success');
-  }catch(error){hideAdminListLoading(currentPane);form.dataset.ajaxBusy='0';if(button){button.disabled=false;button.textContent=oldText;}showAdminToast(error.message,'danger');}
+    const payload=new FormData(form);payload.set('_ajax','1');
+    const response=await fetch('index.php',{method:'POST',body:payload,headers:{Accept:'application/json'},credentials:'same-origin'});
+    const data=await response.json().catch(()=>({ok:false,message:'Resposta inválida do servidor. Nenhuma ação será reenviada automaticamente.'}));
+    if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível salvar.');
+    window.adminLoading.navigate(data.tab||pane?.id.replace(/^tab-/,'')||'');
+  }catch(error){form.dataset.ajaxBusy='0';if(button){button.disabled=false;button.textContent=old;}showAdminToast(error.message,'danger');}
+  finally{finish();}
 });
 }
 function showAdminToast(message,type){if(window.siteToast)return window.siteToast(message,type);const toast=document.createElement('div');toast.className=`alert alert-${type}`;toast.dataset.flashToast='';toast.textContent=message;document.body.append(toast);}

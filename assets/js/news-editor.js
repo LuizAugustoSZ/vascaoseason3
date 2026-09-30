@@ -94,23 +94,28 @@
     if (!coverData.value) return showToast('Selecione uma imagem de capa.', 'danger');
     if (!editor.textContent.trim() && !editor.querySelector('img')) { editor.focus(); return showToast('Escreva o conteúdo da matéria.', 'danger'); }
     document.getElementById('news-content').value = editor.innerHTML;
+    if(form.dataset.ajaxBusy==='1')return;form.dataset.ajaxBusy='1';
+    const finish=window.adminLoading.begin('SALVANDO NOTÍCIA');
     const button = event.submitter || document.getElementById('news-submit'); const old = button.textContent; button.disabled = true; button.textContent = 'Salvando...';
     try {
       const payload = new FormData(form); payload.set('_ajax', '1');
       const response = await fetch('index.php', {method: 'POST', body: payload, headers: {Accept: 'application/json'}, credentials: 'same-origin'}); const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível salvar.');
       await refreshTab(data.message);
-    } catch (error) { button.disabled = false; button.textContent = old; showToast(error.message, 'danger'); }
+    } catch (error) { form.dataset.ajaxBusy='0';button.disabled = false; button.textContent = old; showToast(error.message, 'danger'); }
+    finally { finish(); }
   });
   document.querySelectorAll('.admin-news-list form[method="post"]').forEach(deleteForm => deleteForm.addEventListener('submit', async event => {
     event.preventDefault(); event.stopImmediatePropagation();
     const title = deleteForm.closest('article')?.querySelector('h3')?.textContent?.trim() || 'Esta notícia';
     if (!await confirmNewsRemoval(title)) return;
+    const finish=window.adminLoading.begin('REMOVENDO NOTÍCIA');
     try {
       const payload = new FormData(deleteForm); payload.set('_ajax', '1');
       const response = await fetch('index.php', {method: 'POST', body: payload, headers: {Accept: 'application/json'}, credentials: 'same-origin'}); const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível apagar.'); await refreshTab(data.message);
     } catch (error) { showToast(error.message, 'danger'); }
+    finally { finish(); }
   }));
 
   const list = document.querySelector('.admin-news-list');
@@ -118,18 +123,12 @@
     const items = [...list.querySelectorAll(':scope > article')];
     if (items.length) {
       const controls = document.createElement('div'); controls.className = 'p-3 border-bottom'; controls.innerHTML = '<input class="form-control form-control-sm" type="search" placeholder="Pesquisar notícia ou autor...">'; list.before(controls);
-      const pager = document.createElement('div'); pager.className = 'd-flex justify-content-between align-items-center p-3 border-top'; list.after(pager); let page = 1;
-      const render = () => { const q = controls.querySelector('input').value.toLocaleLowerCase('pt-BR').trim(); const filtered = items.filter(item => !q || item.textContent.toLocaleLowerCase('pt-BR').includes(q)); const pages = Math.max(1, Math.ceil(filtered.length / 5)); page = Math.min(page, pages); const visible = new Set(filtered.slice((page - 1) * 5, page * 5)); items.forEach(item => item.classList.toggle('d-none', !visible.has(item))); pager.innerHTML = `<span class="text-secondary small">${filtered.length} postagem${filtered.length === 1 ? '' : 's'}</span>${filtered.length > 5 ? `<div class="d-flex gap-2 align-items-center"><button class="btn btn-sm btn-outline-light prev" ${page === 1 ? 'disabled' : ''}>Anterior</button><span class="small text-secondary">Página ${page} de ${pages}</span><button class="btn btn-sm btn-outline-light next" ${page === pages ? 'disabled' : ''}>Próxima</button></div>` : ''}`; };
+      const pager = document.createElement('div'); pager.className = 'd-flex justify-content-between align-items-center p-3 border-top'; list.after(pager); const saved=(window.__adminListState||{}).news||{}; controls.querySelector('input').value=saved.search||''; let page = saved.page||1;
+      const render = () => { const q = controls.querySelector('input').value.toLocaleLowerCase('pt-BR').trim(); const filtered = items.filter(item => !q || item.textContent.toLocaleLowerCase('pt-BR').includes(q)); const pages = Math.max(1, Math.ceil(filtered.length / 5)); page = Math.min(page, pages); (window.__adminListState||(window.__adminListState={})).news={page,search:controls.querySelector('input').value}; const visible = new Set(filtered.slice((page - 1) * 5, page * 5)); items.forEach(item => item.classList.toggle('d-none', !visible.has(item))); pager.innerHTML = `<span class="text-secondary small">${filtered.length} postagem${filtered.length === 1 ? '' : 's'}</span>${filtered.length > 5 ? `<div class="d-flex gap-2 align-items-center"><button class="btn btn-sm btn-outline-light prev" ${page === 1 ? 'disabled' : ''}>Anterior</button><span class="small text-secondary">Página ${page} de ${pages}</span><button class="btn btn-sm btn-outline-light next" ${page === pages ? 'disabled' : ''}>Próxima</button></div>` : ''}`; };
       controls.addEventListener('input', () => { page = 1; render(); }); pager.addEventListener('click', event => { if (event.target.closest('.prev')) page--; else if (event.target.closest('.next')) page++; else return; render(); }); render();
     }
   }
 
-  async function refreshTab(message) {
-    const response = await fetch(`index.php?tab=noticias&_refresh=${Date.now()}`, {cache: 'no-store', credentials: 'same-origin'}); const html = await response.text(); const fresh = new DOMParser().parseFromString(html, 'text/html').getElementById('tab-noticias');
-    if (!response.ok || !fresh) throw new Error('A notícia foi salva, mas não foi possível atualizar a listagem.');
-    fresh.classList.add('show', 'active'); document.getElementById('tab-noticias').replaceWith(fresh); history.replaceState(null, '', 'index.php?tab=noticias');
-    for (const file of ['news-editor.js', 'news-round-prompt.js', 'admin-sharing-schedule.js']) { const script = document.createElement('script'); script.src = `../assets/js/${file}?v=${Date.now()}`; document.body.append(script); }
-    showToast(message, 'success');
-  }
+  async function refreshTab(message) { window.adminLoading.navigate('noticias'); }
   function showToast(message, type) { if (window.siteToast) return window.siteToast(message, type); const toast = document.createElement('div'); toast.className = `alert alert-${type}`; toast.dataset.flashToast = ''; toast.textContent = message; document.body.append(toast); }
 })();

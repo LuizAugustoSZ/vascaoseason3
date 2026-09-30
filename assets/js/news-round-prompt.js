@@ -60,5 +60,5 @@
     catch (_) { output.select(); document.execCommand('copy'); }
     status.textContent = 'Prompt copiado! Agora é só colar no ChatGPT.';
   });
-  if (championship.value) loadRounds();
+  if (championship.value) window.adminLoading.track(loadRounds());
 })();
