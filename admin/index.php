@@ -662,11 +662,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if (!in_array($status, ["ativo", "finalizado"], true)) {
                 throw new RuntimeException("Status de campeonato inválido.");
             }
+            competition_identities_ensure_schema($pdo);
+            $pdo->beginTransaction();
+            $pdo->prepare('SELECT id FROM campeonatos WHERE id=? AND ativo=1 FOR UPDATE')->execute([$campeonatoId]);
             $stmt = $pdo->prepare(
                 "UPDATE campeonatos SET status=? WHERE id=? AND ativo=1",
             );
             $stmt->execute([$status, $campeonatoId]);
-            if ($status === 'finalizado') competition_sync_champion_title($pdo, $campeonatoId);
+            $champion = competition_sync_champion_title($pdo, $campeonatoId);
+            if ($status === 'finalizado' && !$champion) throw new RuntimeException('Não é possível finalizar: a decisão ainda não tem um campeão confirmado. Confira jogos pendentes, agregado e pênaltis.');
+            $pdo->commit();
             redirect_notice(
                 $status === "finalizado"
                     ? "Campeonato finalizado."
@@ -702,6 +707,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $identityId = (int)($stmt->fetchColumn() ?: 0);
             $logo = competition_posted_data_url('logo_base64') ?? competition_uploaded_data_url('logo');
             $trophy = competition_posted_data_url('trofeu_base64') ?? competition_uploaded_data_url('trofeu');
+            competition_identities_ensure_schema($pdo);
             $pdo->beginTransaction();
             $newDate = trim((string)($_POST["data_inicio"] ?? ""));
             if ($newDate !== "") competition_schedule_reschedule($pdo, $campeonatoId, $newDate);
@@ -718,8 +724,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $pdo->prepare('UPDATE campeonatos SET nome=?,status=?,identidade_id=? WHERE id=? AND ativo=1')->execute([$nome, $status, $identityId, $campeonatoId]);
             if ($logo !== null) $pdo->prepare('UPDATE competicao_identidades SET logo_base64=? WHERE id=?')->execute([$logo, $identityId]);
             if ($trophy !== null) $pdo->prepare('UPDATE competicao_identidades SET trofeu_base64=? WHERE id=?')->execute([$trophy, $identityId]);
+            $champion = competition_sync_champion_title($pdo, $campeonatoId);
+            if ($status === 'finalizado' && !$champion) throw new RuntimeException('Não é possível finalizar: a decisão ainda não tem um campeão confirmado. Confira jogos pendentes, agregado e pênaltis.');
             $pdo->commit();
-            if ($status === 'finalizado') competition_sync_champion_title($pdo, $campeonatoId);
             redirect_notice('Competição e identidade visual atualizadas.', 'campeonatos');
         }
         // Cria uma decisão entre os campeões confirmados de duas competições.

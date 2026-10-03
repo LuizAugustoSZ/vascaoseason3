@@ -572,7 +572,7 @@ function league_title_status(PDO $pdo, int $championshipId, ?array $ranking = nu
 // Retorna o campeão confirmado de qualquer competição que possa alimentar uma Supercopa.
 function competition_champion_id(PDO $pdo, int $championshipId): ?int
 {
-    $stmt = $pdo->prepare("SELECT tipo,status FROM campeonatos WHERE id=? AND ativo=1");
+    $stmt = $pdo->prepare("SELECT tipo,status,formato FROM campeonatos WHERE id=? AND ativo=1");
     $stmt->execute([$championshipId]);
     $competition = $stmt->fetch();
     if (!$competition) return null;
@@ -583,10 +583,32 @@ function competition_champion_id(PDO $pdo, int $championshipId): ?int
         return $title ? (int)$title['campeao_id'] : null;
     }
     if ($competition["status"] !== "finalizado") return null;
-    $winner = $pdo->prepare("SELECT vencedor_id FROM jogos_mata_mata WHERE campeonato_id=? AND fase='Final' AND ativo=1 AND status='finalizado' AND vencedor_id IS NOT NULL ORDER BY jogo DESC,id DESC LIMIT 1");
+    $winner = $pdo->prepare("SELECT time_a_id,time_b_id,gols_a,gols_b,penaltis_a,penaltis_b,status FROM jogos_mata_mata WHERE campeonato_id=? AND fase='Final' AND ativo=1 ORDER BY jogo,id");
     $winner->execute([$championshipId]);
-    $id = $winner->fetchColumn();
-    return $id === false ? null : (int)$id;
+    return competition_final_winner($winner->fetchAll(), $competition['formato'] === 'ida_volta' ? 2 : 1);
+}
+
+// Resolve a decisão pelo agregado, sem confiar no vencedor de uma partida isolada.
+function competition_final_winner(array $games, int $expectedLegs): ?int
+{
+    if (count($games) !== $expectedLegs) return null;
+    $scores = [];
+    $teams = null;
+    foreach ($games as $game) {
+        $a = (int)$game['time_a_id']; $b = (int)$game['time_b_id'];
+        if (!$a || !$b || $a === $b || !in_array($game['status'], ['finalizado', 'wo'], true)
+            || $game['gols_a'] === null || $game['gols_b'] === null) return null;
+        $pair = [$a, $b]; sort($pair);
+        if ($teams !== null && $teams !== $pair) return null;
+        $teams = $pair;
+        $scores[$a] = ($scores[$a] ?? 0) + (int)$game['gols_a'];
+        $scores[$b] = ($scores[$b] ?? 0) + (int)$game['gols_b'];
+    }
+    [$a, $b] = $teams;
+    if ($scores[$a] !== $scores[$b]) return $scores[$a] > $scores[$b] ? $a : $b;
+    $last = $games[array_key_last($games)];
+    if ($last['penaltis_a'] === null || $last['penaltis_b'] === null || $last['penaltis_a'] === $last['penaltis_b']) return null;
+    return (int)($last['penaltis_a'] > $last['penaltis_b'] ? $last['time_a_id'] : $last['time_b_id']);
 }
 
 // Completa de forma idempotente a migration da Supercopa em ambientes onde ela

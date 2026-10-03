@@ -86,7 +86,7 @@ function competition_roman(int $number): string
 
 function competition_sync_champion_title(PDO $pdo, int $championshipId): ?int
 {
-    competition_identities_ensure_schema($pdo);
+    if (!$pdo->inTransaction()) competition_identities_ensure_schema($pdo);
     $stmt = $pdo->prepare('SELECT id,nome,status,tipo FROM campeonatos WHERE id=? AND ativo=1 LIMIT 1');
     $stmt->execute([$championshipId]); $competition = $stmt->fetch();
     if (!$competition) return null;
@@ -100,7 +100,10 @@ function competition_sync_champion_title(PDO $pdo, int $championshipId): ?int
         }
     }
     $winnerId = competition_champion_id($pdo, $championshipId);
-    if (!$winnerId) return null;
+    if (!$winnerId) {
+        $pdo->prepare('DELETE FROM titulos WHERE campeonato_id=?')->execute([$championshipId]);
+        return null;
+    }
     $description = $competition['status'] === 'finalizado'
         ? 'Título entregue automaticamente ao encerrar a competição'
         : 'Título entregue automaticamente após confirmação matemática antecipada';

@@ -19,14 +19,14 @@ $placements=statistics_competition_placements($pdo,$championshipId,$clubId);
 $titleWhere=[];$titleParams=[];
 if($championshipId){$titleWhere[]='t.campeonato_id=?';$titleParams[]=$championshipId;}
 if($clubId){$titleWhere[]='t.participante_id=?';$titleParams[]=$clubId;}
-$titleRecordsStmt=$pdo->prepare("SELECT t.id,t.campeonato_id,t.titulo,t.temporada,t.conquistado_em,COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,t.participante_id,p.escudo_url FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):'')." ORDER BY CASE t.temporada WHEN 'Season 1' THEN 1 WHEN 'Season 2' THEN 2 WHEN 'Season 3' THEN 3 ELSE 99 END,COALESCE(t.conquistado_em,'9999-12-31'),t.id");
+$titleRecordsStmt=$pdo->prepare("SELECT t.id,t.campeonato_id,t.titulo,t.temporada,t.conquistado_em,i.chave identidade_chave,COALESCE(p.time_nome,t.time_nome,t.tecnico_nome,'Registro histórico') name,t.participante_id,p.escudo_url FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id LEFT JOIN campeonatos c ON c.id=t.campeonato_id LEFT JOIN competicao_identidades i ON i.id=c.identidade_id".($titleWhere?' WHERE '.implode(' AND ',$titleWhere):'')." ORDER BY CASE t.temporada WHEN 'Season 1' THEN 1 WHEN 'Season 2' THEN 2 WHEN 'Season 3' THEN 3 ELSE 99 END,COALESCE(t.conquistado_em,'9999-12-31'),t.id");
 $titleRecordsStmt->execute($titleParams);
 $competitionTitles=[];
 foreach($pdo->query('SELECT chave,nome FROM competicao_identidades ORDER BY ordem_exibicao IS NULL,ordem_exibicao,nome')->fetchAll() as $identity){$competitionTitles[$identity['chave']]=['name'=>$identity['nome'],'clubs'=>[]];}
 $titleRecords=$titleRecordsStmt->fetchAll();$officialTitleKeys=[];$seenManualTitles=[];$titleClubs=[];
 foreach($titleRecords as $record)if(!empty($record['campeonato_id'])){$owner=$record['participante_id']?'club-'.$record['participante_id']:'name-'.$record['name'];$officialTitleKeys[$owner.'|'.competition_identity_key((string)$record['titulo']).'|'.$record['temporada']]=true;}
 foreach($titleRecords as $record){
-    $key=competition_identity_match((string)$record['titulo'])?:'other-'.md5((string)$record['titulo']);
+    $key=$record['identidade_chave']?:competition_identity_match((string)$record['titulo'])?:'other-'.md5((string)$record['titulo']);
     if(!isset($competitionTitles[$key]))$competitionTitles[$key]=['name'=>$record['titulo'],'clubs'=>[]];
     $owner=$record['participante_id']?'club-'.$record['participante_id']:'name-'.$record['name'];
     $recordKey=$owner.'|'.competition_identity_key((string)$record['titulo']).'|'.$record['temporada'];

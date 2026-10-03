@@ -295,6 +295,9 @@ function mercado_garantir_estrutura(PDO $pdo): void
     if (!in_array('jogador_favorito_id', $columns, true)) {
         $pdo->exec("ALTER TABLE clubes_campeonato ADD jogador_favorito_id INT UNSIGNED NULL AFTER mural");
     }
+    if (!in_array('jogador_favorito_origem', $columns, true)) {
+        $pdo->exec("ALTER TABLE clubes_campeonato ADD jogador_favorito_origem VARCHAR(20) NOT NULL DEFAULT 'campeonato' AFTER jogador_favorito_id");
+    }
     $movementColumns = $pdo->query("SHOW COLUMNS FROM movimentacoes_elenco")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('origem', $movementColumns, true)) {
         $pdo->exec("ALTER TABLE movimentacoes_elenco ADD origem VARCHAR(30) NOT NULL DEFAULT 'compra_direta' AFTER tipo");
