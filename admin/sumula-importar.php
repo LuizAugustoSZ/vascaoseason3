@@ -210,6 +210,7 @@ function summary_roster_issues(PDO $pdo, array $parsed, array $context, int $cha
         $addPlayer($mentioned, $code, $event['player_in'] ?? null);
         $addPlayer($mentioned, $code, $event['assist'] ?? null);
     }
+    foreach ($parsed['goals'] as $goal) $addPlayer($mentioned, $goal['team_code'] ?? null, $goal['player'] ?? null);
     $addPlayer($mentioned, $parsed['man_of_match_team_code'] ?? null, $parsed['man_of_match'] ?? null);
 
     $exactRoster = $pdo->prepare("SELECT id,jogador_geral_id,nome,overall,posicao FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 AND grupo IN ('titular','banco') ORDER BY nome");
@@ -369,6 +370,7 @@ try {
         audit_post_success('sumulas', 'Nome de jogador corrigido pela súmula: ' . $playerRow['nome'] . ' → ' . $newName . '.');
         summary_json_response(['ok'=>true,'message'=>'Jogador corrigido para ' . $newName . '. Analise a súmula novamente.']);
     }
+    if (!empty($parsed['score_only']) && ($_POST['confirm_score_only'] ?? '') !== '1') throw new RuntimeException('Confirme que deseja lançar esta partida sem súmula de lances.');
     if ($parsed['warnings']) throw new RuntimeException('A súmula possui alertas que precisam ser corrigidos antes da importação: ' . implode(' ', $parsed['warnings']));
     [$type,$idText] = array_pad(explode(':', (string) ($_POST['match_key'] ?? ''), 2), 2, '');
     $matchId = (int) $idText;
@@ -416,7 +418,7 @@ try {
     $actionLabel = $summaryToRewrite ? 'reescrita' : 'importada';
     $ignoredLabel = $ignoredRosterIssues ? ' ' . count(array_intersect($rosterIssueMessages, $ignoredRosterIssues)) . ' aviso(s) de escalação ignorado(s) após revisão.' : '';
     audit_post_success('sumulas', 'Súmula ' . $actionLabel . ' e partida atualizada.' . $ignoredLabel);
-    summary_json_response(['ok'=>true,'message'=>'Súmula ' . $actionLabel . ', resultado atualizado e eventos armazenados com sucesso.']);
+    summary_json_response(['ok'=>true,'message'=>!empty($parsed['score_only']) ? 'Partida sem súmula registrada: resultado, gols e estatísticas dos times importados.' : 'Súmula ' . $actionLabel . ', resultado atualizado e eventos armazenados com sucesso.']);
 } catch (Throwable $error) {
     if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     summary_json_response(['ok'=>false,'message'=>$error->getMessage()],422);
