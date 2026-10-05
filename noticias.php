@@ -27,9 +27,9 @@ $news = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="description" content="Notícias e novidades da Season 3 do Vascão dos Gigantes.">
     <title>Notícias | Vascão Season 3</title>
-    <link rel="icon" href="favicon.ico?v=5" sizes="any">
-    <link rel="icon" type="image/png" href="assets/img/favicon-season3.png?v=5">
-    <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=5">
+
+
+
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
@@ -38,7 +38,7 @@ $news = $stmt->fetchAll();
                                                             __DIR__ . "/assets/css/news.css",
                                                         ) ?>">
     <link rel="stylesheet" href="assets/css/socials.css?v=<?= filemtime(__DIR__ . "/assets/css/socials.css") ?>">
-</head>
+<?php site_favicon(); ?></head>
 
 <body>
     <?php public_navbar('noticias'); ?>

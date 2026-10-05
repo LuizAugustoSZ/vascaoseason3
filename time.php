@@ -541,7 +541,7 @@ function render_recent_matches(array $games, string $nextKey = ''): void
     <title><?= e(
                 $time ? $time["time_nome"] . " | Vascão S3" : "Time não encontrado",
             ) ?></title>
-    <link rel="icon" href="favicon.ico">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -552,7 +552,7 @@ function render_recent_matches(array $games, string $nextKey = ''): void
                                                                     __DIR__ . "/assets/css/team-profile.css",
                                                                 ) ?>">
     <link rel="stylesheet" href="assets/css/socials.css?v=<?= filemtime(__DIR__ . "/assets/css/socials.css") ?>">
-</head>
+<?php site_favicon($time['escudo_url'] ?? null); ?></head>
 
 <body>
     <?php public_navbar('time'); ?>

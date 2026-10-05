@@ -38,9 +38,9 @@ if (
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Portal oficial da Season 3 do Servidor do Vascão dos Gigantes.">
     <title>Vascão dos Gigantes | Season 3</title>
-    <link rel="icon" href="favicon.ico?v=5" sizes="any">
-    <link rel="icon" type="image/png" href="assets/img/favicon-season3.png?v=5">
-    <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=5">
+
+
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -98,7 +98,7 @@ if (
     <link rel="stylesheet" href="assets/css/socials.css?v=<?= filemtime(
                                                                 __DIR__ . "/assets/css/socials.css",
                                                             ) ?>">
-</head>
+<?php site_favicon(); ?></head>
 
 <body class="landing-page">
     <?php

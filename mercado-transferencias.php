@@ -44,7 +44,7 @@ asort($clubes, SORT_NATURAL | SORT_FLAG_CASE);
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="description" content="Mercado de transferências dos campeonatos do Vascão Season 3.">
     <title>Mercado de Transferências | Vascão Season 3</title>
-    <link rel="icon" href="favicon.ico?v=5" sizes="any">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -52,7 +52,7 @@ asort($clubes, SORT_NATURAL | SORT_FLAG_CASE);
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/branding.css?v=5">
     <link rel="stylesheet" href="assets/css/transfer-market-page.css?v=<?= filemtime(__DIR__ . '/assets/css/transfer-market-page.css') ?>">
-</head>
+<?php site_favicon(); ?></head>
 <body>
 <?php public_navbar('transferencias'); ?>
 <main class="transfer-market-page section-pad" data-transfer-market data-items-per-page="12">

@@ -460,7 +460,7 @@ if ($clube) {
         .competition-roster .roster-filter-empty{padding:20px;border:1px dashed #44515e;border-radius:8px;color:#c3ccd7}
         @media(max-width:767px){.competition-roster .roster-tools{grid-template-columns:1fr 1fr}.competition-roster .roster-tools>label:first-child{grid-column:1/-1}.competition-roster .roster-tools>button{grid-column:1/-1}}
     </style>
-</head>
+<?php site_favicon(); ?></head>
 
 <body><?php public_navbar('mercado'); ?><main class="container market-page" data-market-editable="<?= $podeEditarMercado ? '1' : '0' ?>"><span class="eyebrow"><?= $isMasterManagement ? 'Gestão Master' : 'Gestão do clube' ?></span>
         <h1>GESTÃO DA COMPETIÇÃO</h1><?php if ($managedTeam): ?><p class="market-managed-team">Gerenciando inscrição e escalação de <strong><?= e($managedTeam['time_nome']) ?></strong> · Técnico <?= e($managedTeam['nome']) ?></p><?php endif; ?><?php if ($message): ?><div class="alert alert-success" data-flash-toast><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger" data-flash-toast><?= e($error) ?></div><?php endif; ?><?php if ($campeonatos): ?><form method="get" class="mb-4"><?php if ($isMasterManagement): ?><input type="hidden" name="participante_id" value="<?= $participantId ?>"><?php endif; ?><label class="form-label">Competição que deseja gerenciar</label><select class="form-select" name="campeonato_id" onchange="this.form.submit()"><?php foreach ($campeonatos as $c): ?><option value="<?= $c['id'] ?>" <?= $campeonatoId === (int)$c['id'] ? 'selected' : '' ?>><?= e($c['nome']) ?></option><?php endforeach; ?></select></form><?php else: ?><div class="alert alert-info mb-4">Nenhuma competição de pontos corridos está ativa para gestão.</div><?php endif; ?>

@@ -8,8 +8,8 @@ require __DIR__ . "/includes/public-layout.php"; ?>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="description" content="Guia de comandos do DreamTeam para a comunidade do Vascão Season 3.">
     <title>Comandos | Vascão Season 3</title>
-    <link rel="icon" href="favicon.ico?v=5" sizes="any">
-    <link rel="icon" type="image/png" href="assets/img/favicon-season3.png?v=5">
+
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -31,7 +31,7 @@ require __DIR__ . "/includes/public-layout.php"; ?>
     <link rel="stylesheet" href="assets/css/commands-page.css?v=<?= filemtime(
                                                                     __DIR__ . "/assets/css/commands-page.css",
                                                                 ) ?>">
-</head>
+<?php site_favicon(); ?></head>
 
 <body>
     <?php public_navbar('comandos'); ?>
