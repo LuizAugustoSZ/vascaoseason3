@@ -92,3 +92,5 @@
 .release-notes-modal .modal-footer p{margin:0;color:#7f8999;font-size:.82rem}
 .release-notes-continue{padding:.75rem 1.2rem;font-weight:900;letter-spacing:.06em}
 @media(max-width:767.98px){.release-notes-modal .modal-content{border:0}.release-notes-hero{align-items:flex-start;padding:4rem 1.25rem 1.5rem}.release-version-stamp{position:absolute;top:1rem;left:1.25rem;width:auto;height:auto;padding:.35rem .55rem;transform:none}.release-version-stamp small{display:none}.release-version-stamp strong{font-size:1rem}.release-notes-modal .modal-body{padding:1rem}.release-feature-grid{grid-template-columns:1fr}.release-feature-grid article{padding:1rem}.release-notes-modal .modal-footer{display:grid;gap:.8rem;padding:1rem}.release-notes-continue{width:100%}}
+
+#version-history-modal #version-history-title{color:#fff}
