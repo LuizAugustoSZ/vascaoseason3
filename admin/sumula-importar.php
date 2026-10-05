@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/../includes/bootstrap.php';
 require __DIR__ . '/../includes/dreamteam-parser.php';
+require __DIR__ . '/../includes/summary-storage.php';
 require __DIR__ . '/../includes/knockout.php';
 require __DIR__ . '/../includes/elenco-geral.php';
 admin_required();
@@ -317,6 +318,7 @@ verify_csrf();
 try {
     $pdo = db();
     ensure_summary_table($pdo);
+    summary_ensure_utf8_storage($pdo);
     elenco_geral_garantir_estrutura($pdo);
     $raw = (string) ($_POST['sumula'] ?? '');
     $parsed = dreamteam_parse_summary($raw);
