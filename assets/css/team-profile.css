@@ -1010,3 +1010,5 @@ footer {
     .recent-games-preview .recent-match { min-height:66px }
     .scorers-card .ranking-player { min-height:54px }
 }
+
+.transfer-card-kind.is-trade,.transfer-kind.is-trade{background:#164c62;color:#bceeff}

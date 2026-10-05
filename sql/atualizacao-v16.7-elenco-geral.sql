@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS movimentacoes_elenco_geral (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     participante_id INT UNSIGNED NOT NULL,
     jogador_geral_id INT UNSIGNED NOT NULL,
-    tipo ENUM('compra','venda') NOT NULL,
+    tipo ENUM('compra','venda','troca') NOT NULL,
     origem VARCHAR(30) NOT NULL DEFAULT 'compra_direta',
     origem_detalhe VARCHAR(120) NULL,
     valor_origem DECIMAL(18,2) NULL,
