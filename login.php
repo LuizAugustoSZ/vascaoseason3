@@ -64,7 +64,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Login | Vascão S3</title>
-    <link rel="icon" href="favicon.ico" sizes="any">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/branding.css?v=5">
@@ -73,7 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <script defer src="assets/js/password-toggle.js?v=<?= filemtime(
                                                             __DIR__ . "/assets/js/password-toggle.js",
                                                         ) ?>"></script>
-</head>
+<?php site_favicon(); ?></head>
 
 <body class="d-flex align-items-center min-vh-100">
     <main class="container" style="max-width:460px"><a class="text-secondary text-decoration-none" href="index.php">← Voltar ao site</a>
