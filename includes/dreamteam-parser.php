@@ -59,7 +59,7 @@ function dreamteam_parse_compact_summary(string $raw): ?array
     $text = dreamteam_compact_text($raw);
     if (!preg_match('/(?:RAN(?:K|QU)EADA|PARTIDA)\s+FINALIZADA\s*-\s*(\d+)\'/ui', $text, $finished)) return null;
     if (substr_count($text, 'Man of the Match:') !== 1) throw new RuntimeException('Cole exatamente uma partida completa por vez.');
-    if (!str_contains($text, 'Lances da Partida')) throw new RuntimeException('A seção “Lances da Partida” é obrigatória para importar a súmula.');
+    $scoreOnly = !str_contains($text, 'Lances da Partida');
 
     $header = preg_split('/Man of the Match:/u', $text, 2)[0];
     // Full team names in the statistics are also present immediately around the score.
@@ -101,7 +101,7 @@ function dreamteam_parse_compact_summary(string $raw): ?array
     }
     $events = [];
     $warnings = [];
-    $eventText = preg_split('/Lances da Partida/ui', $text, 2)[1];
+    $eventText = $scoreOnly ? '' : preg_split('/Lances da Partida/ui', $text, 2)[1];
     $eventText = preg_split('/Notas dos Jogadores|Rota (?:Silver\/Gold|Diamond\/Dream)|Estádio e bilheteria|Classificação/ui', $eventText, 2)[0];
     preg_match_all('/(\d+(?:\+\d+)?)\'\s*(.*?)(?=(?<!\d)\d+(?:\+\d+)?\'|$)/u', $eventText, $rows, PREG_SET_ORDER);
     foreach ($rows as $row) {
@@ -171,9 +171,15 @@ function dreamteam_parse_compact_summary(string $raw): ?array
         $team['code'] = count($candidates)===1 ? $candidates[0] : 'SUMMARY_'.($i===0?'HOME':'AWAY');
     }
     unset($team);
+    if ($scoreOnly) {
+        foreach ($teams as $team) foreach ($team['scorers'] as $scorer) {
+            for ($n = 0; $n < $scorer['goals']; $n++) $goals[] = ['type'=>'goal','minute'=>null,'player'=>$scorer['player'],'team_code'=>$team['code'],'goal_type'=>'normal','assist'=>null,'cancelled'=>false];
+        }
+    }
     if (array_sum(array_column($teams[0]['scorers'], 'goals')) !== (int)$scores[1][0][0] || array_sum(array_column($teams[1]['scorers'], 'goals')) !== (int)$scores[2][0][0] || count($goals)!==(int)$scores[1][0][0]+(int)$scores[2][0][0]) $warnings[]='Os marcadores e os gols dos lances não correspondem ao placar final.';
     if ($teams[0]['stats']['possession']+$teams[1]['stats']['possession']!==100) $warnings[]='A soma da posse de bola não corresponde a 100%.';
-    $result = ['home_name'=>$homeName,'home_goals'=>(int)$scores[1][0][0],'away_goals'=>(int)$scores[2][0][0],'away_name'=>$awayName,'duration'=>(int)$finished[1],'stadium'=>$venue[1]??$venueText,'weather'=>$venue[2]??'','man_of_match'=>$motmName,'man_of_match_team_code'=>null,'man_of_match_rating'=>isset($motm[2])?(float)str_replace(',','.',$motm[2]):null,'teams'=>$teams,'events'=>$events,'goals'=>$goals,'warnings'=>$warnings];
+    $result = ['home_name'=>$homeName,'home_goals'=>(int)$scores[1][0][0],'away_goals'=>(int)$scores[2][0][0],'away_name'=>$awayName,'duration'=>$scoreOnly ? null : (int)$finished[1],'stadium'=>$venue[1]??$venueText,'weather'=>$venue[2]??'','man_of_match'=>$motmName,'man_of_match_team_code'=>null,'man_of_match_rating'=>isset($motm[2])?(float)str_replace(',','.',$motm[2]):null,'teams'=>$teams,'events'=>$events,'goals'=>$goals,'warnings'=>$warnings];
+    if ($scoreOnly) $result['score_only'] = true;
     $result['dreamteam_id']='DT-IMPORT-'.strtoupper(substr(hash('sha256', json_encode($result, JSON_UNESCAPED_UNICODE)),0,20));
     return $result;
 }
@@ -184,7 +190,12 @@ function dreamteam_bind_team_codes(array $parsed, array $participants): array
     foreach ($parsed['teams'] as $i=>&$team) {
         if (str_starts_with($team['code'], 'SUMMARY_')) {
             $registered = strtoupper(trim((string)($participants[$i]['sigla']??'')));
-            if ($registered !== '') $team['code']=$registered;
+            if ($registered !== '') {
+                $oldCode = $team['code'];
+                $team['code']=$registered;
+                foreach ($parsed['goals'] as &$goal) if ($goal['team_code'] === $oldCode) $goal['team_code'] = $registered;
+                unset($goal);
+            }
         }
     }
     unset($team);

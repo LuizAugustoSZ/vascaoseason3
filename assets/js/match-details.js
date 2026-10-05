@@ -16,6 +16,12 @@ const renderGame=(m,s,title='',h=null)=>{
   if(isWo)return html+'<div class="alert alert-danger text-center"><strong>PARTIDA ENCERRADA POR W.O.</strong><br>Placar administrativo de 3 a 0 conforme o regulamento. Os gols não são atribuídos a nenhum jogador.</div></section>';
   if(isPenalty)return html+'<div class="alert alert-warning text-center"><strong>RESULTADO ALTERADO POR PENALIDADE</strong><br>Vitória administrativa por 3 a 0 para o adversário do time penalizado. Os gols não são atribuídos a nenhum jogador.</div></section>';
   if(!s)return html+`<div class="alert alert-secondary text-center">${played?'As estatísticas detalhadas desta partida ainda não foram importadas.':'Partida ainda não realizada.'}</div>${headToHead(m,h)}</section>`;
+  if(s.score_only){
+    const reversed=normalize(s.home_name)!==normalize(m.time_a)&&normalize(s.away_name)===normalize(m.time_a),teams=reversed?[s.teams?.[1],s.teams?.[0]]:s.teams;
+    html+='<div class="alert alert-secondary text-center">Partida sem súmula.</div><h3>Gols</h3>';
+    for(const [index,t] of (teams||[]).entries()) html+=`<h4>${escape(index===0?m.time_a:m.time_b)}</h4><ul>${(t.scorers||[]).map(scorer=>`<li>${playerLink(scorer.player,index===0?m.time_a_id:m.time_b_id)}: ${Number(scorer.goals)} gol${Number(scorer.goals)===1?'':'s'}</li>`).join('')||'<li>Nenhum gol</li>'}</ul>`;
+    return html+'</section>';
+  }
   html+=`<p class="match-details-meta">🏟️ ${escape(s.stadium)} • ${escape(s.weather)} • ${s.duration}'</p>`;
   const reversed=normalize(s.home_name)!==normalize(m.time_a)&&normalize(s.away_name)===normalize(m.time_a),teams=reversed?[s.teams?.[1],s.teams?.[0]]:s.teams,codes=[teams?.[0]?.code,teams?.[1]?.code];
   const participantId=code=>code&&code===codes[0]?m.time_a_id:code&&code===codes[1]?m.time_b_id:null;
