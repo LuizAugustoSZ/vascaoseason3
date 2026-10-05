@@ -162,3 +162,45 @@ $rankedAssistsWithoutCode = str_replace(['Assistência de Gabigol (LOC)', 'Assis
 $p=dreamteam_bind_team_codes(dreamteam_parse_summary($rankedAssistsWithoutCode), [['sigla'=>'LOC'],['sigla'=>'INT']]);
 check($p['goals'][0]['assist']==='Gabigol' && $p['goals'][2]['assist']==='Puerta', 'Ranked assists without team code');
 echo "DreamTeam parser tests passed.\n";
+
+$scoreOnly = <<<'REPORT'
+PARTIDA FINALIZADA - 93'
+🏟️ Mané Garrincha 🌦️ Tempo aberto · 8 °C ⚖️ Arbitragem: Imprevisível
+Gari Saint German 2x3 Lords FC
+Man of the Match: :HeroisVSViloes: Thiago Neves 1 gol Nota: 9,36 Destaques: finalização e criação de chances.
+Gari Saint German Finalizações: 13 No gol: 8 Defesas: 5 Escanteios: 4 Posse: 53% Faltas Sofridas: 10 Amarelos: 0 Vermelhos: 0 xG: 2,69 Marcadores: :00boladt: :HeroisVSViloes: Memphis Depay: 1 gol :00boladt: :HeroisVSViloes: Thiago Neves: 1 gol
+Lords FC Finalizações: 16 No gol: 8 Defesas: 6 Escanteios: 7 Posse: 47% Faltas Sofridas: 9 Amarelos: 1 Vermelhos: 0 xG: 4,55 Marcadores: :00boladt: :FimDeUmaEra: Rodri: 1 gol :00boladt: :HeroisVSViloes: Iniesta: 1 gol :00boladt: :FimDeUmaEra: Robert Lewandowski: 1 gol
+dreamteam.futbol - Partida entre Gari Saint German e Lords FC
+REPORT;
+$p=dreamteam_bind_team_codes(dreamteam_parse_summary($scoreOnly), [['sigla'=>'GSG'],['sigla'=>'LOR']]);
+check($p['warnings']===[] && $p['score_only'], 'Score-only accepted');
+check(count($p['goals'])===5 && $p['events']===[] && $p['duration']===null, 'No invented timeline');
+check(array_column($p['goals'],'minute')===[null,null,null,null,null] && array_column($p['goals'],'assist')===[null,null,null,null,null], 'Unknown times and assists');
+check(array_column($p['goals'],'team_code')===['GSG','GSG','LOR','LOR','LOR'], 'Score-only club binding');
+check($p['teams'][0]['stats']['shots']===13 && $p['teams'][1]['stats']['xg']===4.55, 'Score-only stats');
+$markdown=str_replace(['PARTIDA FINALIZADA', '2x3', ':00boladt:', ':HeroisVSViloes:'], ['**PARTIDA FINALIZADA**', '`2x3`', '[:00boladt:](https://example.com/ball)', '[:HeroisVSViloes:](https://example.com/card)'], $scoreOnly);
+check(dreamteam_parse_summary($markdown)['dreamteam_id']===dreamteam_parse_summary($scoreOnly)['dreamteam_id'], 'Markdown and plain text same identity');
+check(dreamteam_parse_summary(str_replace('Rodri: 1 gol','Rodri: 2 gols',$scoreOnly))['warnings']!==[], 'Scorer mismatch blocked');
+$rejected=false;
+try { dreamteam_parse_summary($scoreOnly."\n".$scoreOnly); } catch (RuntimeException $e) { $rejected=true; }
+check($rejected, 'Multiple score-only games rejected');
+$withoutTimeline=preg_split('/Lances da Partida/u',$raw,2)[0];
+$p=dreamteam_bind_team_codes(dreamteam_parse_summary($withoutTimeline), [['sigla'=>'LOC'],['sigla'=>'CFC']]);
+check($p['warnings']===[] && count($p['goals'])===4, 'Multiple goals by same scorer');
+$p=dreamteam_bind_team_codes(dreamteam_parse_summary(preg_split('/\*\*Lances da Partida/u',$zero,2)[0]), [['sigla'=>'CFC'],['sigla'=>'LOC']]);
+check($p['warnings']===[] && count($p['goals'])===1, 'Score-only goalless club');
+echo "Score-only parser tests passed.\n";
+
+$first = <<<'REPORT'
+PARTIDA FINALIZADA - 92'
+🏟️ Maracanã 🌦️ Neblina · 17 °C ⚖️ Arbitragem: Imprevisível
+Lords FC 2x4 Gari Saint German
+Man of the Match: :HeroisVSViloes: Sterling 1 gol | 2 assistências Nota: 10,00 Destaques: criação de chances e progressão com a bola.
+Lords FC Finalizações: 8 No gol: 4 Defesas: 9 Escanteios: 5 Posse: 41% Faltas Sofridas: 10 Amarelos: 0 Vermelhos: 0 xG: 2,31 Marcadores: :HeroisVSViloes: Iniesta: 1 gol :HeroisVSViloes: Lucas Moura: 1 gol
+Gari Saint German Finalizações: 20 No gol: 13 Defesas: 2 Escanteios: 6 Posse: 59% Faltas Sofridas: 7 Amarelos: 0 Vermelhos: 0 xG: 4,59 Marcadores: :HeroisVSViloes: Rodrygo: 1 gol :HeroisVSViloes: Sterling: 1 gol :HeroisVSViloes: Memphis Depay: 1 gol :viracasaca: Hakan Çalhanoğlu: 1 gol
+dreamteam.futbol - Partida entre Lords FC e Gari Saint German
+REPORT;
+$p=dreamteam_bind_team_codes(dreamteam_parse_summary($first), [['sigla'=>'LOR'],['sigla'=>'GSG']]);
+check($p['warnings']===[] && count($p['goals'])===6, 'First supplied match accepted');
+check($p['events']===[] && count(array_filter(array_column($p['goals'],'assist')))===0, 'MOTM assists ignored');
+check($p['goals'][5]['player']==='Hakan Çalhanoğlu', 'Unicode scorer preserved');
