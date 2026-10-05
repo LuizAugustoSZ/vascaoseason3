@@ -151,6 +151,7 @@ function mercado_rotulo_origem(array $movimento): string
     return match ($movimento['origem'] ?? 'compra_direta') {
         'pack' => (string)($movimento['origem_detalhe'] ?: 'Pack'),
         'passe' => 'Passe',
+        'troca_passe' => 'Troca de passe',
         'sorteio' => 'Sorteio',
         'prancheta' => 'Prancheta',
         'obter' => '/obter',
@@ -165,7 +166,7 @@ function mercado_valor_movimento(array $movimento): string
         $moeda = ($movimento['moeda_origem'] ?? '') === 'DD' ? 'DD' : 'DP';
         return number_format((float)($movimento['valor_origem'] ?? 0), 0, ',', '.') . ' ' . $moeda;
     }
-    if (in_array(($movimento['origem'] ?? ''), ['passe', 'sorteio', 'prancheta', 'obter', 'importacao'], true)) return 'Sem custo';
+    if (in_array(($movimento['origem'] ?? ''), ['passe', 'troca_passe', 'sorteio', 'prancheta', 'obter', 'importacao'], true)) return 'Sem custo';
     return 'R$ ' . number_format((float)($movimento['valor'] ?? 0), 0, ',', '.');
 }
 
