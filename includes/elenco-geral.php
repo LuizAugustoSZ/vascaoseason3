@@ -35,6 +35,8 @@ function elenco_geral_garantir_estrutura(PDO $pdo): void
     foreach (preg_split('/;\s*(?:\r?\n|$)/', $migration, -1, PREG_SPLIT_NO_EMPTY) as $statement) {
         $pdo->exec(trim($statement));
     }
+    $typeColumn = $pdo->query("SHOW COLUMNS FROM movimentacoes_elenco_geral LIKE 'tipo'")->fetch();
+    if ($typeColumn && !str_contains((string)$typeColumn['Type'], "'troca'")) $pdo->exec("ALTER TABLE movimentacoes_elenco_geral MODIFY tipo ENUM('compra','venda','troca') NOT NULL");
     $moneyColumn = $pdo->query("SHOW COLUMNS FROM clubes_gerais LIKE 'saldo'")->fetch();
     if ($moneyColumn && strtolower((string)$moneyColumn['Type']) !== 'decimal(18,2)') {
         $pdo->exec("ALTER TABLE clubes_gerais MODIFY saldo DECIMAL(18,2) NOT NULL DEFAULT 0");

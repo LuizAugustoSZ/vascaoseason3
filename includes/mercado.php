@@ -147,6 +147,7 @@ function mercado_packs_para_data(?string $data): array
 
 function mercado_rotulo_origem(array $movimento): string
 {
+    if (($movimento['tipo'] ?? '') === 'troca') return 'Trocado no passe';
     if (($movimento['tipo'] ?? '') === 'venda') return 'Venda';
     return match ($movimento['origem'] ?? 'compra_direta') {
         'pack' => (string)($movimento['origem_detalhe'] ?: 'Pack'),

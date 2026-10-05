@@ -163,7 +163,8 @@ function statistics_finance(PDO $pdo, int $clubId = 0, int $championshipId = 0):
     $where=$clubId?' WHERE m.participante_id='.(int)$clubId:'';
     if($championshipId){$where.=($where?' AND':' WHERE').' m.campeonato_id='.(int)$championshipId;$movementTable='movimentacoes_elenco';}
     else $movementTable='movimentacoes_elenco_geral';
-    $moves=$pdo->query("SELECT m.id,m.participante_id,p.time_nome clube,m.tipo,m.jogador_nome,m.valor,m.criado_em FROM $movementTable m JOIN participantes p ON p.id=m.participante_id$where ORDER BY m.criado_em,m.id")->fetchAll();
+    $moves=$pdo->query("SELECT m.id,m.participante_id,p.time_nome clube,m.tipo,m.origem,m.jogador_nome,m.valor,m.criado_em FROM $movementTable m JOIN participantes p ON p.id=m.participante_id$where ORDER BY m.criado_em,m.id")->fetchAll();
+    $moves=array_values(array_filter($moves,static fn(array $m):bool=>$m['tipo']!=='troca'&&($m['origem']??'')!=='troca_passe'));
     $clubs=[];foreach($moves as $m){$id=(int)$m['participante_id'];if(!isset($clubs[$id]))$clubs[$id]=['id'=>$id,'name'=>$m['clube'],'purchases'=>0,'sales'=>0,'spent'=>0.0,'revenue'=>0.0,'volume'=>0.0];$amount=(float)$m['valor'];$clubs[$id][$m['tipo']==='compra'?'purchases':'sales']++;$clubs[$id][$m['tipo']==='compra'?'spent':'revenue']+=$amount;$clubs[$id]['volume']+=$amount;}
     $wealthTable=$championshipId?'clubes_campeonato':'clubes_gerais';$wealthWhere=[];
     if($championshipId)$wealthWhere[]='g.campeonato_id='.(int)$championshipId;if($clubId)$wealthWhere[]='g.participante_id='.(int)$clubId;
