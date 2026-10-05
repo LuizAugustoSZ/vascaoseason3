@@ -16,7 +16,7 @@ $transferencias = $pdo->query("SELECT movimentos.*,
             m.participante_id,m.tipo,m.origem,m.origem_detalhe,m.valor_origem,m.moeda_origem,
             m.jogador_nome,m.jogador_overall,m.jogador_posicao,m.valor,m.criado_em
         FROM movimentacoes_elenco_geral m
-        WHERE m.tipo IN ('compra','venda')
+        WHERE m.tipo IN ('compra','venda','troca')
         UNION ALL
         SELECT CONCAT('competicao-',m.id),m.campeonato_id,c.nome,m.participante_id,m.tipo,m.origem,
             m.origem_detalhe,m.valor_origem,m.moeda_origem,m.jogador_nome,m.jogador_overall,
@@ -65,18 +65,18 @@ asort($clubes, SORT_NATURAL | SORT_FLAG_CASE);
             <div><label for="transfer-search">Jogador</label><input class="form-control" id="transfer-search" type="search" placeholder="Buscar jogador..." autocomplete="off"></div>
             <div><label for="transfer-championship">Campeonato</label><select class="form-select" id="transfer-championship"><option value="all">Todos</option><?php foreach ($campeonatos as $id => $nome): ?><option value="<?= $id ?>"><?= e($nome) ?></option><?php endforeach; ?></select></div>
             <div><label for="transfer-club">Clube</label><select class="form-select" id="transfer-club"><option value="all">Todos</option><?php foreach ($clubes as $id => $nome): ?><option value="<?= $id ?>"><?= e($nome) ?></option><?php endforeach; ?></select></div>
-            <div><label for="transfer-type">Movimentação</label><select class="form-select" id="transfer-type"><option value="all">Todas</option><option value="compra">Contratações</option><option value="venda">Vendas</option></select></div>
+            <div><label for="transfer-type">Movimentação</label><select class="form-select" id="transfer-type"><option value="all">Todas</option><option value="compra">Contratações</option><option value="troca">Trocas de passe</option><option value="venda">Vendas</option></select></div>
         </section>
 
         <div class="transfer-market-meta"><strong><span data-transfer-count><?= count($transferencias) ?></span> movimentações</strong><button class="btn btn-sm btn-outline-light" type="button" data-clear-transfer-filters>Limpar filtros</button></div>
         <section class="transfer-market-grid">
             <?php foreach ($transferencias as $movimento): ?>
                 <article class="transfer-market-card" data-transfer-item data-type="<?= e($movimento['tipo']) ?>" data-championship="<?= (int)$movimento['campeonato_id'] ?>" data-club="<?= (int)$movimento['participante_id'] ?>" data-player="<?= e(mb_strtolower((string)$movimento['jogador_nome'], 'UTF-8')) ?>">
-                    <div class="transfer-card-top"><span class="transfer-card-kind <?= $movimento['tipo'] === 'venda' ? 'is-sale' : 'is-purchase' ?>"><?= e(mercado_rotulo_origem($movimento)) ?></span><time datetime="<?= e(date('c', strtotime((string)$movimento['criado_em']))) ?>"><?= e(format_datetime_br((string)$movimento['criado_em'])) ?></time></div>
+                    <div class="transfer-card-top"><span class="transfer-card-kind <?= $movimento['tipo'] === 'troca' ? 'is-trade' : ($movimento['tipo'] === 'venda' ? 'is-sale' : 'is-purchase') ?>"><?= e(mercado_rotulo_origem($movimento)) ?></span><time datetime="<?= e(date('c', strtotime((string)$movimento['criado_em']))) ?>"><?= e(format_datetime_br((string)$movimento['criado_em'])) ?></time></div>
                     <strong class="transfer-player-name"><?= e($movimento['jogador_nome']) ?></strong>
                     <p><?= (int)$movimento['jogador_overall'] ?> OVR · <?= e($movimento['jogador_posicao']) ?><?= !empty($movimento['origem_detalhe']) ? ' · ' . e($movimento['origem_detalhe']) : '' ?></p>
                     <div class="transfer-card-club"><a class="transfer-club-shield" href="time.php?id=<?= (int)$movimento['participante_id'] ?>" aria-label="Abrir página do <?= e($movimento['clube']) ?>"><?php if (!empty($movimento['clube_escudo'])): ?><img src="<?= e($movimento['clube_escudo']) ?>" alt="Escudo do <?= e($movimento['clube']) ?>" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden><?= e($movimento['clube_sigla'] ?: mb_substr((string)$movimento['clube'], 0, 3)) ?></span><?php else: ?><span><?= e($movimento['clube_sigla'] ?: mb_substr((string)$movimento['clube'], 0, 3)) ?></span><?php endif; ?></a><div><a class="transfer-club-name" href="time.php?id=<?= (int)$movimento['participante_id'] ?>"><?= e($movimento['clube']) ?></a><?php if ((int)$movimento['campeonato_id'] > 0): ?><a class="transfer-championship-link" href="index.php?campeonato_id=<?= (int)$movimento['campeonato_id'] ?>#competicao"><?= e($movimento['campeonato']) ?></a><?php else: ?><span class="transfer-championship-link"><?= e($movimento['campeonato']) ?></span><?php endif; ?></div></div>
-                    <footer><span><?= $movimento['tipo'] === 'venda' ? 'Valor recebido' : 'Custo registrado' ?></span><strong><?= e(mercado_valor_movimento($movimento)) ?></strong></footer>
+                    <?php if($movimento['tipo']==='troca'&&!empty($movimento['origem_detalhe'])):?><p class="text-secondary small"><?=e($movimento['origem_detalhe'])?></p><?php endif;?><footer><span><?= $movimento['tipo'] === 'troca' ? 'Troca de passe' : ($movimento['tipo'] === 'venda' ? 'Valor recebido' : 'Custo registrado') ?></span><strong><?= e(mercado_valor_movimento($movimento)) ?></strong></footer>
                 </article>
             <?php endforeach; ?>
         </section>
