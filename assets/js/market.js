@@ -175,6 +175,8 @@ document.querySelectorAll('.market-contract-panel form').forEach(form => {
       ? 'O custo será registrado na moeda do pack e não altera o cofre em Real.'
       : type === 'passe'
         ? 'Jogador recebido pelo passe: entrada sem custo e sem alteração no cofre.'
+        : type === 'troca_passe'
+          ? 'Jogador recebido por troca de passe: entrada sem custo e sem alteração no cofre.'
         : type === 'prancheta'
           ? 'Jogador recebido pela prancheta: entrada sem custo e sem alteração no cofre.'
           : 'Jogador ganho em sorteio: entrada sem custo e sem alteração no cofre.';
