@@ -25,7 +25,7 @@ function title_edition_number(string $title): int {
 }
 foreach($grouped as &$champions) usort($champions,static fn(array $a,array $b):int=>title_edition_number((string)$b['titulo'])<=>title_edition_number((string)$a['titulo'])?:((int)$b['id']<=>(int)$a['id']));
 unset($champions);
-?><!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vitrine de Títulos | Vascão S3</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/branding.css?v=5"><link rel="stylesheet" href="assets/css/titles-showcase.css?v=<?= filemtime(__DIR__.'/assets/css/titles-showcase.css') ?>"></head><body>
+?><!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vitrine de Títulos | Vascão S3</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/branding.css?v=5"><link rel="stylesheet" href="assets/css/titles-showcase.css?v=<?= filemtime(__DIR__.'/assets/css/titles-showcase.css') ?>"><?php site_favicon(); ?></head><body>
 <?php public_navbar('titulos'); ?>
 <main class="titles-page"><div class="container"><header class="titles-hero"><span class="eyebrow">Salão de conquistas</span><h1>VITRINE DE TAÇAS</h1><p>Cada competição tem sua própria história. Explore as taças em tamanho grande e revele os campeões de todas as edições.</p></header>
 <?php if($canOrder): ?>

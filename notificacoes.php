@@ -40,7 +40,7 @@ $preferences = $q->fetch() ?: [];
     <link rel="stylesheet" href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/assets/css/style.css') ?>">
     <link rel="stylesheet" href="assets/css/notifications.css?v=<?= filemtime(__DIR__ . '/assets/css/notifications.css') ?>">
     <script src="https://unpkg.com/lucide@latest"></script>
-</head>
+<?php site_favicon(); ?></head>
 <body>
     <?php public_navbar('notificacoes'); ?>
 
