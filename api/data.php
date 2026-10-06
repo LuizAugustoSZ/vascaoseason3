@@ -7,6 +7,7 @@ require_once __DIR__ . "/../includes/g4-knockout.php";
 try {
     $pdo = db();
     competition_identities_seed($pdo);
+    competition_sync_finished_titles($pdo);
     $campeonatos = $pdo
         ->query(
             "SELECT c.id,c.nome,c.identidade_id,c.tipo,c.formato,c.status,c.criado_em,

@@ -5,6 +5,8 @@ require __DIR__.'/includes/public-layout.php';
 require __DIR__.'/includes/statistics.php';
 
 $pdo=db();
+competition_identities_seed($pdo);
+competition_sync_finished_titles($pdo);
 $championshipId=max(0,(int)($_GET['campeonato_id']??0));
 $clubId=max(0,(int)($_GET['clube_id']??0));
 $championships=$pdo->query("SELECT id,nome FROM campeonatos ORDER BY COALESCE(data_inicio,'1970-01-01') DESC,id DESC")->fetchAll();

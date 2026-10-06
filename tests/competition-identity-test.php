@@ -4,6 +4,8 @@ declare(strict_types=1);
 require __DIR__ . '/../includes/bootstrap.php';
 
 $cases = [
+    'Recopa' => 'recopa',
+    'Recopa II' => 'recopa',
     'Libertadores' => 'libertadores g4',
     'Libertadores II' => 'libertadores g4',
     'Libertadores do G4' => 'libertadores g4',

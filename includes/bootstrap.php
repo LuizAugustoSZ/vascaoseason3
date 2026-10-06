@@ -586,7 +586,13 @@ function competition_champion_id(PDO $pdo, int $championshipId): ?int
     if ($competition["status"] !== "finalizado") return null;
     $winner = $pdo->prepare("SELECT time_a_id,time_b_id,gols_a,gols_b,penaltis_a,penaltis_b,status FROM jogos_mata_mata WHERE campeonato_id=? AND fase='Final' AND ativo=1 ORDER BY jogo,id");
     $winner->execute([$championshipId]);
-    return competition_final_winner($winner->fetchAll(), $competition['formato'] === 'ida_volta' ? 2 : 1);
+    $games = $winner->fetchAll();
+    // Mata-mata permite escolher o formato da final independentemente das
+    // semifinais. A chave cadastrada inclui também as pernas ainda agendadas.
+    $legs = $competition['tipo'] === 'mata_mata'
+        ? count($games)
+        : ($competition['formato'] === 'ida_volta' ? 2 : 1);
+    return in_array($legs, [1, 2], true) ? competition_final_winner($games, $legs) : null;
 }
 
 // Resolve a decisão pelo agregado, sem confiar no vencedor de uma partida isolada.

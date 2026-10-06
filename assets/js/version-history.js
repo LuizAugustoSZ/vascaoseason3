@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['27.1','Os títulos respeitam o formato próprio da final, inclusive jogo único com semifinais de ida e volta. Página dos times, estatísticas e vitrine reparam conquistas antigas de forma consistente e preservam títulos históricos quando a decisão está incompleta.','Correção dos títulos de todos os clubes'],
 ['27.0','O Elenco Geral mostra a origem de cada carta e permite filtrar por origem. Cartas de passe ganham o botão Trocar: retire a carta ou adicione a recebida com nome, OVR e posição; a origem fica fixa em Troca de passe. O botão permanece bloqueado em ciclos fechados de pontos corridos. As trocas aparecem no histórico e no mercado, sem alterar o cofre ou o financeiro.','Troca de passe e filtro por origem'],
 ['26.9','A contratação e a edição de movimentações ganharam a origem Recebido por troca de passe. O histórico identifica Troca de passe, sem custo em reais.','Nova origem de contratação'],
 ['26.8','Todas as páginas públicas e administrativas usam a logo oficial como ícone da aba. Na página do time, o ícone usa o escudo do clube, preservando suas proporções e mantendo a logo oficial se a imagem falhar.','Ícones das abas e escudo do clube'],

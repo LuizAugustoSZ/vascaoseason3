@@ -27,6 +27,9 @@ function competition_identity_defaults(): array
 /** Instala a migration de forma idempotente no primeiro acesso do ambiente. */
 function competition_identities_ensure_schema(PDO $pdo): void
 {
+    static $ready = [];
+    $connection = spl_object_id($pdo);
+    if (isset($ready[$connection])) return;
     $pdo->exec("CREATE TABLE IF NOT EXISTS competicao_identidades (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         chave VARCHAR(120) NOT NULL,
@@ -49,6 +52,7 @@ function competition_identities_ensure_schema(PDO $pdo): void
     if (!$titleCompetitionColumn) $pdo->exec("ALTER TABLE titulos ADD COLUMN campeonato_id INT UNSIGNED NULL AFTER participante_id, ADD UNIQUE KEY uk_titulo_campeonato (campeonato_id)");
     $orderColumn = $pdo->query("SHOW COLUMNS FROM competicao_identidades LIKE 'ordem_exibicao'")->fetch();
     if (!$orderColumn) $pdo->exec("ALTER TABLE competicao_identidades ADD COLUMN ordem_exibicao INT UNSIGNED NULL");
+    $ready[$connection] = true;
 }
 
 function competition_identity_data_url(string $filename): string
@@ -64,6 +68,7 @@ function competition_identity_match(string $name): ?string
     if (str_contains($compact, 'brasileir')) return 'brasileirao';
     if (str_contains($compact, 'amistoso') && str_contains($compact, 'dream')) return 'amistosos dreamteam';
     if (str_contains($compact, 'copadobrasil')) return 'copa do brasil';
+    if (str_starts_with($compact, 'recopa')) return 'recopa';
     if (str_contains($compact, 'supercopa')) return 'supercopa r';
     if (str_starts_with($compact, 'mundial')) return 'mundial';
     if (str_starts_with($compact, 'eventocarnavalesco')) return 'evento carnavalesco';
@@ -101,7 +106,11 @@ function competition_sync_champion_title(PDO $pdo, int $championshipId): ?int
     }
     $winnerId = competition_champion_id($pdo, $championshipId);
     if (!$winnerId) {
-        $pdo->prepare('DELETE FROM titulos WHERE campeonato_id=?')->execute([$championshipId]);
+        // Uma decisão histórica incompleta não autoriza apagar a conquista.
+        // Edições reabertas continuam revogando a entrega automática.
+        if ($competition['status'] !== 'finalizado') {
+            $pdo->prepare('DELETE FROM titulos WHERE campeonato_id=?')->execute([$championshipId]);
+        }
         return null;
     }
     $description = $competition['status'] === 'finalizado'
@@ -110,6 +119,14 @@ function competition_sync_champion_title(PDO $pdo, int $championshipId): ?int
     $insert = $pdo->prepare("INSERT INTO titulos(campeonato_id,participante_id,titulo,temporada,descricao,conquistado_em) VALUES(?,?,?,'Season 3',?,CURDATE()) ON DUPLICATE KEY UPDATE participante_id=VALUES(participante_id),titulo=VALUES(titulo),descricao=VALUES(descricao)");
     $insert->execute([$championshipId,$winnerId,$competition['nome'],$description]);
     return $winnerId;
+}
+
+/** Repara entregas antigas antes de qualquer leitura pública de títulos. */
+function competition_sync_finished_titles(PDO $pdo): void
+{
+    foreach ($pdo->query("SELECT id FROM campeonatos WHERE ativo=1 AND status='finalizado'")->fetchAll(PDO::FETCH_COLUMN) as $id) {
+        competition_sync_champion_title($pdo, (int)$id);
+    }
 }
 
 /** Preenche as quatro identidades e associa edições antigas sem sobrescrever artes editadas. */

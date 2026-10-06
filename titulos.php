@@ -8,9 +8,7 @@ try {
     $pdo=db(); competition_identities_seed($pdo);
     // Repara de forma idempotente competições encerradas antes da entrega do
     // título automático (inclusive os modelos novos Libertadores G4 e Sula G8).
-    foreach ($pdo->query("SELECT id FROM campeonatos WHERE ativo=1 AND status='finalizado'")->fetchAll(PDO::FETCH_COLUMN) as $finishedChampionshipId) {
-        competition_sync_champion_title($pdo, (int)$finishedChampionshipId);
-    }
+    competition_sync_finished_titles($pdo);
     $canOrder=trophy_order_allowed($pdo);
     $identities=$pdo->query("SELECT i.id,i.chave,i.nome,COALESCE(i.logo_base64,'')<>'' tem_logo,COALESCE(i.trofeu_base64,'')<>'' tem_trofeu FROM competicao_identidades i ORDER BY i.ordem_exibicao IS NULL,i.ordem_exibicao,i.nome,i.id")->fetchAll();
     $titles=$pdo->query("SELECT t.id,t.titulo,t.temporada,t.conquistado_em,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) clube,p.escudo_url,p.id participante_id,COALESCE(p.ativo,0) participante_ativo,i.chave identidade_chave FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id LEFT JOIN campeonatos c ON c.id=t.campeonato_id LEFT JOIN competicao_identidades i ON i.id=c.identidade_id ORDER BY t.id")->fetchAll();

@@ -23,3 +23,24 @@ foreach ($cases as $name => [$games,$legs,$expected]) {
     if (competition_final_winner($games,$legs) !== $expected) throw new RuntimeException($name);
 }
 echo 'OK: '.count($cases)." cenários de decisão, agregado, pendências e W.O.\n";
+
+class ChampionStatement extends PDOStatement {
+    public function __construct(private array $rows) {}
+    public function execute(?array $params = null): bool { return true; }
+    public function fetch(int $mode = PDO::FETCH_DEFAULT, int $orientation = PDO::FETCH_ORI_NEXT, int $offset = 0): mixed { return $this->rows[0] ?? false; }
+    public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array { return $this->rows; }
+}
+class ChampionDatabase extends PDO {
+    public function __construct(public array $competition, public array $games) {}
+    public function prepare(string $query, array $options = []): PDOStatement|false {
+        return new ChampionStatement(str_contains($query, 'FROM campeonatos') ? [$this->competition] : $this->games);
+    }
+}
+$db = new ChampionDatabase(['tipo'=>'mata_mata','status'=>'finalizado','formato'=>'ida_volta'], [leg(6,5,0,2)]);
+if (competition_champion_id($db,7) !== 5) throw new RuntimeException('Final única com semifinais de ida e volta');
+$db->games[] = leg(5,6,null,null,'agendado');
+if (competition_champion_id($db,7) !== null) throw new RuntimeException('Volta agendada não pode entregar título');
+$db->games = [leg(6,5,0,2)];
+$db->competition['tipo'] = 'supercopa';
+if (competition_champion_id($db,7) !== null) throw new RuntimeException('Supercopa exige as pernas configuradas');
+echo "OK: formato independente da final e proteção contra entrega antecipada\n";
