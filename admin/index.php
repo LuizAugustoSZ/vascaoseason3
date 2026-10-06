@@ -1442,7 +1442,7 @@ $scorersAdmin = $pdo
         "SELECT a.id,a.campeonato_id,a.jogador,a.participante_id,a.gols,c.nome campeonato,p.nome tecnico,p.time_nome FROM artilharia a JOIN campeonatos c ON c.id=a.campeonato_id JOIN participantes p ON p.id=a.participante_id ORDER BY c.status='ativo' DESC,c.criado_em DESC,a.gols DESC,a.jogador",
     )
     ->fetchAll();
-$titlesAdmin = $pdo->query("SELECT t.id,t.participante_id,t.titulo,t.temporada,t.descricao,t.conquistado_em,t.tecnico_nome,t.time_nome,CASE WHEN t.imagem_base64 IS NOT NULL AND t.imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) clube FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id ORDER BY t.conquistado_em DESC,t.id DESC")->fetchAll();
+$titlesAdmin = $pdo->query("SELECT t.id,t.participante_id,t.titulo,t.temporada,t.descricao,t.conquistado_em,t.tecnico_nome,t.time_nome,CASE WHEN COALESCE(NULLIF(t.imagem_base64,''),NULLIF(i.trofeu_base64,'')) IS NOT NULL THEN 1 ELSE 0 END tem_imagem,COALESCE(p.nome,t.tecnico_nome) tecnico,COALESCE(p.time_nome,t.time_nome) clube FROM titulos t LEFT JOIN participantes p ON p.id=t.participante_id LEFT JOIN campeonatos c ON c.id=t.campeonato_id LEFT JOIN competicao_identidades i ON i.id=c.identidade_id ORDER BY t.conquistado_em DESC,t.id DESC")->fetchAll();
 foreach ($titlesAdmin as &$titleAdminRow) if (competition_identity_match((string)$titleAdminRow['titulo'])) $titleAdminRow['tem_imagem'] = 1;
 unset($titleAdminRow);
 $videosAdmin = $pdo

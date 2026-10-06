@@ -68,6 +68,7 @@ function competition_identity_match(string $name): ?string
     if (str_contains($compact, 'brasileir')) return 'brasileirao';
     if (str_contains($compact, 'amistoso') && str_contains($compact, 'dream')) return 'amistosos dreamteam';
     if (str_contains($compact, 'copadobrasil')) return 'copa do brasil';
+    if (str_starts_with($compact, 'recopa')) return 'recopa';
     if (str_contains($compact, 'supercopa')) return 'supercopa r';
     if (str_starts_with($compact, 'mundial')) return 'mundial';
     if (str_starts_with($compact, 'eventocarnavalesco')) return 'evento carnavalesco';
