@@ -54,6 +54,7 @@ if ($requestTooLarge) {
 try {
     $pdo = db();
     competition_identities_seed($pdo);
+    competition_sync_finished_titles($pdo);
     competition_schedule_ensure_schema($pdo);
     mercado_garantir_estrutura($pdo);
     elenco_geral_garantir_estrutura($pdo);
