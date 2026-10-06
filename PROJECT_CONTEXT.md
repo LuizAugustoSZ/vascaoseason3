@@ -20,6 +20,7 @@ O **Vascão Season 3** é um sistema web para organizar campeonatos da comunidad
 ## 2. Princípios do projeto
 
 - O campeão de mata-mata usa a quantidade de jogos ativos cadastrados na Final, incluindo pendentes; `campeonatos.formato` descreve as fases anteriores. Supercopas usam o formato geral. Todas as telas públicas de títulos reconciliam edições encerradas; uma decisão histórica incompleta não apaga uma conquista já registrada.
+- A sincronização inclui `competicao_identidades` antes de `campeonatos`, preservando vínculos, taças, logos e ordem da vitrine na homologação.
 
 - A vitrine permite ordenar as taças diretamente pela conta ativa Slower com papel Admin Master, validada no banco. A posição pública fica em `competicao_identidades.ordem_exibicao`; novas taças sem posição ficam ao final. Conquistas históricas manuais da mesma edição/Season 3 têm precedência sobre a geração automática de títulos.
 
