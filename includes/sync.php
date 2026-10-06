@@ -189,6 +189,12 @@ function sync_replace_snapshot(PDO $pdo, array $snapshot): void
             );
         }
     }
+    // Homologações antigas podem ainda não ter aberto o perfil/importador
+    // que instala as colunas de clube e o armazenamento Unicode de súmulas.
+    require_once __DIR__ . '/mercado.php';
+    require_once __DIR__ . '/summary-storage.php';
+    mercado_garantir_estrutura($pdo);
+    summary_ensure_utf8_storage($pdo);
     $pdo->beginTransaction();
     try {
         $pdo->exec("SET FOREIGN_KEY_CHECKS=0");
