@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 const SYNC_TABLES = [
     "participantes",
+    "competicao_identidades",
     "campeonatos",
     "clubes_campeonato",
     "jogadores_elenco",
