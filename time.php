@@ -7,6 +7,7 @@ require __DIR__ . "/includes/mercado.php";
 require __DIR__ . "/includes/elenco-geral.php";
 require __DIR__ . "/includes/proximo-confronto.php";
 require __DIR__ . "/includes/lineup-image.php";
+require __DIR__ . "/includes/club-hero.php";
 $id = (int) ($_GET["id"] ?? 0);
 if ($id <= 0 && account_logged_in()) {
     $linkedParticipantId = (int)(account_participant_id() ?? 0);
@@ -31,6 +32,7 @@ $timelineNextKey = '';
 $titulos = [];
 $responsavel = null;
 $elencoPublico = [];
+$heroisPublicos = [];
 $elencoGeralPublico = [];
 $clubePublico = null;
 $competicaoReservasSituacao = null;
@@ -52,6 +54,7 @@ if ($requestTooLarge) {
 try {
     $pdo = db();
     competition_identities_seed($pdo);
+    competition_sync_finished_titles($pdo);
     competition_schedule_ensure_schema($pdo);
     mercado_garantir_estrutura($pdo);
     elenco_geral_garantir_estrutura($pdo);
@@ -109,13 +112,20 @@ try {
             $pdo->prepare("UPDATE clubes_gerais SET saldo=?,cofre_configurado=1 WHERE participante_id=?")->execute([$saldo, $id]);
         }
         if (in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_heroi_clube'], true)) {
-            $favoritoId = (int)($_POST['jogador_favorito_id'] ?? 0);
+            $favoritoValor = (string)($_POST['jogador_favorito_id'] ?? '');
+            $origemFavorito = str_starts_with($favoritoValor, 'geral:') ? 'geral' : 'campeonato';
+            $favoritoId = (int)($origemFavorito === 'geral' ? substr($favoritoValor, 6) : $favoritoValor);
             if ($favoritoId > 0) {
-                $favoriteStmt = $pdo->prepare("SELECT COUNT(*) FROM jogadores_elenco WHERE id=? AND campeonato_id=? AND participante_id=? AND ativo=1");
-                $favoriteStmt->execute([$favoritoId, $campeonatoPerfilId, $id]);
+                if ($origemFavorito === 'geral') {
+                    $favoriteStmt = $pdo->prepare("SELECT COUNT(*) FROM jogadores_gerais WHERE id=? AND participante_id=? AND ativo=1");
+                    $favoriteStmt->execute([$favoritoId, $id]);
+                } else {
+                    $favoriteStmt = $pdo->prepare("SELECT COUNT(*) FROM jogadores_elenco e LEFT JOIN jogadores_gerais g ON g.id=e.jogador_geral_id WHERE e.id=? AND e.campeonato_id=? AND e.participante_id=? AND e.ativo=1 AND (e.jogador_geral_id IS NULL OR (g.ativo=1 AND g.participante_id=e.participante_id))");
+                    $favoriteStmt->execute([$favoritoId, $campeonatoPerfilId, $id]);
+                }
                 if (!(int)$favoriteStmt->fetchColumn()) throw new RuntimeException('Escolha um jogador ativo do seu próprio elenco.');
             }
-            $pdo->prepare("UPDATE clubes_campeonato SET jogador_favorito_id=? WHERE campeonato_id=? AND participante_id=?")->execute([$favoritoId ?: null, $campeonatoPerfilId, $id]);
+            $pdo->prepare("UPDATE clubes_campeonato SET jogador_favorito_id=?,jogador_favorito_origem=? WHERE campeonato_id=? AND participante_id=?")->execute([$favoritoId ?: null, $origemFavorito, $campeonatoPerfilId, $id]);
         }
         header('Location: time.php?id=' . $id . '&perfil=salvo');
         exit;
@@ -217,7 +227,7 @@ try {
         $previewUpcoming = array_slice($proximas, 0, 5);
         $timelinePreview = array_merge(array_reverse($previewUpcoming), array_slice($jogadas, 0, 5 - count($previewUpcoming)));
         $stmt = $pdo->prepare(
-            "SELECT id,titulo,temporada,conquistado_em,CASE WHEN imagem_base64 IS NOT NULL AND imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem
+            "SELECT id,campeonato_id,titulo,temporada,conquistado_em,CASE WHEN imagem_base64 IS NOT NULL AND imagem_base64<>'' THEN 1 ELSE 0 END tem_imagem
              FROM titulos
              WHERE participante_id=?
              ORDER BY id",
@@ -265,7 +275,7 @@ try {
             $identityCompetitions = $pdo->query('SELECT c.id,c.nome FROM campeonatos c WHERE c.ativo=1 AND c.identidade_id IS NOT NULL ORDER BY c.id DESC')->fetchAll();
             foreach ($titulos as &$titleItem) {
                 $titleKey = competition_identity_match((string)$titleItem['titulo']);
-                $titleItem['trofeu_url'] = $titleKey ? 'api/competicao-imagem.php?chave=' . rawurlencode($titleKey) . '&tipo=trofeu' : (!empty($titleItem['tem_imagem']) ? 'api/titulo-imagem.php?titulo_id=' . (int)$titleItem['id'] : null);
+                $titleItem['trofeu_url'] = !empty($titleItem['campeonato_id']) ? competition_image_url((int)$titleItem['campeonato_id'], 'trofeu') : ($titleKey ? 'api/competicao-imagem.php?chave=' . rawurlencode($titleKey) . '&tipo=trofeu' : (!empty($titleItem['tem_imagem']) ? 'api/titulo-imagem.php?titulo_id=' . (int)$titleItem['id'] : null));
                 foreach ($identityCompetitions as $identityCompetition) {
                     if (!$titleItem['trofeu_url'] && $titleKey && competition_identity_match((string)$identityCompetition['nome']) === $titleKey) {
                         $titleItem['trofeu_url'] = competition_image_url((int)$identityCompetition['id'], 'trofeu');
@@ -277,7 +287,7 @@ try {
         } catch (Throwable $ignored) {
         }
         try {
-            $stmt = $pdo->prepare("SELECT cc.saldo,cc.cofre_configurado,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,c.nome campeonato,c.status,
+            $stmt = $pdo->prepare("SELECT cc.saldo,cc.cofre_configurado,cc.formacao,cc.campeonato_id,cc.mural,cc.jogador_favorito_id,cc.jogador_favorito_origem,c.nome campeonato,c.status,
                     EXISTS(SELECT 1 FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND p.status IN ('finalizada','wo','penalidade')) AS iniciada
                 FROM clubes_campeonato cc
                 JOIN campeonatos c ON c.id=cc.campeonato_id
@@ -298,7 +308,7 @@ try {
                 $lineupImageData = $lineupImageStmt->fetch() ?: null;
                 if ($lineupImageData && !empty($lineupImageData['tem_conteudo'])) $lineupImagePath = 'api/imagem-escalacao.php?campeonato_id=' . (int)$clubePublico['campeonato_id'] . '&participante_id=' . $id;
                 elseif ($lineupImageData && is_file(__DIR__ . '/' . (string)$lineupImageData['caminho'])) $lineupImagePath = (string)$lineupImageData['caminho'];
-                $stmt = $pdo->prepare("SELECT id,nome,overall,posicao,grupo,ordem,campo_x,campo_y FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
+                $stmt = $pdo->prepare("SELECT id,jogador_geral_id,nome,overall,posicao,grupo,ordem,campo_x,campo_y FROM jogadores_elenco WHERE campeonato_id=? AND participante_id=? AND ativo=1 ORDER BY grupo='titular' DESC,ordem,nome");
                 $stmt->execute([(int)$clubePublico['campeonato_id'], $id]);
                 $elencoPublico = $stmt->fetchAll();
                 $stmt = $pdo->prepare("SELECT tipo,origem,origem_detalhe,valor_origem,moeda_origem,jogador_nome,jogador_overall,jogador_posicao,valor,criado_em
@@ -309,8 +319,18 @@ try {
                     ORDER BY criado_em DESC");
                 $stmt->execute([$id, $id]);
                 $transferenciasPublicas = $stmt->fetchAll();
-                foreach ($elencoPublico as $jogadorElenco) {
-                    if ((int)$jogadorElenco['id'] === (int)$clubePublico['jogador_favorito_id']) {
+                $heroisPublicos = club_hero_candidates($elencoGeralPublico, $elencoPublico);
+                $favoritoValorAtual = ($clubePublico['jogador_favorito_origem'] === 'geral' ? 'geral:' : '') . (string)$clubePublico['jogador_favorito_id'];
+                if ($clubePublico['jogador_favorito_origem'] !== 'geral') {
+                    foreach ($elencoPublico as $legacyPlayer) {
+                        if ((int)$legacyPlayer['id'] === (int)$clubePublico['jogador_favorito_id'] && !empty($legacyPlayer['jogador_geral_id'])) {
+                            $favoritoValorAtual = 'geral:' . (int)$legacyPlayer['jogador_geral_id'];
+                            break;
+                        }
+                    }
+                }
+                foreach ($heroisPublicos as $jogadorElenco) {
+                    if ($jogadorElenco['hero_value'] === $favoritoValorAtual) {
                         $jogadorFavorito = $jogadorElenco;
                         break;
                     }
@@ -688,7 +708,7 @@ function render_recent_matches(array $games, string $nextKey = ''): void
                         ) ?></p>
                 </article>
             </section>
-            <?php if ($canEditClubProfile && $clubePublico): ?><div class="modal fade" id="club-profile-edit-modal" tabindex="-1" aria-labelledby="club-profile-edit-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><div><small class="eyebrow">Conteúdo e finanças do clube</small><h2 class="modal-title" id="club-profile-edit-title">EDITAR PERFIL</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_perfil_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><div class="mb-3"><label class="form-label" for="club-about">Sobre o clube</label><textarea class="form-control" id="club-about" name="descricao" maxlength="1200" rows="4" placeholder="Conte a história e a identidade do clube..."><?= e($time['descricao']) ?></textarea><small class="text-secondary">Este texto aparece publicamente no card Sobre o clube.</small></div><div class="mb-3"><label class="form-label" for="club-treasury">Cofre do clube</label><div class="input-group"><span class="input-group-text">R$</span><input class="form-control" id="club-treasury" name="saldo" inputmode="numeric" value="<?= e(number_format((float)$clubePublico['saldo'], 0, ',', '.')) ?>" required></div><small class="text-secondary">O cofre pode ser corrigido a qualquer momento.</small></div><div><label class="form-label" for="club-favorite">Herói do time</label><select class="form-select" id="club-favorite" name="jogador_favorito_id"><option value="">Nenhum jogador</option><?php foreach ($elencoPublico as $jogador): ?><option value="<?= (int)$jogador['id'] ?>" <?= (int)$jogador['id'] === (int)($clubePublico['jogador_favorito_id'] ?? 0) ? 'selected' : '' ?>><?= e($jogador['nome']) ?> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></option><?php endforeach; ?></select><small class="text-secondary">Escolha entre os jogadores ativos do elenco quem representa o clube.</small></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar perfil</button></div></form></div></div></div><?php endif; ?>
+            <?php if ($canEditClubProfile && $clubePublico): ?><div class="modal fade" id="club-profile-edit-modal" tabindex="-1" aria-labelledby="club-profile-edit-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><div><small class="eyebrow">Conteúdo e finanças do clube</small><h2 class="modal-title" id="club-profile-edit-title">EDITAR PERFIL</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_perfil_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><div class="mb-3"><label class="form-label" for="club-about">Sobre o clube</label><textarea class="form-control" id="club-about" name="descricao" maxlength="1200" rows="4" placeholder="Conte a história e a identidade do clube..."><?= e($time['descricao']) ?></textarea><small class="text-secondary">Este texto aparece publicamente no card Sobre o clube.</small></div><div class="mb-3"><label class="form-label" for="club-treasury">Cofre do clube</label><div class="input-group"><span class="input-group-text">R$</span><input class="form-control" id="club-treasury" name="saldo" inputmode="numeric" value="<?= e(number_format((float)$clubePublico['saldo'], 0, ',', '.')) ?>" required></div><small class="text-secondary">O cofre pode ser corrigido a qualquer momento.</small></div><div><label class="form-label" for="club-favorite">Herói do time</label><select class="form-select" id="club-favorite" name="jogador_favorito_id"><option value="">Nenhum jogador</option><?php foreach ($heroisPublicos as $jogador): ?><option value="<?= e($jogador['hero_value']) ?>" <?= $jogador['hero_value'] === ($favoritoValorAtual ?? '') ? 'selected' : '' ?>><?= e($jogador['nome']) ?> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></option><?php endforeach; ?></select><small class="text-secondary">Escolha entre os jogadores ativos do elenco quem representa o clube.</small></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar perfil</button></div></form></div></div></div><?php endif; ?>
             <?php if ($canEditClubProfile && $clubePublico): ?>
                 <div class="modal fade club-card-modal" id="lineup-image-modal" tabindex="-1" aria-labelledby="lineup-image-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
                     <form method="post" enctype="multipart/form-data" data-lineup-upload-form><div class="modal-header"><div><small class="eyebrow">Somente visual</small><h2 class="modal-title" id="lineup-image-title">IMAGEM DA ESCALAÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="salvar_imagem_escalacao"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><label class="lineup-dropzone" for="lineup-image-input" data-lineup-dropzone><input id="lineup-image-input" type="file" name="imagem_escalacao" accept="image/png,image/jpeg,image/webp" required><img data-lineup-preview <?= $lineupImagePath ? 'src="' . e($lineupImagePath) . '"' : 'hidden' ?> alt="Prévia da escalação"><span data-lineup-drop-copy><b>Arraste a imagem aqui</b><small>ou clique para escolher · PNG, JPEG ou WebP · até 12 MB</small></span></label><p class="lineup-upload-help">No Discord, use <code>..time @usuario</code> para gerar a imagem pelo bot. Depois, copie e cole, ou salve a imagem e envie aqui seguindo as indicações acima. A imagem é somente visual e não altera os titulares cadastrados.</p></div><div class="modal-footer"><?php if ($lineupImagePath): ?><button class="btn btn-outline-danger me-auto" type="submit" form="lineup-image-remove-form">Remover imagem</button><?php endif; ?><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger" type="submit"><?= $lineupImagePath ? 'Substituir imagem' : 'Enviar imagem' ?></button></div></form>
@@ -696,7 +716,7 @@ function render_recent_matches(array $games, string $nextKey = ''): void
                 </div></div></div>
                 <div class="modal fade club-card-modal" id="club-about-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title">EDITAR SOBRE O CLUBE</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_sobre_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><label class="form-label" for="club-about-only">Sobre o clube</label><textarea class="form-control" id="club-about-only" name="descricao" maxlength="1200" rows="8" placeholder="Conte a história e a identidade do clube..."><?= e($time['descricao']) ?></textarea></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar sobre</button></div></form></div></div></div>
                 <div class="modal fade club-card-modal" id="club-treasury-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title">EDITAR COFRE</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_cofre_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><label class="form-label" for="club-treasury-only">Saldo do cofre</label><div class="input-group"><span class="input-group-text">R$</span><input class="form-control" id="club-treasury-only" name="saldo" inputmode="numeric" value="<?= e(number_format((float)$clubePublico['saldo'], 0, ',', '.')) ?>" required></div><small class="text-secondary">Confirme o saldo antes de iniciar a gestão do elenco.</small></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar cofre</button></div></form></div></div></div>
-                <div class="modal fade club-card-modal" id="club-hero-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title">EDITAR HERÓI DO TIME</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_heroi_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><label class="form-label" for="club-hero-only">Herói do time</label><select class="form-select" id="club-hero-only" name="jogador_favorito_id"><option value="">Nenhum jogador</option><?php foreach ($elencoPublico as $jogador): ?><option value="<?= (int)$jogador['id'] ?>" <?= (int)$jogador['id'] === (int)($clubePublico['jogador_favorito_id'] ?? 0) ? 'selected' : '' ?>><?= e($jogador['nome']) ?> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></option><?php endforeach; ?></select></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar herói</button></div></form></div></div></div>
+                <div class="modal fade club-card-modal" id="club-hero-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title">EDITAR HERÓI DO TIME</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="atualizar_heroi_clube"><input type="hidden" name="campeonato_id" value="<?= (int)$clubePublico['campeonato_id'] ?>"><label class="form-label" for="club-hero-only">Herói do time</label><select class="form-select" id="club-hero-only" name="jogador_favorito_id"><option value="">Nenhum jogador</option><?php foreach ($heroisPublicos as $jogador): ?><option value="<?= e($jogador['hero_value']) ?>" <?= $jogador['hero_value'] === ($favoritoValorAtual ?? '') ? 'selected' : '' ?>><?= e($jogador['nome']) ?> · <?= (int)$jogador['overall'] ?> · <?= e($jogador['posicao']) ?></option><?php endforeach; ?></select></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar herói</button></div></form></div></div></div>
             <?php endif; ?>
         </main>
         <?php if ($timelineGames): ?>
