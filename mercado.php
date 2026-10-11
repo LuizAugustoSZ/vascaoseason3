@@ -335,6 +335,13 @@ try {
     $error = $e->getMessage();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'editar_jogador_rapido' && ($_SERVER['HTTP_ACCEPT'] ?? '') === 'application/json') {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code($error === '' ? 200 : 422);
+    echo json_encode(['ok' => $error === '', 'message' => $error ?: $message, 'player' => $error === '' ? ['id' => $jogadorGeralId, 'name' => $nome, 'overall' => $overall, 'position' => $posicao] : null], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 function salvar_jogador(PDO $pdo, int $campeonato, int $participante, array $data): int
 {
     $nome = trim((string)($data['nome'] ?? ''));
@@ -572,6 +579,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const counts = () => ({starters: cards.filter(card => card.dataset.state === 'starter').length, reserves: cards.filter(card => card.dataset.state === 'reserve').length});
         const snapshot = () => cards.map(card => card.dataset.state).join(',') + '|' + (form.querySelector('[name="formacao"]')?.value || '') + '|' + (form.querySelector('[name="formacao_custom"]')?.value || '');
         const initial = snapshot();
+        const draftKey = 'market-roster:<?= (int)($_SESSION['conta_id'] ?? 0) ?>:<?= $participantId ?>:<?= $campeonatoId ?>:' + form.dataset.rosterForm;
+        const savedAction = <?= json_encode($error === '' && $message !== '' ? ($_POST['action'] ?? '') : '') ?>;
+        const cardKey = card => card.querySelector('input[name="titular_geral_id[]"], input[name="titular_id[]"]').value;
+        const persistDraft = () => {
+            try {
+                if (snapshot() === initial) { sessionStorage.removeItem(draftKey); return; }
+                sessionStorage.setItem(draftKey, JSON.stringify({states:Object.fromEntries(cards.map(card => [cardKey(card), card.dataset.state])), formation:formationSelect?.value, custom:formationCustom?.value, scroll:window.scrollY}));
+            } catch (_) {}
+        };
         const notify = message => askClubConfirmation(registration ? 'REVISE A INSCRIÇÃO' : 'REVISE A ESCALAÇÃO', message, 'Entendi');
         const sectorNames = {ataque: 'Ataque', meio: 'Meio', defesa: 'Defesa', goleiro: 'Goleiro'};
         const sectorOf = card => ({ATA:'ataque', PD:'ataque', PE:'ataque', MEI:'meio', MC:'meio', VOL:'meio', LE:'defesa', LD:'defesa', ZAG:'defesa', GOL:'goleiro'}[card.dataset.position] || 'meio');
@@ -643,7 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const search = tools.querySelector('[data-roster-search]');
         const status = tools.querySelector('[data-roster-status]');
         const sort = tools.querySelector('[data-roster-sort]');
-        function filterAndSort() {
+        function filterAndSort(reorder = true) {
             const focused = document.activeElement;
             const query = normalize(search.value.trim());
             const rank = card => { const index = positions.indexOf(card.dataset.position); return index < 0 ? positions.length : index; };
@@ -656,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ordered.forEach(card => {
                 card.hidden = (selectedPosition !== 'all' && card.dataset.position !== selectedPosition) || (status.value !== 'all' && card.dataset.state !== status.value) || !normalize(card.querySelector('.registration-name').textContent).includes(query);
                 if (!card.hidden) visible++;
-                grid.append(card);
+                if (reorder && grid.children[ordered.indexOf(card)] !== card) grid.insertBefore(card, grid.children[ordered.indexOf(card)] || null);
             });
             summary.textContent = visible + ' de ' + cards.length + ' jogadores · Posição primeiro, do ataque ao gol · Filtros não alteram a seleção';
             empty.hidden = visible !== 0;
@@ -720,8 +736,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             setState(card, state);
             updateCounts();
-            filterAndSort();
-            if (card.hidden) status.focus();
+            filterAndSort(false);
+            if (card.hidden) status.focus({preventScroll:true});
+            persistDraft();
         });
         form.addEventListener('submit', event => {
             const count = counts();
@@ -734,6 +751,20 @@ document.addEventListener('DOMContentLoaded', () => {
             delete form.dataset.confirmedSubmit;
             notify(count.starters !== 11 ? 'Selecione exatamente 11 titulares antes de salvar.' : registration && count.reserves > 15 ? 'A inscrição permite no máximo 15 reservas.' : 'Ajuste os titulares aos limites de ataque, meio, defesa e goleiro da formação.');
         }, true);
+        try {
+            if (savedAction === form.querySelector('[name="action"]').value) sessionStorage.removeItem(draftKey);
+            const draft = JSON.parse(sessionStorage.getItem(draftKey) || 'null');
+            if (draft) {
+                cards.forEach(card => { const state = draft.states?.[cardKey(card)]; if (state && (registration ? ['out','reserve','starter'] : ['reserve','starter']).includes(state)) setState(card, state); });
+                if (formationSelect && [...formationSelect.options].some(option => option.value === draft.formation)) formationSelect.value = draft.formation;
+                if (formationCustom && typeof draft.custom === 'string') formationCustom.value = draft.custom;
+                requestAnimationFrame(() => window.scrollTo(0, draft.scroll || 0));
+            }
+        } catch (_) {}
+        form.addEventListener('change', persistDraft);
+        form.addEventListener('input', persistDraft);
+        window.addEventListener('pagehide', persistDraft);
+        form.addEventListener('market-player-updated', updateCounts);
         updateCounts();
         filterAndSort();
         const save = form.querySelector('[data-registration-save]');
