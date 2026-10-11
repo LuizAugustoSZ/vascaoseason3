@@ -343,3 +343,46 @@ document.querySelectorAll('[data-player-ranking]').forEach(module => {
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
 }
+
+document.addEventListener('DOMContentLoaded', () => window.ClubInstantSave?.initialize({
+  actions:['atualizar_perfil_clube','atualizar_sobre_clube','atualizar_cofre_clube','atualizar_heroi_clube','salvar_imagem_escalacao','remover_imagem_escalacao'],
+  update(fresh, form) {
+    ['.treasury-module','.favorite-player-module','.about-module'].forEach(selector => {
+      const target = document.querySelector(selector), source = fresh.querySelector(selector);
+      if (target && source) target.replaceChildren(...source.cloneNode(true).childNodes);
+    });
+    if (!['salvar_imagem_escalacao','remover_imagem_escalacao'].includes(form.elements.action.value)) return;
+    const panel = document.querySelector('[data-lineup-panel="image"]');
+    const source = fresh.querySelector('[data-lineup-panel="image"]');
+    if (panel && source) panel.replaceChildren(...source.cloneNode(true).childNodes);
+    const imageTab = document.querySelector('[data-lineup-tab="image"]');
+    const hasImage = Boolean(panel?.querySelector('img'));
+    if (imageTab) imageTab.disabled = !hasImage;
+    const selected = document.querySelector('[data-lineup-tab].active');
+    if (!hasImage && selected === imageTab) document.querySelector('[data-lineup-tab="players"]')?.click();
+    else selected?.click();
+    panel?.querySelector('img')?.addEventListener('load', () => selected?.click(), {once:true});
+  },
+  afterSave(fresh, form) {
+    if (!['salvar_imagem_escalacao','remover_imagem_escalacao'].includes(form.elements.action.value)) return;
+    const modal = document.getElementById('lineup-image-modal');
+    const source = fresh.getElementById('lineup-image-modal');
+    const footer = modal?.querySelector('.modal-footer');
+    const nextFooter = source?.querySelector('.modal-footer');
+    if (footer && nextFooter) footer.replaceChildren(...nextFooter.childNodes);
+    const oldRemove = document.getElementById('lineup-image-remove-form');
+    const nextRemove = fresh.getElementById('lineup-image-remove-form');
+    if (oldRemove && !nextRemove) oldRemove.remove();
+    else if (!oldRemove && nextRemove) modal.querySelector('.modal-content').append(nextRemove);
+    const upload = modal?.querySelector('[data-lineup-upload-form]');
+    if (upload) {
+      upload.querySelector('input[type="file"]').value = '';
+      const preview = upload.querySelector('[data-lineup-preview]');
+      const image = fresh.querySelector('[data-lineup-panel="image"] img');
+      if (image) preview.src = image.getAttribute('src');
+      else preview.removeAttribute('src');
+      preview.hidden = !image;
+      upload.querySelector('[data-lineup-drop-copy]').hidden = Boolean(image);
+    }
+  }
+}));

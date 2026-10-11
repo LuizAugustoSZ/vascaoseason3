@@ -46,8 +46,11 @@ $canEditClubProfile = account_logged_in() && (
 );
 $profileNotice = isset($_GET['perfil']) ? 'Perfil do clube atualizado.' : '';
 $lineupImageError = mb_substr(trim((string)($_GET['erro_imagem'] ?? '')), 0, 300);
+$instantSave = $_SERVER['REQUEST_METHOD'] === 'POST' && str_contains(strtolower((string)($_SERVER['HTTP_ACCEPT'] ?? '')), 'application/json');
+$instantSaveMessage = '';
 $requestTooLarge = $_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0;
 if ($requestTooLarge) {
+    if ($instantSave) { http_response_code(413); header('Content-Type: application/json; charset=utf-8'); echo json_encode(['ok'=>false,'message'=>'A imagem ultrapassa o limite de 12 MB.'], JSON_UNESCAPED_UNICODE); exit; }
     header('Location: time.php?id=' . $id . '&erro_imagem=' . rawurlencode('A imagem ultrapassa o limite de 12 MB.') . '#conteudo-clube');
     exit;
 }
@@ -84,8 +87,10 @@ try {
             } catch (Throwable $error) { lineup_image_delete_file($newPath); throw $error; }
             lineup_image_delete_file($oldPath);
         }
-        header('Location: time.php?id=' . $id . '&imagem_escalacao=salva'); exit;
+        if ($instantSave) $instantSaveMessage = $profileAction === 'remover_imagem_escalacao' ? 'Imagem da escalação removida.' : 'Imagem da escalação salva.';
+        else { header('Location: time.php?id=' . $id . '&imagem_escalacao=salva'); exit; }
         } catch (RuntimeException $error) {
+            if ($instantSave) { http_response_code(422); header('Content-Type: application/json; charset=utf-8'); echo json_encode(['ok'=>false,'message'=>$error->getMessage()],JSON_UNESCAPED_UNICODE); exit; }
             header('Location: time.php?id=' . $id . '&erro_imagem=' . rawurlencode($error->getMessage()) . '#conteudo-clube'); exit;
         }
     }
@@ -100,6 +105,7 @@ try {
         if (!(int)$clubCheck->fetchColumn()) {
             throw new RuntimeException('O clube não participa deste campeonato.');
         }
+        $pdo->beginTransaction();
         mercado_clube($pdo, $campeonatoPerfilId, $id, true);
         if (in_array($profileAction, ['atualizar_perfil_clube', 'atualizar_sobre_clube'], true)) {
             $descricao = mb_substr(trim((string)($_POST['descricao'] ?? '')), 0, 1200);
@@ -127,8 +133,9 @@ try {
             }
             $pdo->prepare("UPDATE clubes_campeonato SET jogador_favorito_id=?,jogador_favorito_origem=? WHERE campeonato_id=? AND participante_id=?")->execute([$favoritoId ?: null, $origemFavorito, $campeonatoPerfilId, $id]);
         }
-        header('Location: time.php?id=' . $id . '&perfil=salvo');
-        exit;
+        $pdo->commit();
+        if ($instantSave) $instantSaveMessage = 'Dados do clube salvos.';
+        else { header('Location: time.php?id=' . $id . '&perfil=salvo'); exit; }
     }
     $stmt = $pdo->prepare(
         "SELECT id,nome,time_nome,sigla,escudo_url,descricao FROM participantes WHERE id=? AND ativo=1 LIMIT 1",
@@ -348,6 +355,11 @@ try {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
+    if ($instantSave) {
+        $saved = $instantSaveMessage !== '';
+        http_response_code($saved ? 200 : 422); header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok'=>$saved,'message'=>$saved ? $instantSaveMessage : ($e instanceof PDOException ? 'Não foi possível salvar os dados do clube.' : $e->getMessage()),'html'=>null], JSON_UNESCAPED_UNICODE); exit;
+    }
     $databaseUnavailable = true;
 }
 if (!$time) {
@@ -551,6 +563,7 @@ function render_recent_matches(array $games, string $nextKey = ''): void
         </section>
     <?php endforeach;
 }
+if ($instantSave) ob_start();
 ?>
 <!doctype html>
 <html lang="pt-BR" data-bs-theme="dark">
@@ -574,7 +587,7 @@ function render_recent_matches(array $games, string $nextKey = ''): void
     <link rel="stylesheet" href="assets/css/socials.css?v=<?= filemtime(__DIR__ . "/assets/css/socials.css") ?>">
 <?php site_favicon($time['escudo_url'] ?? null); ?></head>
 
-<body>
+<body data-instant-save-scope="<?= (int)($_SESSION['conta_id'] ?? 0) ?>:<?= $id ?>">
     <?php public_navbar('time'); ?>
     <?php if (
         !$time
@@ -733,9 +746,15 @@ function render_recent_matches(array $games, string $nextKey = ''): void
             </div>
         <?php endif; ?>
         <?php endif; ?><?php public_footer(); ?><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="assets/js/club-instant-save.js?v=<?= filemtime(__DIR__ . '/assets/js/club-instant-save.js') ?>"></script>
         <script src="assets/js/team-page.js?v=<?= filemtime(
                                                     __DIR__ . "/assets/js/team-page.js",
                                                 ) ?>"></script>
 </body>
 
 </html>
+
+<?php if ($instantSave) {
+ $html = ob_get_clean();header('Content-Type: application/json; charset=utf-8');
+ echo json_encode(['ok'=>true,'message'=>$instantSaveMessage,'html'=>$html],JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+} ?>
