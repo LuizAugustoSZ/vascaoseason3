@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         card.querySelector('.registration-edit-player').setAttribute('aria-label',`Editar ${player.name}`);
         card.closest('form').dispatchEvent(new Event('market-player-updated'));
       });
+      delete form.dataset.saving;
       bootstrap.Modal.getOrCreateInstance(modal).hide();
     }catch(error){feedback.className='alert alert-danger';feedback.textContent=error instanceof SyntaxError?'A sessão pode ter expirado. Suas seleções foram preservadas; tente novamente.':error.message;feedback.hidden=false;}
     finally{delete form.dataset.saving;submit.disabled=false;submit.textContent='Salvar jogador';}
