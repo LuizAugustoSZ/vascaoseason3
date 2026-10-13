@@ -1,4 +1,4 @@
-(function(){
+window.initializeAdminLists = function(){
 const state=window.__adminListState||(window.__adminListState={});
 const key=table=>{const pane=table?.closest('.tab-pane');return pane?`${pane.id}:${[...pane.querySelectorAll('table')].indexOf(table)}`:''};
 const savedFor=table=>state[key(table)]||{};
@@ -60,4 +60,5 @@ function setupUniversal(){document.querySelectorAll('.tab-pane table').forEach(t
   controls.addEventListener('input',()=>{page=1;render()});controls.addEventListener('change',()=>{page=1;render()});pagination.addEventListener('click',event=>{if(event.target.closest('.prev'))page--;else if(event.target.closest('.next'))page++;else return;render()});render();
 })}
 setupLeague();setupKnockout();setupUniversal();
-})();
+};
+window.initializeAdminLists();

@@ -36,19 +36,19 @@ function is_ajax_request(): bool
         strtolower((string) ($_SERVER["HTTP_X_REQUESTED_WITH"] ?? "")) ===
             "xmlhttprequest";
 }
-function redirect_notice(string $message, string $tab = ""): never
+function redirect_notice(string $message, string $tab = "", array $extra = []): never
 {
     audit_post_success($tab !== "" ? $tab: "admin", $message);
-    $_SESSION["notice"] = $message;
     if (is_ajax_request()) {
         header("Content-Type: application/json; charset=utf-8");
         echo json_encode(
-            ["ok" => true, "message" => $message, "tab" => $tab],
+            array_merge(["ok" => true, "message" => $message, "tab" => $tab, "removed" => ($_POST["action"] ?? "") === "desativar_noticia"], $extra),
             JSON_UNESCAPED_UNICODE,
         );
         exit();
     }
 
+    $_SESSION["notice"] = $message;
     header(
         "Location: index.php" . ($tab !== "" ? "?tab=" . urlencode($tab): ""),
     );
@@ -790,7 +790,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if (in_array($status, ['finalizada','finalizado','wo','penalidade'], true)) throw new RuntimeException('Este jogo já foi finalizado. Seu calendário não pode ser reagendado nesta opção.');
             $pdo->prepare("UPDATE $table SET data_partida=? WHERE id=? AND ativo=1")->execute([$date, $id]);
             $pdo->commit();
-            redirect_notice('Data do jogo atualizada.', $origin === 'pontos' ? 'partidas' : 'mata');
+            redirect_notice('Data do jogo atualizada.', $origin === 'pontos' ? 'jogos' : 'mata', ['game'=>['id'=>$id, 'origin'=>$origin, 'date'=>$date, 'formatted'=>format_datetime_br($date)]]);
         }
         if ($action === "partida") {
             $partidaId = (int) ($_POST["partida_id"] ?? 0);
@@ -1574,6 +1574,7 @@ function admin_nav_icon(string $name): string
     return '<i data-lucide="' . $icon . '" class="lucide"></i>';
 }
 
+if (isset($_GET['_fragment'])) ob_start();
 ?>
 <!doctype html><html lang="pt-BR" data-bs-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Painel | Season 3</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="../assets/css/style.css?v=<?= filemtime(__DIR__ . '/../assets/css/style.css') ?>"><link rel="stylesheet" href="../assets/css/branding.css?v=5"><link rel="stylesheet" href="../assets/css/news.css?v=<?= filemtime(
     __DIR__ . "/../assets/css/news.css",
@@ -1680,7 +1681,7 @@ function admin_nav_icon(string $name): string
     (string) $g["gols_b"],
 ) ?>" data-status="<?= e(
     $g["status"],
-) ?>"><i data-lucide="pencil" class="action-icon"></i> Editar</button><?php if (!in_array($g['status'], ['finalizado','wo'], true)): ?><button type="button" class="btn btn-sm btn-outline-info editar-data-jogo" data-origin="mata" data-id="<?= (int)$g['id'] ?>" data-date="<?= e((string)$g['data_partida']) ?>">Data</button><?php endif; ?><?php if (!in_array($g['status'], ['finalizada','wo','penalidade'], true)): ?><button type="button" class="btn btn-sm btn-outline-info editar-data-jogo" data-origin="pontos" data-id="<?= (int)$g['id'] ?>" data-date="<?= e((string)$g['data_partida']) ?>">Data</button><?php endif; ?><form method="post" onsubmit="return confirm('Apagar este confronto do mata-mata?')"><input type="hidden" name="csrf" value="<?= e(
+) ?>"><i data-lucide="pencil" class="action-icon"></i> Editar</button><?php if (!in_array($g['status'], ['finalizado','wo'], true)): ?><button type="button" class="btn btn-sm btn-outline-info editar-data-jogo" data-origin="mata" data-id="<?= (int)$g['id'] ?>" data-date="<?= e((string)$g['data_partida']) ?>">Data</button><?php endif; ?><form method="post" onsubmit="return confirm('Apagar este confronto do mata-mata?')"><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="desativar_mata"><input type="hidden" name="jogo_mata_id" value="<?= $g[
     "id"
@@ -1852,7 +1853,7 @@ function admin_nav_icon(string $name): string
 ) ?>"></div><div class="col-12"><label class="form-label">Ordem das seções</label><input class="form-control" name="ordem_secoes" value="<?= e(
     $siteConfig["ordem_secoes"],
 ) ?>"><small class="text-secondary">Use os nomes separados por vírgula: noticias, competicao, participantes, artilharia, titulos, midia. A ordem controla a exibição; remova uma chave para ocultar a seção da página inicial e da navegação pública.</small></div></div><button class="btn btn-danger mt-3">Salvar configurações</button></form></section>
-</div></div></main><div id="competition-art-editor" class="competition-art-editor" hidden><div class="competition-art-editor-card" role="dialog" aria-modal="true" aria-labelledby="competition-art-editor-title"><div class="d-flex justify-content-between align-items-start gap-3"><div><small class="eyebrow">Ajustar imagem</small><h3 id="competition-art-editor-title">ENQUADRAR ARTE</h3></div><button type="button" class="btn-close btn-close-white" data-art-cancel aria-label="Fechar"></button></div><p class="text-secondary small">Arraste para posicionar e use o controle para ampliar ou reduzir.</p><div class="competition-art-crop"><canvas width="720" height="480" aria-label="Prévia do enquadramento"></canvas></div><p class="competition-art-note"><strong>Tudo dentro da moldura será salvo.</strong> O quadriculado indica transparência; fundos sólidos ainda permanecem na imagem.</p><label class="form-label mt-3" for="competition-art-zoom">Zoom</label><input id="competition-art-zoom" class="form-range" type="range" min="0.5" max="3" value="1" step="0.01"><div class="d-flex justify-content-end gap-2 mt-3"><button type="button" class="btn btn-outline-light" data-art-cancel>Cancelar</button><button type="button" class="btn btn-danger" data-art-apply>Aplicar enquadramento</button></div></div></div><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="../assets/js/admin-loading.js?v=<?= filemtime(
+</div></div></main><div id="competition-art-editor" class="competition-art-editor" hidden><div class="competition-art-editor-card" role="dialog" aria-modal="true" aria-labelledby="competition-art-editor-title"><div class="d-flex justify-content-between align-items-start gap-3"><div><small class="eyebrow">Ajustar imagem</small><h3 id="competition-art-editor-title">ENQUADRAR ARTE</h3></div><button type="button" class="btn-close btn-close-white" data-art-cancel aria-label="Fechar"></button></div><p class="text-secondary small">Arraste para posicionar e use o controle para ampliar ou reduzir.</p><div class="competition-art-crop"><canvas width="720" height="480" aria-label="Prévia do enquadramento"></canvas></div><p class="competition-art-note"><strong>Tudo dentro da moldura será salvo.</strong> O quadriculado indica transparência; fundos sólidos ainda permanecem na imagem.</p><label class="form-label mt-3" for="competition-art-zoom">Zoom</label><input id="competition-art-zoom" class="form-range" type="range" min="0.5" max="3" value="1" step="0.01"><div class="d-flex justify-content-end gap-2 mt-3"><button type="button" class="btn btn-outline-light" data-art-cancel>Cancelar</button><button type="button" class="btn btn-danger" data-art-apply>Aplicar enquadramento</button></div></div></div><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="../assets/js/async-request.js?v=<?= filemtime(__DIR__ . "/../assets/js/async-request.js") ?>"></script><script src="../assets/js/admin-crud.js?v=<?= filemtime(__DIR__ . "/../assets/js/admin-crud.js") ?>"></script><script src="../assets/js/admin-loading.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/admin-loading.js",
 ) ?>"></script><script src="../assets/js/news-editor.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/news-editor.js",
@@ -1880,3 +1881,5 @@ document.addEventListener('shown.bs.modal', function() {
     }
 });
 </script><?php if (account_is_master()): ?><script>window.adminMarketPacks=<?= json_encode(array_values($marketPacksAdmin), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;window.adminCsrf=<?= json_encode(csrf_token(), JSON_HEX_TAG) ?>;</script><script src="../assets/js/admin-pack-import.js?v=<?= filemtime(__DIR__ . '/../assets/js/admin-pack-import.js') ?>"></script><?php endif; ?><script src="../assets/js/admin-sharing-schedule.js?v=<?= filemtime(__DIR__ . '/../assets/js/admin-sharing-schedule.js') ?>"></script></body></html>
+
+<?php if (isset($_GET['_fragment'])) { $html=ob_get_clean(); header('Content-Type: application/json; charset=utf-8'); echo json_encode(['ok'=>true,'html'=>$html,'games'=>$games,'mataGames'=>$mataGames,'packs'=>array_values($marketPacksAdmin)], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE); } ?>

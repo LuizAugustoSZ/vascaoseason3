@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . "/includes/bootstrap.php";
+require_once __DIR__.'/includes/async-form.php';
 
 if (!account_logged_in()) {
     header("Location: login.php");
@@ -45,6 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $_SESSION["conta_trocar_senha"] = 0;
         session_regenerate_id(true);
         audit_event("edicao", "usuarios", "Senha da conta atualizada.", ["conta_id" => (int)$_SESSION["conta_id"]]);
+        async_form_result(true, 'Senha alterada com sucesso.', ['next'=>'index.php']);
         header("Location: index.php");
         exit();
     } catch (Throwable $e) {
@@ -55,6 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 $obrigatoria = account_must_change_password();
+if ($error !== '') async_form_result(false, $error);
 ?>
 <!doctype html>
 <html lang="pt-BR" data-bs-theme="dark">
@@ -88,7 +91,7 @@ $obrigatoria = account_must_change_password();
                                                                     $error
                                                                 ): ?><div class="alert alert-danger" data-flash-toast><?= e(
                                                                         $error,
-                                                                    ) ?></div><?php endif; ?><form method="post"><input type="hidden" name="csrf" value="<?= e(
+                                                                    ) ?></div><?php endif; ?><form data-async-form method="post"><input type="hidden" name="csrf" value="<?= e(
                                                                                             csrf_token(),
                                                                                         ) ?>">
                 <div class="mb-3"><label class="form-label">Senha temporária ou atual</label><input class="form-control" type="password" name="senha_atual" autocomplete="current-password" required autofocus></div>
@@ -99,6 +102,6 @@ $obrigatoria = account_must_change_password();
                     ): ?><a class="btn btn-link text-secondary w-100 mt-2" href="index.php">Cancelar</a><?php endif; ?><a class="btn btn-link text-secondary w-100" href="logout.php">Sair da conta</a>
         </div>
     </main>
-</body>
+<script src="assets/js/async-request.js?v=<?= filemtime(__DIR__.'/assets/js/async-request.js') ?>"></script><script src="assets/js/public-form-save.js?v=<?= filemtime(__DIR__.'/assets/js/public-form-save.js') ?>"></script></body>
 
 </html>

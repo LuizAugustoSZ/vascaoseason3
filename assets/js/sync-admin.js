@@ -20,7 +20,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
   };
   button.addEventListener('click',async()=>{
+    if(button.dataset.busy==='1')return;
     if(!confirm('Atualizar a homologação com os dados atuais da produção? Os dados de teste das tabelas sincronizadas serão substituídos.'))return;
+    button.dataset.busy='1';
     button.disabled=true;status.textContent='Sincronizando e validando...';
     try{
       const body=new URLSearchParams({csrf});
@@ -28,8 +30,12 @@ document.addEventListener('DOMContentLoaded',()=>{
       const data=await response.json();
       if(!response.ok||!data.ok)throw new Error(data.message||'Falha na sincronização.');
       status.textContent=data.message;button.classList.add('d-none');
+      document.querySelectorAll('.tab-content>.tab-pane').forEach(pane=>{if(!pane.querySelector('iframe'))pane.dataset.stale='1';});
+      const pane=document.querySelector('.tab-content>.tab-pane.active');
+      if(pane&&!pane.querySelector('iframe')){delete pane.dataset.stale;await window.refreshAdminPane?.(pane.id.replace('tab-',''));}
       setTimeout(()=>control.classList.add('d-none'),3500);
-    }catch(error){status.textContent=error.message;button.disabled=false;}
+    }catch(error){status.textContent=error.message;}
+    finally{button.disabled=false;delete button.dataset.busy;}
   });
   check();
 });

@@ -19,4 +19,4 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 }
 $q=$pdo->prepare('SELECT id,kind,title,body,url,created_at,read_at FROM notifications WHERE account_id=? ORDER BY id DESC LIMIT 30');$q->execute([$account]);$items=$q->fetchAll();
 $q=$pdo->prepare('SELECT COUNT(*) FROM notifications WHERE account_id=? AND read_at IS NULL');$q->execute([$account]);
-echo json_encode(['items'=>$items,'unread'=>(int)$q->fetchColumn()],JSON_UNESCAPED_UNICODE);
+echo json_encode(['ok'=>true,'items'=>$items,'unread'=>(int)$q->fetchColumn()],JSON_UNESCAPED_UNICODE);

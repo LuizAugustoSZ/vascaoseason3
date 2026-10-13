@@ -1,4 +1,4 @@
-(() => {
+window.initializeNewsRoundPrompt = function() {
   const championship = document.getElementById('round-prompt-championship');
   const round = document.getElementById('round-prompt-round');
   const stageLabel = document.getElementById('round-prompt-stage-label');
@@ -61,4 +61,5 @@
     status.textContent = 'Prompt copiado! Agora é só colar no ChatGPT.';
   });
   if (championship.value) window.adminLoading.track(loadRounds());
-})();
+};
+window.initializeNewsRoundPrompt();

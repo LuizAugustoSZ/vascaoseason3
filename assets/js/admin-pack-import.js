@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded',()=>{
+window.initializeAdminPackImport = function(){
   const tab=document.getElementById('tab-mercado');if(!tab)return;
   const escape=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
   const panel=document.createElement('div');panel.className='panel admin-form mb-4';
@@ -11,4 +11,5 @@ document.addEventListener('DOMContentLoaded',()=>{
     panel.querySelector('[data-pack-count]').textContent=`${packs.length} identificado${packs.length===1?'':'s'}`;preview.hidden=false;rows.querySelectorAll('[data-pack-edit]').forEach(button=>button.onclick=()=>{const fields=button.closest('[data-pack-row]').querySelector('[data-pack-fields]');fields.hidden=!fields.hidden;if(!fields.hidden)fields.querySelector('input').focus()});if(window.lucide)lucide.createIcons();
   };
   panel.querySelector('#pack-import-analyze').onclick=()=>{const packs=parse(source.value);error.hidden=!!packs.length;if(!packs.length){error.textContent='Nenhum pack foi reconhecido. Confira se cada item contém nome, OVR e valor após o sinal de igual.';preview.hidden=true;return}render(packs)};
-});
+};
+document.addEventListener('DOMContentLoaded',window.initializeAdminPackImport);

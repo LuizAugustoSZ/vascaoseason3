@@ -28,11 +28,13 @@ function getClubConfirmationModal() {
   element.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><small class="eyebrow">Revise antes de continuar</small><h2 class="modal-title" data-confirm-title>CONFIRMAR AÇÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><p data-confirm-message></p><div class="alert alert-secondary mb-0" data-confirm-detail hidden></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Voltar</button><button type="button" class="btn btn-danger" data-confirm-accept>Confirmar</button></div></div></div>';
   document.body.append(element);
   clubConfirmationModal = bootstrap.Modal.getOrCreateInstance(element, {backdrop: 'static'});
+  element.addEventListener('show.bs.modal', () => {element.querySelector('[data-confirm-accept]').disabled=true;});
+  element.addEventListener('shown.bs.modal', () => {element.querySelector('[data-confirm-accept]').disabled=false;});
   element.querySelector('[data-confirm-accept]').addEventListener('click', () => {
     const resolve = clubConfirmationResolve;
     clubConfirmationResolve = null;
+    element.addEventListener('hidden.bs.modal', () => resolve?.(true), {once:true});
     clubConfirmationModal.hide();
-    resolve?.(true);
   });
   element.addEventListener('hidden.bs.modal', () => {
     if (!clubConfirmationResolve) return;
@@ -44,6 +46,7 @@ function getClubConfirmationModal() {
 }
 
 function askClubConfirmation(title, message, acceptLabel, detail = '') {
+  if(clubConfirmationResolve) return Promise.resolve(false);
   const modal = getClubConfirmationModal();
   const element = document.getElementById('club-confirmation-modal');
   element.querySelector('[data-confirm-title]').textContent = title;
@@ -70,21 +73,30 @@ function confirmationDetail(form, action) {
   return '';
 }
 
+window.initializeMarketConfirmations = function() {
 document.querySelectorAll('form[method="post"]').forEach(form => {
+  if(form.dataset.confirmationBound) return; form.dataset.confirmationBound='1';
   const action = form.querySelector('input[name="action"]')?.value;
   const copy = clubConfirmationCopy[action];
   if (!copy) return;
   form.addEventListener('submit', async event => {
     if (form.dataset.confirmedSubmit === '1' || event.defaultPrevented) return;
     event.preventDefault();
+    if(form.dataset.confirming === '1') return;
     if (!form.reportValidity()) return;
-    const confirmed = await askClubConfirmation(copy[0], copy[1], copy[2], confirmationDetail(form, action));
+    form.dataset.confirming='1';
+    let confirmed;
+    try { confirmed = await askClubConfirmation(copy[0], copy[1], copy[2], confirmationDetail(form, action)); }
+    finally { delete form.dataset.confirming; }
     if (!confirmed) return;
     form.dataset.confirmedSubmit = '1';
     form.requestSubmit(event.submitter || undefined);
   });
 });
 
+};
+window.initializeMarketConfirmations();
+window.initializeMarket = function() {
 const starterInputs = [...document.querySelectorAll('input[name="titular_id[]"]')];
 const starterCount = document.querySelector('[data-selected-starters]');
 const starterWarning = document.querySelector('.lineup-limit-warning');
@@ -421,3 +433,6 @@ if (marketTitle && championship && marketTransferPane) {
   if (marketTransferPane) marketTransferPane.prepend(panel);
   else marketTitle.insertAdjacentElement('afterend', panel);
 }
+
+};
+window.initializeMarket();

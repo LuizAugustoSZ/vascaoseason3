@@ -15,6 +15,7 @@ function page() {
   const context = {URL,Promise,Event,queueMicrotask,setTimeout:fn=>{timers.set(++timerId,fn);return timerId},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>fn(),document:{body,readyState:'loading',querySelector:()=>loader,addEventListener:(name,fn)=>events['document:'+name]=fn},sessionStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},location:{href:'https://example.com/admin/?tab=campeonatos',pathname:'/admin/',origin:'https://example.com',replace(url){this.next=url}}};
   context.window=context;context.scrollY=320;context.scrollTo=(x,y)=>context.restoredScroll=y;
   context.addEventListener=(event,fn)=>events[event]=fn;
+  context.refreshAdminPane=async tab=>{context.refreshedTab=tab;};
   context.dispatchEvent=event=>events[event.type]?.(event);
   context.responseBody=deferred();
   context.fetch=async()=>({clone:()=>({text:()=>context.responseBody.promise})});
@@ -25,15 +26,15 @@ function page() {
 (async()=>{
   const p=page();assert.equal(p.main.inert,true,'Carga inicial deve bloquear teclado');
   const job=deferred();const tracked=p.context.adminLoading.track(job.promise);
-  p.events.load();await p.flush();assert.equal(p.main.inert,true,'window.load não significa dados prontos');
+  p.events['document:DOMContentLoaded']();await p.flush();assert.equal(p.main.inert,false,'Carregamentos locais não bloqueiam a tela inteira');
   job.resolve();await tracked;await p.flush();assert.equal(p.main.inert,false);assert.equal(p.prelocked.inert,true,'Preserva bloqueios anteriores');
-  await p.context.fetch('campeonatos-dados.php');await p.flush();assert.equal(p.main.inert,true,'Headers não podem liberar tela');
+  await p.context.fetch('campeonatos-dados.php');await p.flush();assert.equal(p.main.inert,false,'Consultas não bloqueiam a interface');
   p.context.responseBody.resolve('{}');await p.flush();assert.equal(p.main.inert,false,'Corpo consumido deve liberar tela');
   const failed=deferred();const failure=p.context.adminLoading.track(failed.promise).catch(()=>{});failed.reject(new Error('offline'));await failure;await p.flush();assert.equal(p.main.inert,false,'Erro deve permitir nova tentativa');
   p.context.__adminListState={'tab-campeonatos:0':{page:3,values:['Liga','Todos']}};
-  p.context.adminLoading.navigate('campeonatos');await p.flush();assert.equal(p.main.inert,true,'Navegação deve permanecer bloqueada');
-  assert.equal(p.context.location.next,'https://example.com/admin/?tab=campeonatos');
-  const next=page();next.events.load();await next.flush();assert.equal(next.context.__adminListState['tab-campeonatos:0'].page,3);assert.equal(next.context.restoredScroll,320);
+  await p.context.adminLoading.navigate('campeonatos');await p.flush();assert.equal(p.main.inert,false,'Atualizar uma aba não bloqueia a página');
+  assert.equal(p.context.location.next,undefined);assert.equal(p.context.refreshedTab,'campeonatos');
+  const next=page();next.events['document:DOMContentLoaded']();await next.flush();
   const finish=next.context.adminLoading.begin('SALVANDO');finish();finish();await next.flush();assert.equal(next.main.inert,false,'Finalização duplicada não desequilibra contador');
-  console.log('OK: carga inicial, fetch lento, bloqueio de teclado, falha, navegação e restauração de filtros/página.');
+  console.log('OK: carga inicial, consulta lenta e falha sem bloqueio global; atualização da aba sem navegação.');
 })().catch(error=>{console.error(error);process.exitCode=1});
