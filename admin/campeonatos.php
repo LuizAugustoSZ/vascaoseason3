@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . "/../includes/bootstrap.php";
 master_required();
+require_once __DIR__.'/../includes/async-form.php';
 $pdo = db();
 $notice = "";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -12,9 +13,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "UPDATE campeonatos SET status=? WHERE id=? AND ativo=1",
         );
         $stmt->execute([$status, $id]);
+        if ($stmt->rowCount() === 0) { $check=$pdo->prepare('SELECT id FROM campeonatos WHERE id=? AND ativo=1');$check->execute([$id]); if (!$check->fetchColumn()) async_form_result(false, 'Campeonato não encontrado.'); }
         $notice = "Status atualizado.";
+        async_form_result(true, $notice, ['status'=>$status]);
     }
 }
+if ($_SERVER['REQUEST_METHOD'] === 'POST') async_form_result(false, 'Status inválido.');
 $items = $pdo
     ->query(
         "SELECT c.*,(SELECT COUNT(*) FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1)+(SELECT COUNT(*) FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1) jogos FROM campeonatos c WHERE c.ativo=1 ORDER BY c.criado_em DESC,c.id DESC",
@@ -35,7 +39,7 @@ $items = $pdo
     str_replace("_", " e ", $item["formato"]),
 ) ?></td><td><?= $item["jogos"] ?></td><td><?= e(
     $item["status"],
-) ?></td><td><form method="post"><input type="hidden" name="csrf" value="<?= e(
+) ?></td><td><form data-async-form method="post"><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="id" value="<?= $item[
     "id"
@@ -45,4 +49,4 @@ $items = $pdo
     "status"
 ] === "ativo"
     ? "Finalizar"
-    : "Reabrir" ?></button></form></td></tr><?php endforeach; ?></tbody></table></div></main></body></html>
+    : "Reabrir" ?></button></form></td></tr><?php endforeach; ?></tbody></table></div></main><script src="../assets/js/async-request.js"></script><script src="../assets/js/public-form-save.js"></script></body></html>

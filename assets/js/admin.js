@@ -1,4 +1,5 @@
-(function(){
+window.initializeAdmin = function(root = window.document){
+const document = window.adminDocumentScope(root);
 // Mantém busca, filtros e página atual enquanto apenas os dados da aba são renovados.
 const adminListState=window.__adminListState||(window.__adminListState={});
 const adminListKey=table=>{const pane=table?.closest('.tab-pane');if(!pane)return'';return `${pane.id}:${[...pane.querySelectorAll('table')].indexOf(table)}`;};
@@ -197,7 +198,7 @@ if(mataForm){
 // Permite escolher a qual campeonato pertence um cadastro manual.
 window.adminLoading.track(fetch('campeonatos-dados.php').then(response=>response.json()).then(data=>{
   if(!data.ok)throw new Error('Não foi possível carregar os campeonatos.');
-  [['form-partida',['pontos_corridos']],['form-mata',['mata_mata','supercopa']]].forEach(([id,types])=>{const form=document.getElementById(id);if(!form)return;const options=(data.campeonatos||[]).filter(item=>types.includes(item.tipo)).map(item=>`<option value="${item.id}">${item.nome}: ${Number(item.prioridade)===2?'Finalizado':Number(item.prioridade)===0?'Em andamento':'Vai iniciar'}</option>`).join('');form.insertAdjacentHTML('afterbegin',`<div class="mb-3"><label class="form-label">Campeonato</label><select class="form-select" name="campeonato_id" required><option value="">Selecione</option>${options}</select></div>`);});
+  [['form-partida',['pontos_corridos']],['form-mata',['mata_mata','supercopa']]].forEach(([id,types])=>{const form=document.getElementById(id);if(!form)return;const options=(data.campeonatos||[]).filter(item=>types.includes(item.tipo)).map(item=>`<option value="${item.id}">${item.nome}: ${Number(item.prioridade)===2?'Finalizado':Number(item.prioridade)===0?'Em andamento':'Vai iniciar'}</option>`).join('');form.insertAdjacentHTML('afterbegin',`<div class="mb-3"><label class="form-label">Campeonato</label><select class="form-select" name="campeonato_id" required><option value="">Selecione</option>${options}</select></div>`);const editingId=form.elements.partida_id?.value||form.elements.jogo_mata_id?.value;const editing=(id==='form-partida'?window.adminLeagueGames:window.adminMataGames)?.find(game=>Number(game.id)===Number(editingId));if(editingId&&editing){form.campeonato_id.value=String(editing.campeonato_id);form.campeonato_id.disabled=true;}});
 })).catch(window.adminLoading.report);
 
 // Seleciona no formulário o time exibido na linha escolhida.
@@ -470,6 +471,7 @@ if(adminAccessCheckbox){
 // Permite editar uma conta existente preenchendo o formulário automaticamente.
 const userForm=document.querySelector('#tab-usuarios form.panel.admin-form');
 if(userForm){
+  userForm.id ||= 'form-usuario';
   const title=userForm.querySelector('h2'),submit=userForm.querySelector('button:not([type])');
   const password=userForm.querySelector('[name="senha"]'),confirmation=userForm.querySelector('[name="confirmar_senha"]');
   const accountId=document.createElement('input');accountId.type='hidden';accountId.name='conta_id';accountId.value='';userForm.append(accountId);
@@ -545,18 +547,18 @@ const championshipTab=document.getElementById('tab-campeonatos');
 if(championshipTab){
   window.adminLoading.track(fetch('identidades-dados.php',{credentials:'same-origin'}).then(response=>response.json()).then(data=>{
     if(!data.ok)throw new Error('Não foi possível carregar os modelos de competição.');
-    document.getElementById('identity-edit-modal')?.remove();
+    window.document.getElementById('identity-edit-modal')?.remove();
     const csrf=document.querySelector('#competition-edit-form input[name="csrf"]')?.value||'',esc=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const shell=document.createElement('section');shell.className='panel mb-4 competition-models-panel';
     shell.innerHTML=`<div class="panel-head"><div><small class="eyebrow">Fonte única de imagens</small><h3 class="mb-0">CAMPEONATOS PADRÕES</h3></div><span>${data.identidades.length} modelos</span></div><div class="p-3 text-secondary border-bottom">Edite aqui. A alteração é refletida automaticamente em todas as edições, títulos, perfis e na vitrine.</div><div class="competition-model-grid">${data.identidades.map(item=>`<article class="competition-model-card"><div class="competition-model-visual"><img src="${esc(item.trofeu_url)}" alt=""><img src="${esc(item.logo_url)}" alt=""></div><div><h4>${esc(item.nome)}</h4><small>${item.edicoes} edição${item.edicoes===1?'':'ões'} • ${item.titulos} título${item.titulos===1?'':'s'}</small><button type="button" class="btn btn-sm btn-outline-warning w-100 mt-3 editar-identidade" data-id="${item.id}" data-name="${esc(item.nome)}" data-logo="${esc(item.logo_url)}" data-trophy="${esc(item.trofeu_url)}">Editar padrão</button></div></article>`).join('')}</div>`;
     championshipTab.prepend(shell);
     document.body.insertAdjacentHTML('beforeend',`<div class="modal fade" id="identity-edit-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="identity-edit-form" method="post" enctype="multipart/form-data"><div class="modal-header"><div><small class="eyebrow">Fonte única</small><h2 class="modal-title">EDITAR CAMPEONATO PADRÃO</h2></div><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="csrf" value="${csrf}"><input type="hidden" name="action" value="editar_identidade_competicao"><input type="hidden" name="identidade_id"><label class="form-label">Nome do padrão</label><input class="form-control mb-3" name="nome" maxlength="150" required><div class="row g-3"><div class="col-6"><label class="form-label">Logo única</label><div class="competition-image-preview"><img data-preview="logo" alt=""></div><input type="hidden" name="logo_base64"><input class="form-control form-control-sm competition-art-file" type="file" name="logo" data-art-type="logo" accept="image/png,image/webp,image/jpeg"></div><div class="col-6"><label class="form-label">Taça única</label><div class="competition-image-preview"><img data-preview="trofeu" alt=""></div><input type="hidden" name="trofeu_base64"><input class="form-control form-control-sm competition-art-file" type="file" name="trofeu" data-art-type="trofeu" accept="image/png,image/webp,image/jpeg"></div></div><div class="alert alert-info small mt-3 mb-0">Esta alteração será usada por todas as edições e títulos ligados a este padrão.</div></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Atualizar em todo o site</button></div></form></div></div></div>`);
-    const modalElement=document.getElementById('identity-edit-modal'),modal=bootstrap.Modal.getOrCreateInstance(modalElement),form=document.getElementById('identity-edit-form');
+    const modalElement=window.document.getElementById('identity-edit-modal'),modal=bootstrap.Modal.getOrCreateInstance(modalElement),form=document.getElementById('identity-edit-form');
     shell.querySelectorAll('.editar-identidade').forEach(button=>button.addEventListener('click',()=>{form.identidade_id.value=button.dataset.id;form.nome.value=button.dataset.name;form.logo_base64.value='';form.trofeu_base64.value='';form.logo.value='';form.trofeu.value='';const logoPreview=form.querySelector('[data-preview="logo"]');if(logoPreview)logoPreview.src=`${button.dataset.logo}&v=${Date.now()}`;const trophyPreview=form.querySelector('[data-preview="trofeu"]');if(trophyPreview)trophyPreview.src=`${button.dataset.trophy}&v=${Date.now()}`;modal.show()}));
     const supercupForm=document.querySelector('#tab-supercopa form input[name="action"][value="criar_supercopa"]')?.closest('form');
     if(supercupForm){const nameInput=supercupForm.querySelector('input[name="nome"]'),nameLabel=nameInput?.previousElementSibling;nameLabel?.insertAdjacentHTML('beforebegin',`<label class="form-label">Campeonato padrão</label><select class="form-select mb-3" name="identidade_id" required><option value="nova">+ Criar uma nova competição</option>${data.identidades.map(item=>`<option value="${item.id}" data-name="${esc(item.nome)}" data-next="${Math.max(item.edicoes,item.titulos)+1}" ${item.chave==='supercopa r'?'selected':''}>${esc(item.nome)}: criar próxima edição</option>`).join('')}</select>`);const model=supercupForm.identidade_id,romanEdition=n=>{const values=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let value='';for(const [amount,symbol] of values)while(n>=amount){value+=symbol;n-=amount}return value},updateName=()=>{const option=model.selectedOptions[0],isNew=option.value==='nova';nameInput.readOnly=!isNew;nameInput.placeholder=isNew?'Ex.: Recopa dos Gigantes':'';if(isNew){nameInput.value='';nameInput.focus();return}const next=Number(option.dataset.next||1);nameInput.value=option.dataset.name+(next>1?' '+romanEdition(next):'')};model.addEventListener('change',updateName);updateName();}
   })).catch(window.adminLoading.report);
-  const style=document.createElement('style');style.textContent='.competition-model-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;padding:16px}.competition-model-card{overflow:hidden;border:1px solid #343941;border-radius:12px;background:#0c0e11}.competition-model-card>div:last-child{padding:14px}.competition-model-card h4{margin:0;font:800 1.25rem "Barlow Condensed",sans-serif}.competition-model-card small{color:#8f97a4}.competition-model-visual{display:grid;grid-template-columns:1fr 1fr;align-items:center;height:145px;padding:10px;background:radial-gradient(circle,rgba(237,27,47,.12),transparent 65%)}.competition-model-visual img{width:100%;height:125px;object-fit:contain}';document.head.append(style);
+  const style=document.createElement('style');style.textContent='.competition-model-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;padding:16px}.competition-model-card{overflow:hidden;border:1px solid #343941;border-radius:12px;background:#0c0e11}.competition-model-card>div:last-child{padding:14px}.competition-model-card h4{margin:0;font:800 1.25rem "Barlow Condensed",sans-serif}.competition-model-card small{color:#8f97a4}.competition-model-visual{display:grid;grid-template-columns:1fr 1fr;align-items:center;height:145px;padding:10px;background:radial-gradient(circle,rgba(237,27,47,.12),transparent 65%)}.competition-model-visual img{width:100%;height:125px;object-fit:contain}';style.id='admin-competition-model-style';if(!window.document.getElementById(style.id))document.head.append(style);
 }
 
 // Editor reutilizável de enquadramento: arraste a arte e ajuste o zoom antes de salvar.
@@ -587,25 +589,7 @@ if(titleForm){
 }
 
 // Salva uma única vez e abre o painel atualizado com todos os componentes.
-if(!window.__adminAjaxSubmitBound){
-window.__adminAjaxSubmitBound=true;
-document.addEventListener('submit',async event=>{
-  const form=event.target.closest('form[method="post"]');if(!form||(!form.closest('main')&&!form.closest('.modal'))||event.defaultPrevented)return;
-  event.preventDefault();if(form.dataset.ajaxBusy==='1')return;form.dataset.ajaxBusy='1';
-  const pane=form.closest('.tab-pane')||document.querySelector('.tab-content>.tab-pane.active');captureAdminListState(pane);
-  const finish=window.adminLoading.begin('SALVANDO ALTERAÇÕES');
-  const button=event.submitter||form.querySelector('button[type="submit"],button:not([type])');const old=button?.textContent;
-  if(button){button.disabled=true;button.textContent='Salvando...';}
-  try{
-    const payload=new FormData(form);payload.set('_ajax','1');
-    const response=await fetch('index.php',{method:'POST',body:payload,headers:{Accept:'application/json'},credentials:'same-origin'});
-    const data=await response.json().catch(()=>({ok:false,message:'Resposta inválida do servidor. Nenhuma ação será reenviada automaticamente.'}));
-    if(!response.ok||!data.ok)throw new Error(data.message||'Não foi possível salvar.');
-    window.adminLoading.navigate(data.tab||pane?.id.replace(/^tab-/,'')||'');
-  }catch(error){form.dataset.ajaxBusy='0';if(button){button.disabled=false;button.textContent=old;}showAdminToast(error.message,'danger');}
-  finally{finish();}
-});
-}
 function showAdminToast(message,type){if(window.siteToast)return window.siteToast(message,type);const toast=document.createElement('div');toast.className=`alert alert-${type}`;toast.dataset.flashToast='';toast.textContent=message;document.body.append(toast);}
-})();
+};
+window.initializeAdmin();
 const passwordToggleScript=document.createElement('script');passwordToggleScript.src='../assets/js/password-toggle.js';document.head.append(passwordToggleScript);

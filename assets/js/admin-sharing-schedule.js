@@ -1,4 +1,5 @@
-(() => {
+window.initializeAdminSharing = function(root = window.document) {
+ const document = window.adminDocumentScope(root);
   const showToast = (message, type) => {
     if (window.siteToast) return window.siteToast(message, type);
     const notice = document.createElement('div'); notice.className = `alert alert-${type}`; notice.textContent = message; document.body.append(notice);
@@ -22,7 +23,7 @@
   update();
 
   document.querySelectorAll('.editar-data-jogo').forEach(button => button.addEventListener('click', () => {
-    let modal = document.getElementById('game-date-modal');
+    let modal = window.document.getElementById('game-date-modal');
     if (!modal) {
       modal = document.createElement('div'); modal.id = 'game-date-modal'; modal.className = 'modal fade'; modal.tabIndex = -1;
       modal.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h2 class="modal-title">EDITAR DATA DO JOGO</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body"><input type="hidden" name="csrf"><input type="hidden" name="action" value="editar_data_jogo"><input type="hidden" name="origem"><input type="hidden" name="jogo_id"><label class="form-label">Data e horário</label><input type="datetime-local" name="data_partida" class="form-control" required><p class="text-secondary small mt-3">Atualiza apenas o calendário deste jogo.</p></div><div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-danger">Salvar data</button></div></form></div></div>';
@@ -35,4 +36,5 @@
     form.elements.data_partida.value = (button.dataset.date || '').replace(' ', 'T').slice(0, 16);
     bootstrap.Modal.getOrCreateInstance(modal).show();
   }));
-})();
+};
+window.initializeAdminSharing();

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require __DIR__ . "/includes/bootstrap.php";
+require_once __DIR__.'/includes/async-form.php';
 
 if (account_logged_in()) {
     header("Location: index.php");
@@ -57,6 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $_SESSION["conta_trocar_senha"] = 0;
         $_SESSION["participante_id"] = null;
         audit_event("cadastro", "usuarios", "Nova conta criada.", ["conta_id" => (int)$pdo->lastInsertId()]);
+        async_form_result(true, 'Conta criada com sucesso.', ['next'=>'index.php?conta=criada']);
         header("Location: index.php?conta=criada");
         exit();
     } catch (Throwable $e) {
@@ -66,6 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             : "Não foi possível criar a conta agora.";
     }
 }
+if ($error !== '') async_form_result(false, $error);
 ?>
 <!doctype html>
 <html lang="pt-BR" data-bs-theme="dark">
@@ -93,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                                                                                                                             $error
                                                                                                                                         ): ?><div class="alert alert-danger" data-flash-toast><?= e(
                                                                                                                                                 $error,
-                                                                                                                                            ) ?></div><?php endif; ?><form method="post"><input type="hidden" name="csrf" value="<?= e(
+                                                                                                                                            ) ?></div><?php endif; ?><form data-async-form method="post"><input type="hidden" name="csrf" value="<?= e(
                                                                                             csrf_token(),
                                                                                         ) ?>"><label class="form-label">Nome</label><input class="form-control mb-3" name="nome" maxlength="120" autocomplete="name" value="<?= e(
                                                                                                                                         $_POST["nome"] ?? "",
@@ -107,6 +110,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </form><small class="text-secondary d-block mt-3">Já possui acesso? <a href="login.php">Entrar</a></small>
         </div>
     </main>
-</body>
+<script src="assets/js/async-request.js?v=<?= filemtime(__DIR__.'/assets/js/async-request.js') ?>"></script><script src="assets/js/public-form-save.js?v=<?= filemtime(__DIR__.'/assets/js/public-form-save.js') ?>"></script></body>
 
 </html>
