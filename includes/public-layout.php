@@ -204,6 +204,8 @@ function public_footer(): void
     </footer>
     <link rel="stylesheet" href="assets/css/socials.css?v=<?= filemtime(__DIR__ . '/../assets/css/socials.css') ?>">
     <link rel="stylesheet" href="assets/css/version-history.css?v=<?= filemtime(__DIR__ . '/../assets/css/version-history.css') ?>">
+    <script src="assets/js/async-request.js?v=<?= filemtime(__DIR__ . '/../assets/js/async-request.js') ?>"></script>
+    <script src="assets/js/public-form-save.js?v=<?= filemtime(__DIR__ . '/../assets/js/public-form-save.js') ?>"></script>
     <script defer src="assets/js/version-history.js?v=<?= filemtime(__DIR__ . '/../assets/js/version-history.js') ?>"></script>
     <div class="modal fade match-details-modal" id="match-details-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">

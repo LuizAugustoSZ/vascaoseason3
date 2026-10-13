@@ -14,7 +14,15 @@ const domFor = async html => {
     show(){element.classList.add('show');element.dispatchEvent(new w.Event('shown.bs.modal'));},
     hide(){element.classList.remove('show');element.dispatchEvent(new w.Event('hidden.bs.modal'));}
   })}};
+  w.hideSavedModal = async element => w.bootstrap.Modal.getOrCreateInstance(element).hide();
   w.fetch = async () => ({ok:true,json:async()=>({packs:{}})});
+  // Transport has its own real-browser regression; these fixtures exercise UI updates.
+  w.requestJSON = async (url, options={}) => {
+    const response=await w.fetch(url,{...options,headers:{...options.headers,Accept:'application/json'}});
+    const result=await response.json();
+    if(!response.ok || !result.ok)throw new Error(result.message || 'Não foi possível salvar.');
+    return result;
+  };
   await tick();
   w.eval(read('club-instant-save'));
   return dom;

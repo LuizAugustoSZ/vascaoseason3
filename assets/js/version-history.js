@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['27.4','Salvamentos do painel e da Gestão da Competição atualizam os componentes sem reload. Datas dos jogos usam feedback local; inscrição, escalação, importação e formulários da conta tratam falhas sem prender a tela.','CRUD assíncrono e correção do salvamento de datas'],
 ['27.3','Contratações, edições, vendas, trocas e correções no Elenco Geral salvam sem recarregar a página, preservando rolagem, filtros, paginação e rascunhos. Na página do time, cofre, sobre, herói e imagem da escalação também são atualizados no lugar.','Salvamento instantâneo no Elenco Geral e na página do time'],
 ['27.2','A troca de status mantém a posição na tela. A edição rápida salva sem recarregar e preserva a montagem do time. Inscrição e escalação em andamento são recuperadas ao atualizar a página, com limpeza do rascunho após salvar.','Ajuste de escalação de jogadores na tela de elenco geral'],
 ['27.1','Os títulos respeitam o formato próprio da final, inclusive jogo único com semifinais de ida e volta. Página dos times, estatísticas e vitrine reparam conquistas antigas de forma consistente e preservam títulos históricos quando a decisão está incompleta.','Correção dos títulos de todos os clubes'],
@@ -274,6 +275,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(adminVersions.length&&adminVersions[0][0]!=='a2.5')adminVersions.unshift(['a2.5','Submenus agora trocam corretamente o conteúdo em todas as categorias, com Dashboard e Sorteador integrados à mesma tela administrativa.']);
  if(adminVersions.length&&adminVersions[0][0]!=='a2.6')adminVersions.unshift(['a2.6','A aba Campeonatos ganhou edição de nome, status, logo e taça com identidades compartilhadas entre edições da mesma competição.']);
  if(adminVersions.length&&adminVersions[0][0]!=='a3.0')adminVersions.unshift(['a3.0','Admin ganhou a central Campeonatos padrões e criação orgânica da próxima edição de Supercopa sem duplicar imagens.']);
+ if(adminVersions.length&&adminVersions[0][0]!=='a3.1')adminVersions.unshift(['a3.1','CRUD assíncrono global, datas persistidas com atualização local e recuperação dos controles em falhas.']);
  if(adminVersions.length&&!adminVersions.some(([version])=>version==='a2.9'))adminVersions.splice(1,0,['a2.9','Sorteador ganhou modelos reutilizáveis, numeração automática de edições e entrega automática da taça ao campeão.']);
  if(adminVersions.length&&!adminVersions.some(([version])=>version==='a2.8'))adminVersions.splice(1,0,['a2.8','Editor de logos e taças ganhou uma moldura destacada que mostra com precisão toda a área salva.']);
  if(adminVersions.length&&!adminVersions.some(([version])=>version==='a2.7'))adminVersions.splice(1,0,['a2.7','Logos, taças e imagens de títulos históricos ganharam editor visual com arraste, posição e zoom antes do salvamento.']);

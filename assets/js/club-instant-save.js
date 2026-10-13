@@ -66,9 +66,8 @@ window.ClubInstantSave = {
       if (button) button.textContent = 'Salvando…';
       let committed = false;
       try {
-        const response = await fetch(form.getAttribute('action') || location.href, {method:'POST', body, credentials:'same-origin', headers:{Accept:'application/json'}});
-        const result = await response.json();
-        if (!response.ok || !result.ok) throw new Error(result.message || 'Não foi possível salvar.');
+        const result = await requestJSON(form.getAttribute('action') || location.href, {method:'POST', body});
+        if (!result.ok) throw new Error(result.message || 'Não foi possível salvar.');
         committed = true;
         clear(form);
         if (typeof result.html !== 'string' || !result.html) throw new Error('Visualização indisponível.');
@@ -91,11 +90,7 @@ window.ClubInstantSave = {
         delete form.dataset.instantSaving;
         const modal = form.closest('.modal');
         if (modal) {
-          await new Promise(resolve => {
-            if (!modal.classList.contains('show')) { resolve(); return; }
-            modal.addEventListener('hidden.bs.modal', resolve, {once:true});
-            bootstrap.Modal.getOrCreateInstance(modal).hide();
-          });
+          await window.hideSavedModal(modal);
         }
         fields(form).forEach(field => { delete field.dataset.instantDirty; });
         afterSave?.(fresh, form);

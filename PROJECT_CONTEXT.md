@@ -30,7 +30,7 @@ O **Vascão Season 3** é um sistema web para organizar campeonatos da comunidad
 2. Nunca corrigir um problema apagando informações válidas.
 3. Alterações de banco devem ser incrementais, rastreáveis e reversíveis quando possível.
 4. Permissões devem ser verificadas no backend, nunca apenas escondidas com CSS ou JavaScript.
-5. Ações administrativas devem preferencialmente usar AJAX/fetch e atualizar só a área afetada, sem recarregar a página inteira.
+5. Toda operação CRUD deve usar comunicação assíncrona e atualizar os componentes afetados sem recarregar a página inteira, conforme a regra global abaixo.
 6. Listagens administrativas devem seguir o mesmo padrão de busca, filtros, paginação e ações.
 7. Não inventar resultados, jogadores, estatísticas ou fatos sobre campeonatos.
 8. Funcionalidades planejadas não devem ser tratadas como já implementadas.
@@ -163,7 +163,7 @@ Fora das abas, manter somente:
 - opção de reativar registros inativos;
 - confirmação para ações destrutivas ou substituições;
 - feedback claro de sucesso ou erro;
-- salvar sem recarregar a página completa sempre que tecnicamente seguro.
+- salvar sem recarregar a página completa, com feedback localizado e liberação garantida dos controles.
 
 ## 9. Competições e partidas
 
@@ -395,3 +395,16 @@ Uma mudança só está concluída quando:
 - Quem pode aprovar transferências e em quais situações.
 - Se jogador pode trocar de clube durante o mesmo campeonato e como o histórico de artilharia será exibido.
 - Política de armazenamento de imagens fora do banco.
+
+## REGRA GLOBAL — OPERAÇÕES CRUD SEM RELOAD
+
+- É proibido usar reload completo, `location.reload()`, `location.replace()` ou redirecionamento automático como atualização padrão depois de cadastrar, editar, excluir, alterar status, associar registros ou salvar arquivos/configurações.
+- Toda escrita deve usar comunicação assíncrona, com validação no backend, persistência confirmada e resposta estruturada. A interface só apresenta o resultado como salvo após confirmação do servidor.
+- Atualizar os campos, listas, contadores e componentes afetados. Preservar buscas, filtros, paginação, ordenação, rolagem, abas, modais e rascunhos independentes.
+- Reaproveitar o transporte `assets/js/async-request.js` e os atualizadores de componentes existentes. Não adicionar frameworks ou outra arquitetura para a mesma responsabilidade.
+- O loading deve ficar no botão ou componente relacionado; sempre finalizar em `finally`, restaurando o estado anterior dos controles. Bloquear cliques duplicados e tratar sucesso, erro HTTP, JSON inválido, falha de rede e timeout.
+- Timeout ou interrupção não comprovam rollback: informar que o resultado não pôde ser confirmado, preservar os campos e orientar a conferência antes de repetir. Nunca reenviar uma escrita automaticamente.
+- Manter autenticação, autorização, CSRF, validações, transações, integridade e auditoria. Novas funcionalidades devem seguir estas regras.
+- Exceções exigem justificativa técnica documentada: entrada/saída da sessão navegam para o destino de autenticação; trocar a competição é navegação GET; atualizar uma versão publicada exige clique explícito do usuário. O fallback sem JavaScript preserva acesso aos formulários, mas não é o fluxo assíncrono normal. Nenhuma dessas exceções autoriza reload automático após CRUD.
+
+Auditoria e evidências da migração: `docs/CRUD_ASYNC_AUDIT.md`.

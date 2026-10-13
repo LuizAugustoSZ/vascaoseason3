@@ -217,11 +217,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('[data-notification-read]')?.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
+        const button=e.currentTarget;if(button.dataset.busy==='1')return;button.dataset.busy='1';
         const body = new URLSearchParams({ csrf: bell.dataset.csrf || '', through: String(latest) });
-        const response = await fetch(new URL('api/notifications.php', siteRoot), { method: 'POST', body });
-        if (response.ok) {
-            refresh();
-        }
+        try {await requestJSON(new URL('api/notifications.php', siteRoot), {method:'POST',body});await refresh();}
+        catch(error){window.siteToast?.(error.message,'danger');}
+        finally{delete button.dataset.busy;}
     });
 
     document.addEventListener('click', (event) => {
@@ -246,22 +246,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelector('#notification-preferences')?.addEventListener('submit', async (event) => {
         event.preventDefault();
+        if(event.target.dataset.busy==='1')return;event.target.dataset.busy='1';
         const status = document.querySelector('#preferences-status');
         const submitBtn = event.target.querySelector('button[type="submit"]');
         if (submitBtn) submitBtn.disabled = true;
 
         try {
-            const response = await fetch(new URL('api/notifications.php', siteRoot), {
+            await requestJSON(new URL('api/notifications.php', siteRoot), {
                 method: 'POST',
                 body: new FormData(event.target)
             });
-            if (!response.ok) throw Error();
             if (status) { status.className = 'd-none'; status.innerHTML = ''; }
             window.siteToast?.('Preferências salvas com sucesso!', 'success');
         } catch {
             if (status) { status.className = 'd-none'; status.innerHTML = ''; }
             window.siteToast?.('Não foi possível salvar. Tente novamente.', 'danger');
         } finally {
+            delete event.target.dataset.busy;
             if (submitBtn) submitBtn.disabled = false;
         }
     });

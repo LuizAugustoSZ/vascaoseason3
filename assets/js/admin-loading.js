@@ -33,15 +33,6 @@
       window.dispatchEvent(new Event('admin:ready'));
     })), 0);
   };
-  const begin = label => {
-    pending++; lock(label);
-    let ended = false;
-    return () => { if (ended) return; ended = true; pending--; release(); };
-  };
-  const track = promise => {
-    const finish = begin();
-    return Promise.resolve(promise).finally(finish);
-  };
   const report = error => {
     const message = 'Não foi possível carregar todos os controles do painel. ' + (error?.message || 'Tente novamente.');
     if (window.siteToast) window.siteToast(message, 'danger');
@@ -50,36 +41,17 @@
       document.querySelector('main')?.prepend(notice);
     }
   };
-  const navigate = tab => {
-    const url = new URL(location.href);
-    if (tab) url.searchParams.set('tab', tab);
-    ['_refresh', 'editar_noticia'].forEach(key => url.searchParams.delete(key));
-    try { sessionStorage.setItem(storageKey, JSON.stringify({path: url.pathname, lists: window.__adminListState || {}, top: window.scrollY})); } catch (_) {}
-    navigating = true; lock('ATUALIZANDO PAINEL');
-    // Reconstrói todos os dados, eventos, modais e componentes em uma nova página.
-    location.replace(url.href);
+  const active = new Set();
+  const localTrack = promise => {
+    const tracked = Promise.resolve(promise); active.add(tracked);
+    tracked.finally(() => active.delete(tracked)).catch(() => {});
+    return tracked;
   };
-  window.adminLoading = {begin, track, report, navigate};
+  window.adminLoading = {begin: () => () => {}, track: localTrack, report,
+    navigate: tab => window.refreshAdminPane(tab), settled: () => Promise.allSettled([...active])};
   lock();
-  document.addEventListener('submit', event => {
-    // Os formulários fora de main usam a navegação nativa (modais, por exemplo).
-    queueMicrotask(() => {
-      if (!event.defaultPrevented) { navigating = true; lock('SALVANDO ALTERAÇÕES'); }
-    });
-  });
   const finishDocument = () => { pending--; release(); };
-  if (document.readyState === 'complete') finishDocument();
-  else window.addEventListener('load', finishDocument, {once: true});
-  const nativeFetch = window.fetch.bind(window);
-  window.fetch = (...args) => {
-    const input = args[0];
-    const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url, location.href);
-    if (url.origin !== location.origin || !/\/(?:campeonatos-dados|identidades-dados|rodada-prompt|partida-dados|mata-dados|conta-dados|associacoes-dados)\.php$/.test(url.pathname)) return nativeFetch(...args);
-    const finish = begin();
-    return nativeFetch(...args).then(response => {
-      response.clone().text().catch(() => {}).finally(() => setTimeout(finish, 0));
-      return response;
-    }, error => { finish(); throw error; });
-  };
+  if (document.readyState !== 'loading') finishDocument();
+  else document.addEventListener('DOMContentLoaded', finishDocument, {once: true});
   window.addEventListener('pageshow', event => { if (event.persisted) { navigating = false; pending = 0; release(); } });
 })();

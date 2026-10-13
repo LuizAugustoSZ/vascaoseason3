@@ -1,4 +1,4 @@
-(() => {
+window.initializeNewsEditor = function() {
   const editor = document.getElementById('news-editor');
   const form = document.getElementById('news-form');
   if (!editor || !form) return;
@@ -83,7 +83,7 @@
     }
     element.querySelector('[data-delete-message]').textContent = `“${title}” deixará de aparecer no jornal e nos regulamentos.`;
     const modal = bootstrap.Modal.getOrCreateInstance(element); let answered = false;
-    const accept = () => { answered = true; modal.hide(); resolve(true); };
+    const accept = () => { answered = true; window.hideSavedModal(element).then(()=>resolve(true),()=>resolve(false)); };
     const closed = () => { element.querySelector('[data-delete-confirm]').removeEventListener('click', accept); if (!answered) resolve(false); };
     element.querySelector('[data-delete-confirm]').addEventListener('click', accept, {once: true});
     element.addEventListener('hidden.bs.modal', closed, {once: true});
@@ -97,25 +97,34 @@
     if(form.dataset.ajaxBusy==='1')return;form.dataset.ajaxBusy='1';
     const finish=window.adminLoading.begin('SALVANDO NOTÍCIA');
     const button = event.submitter || document.getElementById('news-submit'); const old = button.textContent; button.disabled = true; button.textContent = 'Salvando...';
+    const controls=[...form.elements].filter(field=>'disabled' in field).map(field=>[field,field.disabled]);const editable=editor.contentEditable;
+    let committed=false;
     try {
       const payload = new FormData(form); payload.set('_ajax', '1');
-      const response = await fetch('index.php', {method: 'POST', body: payload, headers: {Accept: 'application/json'}, credentials: 'same-origin'}); const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível salvar.');
-      await refreshTab(data.message);
-    } catch (error) { form.dataset.ajaxBusy='0';button.disabled = false; button.textContent = old; showToast(error.message, 'danger'); }
-    finally { finish(); }
+      controls.forEach(([field])=>{field.disabled=true;});editor.contentEditable='false';
+      const data = await requestJSON('index.php', {method:'POST', body:payload});
+      if (!data.ok) throw new Error(data.message || 'Não foi possível salvar.');
+      committed=true;
+      await refreshTab(data.message, form);
+    } catch (error) { form.dataset.ajaxBusy='0';button.disabled = false; button.textContent = old; showToast(committed ? `A notícia foi salva, mas a visualização não foi atualizada. ${error.message}` : error.message, 'danger'); }
+    finally { form.dataset.ajaxBusy='0';controls.forEach(([field,wasDisabled])=>{field.disabled=wasDisabled;});editor.contentEditable=editable;button.disabled=false; button.textContent=old; finish(); }
   });
   document.querySelectorAll('.admin-news-list form[method="post"]').forEach(deleteForm => deleteForm.addEventListener('submit', async event => {
     event.preventDefault(); event.stopImmediatePropagation();
+    if(deleteForm.dataset.ajaxBusy==='1')return;
+    deleteForm.dataset.ajaxBusy='1';
     const title = deleteForm.closest('article')?.querySelector('h3')?.textContent?.trim() || 'Esta notícia';
-    if (!await confirmNewsRemoval(title)) return;
+    if (!await confirmNewsRemoval(title)) {delete deleteForm.dataset.ajaxBusy;return;}
+    const button=event.submitter||deleteForm.querySelector('button');const disabled=button?.disabled;
+    if(button)button.disabled=true;
     const finish=window.adminLoading.begin('REMOVENDO NOTÍCIA');
+    let committed=false;
     try {
       const payload = new FormData(deleteForm); payload.set('_ajax', '1');
-      const response = await fetch('index.php', {method: 'POST', body: payload, headers: {Accept: 'application/json'}, credentials: 'same-origin'}); const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível apagar.'); await refreshTab(data.message);
-    } catch (error) { showToast(error.message, 'danger'); }
-    finally { finish(); }
+      const data = await requestJSON('index.php', {method:'POST', body:payload});
+      if (!data.ok) throw new Error(data.message || 'Não foi possível apagar.'); committed=true;await refreshTab(data.message, deleteForm);
+    } catch (error) { showToast(committed ? `A notícia foi removida, mas a visualização não foi atualizada. ${error.message}` : error.message, 'danger'); }
+    finally { delete deleteForm.dataset.ajaxBusy;if(button)button.disabled=disabled;finish(); }
   }));
 
   const list = document.querySelector('.admin-news-list');
@@ -129,6 +138,7 @@
     }
   }
 
-  async function refreshTab(message) { window.adminLoading.navigate('noticias'); }
+  async function refreshTab(message, submitted) { await window.refreshAdminPane('noticias', message, submitted); }
   function showToast(message, type) { if (window.siteToast) return window.siteToast(message, type); const toast = document.createElement('div'); toast.className = `alert alert-${type}`; toast.dataset.flashToast = ''; toast.textContent = message; document.body.append(toast); }
-})();
+};
+window.initializeNewsEditor();

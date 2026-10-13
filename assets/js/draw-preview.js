@@ -52,12 +52,11 @@ async function openDrawPreview(data, form) {
     payload.set('action', action);
     payload.set('draw_token', data.token);
     try {
-      const response = await fetch('sorteador.php', {method:'POST', body:payload, credentials:'same-origin'});
-      const result = await response.json();
-      if (!response.ok || !result.ok) throw new Error(result.message || 'Não foi possível concluir. Tente novamente.');
+      const result = await requestJSON('sorteador.php', {method:'POST', body:payload});
+      if (!result.ok) throw new Error(result.message || 'Não foi possível concluir. Tente novamente.');
       modal.close();
       modal.remove();
-      if (action !== 'cancel_preview') { alert(result.message); window.parent.location.reload(); }
+      if (action !== 'cancel_preview') { await completeDraw(result.message); }
     } catch (error) {
       modal.querySelector('[data-error]').textContent = error.message;
     } finally {
