@@ -787,7 +787,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt->execute([$id]);
             $status = $stmt->fetchColumn();
             if (!$status) throw new RuntimeException('Jogo não encontrado.');
-            if (in_array($status, ['finalizada','finalizado','wo','penalidade'], true)) throw new RuntimeException('Este jogo já foi finalizado. Seu calendário não pode ser reagendado nesta opção.');
             $pdo->prepare("UPDATE $table SET data_partida=? WHERE id=? AND ativo=1")->execute([$date, $id]);
             $pdo->commit();
             redirect_notice('Data do jogo atualizada.', $origin === 'pontos' ? 'jogos' : 'mata', ['game'=>['id'=>$id, 'origin'=>$origin, 'date'=>$date, 'formatted'=>format_datetime_br($date)]]);
@@ -1649,7 +1648,7 @@ if (isset($_GET['_fragment'])) ob_start();
     (string) $g["gols_visitante"],
 ) ?>" data-status="<?= e(
     $g["status"],
-) ?>"><i data-lucide="pencil" class="action-icon"></i> Editar</button><?php if (!in_array($g['status'], ['finalizada','wo','penalidade'], true)): ?><button type="button" class="btn btn-sm btn-outline-info editar-data-jogo" data-origin="pontos" data-id="<?= (int)$g['id'] ?>" data-date="<?= e((string)$g['data_partida']) ?>">Data</button><?php endif; ?><form method="post" onsubmit="return confirm('Apagar esta partida dos pontos corridos?')"><input type="hidden" name="csrf" value="<?= e(
+) ?>"><i data-lucide="pencil" class="action-icon"></i> Editar</button><button type="button" class="btn btn-sm btn-outline-info editar-data-jogo" data-origin="pontos" data-id="<?= (int)$g['id'] ?>" data-date="<?= e((string)$g['data_partida']) ?>">Editar data</button><form method="post" onsubmit="return confirm('Apagar esta partida dos pontos corridos?')"><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="desativar_partida"><input type="hidden" name="partida_id" value="<?= $g[
     "id"
@@ -1681,7 +1680,7 @@ if (isset($_GET['_fragment'])) ob_start();
     (string) $g["gols_b"],
 ) ?>" data-status="<?= e(
     $g["status"],
-) ?>"><i data-lucide="pencil" class="action-icon"></i> Editar</button><?php if (!in_array($g['status'], ['finalizado','wo'], true)): ?><button type="button" class="btn btn-sm btn-outline-info editar-data-jogo" data-origin="mata" data-id="<?= (int)$g['id'] ?>" data-date="<?= e((string)$g['data_partida']) ?>">Data</button><?php endif; ?><form method="post" onsubmit="return confirm('Apagar este confronto do mata-mata?')"><input type="hidden" name="csrf" value="<?= e(
+) ?>"><i data-lucide="pencil" class="action-icon"></i> Editar</button><button type="button" class="btn btn-sm btn-outline-info editar-data-jogo" data-origin="mata" data-id="<?= (int)$g['id'] ?>" data-date="<?= e((string)$g['data_partida']) ?>">Editar data</button><form method="post" onsubmit="return confirm('Apagar este confronto do mata-mata?')"><input type="hidden" name="csrf" value="<?= e(
     csrf_token(),
 ) ?>"><input type="hidden" name="action" value="desativar_mata"><input type="hidden" name="jogo_mata_id" value="<?= $g[
     "id"

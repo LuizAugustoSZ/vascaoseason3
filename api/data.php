@@ -15,7 +15,8 @@ try {
                     OR EXISTS(SELECT 1 FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1 AND(j.status IN('finalizado','wo') OR(j.gols_a IS NOT NULL AND j.gols_b IS NOT NULL))) THEN 1 ELSE 0 END iniciado,
                 GREATEST(
                     COALESCE((SELECT MAX(p.data_partida) FROM partidas p WHERE p.campeonato_id=c.id AND p.ativo=1 AND p.status IN('finalizada','wo','penalidade')), '1970-01-01 00:00:00'),
-                    COALESCE((SELECT MAX(s.criado_em) FROM sumulas_dreamteam s
+                    COALESCE((SELECT MAX(j.data_partida) FROM jogos_mata_mata j WHERE j.campeonato_id=c.id AND j.ativo=1 AND j.status IN('finalizado','wo')), '1970-01-01 00:00:00'),
+                    COALESCE((SELECT MAX(COALESCE(sp.data_partida,sj.data_partida,s.criado_em)) FROM sumulas_dreamteam s
                         LEFT JOIN partidas sp ON s.origem='pontos' AND sp.id=s.partida_id
                         LEFT JOIN jogos_mata_mata sj ON s.origem='mata' AND sj.id=s.jogo_mata_mata_id
                         WHERE COALESCE(sp.campeonato_id,sj.campeonato_id)=c.id), '1970-01-01 00:00:00')

@@ -1,6 +1,7 @@
 // Toda mudança pública entregue incrementa obrigatoriamente a versão em 0.1.
 // Alterações internas do admin não geram versão, patch ou anúncio público.
 const siteVersions=[
+['27.5','A data dos jogos pode ser corrigida mesmo após a finalização, em pontos corridos e mata-mata, sem alterar placar ou súmula. Histórico dos clubes, jogadores e estatísticas respeitam a data informada.','Correção das datas de jogos finalizados'],
 ['27.4','Salvamentos do painel e da Gestão da Competição atualizam os componentes sem reload. Datas dos jogos usam feedback local; inscrição, escalação, importação e formulários da conta tratam falhas sem prender a tela.','CRUD assíncrono e correção do salvamento de datas'],
 ['27.3','Contratações, edições, vendas, trocas e correções no Elenco Geral salvam sem recarregar a página, preservando rolagem, filtros, paginação e rascunhos. Na página do time, cofre, sobre, herói e imagem da escalação também são atualizados no lugar.','Salvamento instantâneo no Elenco Geral e na página do time'],
 ['27.2','A troca de status mantém a posição na tela. A edição rápida salva sem recarregar e preserva a montagem do time. Inscrição e escalação em andamento são recuperadas ao atualizar a página, com limpeza do rascunho após salvar.','Ajuste de escalação de jogadores na tela de elenco geral'],

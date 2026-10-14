@@ -13,7 +13,7 @@ function statistics_matches(PDO $pdo, int $championshipId = 0, int $clubId = 0):
             WHERE p.ativo=1 AND p.status IN('finalizada','wo','penalidade') AND p.gols_mandante IS NOT NULL AND p.gols_visitante IS NOT NULL
             UNION ALL
             SELECT 'mata',j.id,j.campeonato_id,c.nome,CONCAT(j.fase,IF(j.ordem>0,CONCAT(' ',j.ordem),'')),
-                   j.time_a_id,j.time_b_id,j.gols_a,j.gols_b,COALESCE(c.data_inicio,j.criado_em),
+                   j.time_a_id,j.time_b_id,j.gols_a,j.gols_b,COALESCE(j.data_partida,c.data_inicio,j.criado_em),
                    a.time_nome,a.sigla,a.escudo_url,b.time_nome,b.sigla,b.escudo_url
             FROM jogos_mata_mata j JOIN campeonatos c ON c.id=j.campeonato_id
             JOIN participantes a ON a.id=j.time_a_id JOIN participantes b ON b.id=j.time_b_id
