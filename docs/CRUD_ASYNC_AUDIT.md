@@ -80,3 +80,14 @@ Painel: `admin/index.php`, `admin/campeonatos.php`, `admin/sorteador.php`, `asse
 Público: `mercado.php`, `importar-elenco.php`, `cadastro.php`, `trocar-senha.php`, `esqueci-senha.php`, `redefinir-senha.php`, `noticia.php`, `includes/public-layout.php`, `api/notifications.php`, `assets/js/market.js`, `market-quick-edit.js`, `club-instant-save.js`, `site-toolbar.js`, `deployment-refresh.js`, `version-history.js`.
 
 Documentação/testes: `PROJECT_CONTEXT.md`, este relatório, `tests/crud-flow-test.py`, `crud-browser-test.js`, `admin-browser-fixture.py`, `admin-loading-test.js`, `club-instant-save-test.js`.
+
+
+## Complemento v27.5 — data real de jogos finalizados
+
+A ação **Editar data** passou a aparecer para todos os jogos ativos de pontos corridos e mata-mata, inclusive finalizados, W.O. e penalidades. O endpoint conserva autorização, CSRF, validação da data e bloqueio transacional; remove somente a restrição de status e continua atualizando exclusivamente `data_partida`. Não reabre jogos nem altera placar, gols, pênaltis, vencedor ou súmulas.
+
+O histórico do clube (`time.php`), o histórico do jogador (`api/jogador-detalhes.php`), as sequências estatísticas (`includes/statistics.php`) e a ordenação das competições (`api/data.php`) passaram a priorizar a data do confronto de mata-mata. Datas antigas de cadastro permanecem como fallback quando não há data informada. Nenhuma migration é necessária.
+
+A regressão PHP/MySQL/Chromium foi ampliada com jogos finalizados corrigidos para 11/10/2026. Ela compara todas as demais colunas das partidas e os registros reais de gols e súmulas antes/depois, verifica ausência de navegação durante os salvamentos e consulta a linha do tempo do clube, o histórico do jogador, as estatísticas e a data de última partida da API pública. O teste estatístico também verifica a prioridade da data corrigida.
+
+Arquivos deste complemento: `admin/index.php`, `assets/js/admin-sharing-schedule.js`, `time.php`, `api/jogador-detalhes.php`, `api/data.php`, `includes/statistics.php`, `assets/js/version-history.js`, `PROJECT_CONTEXT.md`, `tests/crud-flow-test.py`, `tests/crud-browser-test.js`, `tests/statistics-test.php` e este relatório. Testes continuam usando banco local isolado; não são alterados jogos reais dos ambientes Railway.

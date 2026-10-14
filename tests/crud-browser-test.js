@@ -205,5 +205,25 @@ const base=process.argv[2];
     const unchanged=await stateNow();assert.equal(unchanged.league,'2026-10-25 20:00:00');assert.equal(await page.locator('#game-date-modal input[type="datetime-local"]').inputValue(),'2026-10-26T20:00');
     await page.request.get(base+'/test-write-failure.php?clear=1');assert.equal(navigations,mobileNav);
     console.log('PASS: real MySQL persistence failure rolls back, retains typed date and restores controls.');
+    await page.setViewportSize({width:1440,height:1000});
+    const finishedBefore=await (await page.request.get(base+'/test-finished-dates.php?finish=1')).json();
+    await page.goto(base+'/admin/index.php?tab=jogos');await page.waitForFunction(()=>window.adminLeagueGames && !document.body.classList.contains('admin-is-loading'));
+    const finishedNav=navigations;
+    await date('pontos','2026-10-11T20:00');
+    await page.locator('.admin-side-nav [data-bs-target="#tab-mata"]').click();
+    await date('mata','2026-10-11T22:00');
+    const finishedAfter=await (await page.request.get(base+'/test-finished-dates.php')).json();
+    for(const [key,value] of [['league','2026-10-11 20:00:00'],['knockout','2026-10-11 22:00:00']]){
+      assert.equal(finishedAfter[key].data_partida,value);
+      const oldRow={...finishedBefore[key]},newRow={...finishedAfter[key]};delete oldRow.data_partida;delete newRow.data_partida;assert.deepEqual(newRow,oldRow);
+    }
+    for(const key of ['summaries','leagueGoals','knockoutGoals'])assert.deepEqual(finishedAfter[key],finishedBefore[key]);
+    assert.equal(finishedAfter.history.find(m=>m.origem==='mata' && Number(m.id)===1).data_jogo,'2026-10-11 22:00:00');
+    assert.ok(finishedBefore.summaries.length && finishedBefore.leagueGoals.length && finishedBefore.knockoutGoals.length);
+    const teamHTML=await (await page.request.get(base+'/time.php?id=1')).text();assert.ok(teamHTML.includes('datetime="2026-10-11 22:00:00"'),'Club timeline ignored match date');
+    const playerHistory=await (await page.request.get(base+'/api/jogador-detalhes.php?participante_id=1&jogador=Teste%20Data')).json();assert.equal(playerHistory.ok,true,JSON.stringify(playerHistory));assert.equal(playerHistory.games.find(m=>m.origem==='mata' && m.id===1).data_partida,'2026-10-11 22:00:00');
+    const publicData=await (await page.request.get(base+'/api/data.php?campeonato_id=2')).json();assert.equal(publicData.campeonatos.find(c=>Number(c.id)===2).ultima_partida,'2026-10-11 22:00:00');
+    assert.equal(navigations,finishedNav);
+    console.log('PASS: finalized league and knockout dates backdated to October 11; all other columns, scores, penalties, winner, goals and summaries unchanged; statistics use match date.');
   } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

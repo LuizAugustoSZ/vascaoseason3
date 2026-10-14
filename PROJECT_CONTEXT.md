@@ -167,6 +167,8 @@ Fora das abas, manter somente:
 
 ## 9. Competições e partidas
 
+- A ação Editar data está disponível para qualquer jogo ativo, inclusive finalizado, W.O. ou penalidade, em pontos corridos e mata-mata. Ela altera somente `data_partida`, sem reabrir o jogo ou modificar resultados e súmulas. Históricos e sequências usam essa data antes de datas de cadastro.
+
 ### Pontos corridos
 
 - Suporta turno único e ida e volta.
