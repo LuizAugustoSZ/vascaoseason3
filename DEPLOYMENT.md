@@ -1,5 +1,14 @@
 # Deploy: staging e produção
 
+## Migração em andamento para Hostinger
+
+Destinos definidos: produção `vascaoseason3.online` (`main`) e homologação
+`staging.vascaoseason3.online` (`develop`), com bancos separados. A implantação
+ainda não está concluída. Checklist, evidências, configuração privada fora do
+webroot, cron, backup e rollback: [docs/MIGRACAO_HOSTINGER.md](docs/MIGRACAO_HOSTINGER.md).
+O DNS público e os serviços Railway só podem ser alterados com autorização
+específica. As instruções antigas abaixo são referência histórica.
+
 O projeto usa dois ambientes persistentes e dois bancos separados. Dados de produção nunca devem ser usados para testes destrutivos.
 
 | Ambiente | Branch | Banco | Finalidade |

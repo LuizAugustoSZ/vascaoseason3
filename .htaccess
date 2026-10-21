@@ -1,0 +1,14 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^\.well-known/acme-challenge/[A-Za-z0-9_-]+$ - [L]
+    RewriteRule ^(?:config|includes|bin|docker|docs|sql|tests|vendor|backups|tmp|migrations)(?:/|$) - [F,L,NC]
+    RewriteRule (^|/)\. - [F,L]
+    RewriteRule ^assets/uploads/.*\.(?:php[0-9]?|phtml|phar)(?:/|$) - [F,L,NC]
+</IfModule>
+
+<FilesMatch "(?i)(\.(sql|dump|log|ini|md|sh|bak|old|zip|gz|bundle)$|^Dockerfile$|^\.env|^\.git)">
+    Require all denied
+</FilesMatch>

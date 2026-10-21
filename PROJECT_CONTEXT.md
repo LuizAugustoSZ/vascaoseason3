@@ -62,6 +62,14 @@ Antes de criar um arquivo novo, verificar se a responsabilidade já pertence a u
 
 ## 4. Ambientes, Git e deploy
 
+Migração Hostinger em preparação: domínio definitivo `vascaoseason3.online`,
+staging `staging.vascaoseason3.online`, mantendo `main`/`develop` e bancos
+separados. Estado verificável em `docs/MIGRACAO_HOSTINGER.md`. A implantação
+e o cutover ainda não foram concluídos. Não alterar DNS nem desligar Railway
+sem autorização. Configuração privada pode ficar em `vascao-config.php` no pai
+do webroot de cada site. A produção oficial nunca importa dados via sync;
+homologação final consulta exclusivamente o domínio oficial de produção.
+
 ### Repositório
 
 - Usar repositório **privado no GitHub**.

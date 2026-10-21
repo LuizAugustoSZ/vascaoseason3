@@ -5,9 +5,12 @@ declare(strict_types=1);
 // Inicia a sessão usada no login, CSRF e mensagens.
 session_start();
 $localConfig = __DIR__ . "/../config/config.php";
-$config = require is_file($localConfig)
+$privateConfig = dirname(__DIR__, 2) . "/vascao-config.php";
+$config = require is_file($privateConfig)
+    ? $privateConfig
+    : (is_file($localConfig)
     ? $localConfig
-    : __DIR__ . "/../config/config.example.php";
+    : __DIR__ . "/../config/config.example.php");
 date_default_timezone_set($config["app"]["timezone"]);
 require_once __DIR__ . '/competition-identities.php';
 require_once __DIR__ . '/favicon.php';
