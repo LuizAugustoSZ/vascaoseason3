@@ -89,7 +89,7 @@ Não tocar em `anajubyfashion.com.br` ou seus arquivos/bancos/configurações.
 - [ ] Recuperar acesso read-only ao MySQL real e confirmar banco de produção.
 - [ ] Exportar e restaurar backup integral numa instância isolada.
 - [ ] Preservar arquivos não versionados da origem e comparar hashes.
-- [ ] Criar bancos e usuários distintos por ambiente.
+- [x] Criar bancos e usuários distintos por ambiente, com conexão validada.
 - [ ] Validar limites PHP, configuração cron e runtime de staging.
 - [ ] Publicar código por GitHub com destinos independentes para main/develop.
 - [ ] Criar staging separado com dados sanitizados e envio desativado.
@@ -196,6 +196,9 @@ envia. Não configurar cron ativo ou disparar e-mails reais durante os testes.
   api/version.php e CSS público retornaram 200.
 - Hostinger HTTPS: API de versão, CSS, login e landing retornaram 200;
   config, .git/HEAD, bin, SQL e documentação retornaram 403.
+- Ambos os ambientes: login com cookies Secure, HttpOnly e SameSite=Lax;
+  configuração externa não acessível via HTTP (404); `.user.ini` bloqueado (403).
+- Cron temporário de produção e staging removidos e ausência confirmada no hPanel.
 - Navegador confirmou renderização do layout v27.5 e conteúdo indisponível
   por ausência do banco real. HTTP 200 da landing não comprova funcionamento.
 - Testes de banco real, restore, navegação com dados e CRUD Hostinger: pendentes.
@@ -205,6 +208,10 @@ envia. Não configurar cron ativo ou disparar e-mails reais durante os testes.
   exibiu “There was an error deploying from source” e “Limited Access”.
   Conferir liberação com Railway; não presumir falha de código nem restaurar
   backup antigo. Nenhum novo deploy MySQL ficou online.
+  A verificação final confirmou MySQL e web offline, sem deploy pendente.
+  Caso precise de suporte, solicitar a liberação de deploys do projeto
+  `93b276e6-e5cb-4f7f-8bb8-0b6ebb43dca7` após reativação do Hobby, preservando
+  o serviço MySQL e seu volume. Não solicitar exclusão ou restauração antiga.
 - SSL definitivo, login, notificações, staging e deploy automático: pendentes.
 
 ## Cutover e rollback (exigem autorização específica)
