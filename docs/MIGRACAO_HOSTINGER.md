@@ -31,7 +31,17 @@ Não tocar em `anajubyfashion.com.br` ou seus arquivos/bancos/configurações.
   nd_pdo_mysql e PDO habilitados; openssl, iconv, session e zlib integrados.
 - Banco exclusivo `u665200586_vascao_prod` e usuário de mesmo nome criados pelo
   proprietário. Credencial local protegida por DPAPI fora do workspace/Git.
-- Cron e integração final main/develop ainda não foram configurados.
+- Banco e usuário de staging `u665200586_vascao_stage` criados pelo proprietário;
+  segredo distinto, também protegido por DPAPI localmente.
+- Configuração de produção instalada no pai de public_html com permissão 600.
+  Preflight CLI via cron temporário confirmou carregamento privado, conexão ao
+  banco correto e flags de worker/e-mail desativadas. MariaDB 11.8.9 no destino,
+  PHP CLI 8.3.35, todas as extensões presentes, GD/WebP e streams HTTPS disponíveis.
+  Banco novo com uma tabela no diagnóstico; isso não é o banco real migrado.
+- Segundo deploy GitHub concluído no staging, também pela branch de migração.
+  A troca final para main/develop depende de PRs e validação com os dados reais.
+- Cron de diagnóstico validou agenda a cada minuto; removê-lo após o teste.
+  Worker operacional e integração final main/develop ainda não foram ativados.
 - Railway `vibrant-embrace`, projeto `93b276e6-e5cb-4f7f-8bb8-0b6ebb43dca7`.
 - Production `222916da-7d3d-4b95-8d39-58abe0998d08`: web e MySQL offline,
   confirmado pelo conector e pelo painel. Nenhuma reinicialização realizada.
@@ -113,6 +123,9 @@ Segredos de transporte não devem ser copiados para staging.
 PHP esperado: 8.3, pdo_mysql, GD com JPEG/PNG/WebP, mbstring, DOM, fileinfo,
 iconv, openssl, session e zlib. As consultas HTTPS usam streams/allow_url_fopen.
 Limites do container: upload 12M, POST 14M, memória 256M, 10 uploads.
+`.user.ini` prepara os mesmos limites por diretório no PHP CGI/LiteSpeed,
+além de ocultar erros HTTP e usar cookies HttpOnly/SameSite=Lax. O PHP CLI
+ignora `.user.ini`; validar opções web após o TTL de recarga do provedor.
 Aplicar apenas ao Vascão, sem alterar a configuração global dos demais sites.
 Validar rotas PHP existentes, sessões, cookies Secure/SameSite, CSRF e logs.
 
