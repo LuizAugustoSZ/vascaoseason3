@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 // Inicia a sessão usada no login, CSRF e mensagens.
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_samesite', 'Lax');
 session_start();
 $localConfig = __DIR__ . "/../config/config.php";
 $privateConfig = dirname(__DIR__, 2) . "/vascao-config.php";

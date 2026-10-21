@@ -40,7 +40,9 @@ Não tocar em `anajubyfashion.com.br` ou seus arquivos/bancos/configurações.
   Banco novo com uma tabela no diagnóstico; isso não é o banco real migrado.
 - Segundo deploy GitHub concluído no staging, também pela branch de migração.
   A troca final para main/develop depende de PRs e validação com os dados reais.
-- Cron de diagnóstico validou agenda a cada minuto; removê-lo após o teste.
+- Cron temporário validou PHP 8.3.35 e conexão em ambos os bancos distintos,
+  com configuração privada carregada, worker/e-mail desativados e zero dados
+  reais importados. As duas tarefas temporárias foram removidas após os testes.
   Worker operacional e integração final main/develop ainda não foram ativados.
 - Railway `vibrant-embrace`, projeto `93b276e6-e5cb-4f7f-8bb8-0b6ebb43dca7`.
 - Production `222916da-7d3d-4b95-8d39-58abe0998d08`: web e MySQL offline,
@@ -126,6 +128,8 @@ Limites do container: upload 12M, POST 14M, memória 256M, 10 uploads.
 `.user.ini` prepara os mesmos limites por diretório no PHP CGI/LiteSpeed,
 além de ocultar erros HTTP e usar cookies HttpOnly/SameSite=Lax. O PHP CLI
 ignora `.user.ini`; validar opções web após o TTL de recarga do provedor.
+O bootstrap também impõe HttpOnly/SameSite=Lax antes de iniciar a sessão,
+pois opções de PHP do provedor podem prevalecer sobre `.user.ini`.
 Aplicar apenas ao Vascão, sem alterar a configuração global dos demais sites.
 Validar rotas PHP existentes, sessões, cookies Secure/SameSite, CSRF e logs.
 
@@ -195,6 +199,12 @@ envia. Não configurar cron ativo ou disparar e-mails reais durante os testes.
 - Navegador confirmou renderização do layout v27.5 e conteúdo indisponível
   por ausência do banco real. HTTP 200 da landing não comprova funcionamento.
 - Testes de banco real, restore, navegação com dados e CRUD Hostinger: pendentes.
+- Proprietário informou que havia pausado e reativado a assinatura Railway.
+  Billing confirmou plano Hobby ativo. Após nova autorização, tentativas via
+  conector e botão “Deploy the image mysql:9” continuaram recusadas; a interface
+  exibiu “There was an error deploying from source” e “Limited Access”.
+  Conferir liberação com Railway; não presumir falha de código nem restaurar
+  backup antigo. Nenhum novo deploy MySQL ficou online.
 - SSL definitivo, login, notificações, staging e deploy automático: pendentes.
 
 ## Cutover e rollback (exigem autorização específica)
