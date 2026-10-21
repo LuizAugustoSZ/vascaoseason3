@@ -12,7 +12,10 @@ evidências, não declara a migração concluída. DNS e Railway não foram alte
 
 Site PHP/HTML separado criado no plano existente:
 `https://palegreen-dogfish-295486.hostingersite.com` (pré-visualização de produção).
-O endereço temporário ainda não representa a aplicação migrada.
+Deploy GitHub da branch `codex/migracao-hostinger` concluído em `public_html`;
+é uma implantação técnica de validação, ainda sem o banco real.
+Staging separado criado em `https://lavender-dogfish-627181.hostingersite.com`.
+O endereço temporário ainda não representa a aplicação integralmente migrada.
 Não associar o domínio definitivo por um fluxo que altere DNS automaticamente.
 Não tocar em `anajubyfashion.com.br` ou seus arquivos/bancos/configurações.
 
@@ -21,11 +24,24 @@ Não tocar em `anajubyfashion.com.br` ou seus arquivos/bancos/configurações.
 - hPanel autenticado após segundo fator concluído pelo proprietário.
 - Plano Unlimited Web Hosting: 50 GB, 3 GB RAM, 2 CPUs, 600 mil inodes,
   60 PHP workers, 120 processos, sites ilimitados. Servidor no Brasil.
-- O plano suporta múltiplos sites; disponibilidade de bancos, cron e Git precisa
-  ser conferida nas telas específicas antes de declarar os dois ambientes prontos.
+- GitHub já autorizado na conta: integração do Vascão conectada e deploy concluído.
+  Nenhuma permissão GitHub nova foi solicitada. Branch de migração usada somente
+  para preview; main/develop continuam sem alterações por esta tarefa.
+- PHP 8.3 já selecionado no novo site. DOM, fileinfo, GD, mbstring, mysqlnd,
+  nd_pdo_mysql e PDO habilitados; openssl, iconv, session e zlib integrados.
+- Banco exclusivo `u665200586_vascao_prod` e usuário de mesmo nome criados pelo
+  proprietário. Credencial local protegida por DPAPI fora do workspace/Git.
+- Cron e integração final main/develop ainda não foram configurados.
 - Railway `vibrant-embrace`, projeto `93b276e6-e5cb-4f7f-8bb8-0b6ebb43dca7`.
 - Production `222916da-7d3d-4b95-8d39-58abe0998d08`: web e MySQL offline,
   confirmado pelo conector e pelo painel. Nenhuma reinicialização realizada.
+- Proprietário autorizou reativação temporária somente do MySQL. Tentativa de
+  redeploy do build `06299374-ff8b-418f-badd-62165e54eb8f` recusada:
+  “Deploys have been paused temporarily”; o conector também informou ausência de
+  build reutilizável. Painel confirmou “Limited Access” e a mesma pausa.
+  Nenhuma reativação efetivada, alteração de plano, limite ou restauração realizada.
+- Logs do último MySQL registram shutdown completo em 20/10/2026 às 09:12 BRT,
+  versão 9.7.2. Preservar compatibilidade com essa versão na recuperação do volume.
 - Staging `0367548b-d918-45c6-8079-c54c3a8d3372`: deploy web FAILED em 03/10.
 - MySQL usa imagem `mysql:9`; isso não comprova a versão dos arquivos no volume.
   Não iniciar outra versão de MySQL sobre o volume existente.
@@ -52,6 +68,9 @@ Não tocar em `anajubyfashion.com.br` ou seus arquivos/bancos/configurações.
 - [x] Criar branch `codex/migracao-hostinger` de `origin/develop`.
 - [x] Auditar Railway e hPanel sem modificar recursos existentes.
 - [x] Criar novo site PHP/HTML com domínio temporário.
+- [x] Criar site separado de staging com domínio temporário.
+- [x] Publicar branch de migração via GitHub no preview de produção.
+- [x] Confirmar PHP 8.3 e extensões necessárias no site novo.
 - [x] Preparar bloqueio HTTP de arquivos internos e configuração privada externa.
 - [x] Adaptar sincronização aos novos hosts, bloqueando importação em produção.
 - [x] Preparar flags para impedir envios/worker antes do cutover.
@@ -59,7 +78,7 @@ Não tocar em `anajubyfashion.com.br` ou seus arquivos/bancos/configurações.
 - [ ] Exportar e restaurar backup integral numa instância isolada.
 - [ ] Preservar arquivos não versionados da origem e comparar hashes.
 - [ ] Criar bancos e usuários distintos por ambiente.
-- [ ] Confirmar PHP 8.3, extensões e configuração por site.
+- [ ] Validar limites PHP, configuração cron e runtime de staging.
 - [ ] Publicar código por GitHub com destinos independentes para main/develop.
 - [ ] Criar staging separado com dados sanitizados e envio desativado.
 - [ ] Validar importação MySQL/MariaDB, tabelas, dados, índices e AUTO_INCREMENT.
@@ -158,7 +177,11 @@ envia. Não configurar cron ativo ou disparar e-mails reais durante os testes.
   Isso não substitui execução no PHP 8.3 da Hostinger.
 - Apache local: config, includes, bin, sql e docs retornaram 403;
   api/version.php e CSS público retornaram 200.
-- Testes de banco real, restore, navegação e CRUD Hostinger: pendentes.
+- Hostinger HTTPS: API de versão, CSS, login e landing retornaram 200;
+  config, .git/HEAD, bin, SQL e documentação retornaram 403.
+- Navegador confirmou renderização do layout v27.5 e conteúdo indisponível
+  por ausência do banco real. HTTP 200 da landing não comprova funcionamento.
+- Testes de banco real, restore, navegação com dados e CRUD Hostinger: pendentes.
 - SSL definitivo, login, notificações, staging e deploy automático: pendentes.
 
 ## Cutover e rollback (exigem autorização específica)

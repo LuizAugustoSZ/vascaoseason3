@@ -35,7 +35,8 @@ function sync_source_url(): string
     // A configuração do deploy prevalece para impedir importação em produção,
     // inclusive quando o acesso é feito por um endereço de pré-visualização.
     $productionHosts = [SYNC_PRODUCTION_HOST, SYNC_HOSTINGER_PRODUCTION_HOST, "www." . SYNC_HOSTINGER_PRODUCTION_HOST];
-    if (in_array($currentHost, $productionHosts, true) || in_array($configuredHost, $productionHosts, true)) {
+    if (strtolower((string) ($config["app"]["environment"] ?? "")) === "production" ||
+        in_array($currentHost, $productionHosts, true) || in_array($configuredHost, $productionHosts, true)) {
         return "";
     }
     if ($currentHost === SYNC_HOSTINGER_HOMOLOG_HOST) {
