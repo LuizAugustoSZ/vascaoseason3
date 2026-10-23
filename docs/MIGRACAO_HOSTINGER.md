@@ -1,7 +1,39 @@
 # Migração Railway → Hostinger
 
 Auditoria iniciada em 20/10/2026 (America/Sao_Paulo). Este documento registra
-evidências, não declara a migração concluída. DNS e Railway não foram alterados.
+evidências. A auditoria histórica abaixo deve ser lida junto ao estado atual.
+
+## Estado verificado em 23/10/2026
+
+- MySQL Railway reativado no serviço e volume existentes, sem restauração de backup antigo.
+- Dump integral do schema `railway` (MySQL 9.7.4): 31.441.734 bytes, estrutura,
+  todos os registros, BLOBs, rotinas, triggers e eventos. A origem não possui
+  rotinas, triggers ou eventos cadastrados. Original preservado fora do Git/webroot.
+- SHA-256 do original: `ff0fdb5851fa99902139dafc4b14344204f5b90db8f8f4dcfb69f76bebfbbbfa`.
+- Produção Hostinger restaurada com 33 tabelas e 6.466 registros. Contagens e hashes
+  de cada registro, incluindo BLOBs, iguais à origem; nenhuma divergência.
+  Uma segunda leitura da origem confirmou os mesmos hashes antes do cutover.
+- Staging restaurado separadamente e comparado antes da sanitização: mesmos
+  6.466 registros e hashes. Depois, contas/e-mails, senhas, tokens e detalhes
+  privados de auditoria foram sanitizados apenas no banco de homologação.
+- As 11 imagens de escalação foram recuperadas dos BLOBs para seus caminhos
+  de arquivos e verificadas por SHA-256 nos dois sites. Nenhum BLOB ausente.
+- `vascaoseason3.online` associado ao site de produção; HTTPS válido e HTTP → HTTPS.
+  `staging.vascaoseason3.online` associado ao site de homologação, também com HTTPS.
+  O pedido do proprietário para publicar no domínio real autorizou este cutover.
+- Páginas públicas, notícias, competição, jogadores, títulos, estatísticas,
+  mercado e API responderam sem erros PHP na prévia com o banco real.
+- Login e acesso administrativo reais passaram no staging com conta temporária;
+  cookies Secure/HttpOnly/SameSite=Lax. A conta temporária foi removida após o teste.
+- Worker antigo do Railway desativado, flags de envio/worker salvas sem redeploy
+  e deploy automático de main desconectado nesse ambiente. Endereço público
+  antigo redireciona com HTTP 307 para o domínio oficial; serviço e volume preservados.
+- Pendências operacionais desta etapa: concluir publicação main/develop na Hostinger,
+  ativar e verificar cron e transporte de e-mail em produção, registrar evidências finais.
+- Ana Juby Fashion e seus ambientes não receberam modificações.
+
+Os destinos temporários e o bloqueio Railway citados nas seções históricas
+representam o estado anterior ao cutover, não o estado atual.
 
 ## Destinos e isolamento
 
@@ -86,13 +118,13 @@ Não tocar em `anajubyfashion.com.br` ou seus arquivos/bancos/configurações.
 - [x] Preparar bloqueio HTTP de arquivos internos e configuração privada externa.
 - [x] Adaptar sincronização aos novos hosts, bloqueando importação em produção.
 - [x] Preparar flags para impedir envios/worker antes do cutover.
-- [ ] Recuperar acesso read-only ao MySQL real e confirmar banco de produção.
-- [ ] Exportar e restaurar backup integral numa instância isolada.
-- [ ] Preservar arquivos não versionados da origem e comparar hashes.
+- [x] Recuperar acesso read-only ao MySQL real e confirmar banco de produção.
+- [x] Exportar e restaurar backup integral numa instância isolada.
+- [x] Preservar imagens persistidas em BLOB e recuperar os arquivos com hashes iguais.
 - [x] Criar bancos e usuários distintos por ambiente, com conexão validada.
 - [ ] Validar limites PHP, configuração cron e runtime de staging.
 - [ ] Publicar código por GitHub com destinos independentes para main/develop.
-- [ ] Criar staging separado com dados sanitizados e envio desativado.
+- [x] Criar staging separado com dados sanitizados e envio desativado.
 - [ ] Validar importação MySQL/MariaDB, tabelas, dados, índices e AUTO_INCREMENT.
 - [ ] Executar testes reais públicos, login, permissões, CRUD assíncrono e uploads.
 - [ ] Validar SSL para os domínios finais e ligação ao site sem alterar DNS.
