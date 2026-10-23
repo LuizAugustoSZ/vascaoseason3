@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
+
 require __DIR__ . '/../includes/bootstrap.php';
 
 $correctionId = 'v25.1-copa-do-brasil-duplicate-v3';

@@ -23,12 +23,25 @@ const SYNC_TABLES = [
 
 const SYNC_HOMOLOG_HOST = "vascaoseason3-moonvault.up.railway.app";
 const SYNC_PRODUCTION_HOST = "vascaoseason3-ironhaven.up.railway.app";
+const SYNC_HOSTINGER_HOMOLOG_HOST = "staging.vascaoseason3.online";
+const SYNC_HOSTINGER_PRODUCTION_HOST = "vascaoseason3.online";
 
 function sync_source_url(): string
 {
     global $config;
     $currentHost = strtolower((string) ($_SERVER["HTTP_HOST"] ?? ""));
     $currentHost = preg_replace('/:\d+$/', '', $currentHost) ?? $currentHost;
+    $configuredHost = strtolower((string) parse_url((string) ($config["app"]["base_url"] ?? ""), PHP_URL_HOST));
+    // A configuração do deploy prevalece para impedir importação em produção,
+    // inclusive quando o acesso é feito por um endereço de pré-visualização.
+    $productionHosts = [SYNC_PRODUCTION_HOST, SYNC_HOSTINGER_PRODUCTION_HOST, "www." . SYNC_HOSTINGER_PRODUCTION_HOST];
+    if (strtolower((string) ($config["app"]["environment"] ?? "")) === "production" ||
+        in_array($currentHost, $productionHosts, true) || in_array($configuredHost, $productionHosts, true)) {
+        return "";
+    }
+    if ($currentHost === SYNC_HOSTINGER_HOMOLOG_HOST) {
+        return "https://" . SYNC_HOSTINGER_PRODUCTION_HOST;
+    }
     if ($currentHost === SYNC_HOMOLOG_HOST) {
         return "https://" . SYNC_PRODUCTION_HOST;
     }

@@ -25,8 +25,8 @@ return [
         "environment" => getenv("APP_ENV") ?: "local",
         "timezone" => "America/Sao_Paulo",
     ],
-    // Fallback para desenvolvimento/outros domínios. As URLs Railway oficiais
-    // são reconhecidas automaticamente pelo módulo de sincronização.
+    // Fallback para pré-visualização/outros domínios. Os hosts oficiais Railway
+    // e Hostinger são reconhecidos automaticamente; produção nunca importa.
     "sync" => [
         "source_url" => rtrim(getenv("SYNC_SOURCE_URL") ?: "", "/"),
         "secret" => getenv("SYNC_SECRET") ?: "",
