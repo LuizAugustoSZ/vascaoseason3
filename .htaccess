@@ -1,0 +1,19 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^\.well-known/acme-challenge/[A-Za-z0-9_-]+$ - [L]
+    # Somente os hosts Hostinger: não interferir no proxy HTTPS do Railway/local.
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+    RewriteCond %{HTTP_HOST} ^(?:vascaoseason3\.online|www\.vascaoseason3\.online|staging\.vascaoseason3\.online|palegreen-dogfish-295486\.hostingersite\.com|lavender-dogfish-627181\.hostingersite\.com)(?::[0-9]+)?$ [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=302,L,NE]
+    RewriteRule ^(?:config|includes|bin|docker|docs|sql|tests|vendor|backups|tmp|migrations)(?:/|$) - [F,L,NC]
+    RewriteRule (^|/)\. - [F,L]
+    RewriteRule ^assets/uploads/.*\.(?:php[0-9]?|phtml|phar)(?:/|$) - [F,L,NC]
+</IfModule>
+
+<FilesMatch "(?i)(\.(sql|dump|log|ini|md|sh|bak|old|zip|gz|bundle)$|^Dockerfile$|^\.env|^\.git)">
+    Require all denied
+</FilesMatch>

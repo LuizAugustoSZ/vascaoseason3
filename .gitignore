@@ -9,3 +9,14 @@ config/config.php
 .DS_Store
 Thumbs.db
 
+# Dados privados e arquivos persistentes de cada instalação
+backups/
+tmp/
+assets/uploads/
+*.sql.gz
+*.sql.zip
+*.dump
+*.sql
+!sql/*.sql
+!tests/*fixture.sql
+

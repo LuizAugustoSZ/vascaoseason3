@@ -8,6 +8,8 @@ declare(strict_types=1);
  */
 function system_email_send(string $to, string $subject, string $text, string $idempotencyKey): bool
 {
+    // Pré-visualização e staging devem desativar todo envio, inclusive reset.
+    if (getenv('EMAIL_ENABLED') !== false && !filter_var(getenv('EMAIL_ENABLED'), FILTER_VALIDATE_BOOLEAN)) return false;
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) return false;
 
     $readEnvironment = static function (string $name, string $default = ''): string {
