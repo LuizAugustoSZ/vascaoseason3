@@ -2,8 +2,9 @@
 declare(strict_types=1);
 require __DIR__.'/../includes/bootstrap.php';
 master_required();
+header('Cache-Control: private, no-store, max-age=0');
 try {
-    $pdo=db(); competition_identities_seed($pdo);
+    $pdo=db();
     $items=$pdo->query("SELECT i.id,i.chave,i.nome,COUNT(DISTINCT c.id) edicoes FROM competicao_identidades i LEFT JOIN campeonatos c ON c.identidade_id=i.id GROUP BY i.id,i.chave,i.nome ORDER BY i.nome")->fetchAll();
     $titles=$pdo->query('SELECT t.titulo,i.chave identidade_chave FROM titulos t LEFT JOIN campeonatos c ON c.id=t.campeonato_id LEFT JOIN competicao_identidades i ON i.id=c.identidade_id')->fetchAll();
     foreach($items as &$item){

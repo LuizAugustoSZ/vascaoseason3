@@ -196,7 +196,7 @@ if(mataForm){
 }
 
 // Permite escolher a qual campeonato pertence um cadastro manual.
-window.adminLoading.track(fetch('campeonatos-dados.php').then(response=>response.json()).then(data=>{
+window.adminLoading.track(window.adminLoading.loadJSON('campeonatos-dados.php').then(data=>{
   if(!data.ok)throw new Error('Não foi possível carregar os campeonatos.');
   [['form-partida',['pontos_corridos']],['form-mata',['mata_mata','supercopa']]].forEach(([id,types])=>{const form=document.getElementById(id);if(!form)return;const options=(data.campeonatos||[]).filter(item=>types.includes(item.tipo)).map(item=>`<option value="${item.id}">${item.nome}: ${Number(item.prioridade)===2?'Finalizado':Number(item.prioridade)===0?'Em andamento':'Vai iniciar'}</option>`).join('');form.insertAdjacentHTML('afterbegin',`<div class="mb-3"><label class="form-label">Campeonato</label><select class="form-select" name="campeonato_id" required><option value="">Selecione</option>${options}</select></div>`);const editingId=form.elements.partida_id?.value||form.elements.jogo_mata_id?.value;const editing=(id==='form-partida'?window.adminLeagueGames:window.adminMataGames)?.find(game=>Number(game.id)===Number(editingId));if(editingId&&editing){form.campeonato_id.value=String(editing.campeonato_id);form.campeonato_id.disabled=true;}});
 })).catch(window.adminLoading.report);
@@ -545,7 +545,7 @@ if(editionEditForm){editionEditForm.querySelector('.row.g-3')?.remove();const no
 // Centraliza os modelos: uma única logo/taça alimenta edições, títulos, perfis e vitrine.
 const championshipTab=document.getElementById('tab-campeonatos');
 if(championshipTab){
-  window.adminLoading.track(fetch('identidades-dados.php',{credentials:'same-origin'}).then(response=>response.json()).then(data=>{
+  window.adminLoading.track(window.adminLoading.loadJSON('identidades-dados.php').then(data=>{
     if(!data.ok)throw new Error('Não foi possível carregar os modelos de competição.');
     window.document.getElementById('identity-edit-modal')?.remove();
     const csrf=document.querySelector('#competition-edit-form input[name="csrf"]')?.value||'',esc=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

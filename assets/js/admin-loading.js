@@ -42,12 +42,29 @@
     }
   };
   const active = new Set();
+  // Apenas leituras: uma resposta vazia pode ser transitória após a migração/cache.
+  // Nunca repete formulários nem operações de escrita.
+  const loadJSON = async path => {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const url = new URL(path, location.href);
+      url.searchParams.set('_admin_read', `${Date.now()}-${attempt}`);
+      const response = await fetch(url.href, {cache:'no-store', credentials:'same-origin', headers:{Accept:'application/json'}});
+      if (response.redirected) throw new Error('Sua sessão expirou. Entre novamente para carregar o painel.');
+      const body = await response.text();
+      if ((!body.trim() || [502,503,504].includes(response.status)) && attempt === 0) continue;
+      let data;
+      try { data = JSON.parse(body); }
+      catch (_) { throw new Error('O servidor não retornou os dados do painel. Atualize a página para tentar novamente.'); }
+      if (!response.ok || data?.ok !== true) throw new Error(data?.message || 'Não foi possível carregar os dados do painel.');
+      return data;
+    }
+  };
   const localTrack = promise => {
     const tracked = Promise.resolve(promise); active.add(tracked);
     tracked.finally(() => active.delete(tracked)).catch(() => {});
     return tracked;
   };
-  window.adminLoading = {begin: () => () => {}, track: localTrack, report,
+  window.adminLoading = {begin: () => () => {}, track: localTrack, report, loadJSON,
     navigate: tab => window.refreshAdminPane(tab), settled: () => Promise.allSettled([...active])};
   lock();
   const finishDocument = () => { pending--; release(); };

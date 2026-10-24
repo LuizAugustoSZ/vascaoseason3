@@ -25,6 +25,21 @@ function page() {
 }
 (async()=>{
   const p=page();assert.equal(p.main.inert,true,'Carga inicial deve bloquear teclado');
+  const reads=[];
+  p.context.fetch=async(url,options)=>{reads.push({url,options});return {ok:true,status:200,redirected:false,text:async()=>reads.length===1?'':'{"ok":true,"campeonatos":[]}'}};
+  assert.equal((await p.context.adminLoading.loadJSON('campeonatos-dados.php')).ok,true);
+  assert.equal(reads.length,2,'Uma leitura vazia deve ser repetida uma vez');
+  assert.equal(reads[0].options.cache,'no-store');
+  assert.equal(reads[0].options.credentials,'same-origin');
+  assert.notEqual(reads[0].url,reads[1].url,'A nova leitura não deve reutilizar a resposta vazia em cache');
+  let failures=0;
+  p.context.fetch=async()=>{failures++;return {ok:true,status:200,redirected:false,text:async()=>''}};
+  await assert.rejects(p.context.adminLoading.loadJSON('campeonatos-dados.php'),/servidor não retornou/);
+  assert.equal(failures,2,'Falhas persistentes não podem gerar repetição infinita');
+  p.context.fetch=async()=>({ok:true,status:200,redirected:true,text:async()=>'<html>Login</html>'});
+  await assert.rejects(p.context.adminLoading.loadJSON('campeonatos-dados.php'),/sessão expirou/);
+  p.context.fetch=async()=>({ok:false,status:403,redirected:false,text:async()=>'{"ok":false,"message":"Acesso negado"}'});
+  await assert.rejects(p.context.adminLoading.loadJSON('identidades-dados.php'),/Acesso negado/);
   const job=deferred();const tracked=p.context.adminLoading.track(job.promise);
   p.events['document:DOMContentLoaded']();await p.flush();assert.equal(p.main.inert,false,'Carregamentos locais não bloqueiam a tela inteira');
   job.resolve();await tracked;await p.flush();assert.equal(p.main.inert,false);assert.equal(p.prelocked.inert,true,'Preserva bloqueios anteriores');
