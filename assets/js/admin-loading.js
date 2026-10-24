@@ -64,7 +64,9 @@
     tracked.finally(() => active.delete(tracked)).catch(() => {});
     return tracked;
   };
-  window.adminLoading = {begin: () => () => {}, track: localTrack, report, loadJSON,
+  const catalog = (name, path) => window.adminCatalogs?.[name]
+    ? Promise.resolve(window.adminCatalogs[name]) : loadJSON(path);
+  window.adminLoading = {begin: () => () => {}, track: localTrack, report, loadJSON, catalog,
     navigate: tab => window.refreshAdminPane(tab), settled: () => Promise.allSettled([...active])};
   lock();
   const finishDocument = () => { pending--; release(); };

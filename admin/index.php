@@ -1425,6 +1425,13 @@ $championshipsAdmin = $pdo
     )
     ->fetchAll();
 $supercupSources = $championshipsAdmin;
+$adminCatalogs = [
+    'campeonatos' => ['ok' => true, 'campeonatos' => array_map(
+        static fn(array $item): array => array_intersect_key($item, array_flip(['id','nome','tipo','status','data_inicio','prioridade'])),
+        $championshipsAdmin
+    )],
+];
+if (account_is_master()) $adminCatalogs['identidades'] = ['ok' => true, 'identidades' => competition_admin_identities($pdo)];
 $supercupsAdmin = [];
 try {
     $supercupsAdmin = $pdo->query("SELECT s.id,c.nome,c.status,oa.nome origem_a,ob.nome origem_b,a.time_nome time_a,b.time_nome time_b FROM supercopas s JOIN campeonatos c ON c.id=s.campeonato_id JOIN campeonatos oa ON oa.id=s.origem_a_campeonato_id JOIN campeonatos ob ON ob.id=s.origem_b_campeonato_id LEFT JOIN jogos_mata_mata j ON j.campeonato_id=c.id AND j.fase='Final' AND j.jogo=1 AND j.ativo=1 LEFT JOIN participantes a ON a.id=j.time_a_id LEFT JOIN participantes b ON b.id=j.time_b_id ORDER BY s.id DESC")->fetchAll();
@@ -1860,7 +1867,7 @@ if (isset($_GET['_fragment'])) ob_start();
     __DIR__ . "/../assets/js/news-round-prompt.js",
 ) ?>"></script><script src="../assets/js/sumula-importer.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/sumula-importer.js",
-) ?>"></script><script src="../assets/js/admin.js?v=<?= filemtime(
+) ?>"></script><script>window.adminCatalogs=<?= json_encode($adminCatalogs, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_INVALID_UTF8_SUBSTITUTE) ?>;</script><script src="../assets/js/admin.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/admin.js",
 ) ?>"></script><script>window.adminLeagueGames=<?= json_encode($games, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;window.adminMataGames=<?= json_encode($mataGames, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script><script src="../assets/js/admin-lists.js?v=<?= filemtime(
     __DIR__ . "/../assets/js/admin-lists.js",
@@ -1881,4 +1888,4 @@ document.addEventListener('shown.bs.modal', function() {
 });
 </script><?php if (account_is_master()): ?><script>window.adminMarketPacks=<?= json_encode(array_values($marketPacksAdmin), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;window.adminCsrf=<?= json_encode(csrf_token(), JSON_HEX_TAG) ?>;</script><script src="../assets/js/admin-pack-import.js?v=<?= filemtime(__DIR__ . '/../assets/js/admin-pack-import.js') ?>"></script><?php endif; ?><script src="../assets/js/admin-sharing-schedule.js?v=<?= filemtime(__DIR__ . '/../assets/js/admin-sharing-schedule.js') ?>"></script></body></html>
 
-<?php if (isset($_GET['_fragment'])) { $html=ob_get_clean(); header('Content-Type: application/json; charset=utf-8'); echo json_encode(['ok'=>true,'html'=>$html,'games'=>$games,'mataGames'=>$mataGames,'packs'=>array_values($marketPacksAdmin)], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE); } ?>
+<?php if (isset($_GET['_fragment'])) { $html=ob_get_clean(); header('Content-Type: application/json; charset=utf-8'); echo json_encode(['ok'=>true,'html'=>$html,'games'=>$games,'mataGames'=>$mataGames,'packs'=>array_values($marketPacksAdmin),'catalogs'=>$adminCatalogs], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE); } ?>

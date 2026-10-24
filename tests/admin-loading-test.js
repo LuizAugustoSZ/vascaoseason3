@@ -26,6 +26,11 @@ function page() {
 (async()=>{
   const p=page();assert.equal(p.main.inert,true,'Carga inicial deve bloquear teclado');
   const reads=[];
+  p.context.adminCatalogs={campeonatos:{ok:true,campeonatos:[{id:39}]}};
+  p.context.fetch=async()=>{throw new Error('Não deve abrir outra conexão');};
+  assert.equal((await p.context.adminLoading.catalog('campeonatos','campeonatos-dados.php')).campeonatos[0].id,39,'A abertura deve usar o catálogo da própria página');
+  p.context.adminCatalogs={campeonatos:{ok:true,campeonatos:[{id:40}]}};
+  assert.equal((await p.context.adminLoading.catalog('campeonatos','campeonatos-dados.php')).campeonatos[0].id,40,'Atualizar a listagem deve usar o novo catálogo');
   p.context.fetch=async(url,options)=>{reads.push({url,options});return {ok:true,status:200,redirected:false,text:async()=>reads.length===1?'':'{"ok":true,"campeonatos":[]}'}};
   assert.equal((await p.context.adminLoading.loadJSON('campeonatos-dados.php')).ok,true);
   assert.equal(reads.length,2,'Uma leitura vazia deve ser repetida uma vez');

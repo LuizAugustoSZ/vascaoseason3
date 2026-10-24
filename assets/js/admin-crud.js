@@ -51,6 +51,7 @@
     pane.replaceChildren(...source.childNodes);
     window.adminLeagueGames = result.games; window.adminMataGames = result.mataGames;
     window.adminMarketPacks = result.packs;
+    window.adminCatalogs = result.catalogs;
     window.initializeAdmin?.(pane);
     window.initializeAdminLists?.();
     if (tab === 'noticias') { window.initializeNewsEditor?.(); window.initializeNewsRoundPrompt?.(); }
